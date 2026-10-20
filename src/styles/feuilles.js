@@ -32,7 +32,7 @@ export const FEUILLES = {
   collection: liste(['cartes-jeu', 'carte-infos', 'collection', 'collection-roue', 'collection-doublons']),
   cartes: liste(['cartes-jeu', 'carte-infos', 'toutes-les-cartes']),
   succes: liste(['cartes-jeu', 'carte-infos', 'succes-badges', 'succes']),
-  boutique: liste(['boutique', 'boutique-jour', 'boutique-profil', 'cartes-jeu', 'carte-infos', 'booster', 'plateaux']),
+  boutique: liste(['cartes-jeu', 'carte-infos', 'booster', 'boutique-vitrine', 'boutique-accueil']),
   marche: liste(['cartes-jeu', 'carte-infos', 'marche', 'marche-echanges']),
   pass: liste(['cartes-jeu', 'carte-infos', 'pass']),
   profil: liste(['cartes-jeu', 'carte-infos', 'succes-badges', 'profil']),

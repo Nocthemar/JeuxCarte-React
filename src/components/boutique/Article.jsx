@@ -48,9 +48,9 @@ export function Pastilles({ item }) {
   );
 }
 
-export function Article({ item, prix, bouton, stock = null, epuise = false, extra = null }) {
+export function Article({ item, prix, bouton, extra = null }) {
   return (
-    <article className={`article${epuise ? ' article--epuise' : ''}`}>
+    <article className="article">
       <div className="article__niche"><Apercu item={item} /></div>
       <div className="article__etiquette">
         <span className="article__type">{LIBELLES[item.kind] ?? item.kind}</span>
@@ -58,7 +58,6 @@ export function Article({ item, prix, bouton, stock = null, epuise = false, extr
         {extra}
         <p className="article__desc">{item.description ?? ''}</p>
         <div className="article__prix">{prix} <Piece /></div>
-        {stock}
         {bouton}
       </div>
     </article>

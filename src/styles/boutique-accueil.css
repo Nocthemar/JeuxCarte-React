@@ -1,0 +1,217 @@
+/* =====================================================================
+   Boutique, style « comme l'accueil du Duel » (.vitrine--accueil)
+   Se pose par-dessus boutique-vitrine.css : même organisation (hall, portes, échoppes),
+   mais l'allure du hall des Couronnes (styles/jeu-cartes.css) : nuit bleutée et forteresse
+   sous la lune, bannières à pointe, facettes, un seul accent ambre, équerres dorées.
+   ===================================================================== */
+
+body.page-boutique:has(.vitrine--accueil) {
+  background:
+    radial-gradient(ellipse 120% 90% at 50% 40%, transparent 40%, rgba(0,0,0,.75) 100%),
+    linear-gradient(180deg, rgba(11,13,18,.35), rgba(11,13,18,.82) 70%),
+    url("/img/Fond/profil-forteresse.svg") center bottom / cover no-repeat fixed,
+    #0b0d12;
+}
+.page-boutique .vitrine--accueil {
+  --or: #d9a441;
+  --or-vif: #f3cf7c;
+  --or-sombre: #a8741f;
+  --trait: rgba(205,214,230,.16);
+  --trait-fort: rgba(217,164,65,.5);
+  --blanc: #eef0f4;
+  --gris: #9aa1ad;
+  --texte-doux: #b4bac5;
+  --facette: polygon(10px 0, calc(100% - 10px) 0, 100% 10px, 100% calc(100% - 10px), calc(100% - 10px) 100%, 10px 100%, 0 calc(100% - 10px), 0 10px);
+  --panneau:
+    linear-gradient(180deg, rgba(255,255,255,.05), transparent 40%),
+    linear-gradient(180deg, rgba(26,30,42,.94), rgba(11,13,19,.92));
+  --vitre: #0a0c12;
+  color: var(--blanc);
+  position: relative;
+}
+/* Lueur ambre derrière le titre */
+.page-boutique .vitrine--accueil::before {
+  content: ""; position: absolute; inset: -40px -10vw auto; height: 700px; z-index: -1; pointer-events: none;
+  background:
+    radial-gradient(ellipse 40% 30% at 50% 8%, rgba(217,164,65,.14), transparent 70%),
+    radial-gradient(ellipse 46% 30% at 62% 70%, rgba(154,108,240,.07), transparent 70%);
+}
+
+/* ---------- En-tête centré : sur-titre entre deux traits, titre blanc et or, filet à losange ---------- */
+.page-boutique .vitrine--accueil .vitrine-entete {
+  flex-direction: column; align-items: center; text-align: center;
+  gap: 14px; padding-bottom: 0; border-bottom: 0; margin-bottom: 34px;
+}
+.page-boutique .vitrine--accueil .vitrine-entete__titre { display: flex; flex-direction: column; align-items: center; }
+.page-boutique .vitrine--accueil .vitrine-entete__sur {
+  display: flex; align-items: center; gap: 16px;
+  font-size: .75rem; letter-spacing: .42em; color: #c6ccd6;
+}
+.page-boutique .vitrine--accueil .vitrine-entete__sur::before,
+.page-boutique .vitrine--accueil .vitrine-entete__sur::after {
+  content: ""; width: clamp(30px, 6vw, 70px); height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(217,164,65,.7));
+}
+.page-boutique .vitrine--accueil .vitrine-entete__sur::after { background: linear-gradient(90deg, rgba(217,164,65,.7), transparent); }
+.page-boutique .vitrine--accueil .vitrine-retour {
+  clip-path: polygon(8px 0, calc(100% - 8px) 0, 100% 50%, calc(100% - 8px) 100%, 8px 100%, 0 50%);
+  border: 0; padding: 7px 22px;
+  background: linear-gradient(160deg, rgba(255,255,255,.1) 0 40%, transparent 40.1%), #1e232d;
+  box-shadow: inset 0 0 0 1px rgba(205,214,230,.34);
+  color: var(--blanc);
+}
+.page-boutique .vitrine--accueil .vitrine-retour:hover { filter: brightness(1.25); background: linear-gradient(160deg, rgba(255,255,255,.1) 0 40%, transparent 40.1%), #1e232d; color: var(--blanc); }
+.page-boutique .vitrine--accueil .vitrine-entete h1 {
+  margin-top: 8px;
+  font-size: clamp(2rem, 5vw, 3.6rem);
+  background: none; -webkit-background-clip: border-box; background-clip: border-box;
+  color: var(--blanc);
+  filter: none; text-shadow: 0 6px 40px rgba(0,0,0,.9);
+}
+.page-boutique .vitrine--accueil .vitrine-entete h1 span {
+  background: linear-gradient(180deg, #fff1c8 5%, #ecc061 50%, #a8741f 95%);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+  filter: drop-shadow(0 4px 22px rgba(217,164,65,.4));
+}
+.page-boutique .vitrine--accueil .vitrine-entete p { margin: 0 auto; color: #d2d6de; font-style: normal; font-size: 1.05rem; text-shadow: 0 2px 12px rgba(0,0,0,.9); }
+.page-boutique .vitrine--accueil .vitrine-entete p::before {
+  content: ""; display: block; width: 280px; max-width: 70%; height: 11px; margin: 16px auto 14px;
+  background:
+    linear-gradient(90deg, transparent, var(--or)) 0 5px / calc(50% - 12px) 1px no-repeat,
+    linear-gradient(90deg, var(--or), transparent) 100% 5px / calc(50% - 12px) 1px no-repeat,
+    linear-gradient(45deg, transparent 30%, #f3cf7c 31% 69%, transparent 70%) 50% 0 / 11px 11px no-repeat;
+}
+/* Bourse : une plaque à facettes */
+.page-boutique .vitrine--accueil .bourse {
+  clip-path: var(--facette);
+  border: 0;
+  background: linear-gradient(180deg, rgba(255,255,255,.05), transparent 40%), linear-gradient(180deg, rgba(26,30,42,.94), rgba(11,13,19,.92));
+  box-shadow: inset 0 0 0 1px rgba(217,164,65,.4);
+}
+.page-boutique .vitrine--accueil .bourse strong { color: var(--or-vif); }
+
+/* ---------- Les portes du hall : bannières à pointe, l'or au survol ---------- */
+.page-boutique .vitrine--accueil .hall { gap: 20px; max-width: 1080px; margin: 0 auto; }
+.page-boutique .vitrine--accueil .porte {
+  border: 0;
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 26px), 50% 100%, 0 calc(100% - 26px));
+  padding-bottom: 26px;
+  background: var(--panneau);
+  box-shadow: inset 0 3px 0 rgba(205,214,230,.25), inset 0 0 0 1px var(--trait);
+  color: var(--gris);
+  text-align: center;
+}
+.page-boutique .vitrine--accueil .porte::before { display: none; }
+.page-boutique .vitrine--accueil .porte:hover, .page-boutique .vitrine--accueil .porte:focus-visible {
+  transform: translateY(-8px);
+  background:
+    radial-gradient(ellipse 80% 50% at 50% 0, rgba(243,207,124,.28), transparent 70%),
+    linear-gradient(180deg, rgba(64,46,18,.95), rgba(22,17,10,.94));
+  box-shadow: inset 0 3px 0 #f3cf7c, inset 0 0 0 1px rgba(217,164,65,.55);
+}
+.page-boutique .vitrine--accueil .porte__texte { align-items: center; padding: 0 22px 16px; }
+.page-boutique .vitrine--accueil .porte__num { color: var(--gris); letter-spacing: .3em; }
+.page-boutique .vitrine--accueil .porte__titre { color: var(--blanc); text-transform: uppercase; letter-spacing: .1em; font-size: clamp(1.05rem, 2vw, 1.3rem); }
+.page-boutique .vitrine--accueil .porte:hover .porte__titre { color: var(--or-vif); }
+.page-boutique .vitrine--accueil .porte__desc { color: var(--texte-doux); }
+.page-boutique .vitrine--accueil .porte__entrer { align-self: center; }
+.page-boutique .vitrine--accueil .porte__annonce {
+  clip-path: var(--facette); border: 0;
+  background: rgba(6,7,11,.85); box-shadow: inset 0 0 0 1px var(--trait);
+  color: #c6ccd6;
+}
+.page-boutique .vitrine--accueil .porte__annonce--vive { background: linear-gradient(160deg, #f0c873 0 40%, var(--or) 40.1%); color: #1b1408; box-shadow: none; }
+.page-boutique .vitrine--accueil .scene::after { background: radial-gradient(ellipse at center, rgba(217,164,65,.3), rgba(217,164,65,.05) 55%, transparent 72%); }
+.page-boutique .vitrine--accueil .scene__blason {
+  clip-path: var(--facette); border: 0;
+  background: radial-gradient(ellipse 80% 70% at 50% 30%, rgba(80,90,140,.35), transparent 70%), linear-gradient(180deg, #1a1f2c, #0c0e15);
+  box-shadow: inset 0 0 0 1px rgba(217,164,65,.45);
+}
+
+/* ---------- Onglets : comme le choix de difficulté ---------- */
+.page-boutique .vitrine--accueil .onglets {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 0;
+  max-width: 600px; margin: -10px auto 30px;
+  clip-path: var(--facette);
+  background: rgba(6,7,11,.7); box-shadow: inset 0 0 0 1px var(--trait);
+}
+.page-boutique .vitrine--accueil .onglet {
+  justify-content: center; min-height: 46px; padding: 0 10px; border: 0;
+  color: var(--gris); font-size: .78rem;
+}
+.page-boutique .vitrine--accueil .onglet + .onglet { box-shadow: inset 1px 0 0 var(--trait); }
+.page-boutique .vitrine--accueil .onglet__num { display: none; }
+.page-boutique .vitrine--accueil .onglet:hover { color: #e8e2d4; background: rgba(255,255,255,.05); }
+.page-boutique .vitrine--accueil .onglet.est-actif { color: #1b1408; background: linear-gradient(180deg, #f3cf7c, var(--or) 60%, #b07a26); }
+
+/* ---------- Titre d'échoppe ---------- */
+.page-boutique .vitrine--accueil .echoppe__sur { color: #c6ccd6; letter-spacing: .34em; }
+.page-boutique .vitrine--accueil .echoppe__entete h2 { color: var(--blanc); text-transform: uppercase; letter-spacing: .1em; }
+.page-boutique .vitrine--accueil .echoppe__intro { color: var(--texte-doux); font-style: normal; }
+
+/* ---------- Articles : panneaux sombres aux équerres dorées ---------- */
+.page-boutique .vitrine--accueil .article {
+  border: 1px solid rgba(217,164,65,.26);
+  background: linear-gradient(180deg, rgba(255,255,255,.035), transparent 30%), linear-gradient(180deg, rgba(13,15,22,.9), rgba(7,8,13,.94));
+  box-shadow: 0 20px 44px rgba(0,0,0,.55);
+}
+.page-boutique .vitrine--accueil .article::before {
+  inset: 6px; opacity: 1;
+  --c: #e2b24f;
+  background:
+    linear-gradient(var(--c), var(--c)) 0 0 / 16px 2px no-repeat,
+    linear-gradient(var(--c), var(--c)) 0 0 / 2px 16px no-repeat,
+    linear-gradient(var(--c), var(--c)) 100% 0 / 16px 2px no-repeat,
+    linear-gradient(var(--c), var(--c)) 100% 0 / 2px 16px no-repeat,
+    linear-gradient(var(--c), var(--c)) 0 100% / 16px 2px no-repeat,
+    linear-gradient(var(--c), var(--c)) 0 100% / 2px 16px no-repeat,
+    linear-gradient(var(--c), var(--c)) 100% 100% / 16px 2px no-repeat,
+    linear-gradient(var(--c), var(--c)) 100% 100% / 2px 16px no-repeat;
+}
+.page-boutique .vitrine--accueil .article:hover::before { inset: 6px; }
+.page-boutique .vitrine--accueil .article:hover { border-color: rgba(217,164,65,.55); transform: translateY(-4px); }
+.page-boutique .vitrine--accueil .article__niche {
+  background:
+    radial-gradient(ellipse 55% 80% at 50% -10%, rgba(190,205,240,.13), transparent 70%),
+    radial-gradient(ellipse 45% 12% at 50% 88%, rgba(217,164,65,.2), transparent 72%),
+    var(--vitre);
+  border-bottom-color: var(--trait);
+}
+.page-boutique .vitrine--accueil .article__type { color: var(--gris); }
+.page-boutique .vitrine--accueil .article__nom { color: var(--blanc); }
+.page-boutique .vitrine--accueil .article__prix { color: var(--or-vif); text-shadow: none; }
+
+/* Boutons : facettes, ambre (comme « Engager le duel ») */
+.page-boutique .vitrine--accueil .btn-acheter,
+.page-boutique .vitrine--accueil .btn-ouvrir {
+  border: 0;
+  clip-path: polygon(8px 0, calc(100% - 8px) 0, 100% 50%, calc(100% - 8px) 100%, 8px 100%, 0 50%);
+  background: linear-gradient(160deg, #f0c873 0 40%, var(--or) 40.1%);
+  color: #1b1408; letter-spacing: .12em;
+  transition: filter .15s, transform .15s;
+}
+.page-boutique .vitrine--accueil .btn-acheter:hover:not(:disabled), .page-boutique .vitrine--accueil .btn-acheter:focus-visible:not(:disabled) {
+  background: linear-gradient(160deg, #f0c873 0 40%, var(--or) 40.1%); color: #1b1408;
+  filter: brightness(1.12); transform: translateY(-1px); box-shadow: none;
+}
+.page-boutique .vitrine--accueil .btn-acheter:disabled {
+  background: linear-gradient(160deg, rgba(255,255,255,.08) 0 40%, transparent 40.1%), #1e232d;
+  box-shadow: inset 0 0 0 1px var(--trait);
+  color: var(--gris);
+}
+.page-boutique .vitrine--accueil .btn-ouvrir::after { content: none; }
+.page-boutique .vitrine--accueil .plateau__possede { clip-path: var(--facette); border: 0; box-shadow: inset 0 0 0 1px var(--trait-fort); }
+
+/* ---------- Téléphones ---------- */
+@media (max-width: 760px) {
+  .page-boutique .vitrine--accueil .porte {
+    clip-path: var(--facette); padding-bottom: 0; text-align: left;
+  }
+  .page-boutique .vitrine--accueil .porte__texte { align-items: flex-start; padding: 16px 14px 16px 4px; }
+  .page-boutique .vitrine--accueil .porte:hover { transform: translateX(3px); }
+}
+@media (max-width: 600px) {
+  .page-boutique .vitrine--accueil .vitrine-entete__sur { gap: 10px; letter-spacing: .22em; font-size: .68rem; }
+  .page-boutique .vitrine--accueil .vitrine-entete__sur::before, .page-boutique .vitrine--accueil .vitrine-entete__sur::after { width: 20px; }
+  .page-boutique .vitrine--accueil .onglet { flex: none; padding: 0 4px; font-size: .64rem; letter-spacing: .06em; min-height: 40px; }
+}

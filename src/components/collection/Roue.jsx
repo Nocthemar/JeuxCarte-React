@@ -195,7 +195,7 @@ export default function Roue({ objets, equipes, surEquiper, anime }) {
           {!o ? (
             <>
               <span className="roue__vide">{cat.vide} pour l&apos;instant.</span>
-              <Link className="roue__lien" to="/boutique">Voir la boutique</Link>
+              <Link className="roue__lien" to="/boutique?echoppe=plateaux">Voir la boutique</Link>
             </>
           ) : (
             <>

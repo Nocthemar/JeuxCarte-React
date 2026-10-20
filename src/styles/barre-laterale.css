@@ -204,8 +204,8 @@
   .rail-menu__item .rail-ico{ font-size:0.8rem; font-weight:700; }
 
   /* Thème clair (comme la barre, theme-jour.css) */
-  :root[data-theme="jour"] body:not(.page-jeu):not(.page-fiche) .rail-menu{ background:rgba(236,230,219,0.98); border-color:rgba(60,40,20,0.18); box-shadow:0 14px 40px rgba(60,40,20,0.25); }
-  :root[data-theme="jour"] body:not(.page-jeu):not(.page-fiche) .rail-menu__item{ color:#5c4a38; }
-  :root[data-theme="jour"] body:not(.page-jeu):not(.page-fiche) .rail-menu__item.is-active{ background:rgba(60,40,20,0.08); color:#8a6a2c; }
-  :root[data-theme="jour"] body:not(.page-jeu):not(.page-fiche) .rail-menu__item--sortie{ color:#a8323a; }
+  :root[data-theme="jour"] body:not(.page-jeu):not(.page-fiche):not(.page-boutique) .rail-menu{ background:rgba(236,230,219,0.98); border-color:rgba(60,40,20,0.18); box-shadow:0 14px 40px rgba(60,40,20,0.25); }
+  :root[data-theme="jour"] body:not(.page-jeu):not(.page-fiche):not(.page-boutique) .rail-menu__item{ color:#5c4a38; }
+  :root[data-theme="jour"] body:not(.page-jeu):not(.page-fiche):not(.page-boutique) .rail-menu__item.is-active{ background:rgba(60,40,20,0.08); color:#8a6a2c; }
+  :root[data-theme="jour"] body:not(.page-jeu):not(.page-fiche):not(.page-boutique) .rail-menu__item--sortie{ color:#a8323a; }
 }

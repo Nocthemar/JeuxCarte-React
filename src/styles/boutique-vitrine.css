@@ -1,0 +1,467 @@
+/* =====================================================================
+   Boutique « vitrine de luxe » (pages/Boutique.jsx, components/boutique/*)
+   - le hall : quatre grandes portes illustrées, une par échoppe ;
+   - les échoppes : chaque article posé dans sa vitrine, sous un projecteur, sur un socle doré.
+   Fond très sombre, filets et coins dorés, arêtes vives comme le reste du site.
+   Chargée APRÈS booster.css (elle en reprend la présentation des boosters en vente) ;
+   l'animation d'ouverture des boosters reste dans booster.css.
+   La boutique reste nocturne en thème clair (theme-jour.css).
+   ===================================================================== */
+
+.page-boutique {
+  --or: #d8b978;
+  --or-vif: #f3d58e;
+  --or-sombre: #8a6a2c;
+  --trait: rgba(216,185,120,.2);
+  --trait-fort: rgba(216,185,120,.5);
+  --vitre: #0d0a09;
+  --panneau: linear-gradient(180deg, #1a1513, #0f0c0b);
+  background:
+    radial-gradient(ellipse 70% 45% at 50% -8%, rgba(216,185,120,.13), transparent 70%),
+    radial-gradient(ellipse 60% 40% at 50% 110%, rgba(120,70,30,.12), transparent 70%),
+    #0b0908;
+  background-attachment: fixed;
+}
+.page-boutique .vitrine { max-width: 1160px; padding-top: 28px; }
+
+/* Les coins dorés (deux équerres opposées), communs aux portes, articles et bourse */
+.page-boutique .porte::before,
+.page-boutique .article::before {
+  content: ""; position: absolute; inset: 7px; pointer-events: none; z-index: 3;
+  background:
+    linear-gradient(var(--or), var(--or)) top left / 16px 1px no-repeat,
+    linear-gradient(var(--or), var(--or)) top left / 1px 16px no-repeat,
+    linear-gradient(var(--or), var(--or)) bottom right / 16px 1px no-repeat,
+    linear-gradient(var(--or), var(--or)) bottom right / 1px 16px no-repeat;
+  opacity: .55;
+  transition: opacity .3s ease, inset .3s ease;
+}
+.page-boutique .porte:hover::before, .page-boutique .porte:focus-visible::before,
+.page-boutique .article:hover::before { opacity: 1; inset: 5px; }
+
+/* ---------- En-tête : titre doré et bourse ---------- */
+.page-boutique .vitrine-entete {
+  display: flex; align-items: flex-end; justify-content: space-between; gap: 18px 28px; flex-wrap: wrap;
+  margin: 0 0 26px; padding-bottom: 18px;
+  border-bottom: 1px solid var(--trait);
+}
+.page-boutique .vitrine-entete__titre { min-width: 0; }
+.page-boutique .vitrine-entete__sur, .page-boutique .vitrine-retour {
+  display: inline-block; margin-bottom: 6px;
+  font-family: "Cinzel","Cinzel Repli", serif; font-size: .68rem; letter-spacing: .3em; text-transform: uppercase;
+  color: var(--or);
+}
+.page-boutique .vitrine-retour {
+  padding: 5px 14px 5px 10px; letter-spacing: .18em;
+  border: 1px solid var(--trait); color: var(--texte-doux);
+  transition: color .2s ease, border-color .2s ease, background .2s ease;
+}
+.page-boutique .vitrine-retour:hover, .page-boutique .vitrine-retour:focus-visible { color: var(--or-vif); border-color: var(--trait-fort); background: rgba(216,185,120,.06); outline: none; }
+.page-boutique .vitrine-entete h1 {
+  font-family: "Cinzel Decorative","Cinzel Decorative Repli", serif; font-weight: 700;
+  font-size: clamp(1.6rem, 3.6vw, 2.5rem); line-height: 1.1;
+  background: linear-gradient(180deg, #fff3d6 10%, var(--or) 55%, var(--or-sombre));
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+  filter: drop-shadow(0 2px 10px rgba(216,185,120,.18));
+}
+.page-boutique .vitrine-entete p { margin: 8px 0 0; max-width: 56ch; font-style: italic; color: var(--texte-doux); }
+
+.page-boutique .bourse {
+  position: relative;
+  display: flex; align-items: center; gap: 12px;
+  padding: 8px 22px 8px 12px;
+  border: 1px solid var(--trait-fort);
+  background: linear-gradient(180deg, rgba(40,31,22,.9), rgba(14,11,10,.95));
+  box-shadow: 0 10px 26px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,236,190,.08), 0 0 24px rgba(216,185,120,.08);
+}
+.page-boutique .bourse__piece { width: 38px; height: 38px; filter: drop-shadow(0 2px 8px rgba(216,185,120,.45)); }
+.page-boutique .bourse__texte { display: flex; flex-direction: column; line-height: 1.05; }
+.page-boutique .bourse__libelle {
+  font-family: "Cinzel","Cinzel Repli", serif; font-size: .6rem; letter-spacing: .24em; text-transform: uppercase; color: var(--texte-doux);
+}
+.page-boutique .bourse strong { font-family: "Cinzel","Cinzel Repli", serif; font-size: 1.5rem; color: var(--or-vif); font-variant-numeric: tabular-nums; }
+.page-boutique .bourse small { font-family: "EB Garamond","EB Garamond Repli", serif; font-style: italic; font-weight: 400; font-size: .85rem; color: var(--texte-doux); }
+
+/* =====================================================================
+   Le hall : quatre portes
+   ===================================================================== */
+.page-boutique .hall {
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 22px;
+}
+.page-boutique .porte {
+  position: relative; overflow: hidden; isolation: isolate;
+  display: flex; flex-direction: column;
+  min-height: 360px;
+  border: 1px solid var(--trait);
+  background:
+    radial-gradient(ellipse 55% 60% at 50% 0%, rgba(255,232,180,.13), transparent 70%),
+    var(--panneau);
+  box-shadow: 0 18px 40px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,236,190,.05);
+  color: var(--texte);
+  transition: transform .35s cubic-bezier(.2,.8,.3,1), border-color .3s ease, box-shadow .3s ease;
+}
+/* Reflet qui balaie la porte au survol */
+.page-boutique .porte::after {
+  content: ""; position: absolute; inset: 0; z-index: 2; pointer-events: none;
+  background: linear-gradient(110deg, transparent 35%, rgba(255,240,205,.09) 48%, transparent 60%);
+  translate: -120% 0;
+  transition: translate .9s ease;
+}
+.page-boutique .porte:hover, .page-boutique .porte:focus-visible {
+  transform: translateY(-5px);
+  border-color: var(--trait-fort);
+  box-shadow: 0 26px 50px rgba(0,0,0,.6), 0 0 34px rgba(216,185,120,.12), inset 0 1px 0 rgba(255,236,190,.08);
+  outline: none;
+}
+.page-boutique .porte:hover::after, .page-boutique .porte:focus-visible::after { translate: 120% 0; }
+
+.page-boutique .porte__texte {
+  position: relative; z-index: 1;
+  display: flex; flex-direction: column; gap: 6px;
+  padding: 0 26px 24px;
+}
+.page-boutique .porte__num {
+  font-family: "Cinzel","Cinzel Repli", serif; font-size: .64rem; letter-spacing: .26em; text-transform: uppercase; color: var(--or);
+}
+.page-boutique .porte__titre {
+  font-family: "Cinzel","Cinzel Repli", serif; font-weight: 700;
+  font-size: clamp(1.15rem, 2.2vw, 1.5rem); line-height: 1.2; color: #f6ecd8;
+}
+.page-boutique .porte__desc { font-style: italic; font-size: .95rem; line-height: 1.45; color: var(--texte-doux); }
+.page-boutique .porte__entrer {
+  align-self: flex-start; margin-top: 8px;
+  font-family: "Cinzel","Cinzel Repli", serif; font-size: .7rem; letter-spacing: .2em; text-transform: uppercase;
+  color: var(--or);
+  border-bottom: 1px solid transparent;
+  transition: color .2s ease, border-color .2s ease;
+}
+.page-boutique .porte__entrer span { display: inline-block; transition: transform .25s ease; }
+.page-boutique .porte:hover .porte__entrer { color: var(--or-vif); border-color: var(--trait-fort); }
+.page-boutique .porte:hover .porte__entrer span { transform: translateX(4px); }
+
+/* La petite annonce en haut à droite (offrande prête, prochain étal…) */
+.page-boutique .porte__annonce {
+  position: absolute; top: 16px; right: 16px; z-index: 4;
+  padding: 4px 12px;
+  border: 1px solid var(--trait-fort);
+  background: rgba(10,8,7,.85);
+  font-family: "Cinzel","Cinzel Repli", serif; font-size: .64rem; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--texte-doux);
+  font-variant-numeric: tabular-nums;
+}
+.page-boutique .porte__annonce--vive {
+  border-color: transparent;
+  background: linear-gradient(180deg, var(--or-vif), #c99436);
+  color: #1a1410; font-weight: 700;
+  box-shadow: 0 0 18px rgba(243,213,142,.35);
+  animation: annonce-appel 2.4s ease-in-out infinite;
+}
+@keyframes annonce-appel { 50% { box-shadow: 0 0 26px rgba(243,213,142,.6); } }
+
+/* ---------- Les scènes : ce qu'on trouve derrière chaque porte, sous un projecteur ---------- */
+.page-boutique .scene {
+  position: relative; flex: 1;
+  display: flex; align-items: flex-end; justify-content: center;
+  min-height: 210px; padding-bottom: 30px;
+}
+/* Socle : un ovale de lumière dorée sous les objets */
+.page-boutique .scene::after {
+  content: ""; position: absolute; left: 50%; bottom: 18px; z-index: -1;
+  width: 62%; height: 26px; translate: -50% 0;
+  background: radial-gradient(ellipse at center, rgba(216,185,120,.32), rgba(216,185,120,.06) 55%, transparent 72%);
+  border-radius: 50%;
+}
+.page-boutique .scene img { filter: drop-shadow(0 14px 14px rgba(0,0,0,.7)); transition: transform .45s cubic-bezier(.2,.8,.3,1); }
+
+/* Boosters : la porte, et trois dos de cartes en éventail derrière */
+.page-boutique .scene--boosters .scene__booster { position: relative; z-index: 1; height: 190px; width: auto; }
+.page-boutique .scene--boosters .scene__dos {
+  position: absolute; bottom: 44px; left: 50%; width: 92px; margin-left: -46px;
+  transform: translateX(calc(var(--k) * 46px)) rotate(calc(var(--k) * 12deg)) translateY(calc(var(--k) * var(--k) * 8px - 18px));
+}
+.page-boutique .porte:hover .scene__booster { transform: translateY(-8px) rotate(-2deg) scale(1.04); }
+.page-boutique .porte:hover .scene__dos {
+  transform: translateX(calc(var(--k) * 62px)) rotate(calc(var(--k) * 18deg)) translateY(calc(var(--k) * var(--k) * 10px - 34px));
+}
+
+/* Apparences : un médaillon de velours, un titre gravé et des pastilles de couleurs */
+.page-boutique .scene__blason {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px;
+  width: min(300px, 80%); height: 150px; margin-bottom: 6px;
+  border: 1px solid var(--trait-fort);
+  background:
+    radial-gradient(ellipse 80% 70% at 50% 30%, rgba(120,40,60,.35), transparent 70%),
+    linear-gradient(180deg, #1f1416, #120c0d);
+  box-shadow: 0 16px 30px rgba(0,0,0,.6), inset 0 0 30px rgba(0,0,0,.6);
+  transition: transform .45s cubic-bezier(.2,.8,.3,1);
+}
+.page-boutique .scene__titre {
+  font-family: "EB Garamond","EB Garamond Repli", serif; font-style: italic; font-size: 1.6rem;
+  color: var(--or-vif); text-shadow: 0 0 18px rgba(243,213,142,.35);
+}
+.page-boutique .scene__couleurs { display: flex; gap: 10px; }
+.page-boutique .scene__couleurs i {
+  width: 18px; height: 18px; border-radius: 50%;
+  background: var(--c); border: 1px solid rgba(255,255,255,.3); box-shadow: 0 0 10px var(--c);
+}
+.page-boutique .porte:hover .scene__blason { transform: translateY(-8px) scale(1.03); }
+
+/* Plateaux : deux arènes posées l'une derrière l'autre */
+.page-boutique .scene--plateaux { perspective: 700px; }
+.page-boutique .scene__plateau { position: relative; z-index: 1; width: min(270px, 70%); height: auto; transform: rotateX(18deg); }
+.page-boutique .scene__plateau--fond { position: absolute; bottom: 58px; left: 50%; z-index: 0; width: min(210px, 55%); translate: -75% 0; opacity: .55; filter: blur(1px) drop-shadow(0 10px 10px rgba(0,0,0,.7)); }
+.page-boutique .porte:hover .scene__plateau { transform: rotateX(8deg) translateY(-8px) scale(1.04); }
+.page-boutique .porte:hover .scene__plateau--fond { transform: rotateX(18deg) translateX(-14px); opacity: .75; }
+
+/* =====================================================================
+   Dans une échoppe : onglets, titre, articles en vitrine
+   ===================================================================== */
+.page-boutique .onglets {
+  display: flex; flex-wrap: wrap; gap: 8px; margin: -6px 0 26px;
+}
+.page-boutique .onglet {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 7px 16px 7px 8px;
+  border: 1px solid var(--trait);
+  font-family: "Cinzel","Cinzel Repli", serif; font-size: .74rem; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--texte-doux);
+  transition: color .2s ease, border-color .2s ease, background .2s ease;
+}
+.page-boutique .onglet__num {
+  display: grid; place-items: center; width: 26px; height: 26px;
+  border: 1px solid var(--trait); font-weight: 700; font-size: .7rem; color: var(--or);
+}
+.page-boutique .onglet:hover, .page-boutique .onglet:focus-visible { color: var(--texte); border-color: var(--trait-fort); background: rgba(216,185,120,.05); outline: none; }
+.page-boutique .onglet.est-actif { color: #1a1410; border-color: var(--or); background: linear-gradient(180deg, var(--or-vif), #c99436); }
+.page-boutique .onglet.est-actif .onglet__num { border-color: rgba(26,20,16,.4); color: #1a1410; }
+
+/* (une <section> : sans ça, elle prend les grandes marges des sections du site, styles/index.css) */
+.page-boutique .echoppe { max-width: none; margin: 0; padding: 0; border: 0; text-align: center; }
+.page-boutique .echoppe__entete { margin: 0 auto 30px; max-width: 680px; }
+.page-boutique .echoppe__sur {
+  font-family: "Cinzel","Cinzel Repli", serif; font-size: .66rem; letter-spacing: .28em; text-transform: uppercase; color: var(--or);
+}
+.page-boutique .echoppe__entete h2 {
+  margin: 8px 0 0;
+  font-family: "Cinzel","Cinzel Repli", serif; font-weight: 700;
+  font-size: clamp(1.35rem, 3vw, 2rem); letter-spacing: .05em; color: #f6ecd8;
+}
+/* filet doré sous le titre, avec un losange au centre */
+.page-boutique .echoppe__entete h2::after {
+  content: ""; display: block; width: 160px; height: 9px; margin: 14px auto 0;
+  background:
+    linear-gradient(90deg, transparent, var(--or) 40%, transparent 46%, transparent 54%, var(--or) 60%, transparent) center / 100% 1px no-repeat,
+    linear-gradient(45deg, transparent 40%, var(--or) 41% 59%, transparent 60%) center / 9px 9px no-repeat;
+}
+.page-boutique .echoppe__intro { margin: 14px auto 0; max-width: 60ch; font-style: italic; font-size: .95rem; color: var(--texte-doux); }
+
+/* ---------- Les étals : une grille de vitrines ---------- */
+.page-boutique .etal {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 22px;
+  margin-top: 26px; text-align: center;
+}
+.page-boutique .etal > .vide { grid-column: 1 / -1; padding: 30px 0; color: var(--texte-doux); font-style: italic; }
+
+.page-boutique .article {
+  position: relative; overflow: hidden;
+  display: flex; flex-direction: column;
+  margin: 0;
+  border: 1px solid var(--trait);
+  background: var(--panneau);
+  box-shadow: 0 14px 32px rgba(0,0,0,.5);
+  transition: transform .3s cubic-bezier(.2,.8,.3,1), border-color .3s ease, box-shadow .3s ease;
+}
+.page-boutique .article:hover {
+  transform: translateY(-4px);
+  border-color: var(--trait-fort);
+  box-shadow: 0 22px 44px rgba(0,0,0,.6), 0 0 28px rgba(216,185,120,.1);
+}
+/* Reflet sur la vitre au survol */
+.page-boutique .article::after {
+  content: ""; position: absolute; inset: 0; z-index: 2; pointer-events: none;
+  background: linear-gradient(110deg, transparent 35%, rgba(255,240,205,.08) 48%, transparent 60%);
+  translate: -120% 0; transition: translate .9s ease;
+}
+.page-boutique .article:hover::after { translate: 120% 0; }
+
+/* La vitrine : projecteur en haut, socle lumineux en bas */
+.page-boutique .article__niche {
+  position: relative; order: 0;
+  height: 170px;
+  display: grid; place-items: center;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse 55% 80% at 50% -10%, rgba(255,232,180,.17), transparent 70%),
+    radial-gradient(ellipse 45% 12% at 50% 88%, rgba(216,185,120,.22), transparent 72%),
+    var(--vitre);
+  border-bottom: 1px solid var(--trait);
+  box-shadow: inset 0 0 40px rgba(0,0,0,.7);
+}
+.page-boutique .article__icone {
+  width: 100px; height: 100px; object-fit: contain;
+  filter: drop-shadow(0 12px 12px rgba(0,0,0,.75));
+  transition: transform .35s cubic-bezier(.2,.8,.3,1);
+}
+.page-boutique .article:hover .article__icone { transform: translateY(-6px) scale(1.07); }
+.page-boutique .article__sans-image { font-size: 2.2rem; color: rgba(216,185,120,.5); text-shadow: 0 0 16px rgba(216,185,120,.4); }
+
+/* L'étiquette : nom, description, prix, achat */
+.page-boutique .article__etiquette {
+  order: 1; position: relative; z-index: 1;
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  flex: 1;
+  margin: 0; padding: 16px 16px 18px;
+  background: none; border: 0; outline: 0; box-shadow: none;
+  transform: none;
+}
+.page-boutique .article__type {
+  font-family: "Cinzel","Cinzel Repli", serif; font-size: .6rem; letter-spacing: .24em; text-transform: uppercase; color: var(--or);
+}
+.page-boutique .article__nom {
+  margin: 0; font-family: "Cinzel","Cinzel Repli", serif; font-weight: 700;
+  font-size: 1.02rem; line-height: 1.25; color: #f6ecd8;
+}
+.page-boutique .article__desc {
+  margin: 2px 0 0; flex: 1;
+  font-size: .86rem; line-height: 1.5; font-style: italic; color: var(--texte-doux);
+}
+.page-boutique .article__prix {
+  display: inline-flex; align-items: center; gap: 6px;
+  margin-top: 8px;
+  font-family: "Cinzel","Cinzel Repli", serif; font-weight: 700; font-size: 1.3rem;
+  color: var(--or-vif); text-shadow: 0 0 14px rgba(243,213,142,.2);
+  font-variant-numeric: tabular-nums;
+}
+.page-boutique .piece { width: 20px; height: 20px; }
+
+/* Bouton d'achat : filet doré, plein au survol */
+.page-boutique .btn-acheter {
+  align-self: stretch;
+  margin-top: 10px; padding: 10px 8px;
+  border: 1px solid var(--trait-fort); border-radius: 0;
+  background: rgba(216,185,120,.04);
+  color: var(--or-vif);
+  font-family: "Cinzel","Cinzel Repli", serif; font-weight: 700;
+  font-size: .72rem; letter-spacing: .18em; text-transform: uppercase;
+  cursor: pointer;
+  transition: background .2s, color .2s, border-color .2s, box-shadow .2s;
+}
+.page-boutique .btn-acheter:hover:not(:disabled), .page-boutique .btn-acheter:focus-visible:not(:disabled) {
+  background: linear-gradient(180deg, var(--or-vif), #c99436); border-color: var(--or); color: #1a1410;
+  box-shadow: 0 0 20px rgba(243,213,142,.3); outline: none;
+}
+.page-boutique .btn-acheter:disabled {
+  border-color: rgba(240,236,227,.12); background: none; color: var(--texte-doux);
+  letter-spacing: .08em; cursor: not-allowed;
+}
+
+/* ---------- Apparences : bannière devinée, titre gravé, pastilles ---------- */
+.page-boutique .article__niche .apercu { position: absolute; inset: 0; }
+.page-boutique .apercu img {
+  width: 100%; height: 100%; object-fit: cover; display: block;
+  filter: blur(5px) brightness(.75); transform: scale(1.12);
+}
+.page-boutique .article__niche .apercu--titre {
+  position: static; display: grid; place-items: center; padding: 0 14px;
+  font-family: "EB Garamond","EB Garamond Repli", serif; font-style: italic; font-size: 1.25rem;
+  color: var(--or-vif); text-shadow: 0 0 16px rgba(243,213,142,.4);
+}
+.page-boutique .pastilles { display: flex; justify-content: center; gap: 6px; margin: 2px 0; }
+.page-boutique .pastille {
+  width: 16px; height: 16px; border-radius: 50%;
+  background: var(--c); border: 1px solid rgba(255,255,255,.3); box-shadow: 0 0 8px var(--c);
+}
+
+/* ---------- Plateaux ---------- */
+.page-boutique .etal--plateaux { grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); }
+.page-boutique .article__niche--plateau {
+  height: 180px; perspective: 600px;
+  background:
+    radial-gradient(ellipse 55% 80% at 50% -10%, rgba(200,220,255,.14), transparent 70%),
+    radial-gradient(ellipse 50% 12% at 50% 88%, rgba(216,185,120,.2), transparent 72%),
+    #0b0c10;
+}
+.page-boutique .article__plateau {
+  width: 88%; height: 100%; object-fit: contain;
+  filter: drop-shadow(0 14px 14px rgba(0,0,0,.75));
+  transform: rotateX(14deg);
+  transition: transform .4s cubic-bezier(.2,.8,.3,1);
+}
+.page-boutique .article--plateau:hover .article__plateau { transform: rotateX(4deg) translateY(-6px) scale(1.05); }
+.page-boutique .plateau__possede {
+  position: absolute; top: 12px; right: 12px;
+  padding: 3px 10px;
+  background: rgba(10,8,8,.85); border: 1px solid var(--trait-fort);
+  color: var(--or-vif);
+  font-family: "Cinzel","Cinzel Repli", serif; font-size: .64rem; letter-spacing: .14em; text-transform: uppercase;
+}
+.page-boutique .article--possede .article__prix { opacity: .7; font-style: italic; font-size: 1rem; }
+
+/* ---------- Boosters (la présentation de booster.css, en vitrine) ---------- */
+.page-boutique .etal--boosters { display: flex; flex-wrap: wrap; justify-content: center; align-items: stretch; gap: 22px; }
+.page-boutique .etal--boosters .article { width: min(300px, 100%); }
+.page-boutique .etal--offrande { margin-bottom: 4px; }
+.page-boutique .article__niche--booster { height: 250px; }
+.page-boutique .booster__possedes { border-radius: 0; }
+.page-boutique .booster__chances { margin-top: 2px; }
+.page-boutique .btn-ouvrir { border-radius: 0; letter-spacing: .16em; }
+/* L'offrande prête : une lueur douce autour de sa vitrine */
+.page-boutique .article--offrande.est-pret { border-color: var(--trait-fort); box-shadow: 0 14px 32px rgba(0,0,0,.5), 0 0 30px rgba(159,211,143,.14); }
+
+/* =====================================================================
+   Téléphones et petits écrans
+   ===================================================================== */
+@media (max-width: 760px) {
+  .page-boutique .vitrine-entete { align-items: flex-start; }
+  .page-boutique .hall { grid-template-columns: 1fr; gap: 14px; }
+  /* Une porte : la scène à gauche, le texte à droite */
+  .page-boutique .porte { flex-direction: row; align-items: center; min-height: 150px; }
+  .page-boutique .porte .scene { flex: 0 0 38%; min-height: 150px; padding-bottom: 18px; overflow: hidden; }
+  .page-boutique .porte__texte { flex: 1; padding: 18px 16px 18px 4px; gap: 4px; }
+  .page-boutique .porte__desc { font-size: .84rem; }
+  .page-boutique .porte__entrer { display: none; }
+  /* l'annonce passe au-dessus du texte, dans la colonne (elle ne chevauche plus la description) */
+  .page-boutique .porte__annonce { position: static; order: -1; align-self: flex-start; margin: 14px 0 -8px; font-size: .58rem; padding: 3px 9px; }
+  .page-boutique .porte { flex-wrap: wrap; }
+  .page-boutique .porte__annonce { margin-left: calc(38% + 4px); }
+  .page-boutique .scene::after { bottom: 10px; width: 80%; }
+  .page-boutique .scene--boosters .scene__booster { height: 112px; }
+  .page-boutique .scene--boosters .scene__dos { width: 56px; margin-left: -28px; bottom: 30px; transform: translateX(calc(var(--k) * 26px)) rotate(calc(var(--k) * 12deg)) translateY(calc(var(--k) * var(--k) * 5px - 10px)); }
+  .page-boutique .porte:hover .scene__dos { transform: translateX(calc(var(--k) * 30px)) rotate(calc(var(--k) * 15deg)) translateY(calc(var(--k) * var(--k) * 6px - 14px)); }
+  .page-boutique .scene__blason { width: 88%; height: 96px; gap: 8px; }
+  .page-boutique .scene__titre { font-size: 1rem; }
+  .page-boutique .scene__couleurs { gap: 6px; }
+  .page-boutique .scene__couleurs i { width: 11px; height: 11px; }
+  .page-boutique .scene__plateau { width: 88%; }
+  .page-boutique .scene__plateau--fond { width: 70%; bottom: 40px; }
+}
+@media (max-width: 600px) {
+  .page-boutique .vitrine { padding-top: 18px; }
+  .page-boutique .vitrine-entete { margin-bottom: 18px; }
+  .page-boutique .bourse { padding: 6px 16px 6px 10px; }
+  .page-boutique .bourse__piece { width: 30px; height: 30px; }
+  .page-boutique .bourse strong { font-size: 1.2rem; }
+  .page-boutique .onglets { gap: 6px; margin-bottom: 20px; }
+  .page-boutique .onglet { flex: 1 1 calc(50% - 6px); justify-content: center; padding: 6px 8px; font-size: .64rem; letter-spacing: .08em; }
+  .page-boutique .onglet__num { width: 22px; height: 22px; }
+  .page-boutique .etal { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  .page-boutique .etal--plateaux { grid-template-columns: 1fr; }
+  .page-boutique .article__niche { height: 120px; }
+  .page-boutique .article__icone { width: 72px; height: 72px; }
+  .page-boutique .article__etiquette { padding: 12px 10px 14px; }
+  .page-boutique .article__nom { font-size: .88rem; }
+  .page-boutique .article__desc { font-size: .78rem; }
+  .page-boutique .article__prix { font-size: 1.1rem; }
+  .page-boutique .btn-acheter { font-size: .62rem; letter-spacing: .1em; }
+  .page-boutique .article__niche--booster { height: 220px; }
+}
+
+/* Animations réduites (Paramètres) et préférence du système */
+@media (prefers-reduced-motion: reduce) {
+  .page-boutique .porte, .page-boutique .article, .page-boutique .scene img, .page-boutique .scene__blason { transition: none; }
+  .page-boutique .porte::after, .page-boutique .article::after { display: none; }
+  .page-boutique .porte__annonce--vive { animation: none; }
+}
+:root.anim-reduites .page-boutique .porte::after,
+:root.anim-reduites .page-boutique .article::after { display: none; }
+:root.anim-reduites .page-boutique .porte__annonce--vive { animation: none; }

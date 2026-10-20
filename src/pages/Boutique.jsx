@@ -1,29 +1,55 @@
 // =====================================================================
-//  Écran « Boutique » (ancien boutique.html + JS/boutique*.js)
-//  Quatre échoppes :
+//  Écran « Boutique » : un hall et trois échoppes, présentés comme une vitrine
+//  (styles/boutique-vitrine.css, boutique-accueil.css)
+//   - le hall (#/boutique) : trois grandes portes, une par échoppe, avec ce qui attend le joueur
+//     (offrande prête, boosters à ouvrir) ;
+//   - une échoppe (#/boutique?echoppe=boosters…) : ses articles, et des onglets pour passer aux autres.
+//  Les échoppes :
 //   I.   les boosters de cartes, et l'offrande gratuite (components/boutique/Boosters.jsx) ;
-//   II.  l'étal du marchand ambulant, renouvelé par le bot toutes les 5 h ;
-//   III. l'armoire des apparences (bannières, titres, thèmes) ;
-//   IV.  l'atelier des plateaux du Duel (components/boutique/Etals.jsx).
-//  La bourse (solde) est en haut ; après chaque achat, tout est rechargé (le solde est commun).
-//  À droite, le sommaire met en avant l'échoppe qui occupe le milieu de l'écran.
+//   II.  l'armoire des apparences (bannières, titres, thèmes) ;
+//   III. l'atelier des plateaux du Duel (components/boutique/Etals.jsx).
+//  (L'étal du marchand ambulant a été retiré du jeu le 20/10/2026 ; sa table daily_shop reste en base,
+//  le bot Discord et le site Nocthémar s'en servent.)
+//  La bourse (solde) reste en haut ; après chaque achat, tout est rechargé (le solde est commun).
 // =====================================================================
 import { useEffect, useState } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
 import Page from '../components/Page.jsx';
 import ApercuCarte from '../components/ApercuCarte.jsx';
 import Boosters from '../components/boutique/Boosters.jsx';
-import { EtalMarchand, ArmoireProfil, AtelierPlateaux } from '../components/boutique/Etals.jsx';
+import { ArmoireProfil, AtelierPlateaux } from '../components/boutique/Etals.jsx';
 import { supabase } from '../lib/supabase.js';
 import { useAuth } from '../lib/auth.js';
 import { urlPublique } from '../lib/chemins.js';
 
 const ECHOPPES = [
-  ['porte-cartes', 'I', 'Boosters'],
-  ['etal-marchand', 'II', 'Le marchand'],
-  ['armoire-apparences', 'III', 'Apparences'],
-  ['atelier-plateaux', 'IV', 'Plateaux'],
+  {
+    id: 'boosters', num: 'I', court: 'Boosters', sur: 'Boosters de cartes', titre: 'La porte aux mille cartes',
+    porte: 'Des cartes tirées au hasard, et une offrande offerte toutes les 10 minutes.',
+    intro: 'Chaque booster renferme des cartes tirées au hasard. Tape sur la porte pour la briser : sa lumière trahit la rareté qui t\'attend.',
+  },
+  {
+    id: 'apparences', num: 'II', court: 'Apparences', sur: 'Bannières, titres, thèmes', titre: 'L\'armoire des apparences',
+    porte: 'Pare ton profil : bannières, titres et thèmes de couleurs.',
+    intro: 'Bannières, titres et thèmes pour ton profil. Une fois acheté, équipe-le depuis ton profil.',
+  },
+  {
+    id: 'plateaux', num: 'III', court: 'Plateaux', sur: 'Plateaux de duel', titre: 'L\'atelier des plateaux',
+    porte: 'Change d\'arène : les plateaux des saisons pour tes duels.',
+    intro: 'Sans plateau choisi, tu joues sur l\'arène de pierre. Achète un plateau des saisons pour en changer ; choisis-le quand tu veux dans la roue de ta Collection.',
+  },
 ];
 const AUCUN = new Set();
+
+// ESSAI : deux styles à comparer, « accueil » (comme l'accueil du Duel, styles/boutique-accueil.css)
+// et « luxe » (vitrine de luxe, styles/boutique-vitrine.css seule). En développement seulement,
+// un bouton permet de passer de l'un à l'autre ; à retirer une fois le style choisi.
+const STYLE_PAR_DEFAUT = 'accueil';
+const lireStyle = () => {
+  if (!import.meta.env.DEV) return STYLE_PAR_DEFAUT;
+  try { return localStorage.getItem('boutique-style-essai') ?? STYLE_PAR_DEFAUT; } catch { return STYLE_PAR_DEFAUT; }
+};
+const img = (chemin) => urlPublique(`img/${chemin}`);
 
 // Le solde et les objets possédés du joueur connecté
 async function chargerCompte(discordId) {
@@ -34,24 +60,113 @@ async function chargerCompte(discordId) {
   return { solde: bourse?.balance ?? 0, possedes: new Set((inventaire ?? []).map((l) => l.item_id)) };
 }
 
-// Une enseigne d'échoppe
-function Enseigne({ num, sur, titre }) {
+// Ce que le hall annonce sur la porte des boosters : l'offrande prête, les boosters à ouvrir
+async function chargerHall(moi) {
+  if (!moi) return null;
+  const [gratuit, mesBoosters] = await Promise.all([
+    supabase.rpc('booster_gratuit_etat'),
+    supabase.from('player_boosters').select('quantite').eq('discord_id', moi.discord_id),
+  ]);
+  return {
+    offrande: gratuit.error ? null : Date.now() + (gratuit.data?.secondes ?? 0) * 1000,
+    aOuvrir: (mesBoosters.data ?? []).reduce((n, l) => n + (l.quantite ?? 0), 0),
+  };
+}
+
+// L'heure, mise à jour régulièrement (l'offrande devient prête pendant qu'on regarde le hall)
+function useMaintenant(ms) {
+  const [t, setT] = useState(() => Date.now());
+  useEffect(() => {
+    const minuteur = setInterval(() => setT(Date.now()), ms);
+    return () => clearInterval(minuteur);
+  }, [ms]);
+  return t;
+}
+
+// ---------------------------------------------------------------------
+//  Le hall : une porte par échoppe, avec une petite scène qui montre ce qu'on y trouve
+// ---------------------------------------------------------------------
+function Scene({ id }) {
+  if (id === 'boosters') {
+    return (
+      <div className="scene scene--boosters" aria-hidden="true">
+        {[-1, 0, 1].map((k) => <img key={k} className="scene__dos" src={img('Cartes/Verso-gris.webp')} alt="" style={{ '--k': k }} />)}
+        <img className="scene__booster" src={img('Booster/Booster.webp')} alt="" />
+      </div>
+    );
+  }
+  if (id === 'apparences') {
+    return (
+      <div className="scene scene--apparences" aria-hidden="true">
+        <div className="scene__blason">
+          <span className="scene__titre">« Le Brave »</span>
+          <span className="scene__couleurs">
+            {['#d0612a', '#ffd27a', '#6f8fd8', '#9a5fc0'].map((c) => <i key={c} style={{ '--c': c }} />)}
+          </span>
+        </div>
+      </div>
+    );
+  }
   return (
-    <div className="enseigne">
-      <span className="enseigne__num">{num}</span>
-      <span className="enseigne__sur">{sur}</span>
-      <h2>{titre}</h2>
+    <div className="scene scene--plateaux" aria-hidden="true">
+      <img className="scene__plateau scene__plateau--fond" src={img('Plateaux de carte/plateau-automne-mini.webp')} alt="" />
+      <img className="scene__plateau" src={img('Plateaux de carte/plateau-hiver-mini.webp')} alt="" />
     </div>
+  );
+}
+
+function Hall({ moi, version }) {
+  const [etat, setEtat] = useState(null);
+  const maintenant = useMaintenant(1000);
+  useEffect(() => {
+    let actif = true;
+    chargerHall(moi).then((e) => { if (actif) setEtat(e); });
+    return () => { actif = false; };
+  }, [moi, version]);
+
+  // La petite annonce de la porte des boosters
+  const annonce = (id) => {
+    if (!etat || id !== 'boosters') return null;
+    if (etat.offrande !== null && etat.offrande <= maintenant) return { texte: 'Offrande prête !', vive: true };
+    if (etat.aOuvrir > 0) return { texte: `${etat.aOuvrir} à ouvrir`, vive: true };
+    return null;
+  };
+
+  return (
+    <nav className="hall" aria-label="Échoppes de la boutique">
+      {ECHOPPES.map((e) => {
+        const a = annonce(e.id);
+        return (
+          <Link key={e.id} to={{ search: `?echoppe=${e.id}` }} className={`porte porte--${e.id}`} data-echoppe={e.id}>
+            <Scene id={e.id} />
+            <span className="porte__texte">
+              <span className="porte__num">{e.num} · {e.sur}</span>
+              <span className="porte__titre">{e.titre}</span>
+              <span className="porte__desc">{e.porte}</span>
+              <span className="porte__entrer">Entrer <span aria-hidden="true">→</span></span>
+            </span>
+            {a && <span className={`porte__annonce${a.vive ? ' porte__annonce--vive' : ''}`}>{a.texte}</span>}
+          </Link>
+        );
+      })}
+    </nav>
   );
 }
 
 export default function Boutique() {
   const { joueur } = useAuth();
   const discordId = joueur?.discord_id ?? null;
+  const [params] = useSearchParams();
+  const ici = ECHOPPES.find((e) => e.id === params.get('echoppe')) ?? null;
   const [version, setVersion] = useState(0);         // change après chaque achat : tout se recharge
   const [compte, setCompte] = useState({ pour: null });
   const [ouverte, setOuverte] = useState(null);      // la carte affichée en grand
-  const [visible, setVisible] = useState(null);      // l'échoppe au milieu de l'écran
+  const [style, setStyle] = useState(lireStyle);
+  const changerStyle = () => {
+    const s = style === 'accueil' ? 'luxe' : 'accueil';
+    try { localStorage.setItem('boutique-style-essai', s); } catch { /* stockage indisponible */ }
+    setStyle(s);
+  };
   const rafraichir = () => setVersion((v) => v + 1);
 
   useEffect(() => {
@@ -62,71 +177,63 @@ export default function Boutique() {
   }, [discordId, version]);
   const c = discordId && compte.pour === discordId ? compte : { solde: 0, possedes: AUCUN };
 
-  // Sommaire : l'échoppe qui occupe le milieu de l'écran est mise en avant
-  useEffect(() => {
-    const surveillance = new IntersectionObserver((entrees) => {
-      for (const e of entrees) if (e.isIntersecting) setVisible(e.target.id);
-    }, { rootMargin: '-45% 0px -50% 0px' });
-    ECHOPPES.forEach(([id]) => { const s = document.getElementById(id); if (s) surveillance.observe(s); });
-    return () => surveillance.disconnect();
-  }, []);
+  // En passant du hall à une échoppe (ou d'une échoppe à l'autre) : on remonte en haut
+  useEffect(() => { window.scrollTo(0, 0); }, [ici]);
 
   const props = { moi: joueur, solde: c.solde, possedes: c.possedes, version, rafraichir };
 
   return (
     <Page id="boutique" classes="page-profil page-boutique" titre="Boutique">
-      <main className="profil-wrap marche">
-        <header className="boutique-entete">
-          <h1>Le Marché de Nocthémar</h1>
-          <p>Tout ce qui se vend ici est cosmétique ou narratif. Les pièces se gagnent en jouant, jamais en payant.</p>
-        </header>
-
-        {/* Échoppe I : boosters de cartes (achat et ouverture) */}
-        <section className="echoppe" id="porte-cartes">
-          {/* Solde (connecté), dans le coin de l'échoppe */}
+      <main className={`profil-wrap vitrine${style === 'accueil' ? ' vitrine--accueil' : ''}`}>
+        <header className="vitrine-entete">
+          <div className="vitrine-entete__titre">
+            {ici ? <Link className="vitrine-retour" to="/boutique"><span aria-hidden="true">←</span> Le hall</Link>
+              : <span className="vitrine-entete__sur">Nocthémar</span>}
+            <h1>Le Marché de <span>Nocthémar</span></h1>
+            {!ici && <p>Tout ce qui se vend ici est cosmétique ou narratif. Les pièces se gagnent en jouant, jamais en payant.</p>}
+          </div>
+          {/* Solde du joueur connecté */}
           <div id="bourse" className="bourse" hidden={!joueur}>
-            <img className="bourse__piece" src={urlPublique('img/Equipement/Or-icone.webp')} alt="" />
-            <div className="bourse__texte">
+            <img className="bourse__piece" src={img('Equipement/Or-icone.webp')} alt="" />
+            <span className="bourse__texte">
               <span className="bourse__libelle">Ta bourse</span>
               <strong><span id="solde">{c.solde.toLocaleString('fr-FR')}</span> <small>pièces</small></strong>
-            </div>
+            </span>
           </div>
-          <Enseigne num="I" sur="Boosters de cartes" titre="La porte aux mille cartes" />
-          <p className="echoppe__intro">Chaque booster renferme des cartes tirées au hasard. Tape sur la porte pour la briser : sa lumière trahit la rareté qui t&apos;attend.</p>
-          <Boosters {...props} surApercu={setOuverte} />
-        </section>
+        </header>
 
-        {/* Échoppe II : sélection du marchand, renouvelée par le bot */}
-        <section className="echoppe" id="etal-marchand">
-          <Enseigne num="II" sur="Boutique du marchand" titre="L'étal du marchand ambulant" />
-          <p className="echoppe__intro">Renouvelé toutes les 5 heures. Stock limité : premier arrivé, premier servi.</p>
-          <EtalMarchand {...props} />
-        </section>
+        {!ici ? <Hall moi={joueur} version={version} /> : (
+          <>
+            {/* Passer d'une échoppe à l'autre sans revenir au hall */}
+            <nav className="onglets" aria-label="Échoppes">
+              {ECHOPPES.map((e) => (
+                <Link key={e.id} to={{ search: `?echoppe=${e.id}` }} className={`onglet${e.id === ici.id ? ' est-actif' : ''}`}
+                  aria-current={e.id === ici.id ? 'page' : undefined}>
+                  <span className="onglet__num">{e.num}</span> {e.court}
+                </Link>
+              ))}
+            </nav>
 
-        {/* Échoppe III : cosmétiques du profil */}
-        <section className="echoppe" id="armoire-apparences">
-          <Enseigne num="III" sur="Boutique du profil" titre="L'armoire des apparences" />
-          <p className="echoppe__intro">Bannières, titres et thèmes pour ton profil. Une fois acheté, équipe-le depuis ton profil.</p>
-          <ArmoireProfil {...props} />
-        </section>
-
-        {/* Échoppe IV : plateaux du Duel des Couronnes */}
-        <section className="echoppe" id="atelier-plateaux">
-          <Enseigne num="IV" sur="Plateaux de duel" titre="L'atelier des plateaux" />
-          <p className="echoppe__intro">Sans plateau choisi, tu joues sur l&apos;arène de pierre. Achète un plateau des saisons pour en changer ; choisis-le quand tu veux dans la roue de ta Collection.</p>
-          <AtelierPlateaux {...props} />
-        </section>
+            <section className={`echoppe echoppe--${ici.id}`} id={`echoppe-${ici.id}`} aria-labelledby="echoppe-titre">
+              <header className="echoppe__entete">
+                <span className="echoppe__sur">{ici.num} · {ici.sur}</span>
+                <h2 id="echoppe-titre">{ici.titre}</h2>
+                <p className="echoppe__intro">{ici.intro}</p>
+              </header>
+              {ici.id === 'boosters' && <Boosters {...props} surApercu={setOuverte} />}
+              {ici.id === 'apparences' && <ArmoireProfil {...props} />}
+              {ici.id === 'plateaux' && <AtelierPlateaux {...props} />}
+            </section>
+          </>
+        )}
       </main>
 
-      {/* Sommaire : aller directement à une échoppe */}
-      <nav className="sommaire" id="sommaire" aria-label="Échoppes de la boutique">
-        {ECHOPPES.map(([id, num, nom]) => (
-          <a key={id} href={`#${id}`} className={visible === id ? 'est-actif' : undefined} aria-current={visible === id ? 'location' : undefined}
-            onClick={(e) => { e.preventDefault(); document.getElementById(id)?.scrollIntoView(); }}>
-            <span className="sommaire__num">{num}</span><span className="sommaire__nom">{nom}</span>
-          </a>
-        ))}
-      </nav>
+      {import.meta.env.DEV && (
+        <button type="button" onClick={changerStyle}
+          style={{ position: 'fixed', top: 12, right: 12, zIndex: 60, padding: '6px 12px', font: '600 12px sans-serif', background: '#2b2f3a', color: '#fff', border: '1px solid #888', cursor: 'pointer' }}>
+          Essai · style : {style === 'accueil' ? 'Accueil' : 'Luxe'} (changer)
+        </button>
+      )}
 
       {ouverte && <ApercuCarte carte={ouverte} surFermeture={() => setOuverte(null)} />}
     </Page>

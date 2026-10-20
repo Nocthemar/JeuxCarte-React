@@ -1,13 +1,10 @@
 // =====================================================================
 //  Les autres échoppes de la boutique (même HTML qu'avant)
-//  - EtalMarchand : la sélection du bot Discord, renouvelée toutes les 5 h (ancien JS/boutique-jour.js) :
-//    daily_shop du créneau en cours (current_shop_slot), stock limité, achat buy_daily_item,
-//    compte à rebours jusqu'au prochain étal (next_shop_refresh) ;
 //  - ArmoireProfil : bannières, titres et thèmes (items.shop = 'fun'), un exemplaire par joueur,
 //    achat buy_fun_item (ancien JS/boutique-profil.js) ;
 //  - AtelierPlateaux : les plateaux du Duel, achat acheter_plateau, « Jouer dessus » equiper_plateau
 //    (ancien JS/boutique-plateaux.js).
-//  Le solde et le stock sont vérifiés côté serveur : impossible de tricher.
+//  Le solde est vérifié côté serveur : impossible de tricher.
 //
 //  props communes : moi, solde, possedes (ids des objets possédés), version, rafraichir()
 // =====================================================================
@@ -16,8 +13,6 @@ import { Article, BoutonAchat, Pastilles, Piece } from './Article.jsx';
 import { supabase } from '../../lib/supabase.js';
 import { useNotifier } from '../../lib/notification.js';
 import { urlPublique } from '../../lib/chemins.js';
-
-const DELAI_APRES_RENOUVELLEMENT = 5000;   // laisse au bot le temps d'écrire la nouvelle sélection
 
 // Recharge des données quand la clé change ; null pendant le premier chargement
 function useCharger(charger, cles) {
@@ -32,7 +27,7 @@ function useCharger(charger, cles) {
   return donnees;
 }
 
-// Un achat de l'étal ou de l'armoire : le message, puis tout se recharge (le solde est commun)
+// Un achat de l'armoire : le message, puis tout se recharge (le solde est commun)
 function useAcheter(rafraichir) {
   const notifier = useNotifier();
   return async (rpc, itemId) => {
@@ -41,80 +36,6 @@ function useAcheter(rafraichir) {
     else notifier(`${data.item} acheté pour ${data.price} pièces !`);
     rafraichir();
   };
-}
-
-// ---------------------------------------------------------------------
-//  Le compte à rebours jusqu'au prochain étal ; à zéro, le marchand renouvelle son étal (surRenouveau)
-// ---------------------------------------------------------------------
-function Rebours({ version, surRenouveau }) {
-  const [prochain, setProchain] = useState(null);   // Date du renouvellement (calculée par la base)
-  const [maintenant, setMaintenant] = useState(() => Date.now());
-  const [tour, setTour] = useState(0);
-  useEffect(() => {
-    let actif = true;
-    supabase.rpc('next_shop_refresh').then(({ data, error }) => { if (actif) setProchain(error || !data ? false : new Date(data)); });
-    return () => { actif = false; };
-  }, [version, tour]);
-  useEffect(() => {
-    const t = setInterval(() => setMaintenant(Date.now()), 1000);
-    return () => clearInterval(t);
-  }, []);
-  const reste = prochain ? Math.max(0, Math.floor((prochain - maintenant) / 1000)) : null;
-  const fini = reste === 0;
-  useEffect(() => {
-    if (!fini) return undefined;
-    const t = setTimeout(() => { surRenouveau(); setTour((n) => n + 1); }, DELAI_APRES_RENOUVELLEMENT);
-    return () => clearTimeout(t);
-  }, [fini, surRenouveau]);
-
-  if (!prochain) return <p id="rebours" className="rebours" />;
-  // L'heure vient de Supabase en UTC : on l'affiche en heure de Paris (infobulle)
-  const titre = `Renouvellement à ${prochain.toLocaleTimeString('fr-FR', { timeZone: 'Europe/Paris', hour: '2-digit', minute: '2-digit' })} (heure de Paris)`;
-  if (fini) return <p id="rebours" className="rebours" title={titre}>Le marchand renouvelle son étal…</p>;
-  const hh = Math.floor(reste / 3600);
-  const mm = Math.floor((reste % 3600) / 60);
-  const ss = reste % 60;
-  return (
-    <p id="rebours" className="rebours" title={titre}>
-      <span className="rebours__libelle">Nouvel étal dans</span>{' '}
-      <strong className="rebours__temps">{hh} h {String(mm).padStart(2, '0')} min {String(ss).padStart(2, '0')} s</strong>
-    </p>
-  );
-}
-
-async function chargerEtal() {
-  // Début du créneau de 5 h en cours, calculé par la base
-  const { data: slot, error: erreurSlot } = await supabase.rpc('current_shop_slot');
-  if (erreurSlot || !slot) return { erreur: true };
-  const { data: lignes, error } = await supabase.from('daily_shop').select('price, stock, item:items(*)').eq('slot', slot).order('price');
-  return error ? { erreur: true } : { lignes: lignes ?? [] };
-}
-
-export function EtalMarchand({ moi, solde, version, rafraichir }) {
-  const [renouveau, setRenouveau] = useState(0);
-  const d = useCharger(chargerEtal, [version, renouveau]);
-  const acheter = useAcheter(rafraichir);
-  const [surRenouveau] = useState(() => () => setRenouveau((n) => n + 1));
-  return (
-    <>
-      <Rebours version={version} surRenouveau={surRenouveau} />
-      <div id="jour" className="etal">
-        {!d ? <p className="vide">Chargement…</p>
-          : d.erreur ? <p className="vide">Impossible de charger la boutique du marchand.</p>
-            : !d.lignes.length ? <p className="vide">Le marchand installe encore son étal… Reviens dans quelques minutes.</p>
-              : d.lignes.map(({ price, stock, item }) => {
-                const epuise = stock <= 0;
-                const bas = !epuise && stock <= 2;   // presque plus rien : stock en rouge
-                return (
-                  <Article key={item.id} item={item} prix={price} epuise={epuise}
-                    stock={<span className={`article__stock${bas ? ' article__stock--bas' : ''}`}>{epuise ? 'Épuisé' : `${stock} en stock`}</span>}
-                    bouton={<BoutonAchat connecte={!!moi} solde={solde} prix={price} bloque={epuise ? 'Épuisé' : null}
-                      attributs={{ 'data-boutique': 'jour', 'data-item': item.id }} surAchat={() => acheter('buy_daily_item', item.id)} />} />
-                );
-              })}
-      </div>
-    </>
-  );
 }
 
 async function chargerArmoire() {
