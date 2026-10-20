@@ -5,10 +5,9 @@
 //  L'offrande : un booster gratuit de 3 cartes toutes les 10 minutes (booster_gratuit_etat,
 //  ouvrir_booster_gratuit) ; le serveur donne le temps restant, la page compte à rebours.
 //
-//  props : moi, solde, version (change après chaque achat : on recharge), rafraichir(), surApercu(carte)
+//  props : moi, solde, version (change après chaque achat : on recharge), rafraichir()
 // =====================================================================
 import { useEffect, useState } from 'react';
-import Carte from '../Carte.jsx';
 import { Piece, BoutonAchat } from './Article.jsx';
 import { supabase } from '../../lib/supabase.js';
 import { useNotifier } from '../../lib/notification.js';
@@ -16,7 +15,6 @@ import { ouvrirBoosterAnime, COULEURS_RARETE } from '../../lib/booster.js';
 import { urlPublique } from '../../lib/chemins.js';
 
 const NOMS_RARETE = { commune: 'Commune', eveillee: 'Éveillée', mythique: 'Mythique', legendaire: 'Légendaire', transcendante: 'Transcendante' };
-const RANG = ['commune', 'eveillee', 'mythique', 'legendaire', 'transcendante'];
 const DELAI_GRATUIT = 600;   // secondes, comme dans le SQL
 const OFFRANDE = { nom: 'Offrande du Voyageur', nb_cartes: 3, image: 'img/Booster/Booster.webp' };
 const minSec = (s) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
@@ -57,30 +55,17 @@ function Pile({ b }) {
   );
 }
 
-// Chances par rareté et aperçu des cartes possibles (autant que le booster en contient, les plus rares d'abord)
-function Contenu({ b, possibles, surApercu }) {
+// Chances par rareté (les cartes d'aperçu ont été retirées le 20/10/2026)
+function Chances({ b }) {
   const chances = Object.entries(b.chances ?? {}).filter(([, v]) => v > 0);
-  const cartes = [...possibles].sort((x, y) => RANG.indexOf(y.rarity) - RANG.indexOf(x.rarity)).slice(0, b.nb_cartes);
   return (
-    <>
-      <ul className="booster__chances" aria-label="Chances par carte">
-        {chances.map(([r, v]) => <li key={r} style={{ '--c': COULEURS_RARETE[r] }}>{NOMS_RARETE[r] ?? r} {v} %</li>)}
-      </ul>
-      {cartes.length > 0 && (
-        <div className="booster__cartes" aria-label="Cartes possibles">
-          {cartes.map((c) => (
-            <button key={c.id} type="button" className="booster__vignette" title={`${c.name} : voir la carte`} aria-label={`Voir la carte ${c.name}`}
-              onClick={() => surApercu(c)}>
-              <Carte carte={c} />
-            </button>
-          ))}
-        </div>
-      )}
-    </>
+    <ul className="booster__chances" aria-label="Chances par carte">
+      {chances.map(([r, v]) => <li key={r} style={{ '--c': COULEURS_RARETE[r] }}>{NOMS_RARETE[r] ?? r} {v} %</li>)}
+    </ul>
   );
 }
 
-export default function Boosters({ moi, solde, version, rafraichir, surApercu }) {
+export default function Boosters({ moi, solde, version, rafraichir }) {
   const notifier = useNotifier();
   const [d, setD] = useState(null);
   const [maintenant, setMaintenant] = useState(() => Date.now());
@@ -178,7 +163,7 @@ export default function Boosters({ moi, solde, version, rafraichir, surApercu })
               <div className="article__etiquette">
                 <span className="article__type">Booster · {b.nb_cartes} carte{pluriel(b.nb_cartes)}</span>
                 <h3 className="article__nom">{b.nom}</h3>
-                <Contenu b={b} possibles={d.cartes.get(b.id) ?? []} surApercu={surApercu} />
+                <Chances b={b} />
                 <p className="article__desc">Doublon : un exemplaire de plus, à recycler dans ton grimoire contre de l&apos;or.</p>
                 <div className="article__prix">{b.prix} <Piece /></div>
                 <BoutonAchat connecte={!!moi} solde={solde} prix={b.prix} surAchat={() => acheter(b)} />

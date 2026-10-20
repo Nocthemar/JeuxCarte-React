@@ -15,7 +15,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import Page from '../components/Page.jsx';
-import ApercuCarte from '../components/ApercuCarte.jsx';
 import Boosters from '../components/boutique/Boosters.jsx';
 import { ArmoireProfil, AtelierPlateaux } from '../components/boutique/Etals.jsx';
 import { supabase } from '../lib/supabase.js';
@@ -160,7 +159,6 @@ export default function Boutique() {
   const ici = ECHOPPES.find((e) => e.id === params.get('echoppe')) ?? null;
   const [version, setVersion] = useState(0);         // change après chaque achat : tout se recharge
   const [compte, setCompte] = useState({ pour: null });
-  const [ouverte, setOuverte] = useState(null);      // la carte affichée en grand
   const [style, setStyle] = useState(lireStyle);
   const changerStyle = () => {
     const s = style === 'accueil' ? 'luxe' : 'accueil';
@@ -220,7 +218,7 @@ export default function Boutique() {
                 <h2 id="echoppe-titre">{ici.titre}</h2>
                 <p className="echoppe__intro">{ici.intro}</p>
               </header>
-              {ici.id === 'boosters' && <Boosters {...props} surApercu={setOuverte} />}
+              {ici.id === 'boosters' && <Boosters {...props} />}
               {ici.id === 'apparences' && <ArmoireProfil {...props} />}
               {ici.id === 'plateaux' && <AtelierPlateaux {...props} />}
             </section>
@@ -235,7 +233,6 @@ export default function Boutique() {
         </button>
       )}
 
-      {ouverte && <ApercuCarte carte={ouverte} surFermeture={() => setOuverte(null)} />}
     </Page>
   );
 }

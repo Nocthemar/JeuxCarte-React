@@ -35,11 +35,6 @@
   content: ""; display: inline-block; width: 7px; height: 7px; margin-right: 5px;
   transform: rotate(45deg); background: var(--c);
 }
-.page-boutique .booster__cartes { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 6px; margin-top: 6px; }
-.page-boutique .booster__vignette { padding: 0; border: 0; background: none; cursor: zoom-in; transition: transform .15s ease; }
-.page-boutique .booster__vignette:hover, .page-boutique .booster__vignette:focus-visible { transform: translateY(-3px) scale(1.12); outline: none; }
-.page-boutique .booster__vignette { width: 52px; }
-.page-boutique .booster__vignette .carte-jeu { cursor: zoom-in; }
 .page-boutique .btn-ouvrir {
   align-self: stretch;
   margin-top: 8px; padding: 10px 8px;
