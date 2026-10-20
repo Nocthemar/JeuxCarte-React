@@ -19,11 +19,15 @@ export default function Layout() {
             ecran : en changeant d'écran, le message s'efface. (Pas de « key » ici : elle recréerait le
             <Suspense> à chaque écran, et l'ancien écran disparaîtrait avec ses styles avant que le nouveau
             soit prêt : la barre s'affichait un instant sans style.) */}
-        <FiletErreur ecran={pathname}>
-          {/* (l'écran se charge à la demande : rien ne s'affiche le temps qu'il arrive) */}
-          <Suspense fallback={null}><Outlet /></Suspense>
-        </FiletErreur>
-        <BarreLaterale />
+        {/* L'écran se charge à la demande : rien ne s'affiche le temps qu'il arrive, pas même la barre.
+            Ses styles (barre-laterale.css) arrivent avec ceux de l'écran : affichée avant, elle
+            apparaissait un instant sans style au chargement de la page. */}
+        <Suspense fallback={null}>
+          <FiletErreur ecran={pathname}>
+            <Outlet />
+          </FiletErreur>
+          <BarreLaterale />
+        </Suspense>
         <MiseAJour />
       </Authentification>
     </Notifications>
