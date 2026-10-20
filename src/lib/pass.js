@@ -10,7 +10,14 @@ import { supabase } from './supabase.js';
 export function demanderTicketPass({ mode, difficulte = null, salon = null }) {
   const params = mode === 'ami' ? { p_mode: 'ami', p_salon: salon } : { p_mode: 'ia', p_difficulte: difficulte };
   return supabase.rpc('pass_commencer_partie', params)
-    .then(({ data, error }) => (error ? null : data))
+    .then(({ data, error }) => {
+      if (!error) return data;
+      // Base pas encore à jour : la fonction ne connaît pas la difficulté, on la redemande sans (comme l'ancien jeu)
+      if (error.code === 'PGRST202' && params.p_difficulte) {
+        return supabase.rpc('pass_commencer_partie', { p_mode: 'ia' }).then((r) => (r.error ? null : r.data));
+      }
+      return null;
+    })
     .catch(() => null);
 }
 

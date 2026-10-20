@@ -1,5 +1,5 @@
 // =====================================================================
-//  Comparaison avec l'ANCIEN moteur (ancien/JS/jeu-cartes-moteur.js), action par action
+//  Comparaison avec l'ANCIEN moteur (Ancient/Nochthémar JEU DE CARTE/JS/jeu-cartes-moteur.js), action par action
 //
 //  Des centaines de parties complètes, l'Ombre contre l'Ombre, avec des Grimoires, des terrains et
 //  des difficultés tirés au hasard. Les deux moteurs reçoivent exactement les mêmes dés : l'ancien
@@ -23,7 +23,7 @@ import { generateur } from '../../src/moteur/hasard.js';
 import { OBJETS } from '../../src/data/cartes.js';
 import { CATALOGUE } from './catalogue.js';
 
-const CHEMIN_ANCIEN = ['ancien/JS/jeu-cartes-moteur.js', 'src/Ancient/Nochthémar JEU DE CARTE/JS/jeu-cartes-moteur.js']
+const CHEMIN_ANCIEN = ['Ancient/Nochthémar JEU DE CARTE/JS/jeu-cartes-moteur.js']
   .map((c) => resolve(c)).find(existsSync);
 
 // Un ancien moteur tout neuf (son compteur d'unités repart de 0, comme le nouveau)
@@ -195,7 +195,7 @@ function bilan(titre, resultats) {
   return { fins, total };
 }
 
-// L'ancien code n'est pas publié avec le jeu (dossier ancien/, ignoré par git) : sur GitHub, où le jeu
+// L'ancien code n'est pas publié avec le jeu (dossier Ancient/, ignoré par git) : sur GitHub, où le jeu
 // est construit, cette comparaison est sautée ; elle tourne sur l'ordinateur qui a l'ancien code
 describe.skipIf(!CHEMIN_ANCIEN)("Comparaison avec l'ancien moteur", () => {
 

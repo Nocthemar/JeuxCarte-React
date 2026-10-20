@@ -5,7 +5,7 @@ duels en ligne (1 contre 1 et 2 contre 2, parties privées et classées), collec
 Pass de saison, Marché (ventes et échanges scellés), profil et succès.
 
 C'est la migration vers **Vite + React** de l'ancien jeu en HTML/CSS/JavaScript, avec les mêmes règles,
-le même design et les mêmes données Supabase. L'ancien code reste dans `ancien/` comme référence
+le même design et les mêmes données Supabase. L'ancien code reste dans `Ancient/` comme référence
 (il n'est jamais modifié).
 
 ## Commandes

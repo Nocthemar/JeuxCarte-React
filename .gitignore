@@ -24,9 +24,7 @@ dist-ssr
 *.sw?
 
 # Ancien jeu (HTML/CSS/JS), gardé comme référence avec son propre dépôt git
-ancien/
-# Emplacement provisoire de l’ancien jeu, avant son déplacement vers ancien/
-src/Ancient/
+Ancient/
 
 # Configuration locale (URL et clé Supabase) : jamais publiée
 .env.local
