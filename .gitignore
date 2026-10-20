@@ -29,3 +29,6 @@ Ancient/
 # Configuration locale (URL et clé Supabase) : jamais publiée
 .env.local
 .env.*.local
+
+# Fichier créé par Steam (raccourci « jeu non Steam ») : jamais publié
+steam_appid.txt

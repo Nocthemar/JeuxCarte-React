@@ -1,6 +1,6 @@
 // =====================================================================
-//  Écran « Boutique » : un hall et trois échoppes, présentés comme une vitrine
-//  (styles/boutique-vitrine.css, boutique-accueil.css)
+//  Écran « Boutique » : un hall et trois échoppes, dans le style de l'accueil du Duel
+//  (styles/boutique-vitrine.css : la mise en page ; boutique-accueil.css : l'allure, choisie le 20/10/2026)
 //   - le hall (#/boutique) : trois grandes portes, une par échoppe, avec ce qui attend le joueur
 //     (offrande prête, boosters à ouvrir) ;
 //   - une échoppe (#/boutique?echoppe=boosters…) : ses articles, et des onglets pour passer aux autres.
@@ -40,14 +40,6 @@ const ECHOPPES = [
 ];
 const AUCUN = new Set();
 
-// ESSAI : deux styles à comparer, « accueil » (comme l'accueil du Duel, styles/boutique-accueil.css)
-// et « luxe » (vitrine de luxe, styles/boutique-vitrine.css seule). En développement seulement,
-// un bouton permet de passer de l'un à l'autre ; à retirer une fois le style choisi.
-const STYLE_PAR_DEFAUT = 'accueil';
-const lireStyle = () => {
-  if (!import.meta.env.DEV) return STYLE_PAR_DEFAUT;
-  try { return localStorage.getItem('boutique-style-essai') ?? STYLE_PAR_DEFAUT; } catch { return STYLE_PAR_DEFAUT; }
-};
 const img = (chemin) => urlPublique(`img/${chemin}`);
 
 // Le solde et les objets possédés du joueur connecté
@@ -159,12 +151,6 @@ export default function Boutique() {
   const ici = ECHOPPES.find((e) => e.id === params.get('echoppe')) ?? null;
   const [version, setVersion] = useState(0);         // change après chaque achat : tout se recharge
   const [compte, setCompte] = useState({ pour: null });
-  const [style, setStyle] = useState(lireStyle);
-  const changerStyle = () => {
-    const s = style === 'accueil' ? 'luxe' : 'accueil';
-    try { localStorage.setItem('boutique-style-essai', s); } catch { /* stockage indisponible */ }
-    setStyle(s);
-  };
   const rafraichir = () => setVersion((v) => v + 1);
 
   useEffect(() => {
@@ -182,7 +168,7 @@ export default function Boutique() {
 
   return (
     <Page id="boutique" classes="page-profil page-boutique" titre="Boutique">
-      <main className={`profil-wrap vitrine${style === 'accueil' ? ' vitrine--accueil' : ''}`}>
+      <main className="profil-wrap vitrine vitrine--accueil">
         <header className="vitrine-entete">
           <div className="vitrine-entete__titre">
             {ici ? <Link className="vitrine-retour" to="/boutique"><span aria-hidden="true">←</span> Le hall</Link>
@@ -225,13 +211,6 @@ export default function Boutique() {
           </>
         )}
       </main>
-
-      {import.meta.env.DEV && (
-        <button type="button" onClick={changerStyle}
-          style={{ position: 'fixed', top: 12, right: 12, zIndex: 60, padding: '6px 12px', font: '600 12px sans-serif', background: '#2b2f3a', color: '#fff', border: '1px solid #888', cursor: 'pointer' }}>
-          Essai · style : {style === 'accueil' ? 'Accueil' : 'Luxe'} (changer)
-        </button>
-      )}
 
     </Page>
   );

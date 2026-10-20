@@ -1,6 +1,8 @@
 /* =====================================================================
-   Boutique « vitrine de luxe » (pages/Boutique.jsx, components/boutique/*)
-   - le hall : quatre grandes portes illustrées, une par échoppe ;
+   Boutique : la mise en page (pages/Boutique.jsx, components/boutique/*)
+   Son allure finale vient de boutique-accueil.css, chargée par-dessus (style de l'accueil du Duel) ;
+   les couleurs de ce fichier-ci (la « vitrine de luxe » essayée d'abord) servent de base.
+   - le hall : trois grandes portes illustrées, une par échoppe ;
    - les échoppes : chaque article posé dans sa vitrine, sous un projecteur, sur un socle doré.
    Fond très sombre, filets et coins dorés, arêtes vives comme le reste du site.
    Chargée APRÈS booster.css (elle en reprend la présentation des boosters en vente) ;
