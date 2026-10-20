@@ -1,3 +1,5 @@
+import { createHash } from 'node:crypto'
+import { readFileSync } from 'node:fs'
 import react from '@vitejs/plugin-react'
 import { defineConfig, loadEnv } from 'vite'
 
@@ -28,6 +30,29 @@ function politiqueDeSecurite(supabase) {
   }
 }
 
+// L'appli (téléphone, ordinateur) : fabrique dist/sw.js, le service worker (modèle : src/appli/service-worker.js),
+// avec la liste des fichiers du jeu à ranger sur l'appareil. Les images (14 Mo) n'y sont pas : elles sont
+// rangées au fur et à mesure qu'on les voit.
+function appliHorsLigne() {
+  return {
+    name: 'appli-hors-ligne',
+    apply: 'build',
+    enforce: 'post',
+    generateBundle(_, bundle) {
+      const fichiers = Object.keys(bundle).filter((f) => f === 'index.html' || (f.startsWith('assets/') && !f.endsWith('.map')))
+      fichiers.push('manifest.webmanifest', 'icones/icone-192.png', 'img/Logo/favicon.png')
+      fichiers.sort()
+      // La version change dès qu'un fichier du jeu change (leurs noms contiennent une empreinte de leur contenu)
+      const version = createHash('sha256').update(fichiers.join('\n') + readFileSync('public/manifest.webmanifest', 'utf8')).digest('hex').slice(0, 12)
+      this.emitFile({
+        type: 'asset',
+        fileName: 'sw.js',
+        source: `self.__PRECACHE = ${JSON.stringify({ fichiers, version })};\n\n${readFileSync('src/appli/service-worker.js', 'utf8')}`,
+      })
+    },
+  }
+}
+
 // https://vite.dev/config/
 export default defineConfig(({ command, mode }) => {
   // (.env.local sur l'ordinateur ; sur GitHub, les « Variables » du dépôt, voir .github/workflows/mise-en-ligne.yml)
@@ -39,7 +64,7 @@ export default defineConfig(({ command, mode }) => {
     // Adresses relatives : le jeu fonctionne à la racine d'un site comme dans un sous-dossier
     // (GitHub Pages : …github.io/CarteJeuxNocthemar/)
     base: './',
-    plugins: [react(), politiqueDeSecurite(env.VITE_SUPABASE_URL)],
+    plugins: [react(), politiqueDeSecurite(env.VITE_SUPABASE_URL), appliHorsLigne()],
     // En développement (npm run dev) : Vite prépare les écrans et leurs styles dès le démarrage, au lieu
     // d'attendre la première visite de chaque écran (sinon plusieurs secondes d'attente la première fois)
     server: { warmup: { clientFiles: ['./src/pages/*.jsx', './src/styles/*.css'] } },

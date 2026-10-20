@@ -8,6 +8,7 @@ import Notifications from './Notifications.jsx';
 import Authentification from './Authentification.jsx';
 import BarreLaterale from './BarreLaterale.jsx';
 import FiletErreur from './FiletErreur.jsx';
+import MiseAJour from './MiseAJour.jsx';
 
 export default function Layout() {
   const { pathname } = useLocation();
@@ -21,6 +22,7 @@ export default function Layout() {
           <Suspense fallback={null}><Outlet /></Suspense>
         </FiletErreur>
         <BarreLaterale />
+        <MiseAJour />
       </Authentification>
     </Notifications>
   );

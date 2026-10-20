@@ -23,4 +23,9 @@ export default defineConfig([
     files: ['tests/**/*.js', '*.config.js'],
     languageOptions: { globals: { ...globals.node, ...globals.browser } },
   },
+  // Le service worker tourne à part, sans page (self, caches, clients)
+  {
+    files: ['src/appli/service-worker.js'],
+    languageOptions: { globals: globals.serviceworker },
+  },
 ])

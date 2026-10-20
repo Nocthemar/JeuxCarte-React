@@ -2,6 +2,7 @@
 //  Écran « Paramètres » (ancien parametres.html + JS/parametres.js, même HTML)
 //  - Son : volume général, musique, effets (lib/son.js), tout couper, écouter ;
 //  - Affichage : animations réduites, effets légers, conseils du duel (lib/preferences.js), thème clair ;
+//  - Appli : installer le jeu sur l'appareil (lib/appli.js) ;
 //  - Compte : déconnexion, suppression du compte (supprimer_mon_compte).
 //  Tout est retenu dans le navigateur, sauf la suppression du compte.
 // =====================================================================
@@ -11,6 +12,7 @@ import { supabase } from '../lib/supabase.js';
 import { useAuth, connexionDiscord, deconnexion } from '../lib/auth.js';
 import { useNotifier } from '../lib/notification.js';
 import { CLES, lirePref, ecrirePref } from '../lib/preferences.js';
+import { estIOS, installer, useAppli } from '../lib/appli.js';
 import {
   jouerSon, lireVolumes, reglerVolume, reglerVolumeEffets, reglerVolumeMusique,
   estMuet, basculerMuet, demarrerMusique, arreterMusique,
@@ -33,6 +35,31 @@ function Curseur({ id, libelle, aide, valeur, surChangement, surFin }) {
         onChange={(e) => surChangement(e.target.value / 100)} onPointerUp={surFin} onKeyUp={surFin} />
       <output id={`val-${id}`}>{pct} %</output>
     </div>
+  );
+}
+
+// Installer le jeu comme une appli : le bouton du navigateur s'il en propose un, sinon la marche à suivre
+function Appli() {
+  const { installable, installee } = useAppli();
+  let contenu;
+  if (installee) contenu = <span>Le jeu est installé sur cet appareil.</span>;
+  else if (installable) {
+    contenu = (
+      <>
+        <span><b>Installer le jeu</b><small>Une icône Nocthémar sur ton écran d’accueil, en plein écran ; le duel contre l’Ombre marche même sans internet.</small></span>
+        <button type="button" className="btn-or" id="btn-installer" onClick={installer}>Installer l’appli</button>
+      </>
+    );
+  } else if (estIOS()) {
+    contenu = <span><b>Installer le jeu</b><small>Dans Safari, touche le bouton Partager, puis « Sur l’écran d’accueil ».</small></span>;
+  } else {
+    contenu = <span><b>Installer le jeu</b><small>Ouvre le jeu dans Chrome ou Edge (ordinateur, Android), puis utilise « Installer » du menu du navigateur. Sur iPhone : Safari, Partager, « Sur l’écran d’accueil ».</small></span>;
+  }
+  return (
+    <section className="reglages-bloc" aria-labelledby="titre-appli">
+      <h2 id="titre-appli">Appli</h2>
+      <div className="reglage" id="appli">{contenu}</div>
+    </section>
   );
 }
 
@@ -145,6 +172,8 @@ export default function Parametres() {
             <span><b>Thème clair</b><small>Pages claires, comme le jour sur Nocthémar.</small></span>
           </label>
         </section>
+
+        <Appli />
 
         {/* Compte */}
         <section className="reglages-bloc" aria-labelledby="titre-compte">
