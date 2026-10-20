@@ -104,7 +104,12 @@ function Compte() {
       </Link>
       <LiensDuJeu />
       <div className="auth-actions">
-        <button type="button" className="btn-deco" title="Se déconnecter" aria-label="Se déconnecter" onClick={deconnexion}>⏻</button>
+        <button type="button" className="btn-deco" title="Se déconnecter" aria-label="Se déconnecter" onClick={deconnexion}>
+          {/* Le symbole ⏻ manque dans les polices d'Android (un carré vide s'affichait) : icône dessinée */}
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+            <path d="M12 3v8" /><path d="M7 6.5a7 7 0 1 0 10 0" />
+          </svg>
+        </button>
         {joueur.is_mj && <a className="lien-mj" href={lienSite('mj.html')} title="Panneau MJ" aria-label="Panneau MJ">MJ</a>}
       </div>
     </div>
