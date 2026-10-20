@@ -16,8 +16,10 @@ export default function Layout() {
     <Notifications>
       <Authentification>
         {/* Si l'écran plante, le filet affiche un message ; la barre reste là pour changer d'écran.
-            key : changer d'écran repart d'un filet neuf. */}
-        <FiletErreur key={pathname}>
+            ecran : en changeant d'écran, le message s'efface. (Pas de « key » ici : elle recréerait le
+            <Suspense> à chaque écran, et l'ancien écran disparaîtrait avec ses styles avant que le nouveau
+            soit prêt : la barre s'affichait un instant sans style.) */}
+        <FiletErreur ecran={pathname}>
           {/* (l'écran se charge à la demande : rien ne s'affiche le temps qu'il arrive) */}
           <Suspense fallback={null}><Outlet /></Suspense>
         </FiletErreur>

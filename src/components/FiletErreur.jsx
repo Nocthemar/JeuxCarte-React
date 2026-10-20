@@ -4,6 +4,7 @@
 //  React n'offre cette protection qu'aux composants écrits en « class » (componentDidCatch).
 //
 //  pleinePage : le filet qui entoure tout le jeu (dernier recours, sans la barre latérale)
+//  ecran : l'adresse de l'écran ; quand elle change, le message s'efface et le nouvel écran s'affiche
 // =====================================================================
 import { Component, Suspense } from 'react';
 import Page from './Page.jsx';
@@ -26,6 +27,10 @@ export default class FiletErreur extends Component {
 
   static getDerivedStateFromError(erreur) {
     return { erreur };
+  }
+
+  componentDidUpdate(avant) {
+    if (this.state.erreur && avant.ecran !== this.props.ecran) this.setState({ erreur: null });
   }
 
   componentDidCatch(erreur) {

@@ -6,8 +6,13 @@
 //  Ce fichier est un modèle : à la construction (vite.config.js, appliHorsLigne), la liste des
 //  fichiers du jeu est ajoutée au début (self.__PRECACHE) et le tout devient dist/sw.js.
 //
-//  Une nouvelle version publiée attend sagement : le jeu propose « Mettre à jour » (lib/appli.js),
-//  pour ne jamais recharger la page en plein duel.
+//  Une nouvelle version prend la main tout de suite, mais ne recharge jamais la page : un écran
+//  ouvert continue avec ses fichiers (la copie précédente est gardée), et le jeu propose
+//  « Mettre à jour » (lib/appli.js). Jamais de rechargement surprise en plein duel.
+//
+//  ⚠️ GitHub Pages dit au navigateur de garder chaque fichier 10 minutes : la copie est donc toujours
+//  téléchargée « fraîche » (cache: 'reload'), sinon elle pourrait ranger l'ANCIENNE page d'accueil, qui
+//  réclame des fichiers effacés -> page blanche (bug du 20/10/2026).
 // =====================================================================
 const { fichiers, version } = self.__PRECACHE;
 const CACHE_JEU = `nocthemar-jeu-${version}`;
@@ -19,28 +24,38 @@ const BASE = new URL('./', self.location).href;
 const adresse = (chemin) => new URL(chemin, BASE).href;
 const DANS_LE_JEU = new Set(fichiers);
 
-// Installation : copie de tous les fichiers du jeu
+// Installation : copie de tous les fichiers du jeu, téléchargés frais, puis on prend la main sans attendre
 self.addEventListener('install', (e) => {
-  e.waitUntil(caches.open(CACHE_JEU).then((cache) => cache.addAll(fichiers.map(adresse))));
+  e.waitUntil((async () => {
+    const cache = await caches.open(CACHE_JEU);
+    await cache.addAll(fichiers.map((f) => new Request(adresse(f), { cache: 'reload' })));
+    await self.skipWaiting();
+  })());
 });
 
-// Le joueur a accepté la mise à jour
-self.addEventListener('message', (e) => {
-  if (e.data === 'activer') self.skipWaiting();
-});
-
-// La nouvelle version prend la main : les copies des anciennes versions sont effacées
+// On garde la copie de la version précédente (un écran resté ouvert en a encore besoin) ;
+// les plus anciennes sont effacées
 self.addEventListener('activate', (e) => {
   e.waitUntil((async () => {
-    const noms = await caches.keys();
-    await Promise.all(noms.filter((n) => n.startsWith('nocthemar-jeu-') && n !== CACHE_JEU).map((n) => caches.delete(n)));
+    const versions = (await caches.keys()).filter((n) => n.startsWith('nocthemar-jeu-') && n !== CACHE_JEU);
+    await Promise.all(versions.slice(0, -1).map((n) => caches.delete(n)));
     await self.clients.claim();
   })());
 });
 
-// D'abord la copie rangée ; sinon internet
-async function depuisLaCopie(cle, requete) {
-  return (await caches.match(cle, { ignoreSearch: true })) ?? fetch(requete);
+// D'abord une copie rangée (de cette version ou de la précédente) ; sinon internet
+async function depuisLaCopie(requete) {
+  return (await caches.match(requete, { ignoreSearch: true })) ?? fetch(requete);
+}
+
+// L'entrée du jeu : la page d'accueil d'internet (vérifiée auprès du site, jamais celle gardée 10 min
+// par le navigateur) ; la copie seulement sans connexion
+async function pageDAccueil(requete) {
+  try {
+    return await fetch(requete.url, { cache: 'no-cache', credentials: 'same-origin' });
+  } catch {
+    return (await caches.match(adresse('index.html'), { cacheName: CACHE_JEU })) ?? Response.error();
+  }
 }
 
 // Images et polices : la copie tout de suite si on l'a, et on la rafraîchit en arrière-plan
@@ -74,11 +89,12 @@ self.addEventListener('fetch', (e) => {
   const chemin = url.href.slice(BASE.length).split(/[?#]/)[0];
   if (requete.mode === 'navigate') {
     // L'entrée du jeu (y compris le retour de Discord, « ?code=… ») ; les anciennes pages .html passent par internet
-    if (chemin === '' || chemin === 'index.html') e.respondWith(depuisLaCopie(adresse('index.html'), requete));
+    if (chemin === '' || chemin === 'index.html') e.respondWith(pageDAccueil(requete));
     return;
   }
-  if (DANS_LE_JEU.has(chemin)) {
-    e.respondWith(depuisLaCopie(adresse(chemin), requete));
+  // Les fichiers du jeu (leur nom change à chaque version : une copie n'est jamais périmée)
+  if (DANS_LE_JEU.has(chemin) || chemin.startsWith('assets/')) {
+    e.respondWith(depuisLaCopie(requete));
     return;
   }
   if (chemin.startsWith('img/')) e.respondWith(copieRafraichie(CACHE_IMAGES, requete, e));

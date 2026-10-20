@@ -1,7 +1,8 @@
 // =====================================================================
 //  Le jeu comme une appli (téléphone, ordinateur)
 //  - inscrit le service worker (src/appli/service-worker.js), seulement dans la version publiée ;
-//  - repère une nouvelle version prête : le bandeau « Mettre à jour » (components/MiseAJour.jsx) ;
+//  - repère qu'une nouvelle version a pris la main : le bandeau « Mettre à jour » (components/MiseAJour.jsx),
+//    qui recharge la page quand le joueur le décide ;
 //  - garde l'invitation « Installer » du navigateur pour le bouton des Paramètres.
 //  useAppli() : l'état, partagé par tous les écrans (useSyncExternalStore).
 // =====================================================================
@@ -24,9 +25,7 @@ const sAbonner = (f) => {
 };
 export const useAppli = () => useSyncExternalStore(sAbonner, () => etat);
 
-let versionEnAttente = null;
 let invitation = null;
-let miseAJourDemandee = false;
 
 export function demarrerAppli() {
   // Chrome, Edge (ordinateur, Android) : le navigateur propose d'installer ; on garde sa proposition
@@ -43,25 +42,14 @@ export function demarrerAppli() {
   // En développement (npm run dev), pas de service worker : on verrait d'anciennes copies du code
   if (!import.meta.env.PROD || !('serviceWorker' in navigator)) return;
 
-  // Le nouveau service worker a pris la main APRÈS « Mettre à jour » : on recharge sur la nouvelle version
-  // (à la toute première installation il prend aussi la main, mais sans rechargement)
+  // Une nouvelle version a pris la main pendant qu'on joue : on le propose, sans recharger
+  // (à la toute première visite, le service worker prend aussi la main : rien à proposer)
+  const dejaInstallee = !!navigator.serviceWorker.controller;
   navigator.serviceWorker.addEventListener('controllerchange', () => {
-    if (miseAJourDemandee) location.reload();
+    if (dejaInstallee) changer({ majPrete: true });
   });
 
   navigator.serviceWorker.register(urlPublique('sw.js')).then((inscription) => {
-    const signaler = (sw) => {
-      versionEnAttente = sw;
-      changer({ majPrete: true });
-    };
-    // (controller : une version est déjà installée ; sinon c'est la première visite, rien à proposer)
-    if (inscription.waiting && navigator.serviceWorker.controller) signaler(inscription.waiting);
-    inscription.addEventListener('updatefound', () => {
-      const sw = inscription.installing;
-      sw?.addEventListener('statechange', () => {
-        if (sw.state === 'installed' && navigator.serviceWorker.controller) signaler(sw);
-      });
-    });
     // Une nouvelle version publiée ? On regarde au retour sur le jeu, et toutes les 30 minutes
     const verifier = () => inscription.update().catch(() => {});
     setInterval(verifier, 30 * 60 * 1000);
@@ -72,9 +60,7 @@ export function demarrerAppli() {
 }
 
 export function mettreAJour() {
-  if (!versionEnAttente) return;
-  miseAJourDemandee = true;
-  versionEnAttente.postMessage('activer');
+  location.reload();
 }
 
 export async function installer() {
