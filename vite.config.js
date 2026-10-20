@@ -5,9 +5,9 @@ import { defineConfig, loadEnv } from 'vite'
 // seuls les scripts du jeu s'exécutent ; le jeu ne parle qu'à son projet Supabase.
 // Ajoutée seulement à la version finale (npm run build) : en développement, Vite a besoin de scripts
 // écrits dans la page, que cette politique interdit.
+// (l'adresse de Supabase n'est lue qu'à la construction : les tests chargent aussi ce fichier, sans elle)
 function politiqueDeSecurite(supabase) {
-  const hote = new URL(supabase).host
-  const regles = [
+  const regles = (hote) => [
     "default-src 'self'",
     "script-src 'self'",
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
@@ -24,7 +24,7 @@ function politiqueDeSecurite(supabase) {
     name: 'politique-de-securite',
     apply: 'build',
     transformIndexHtml: (html) => html.replace('<meta charset="UTF-8" />',
-      `<meta charset="UTF-8" />\n    <meta http-equiv="Content-Security-Policy" content="${regles}" />`),
+      `<meta charset="UTF-8" />\n    <meta http-equiv="Content-Security-Policy" content="${regles(new URL(supabase).host)}" />`),
   }
 }
 
