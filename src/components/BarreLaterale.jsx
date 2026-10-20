@@ -2,7 +2,12 @@
 //  La barre de navigation latérale (ancien JS/barre-laterale.js, styles/barre-laterale.css)
 //  De haut en bas : le lien vers le site Nocthémar, le compte Discord, puis les pages du jeu.
 //  Même HTML que l'ancienne barre (classes rail-…), donc même apparence.
+//
+//  Sur téléphone (styles/barre-laterale.css, max-width 700px), la barre du bas ne garde que 5 boutons :
+//  Jouer, Collection, le profil (au centre), Boutique et « Plus » ; les autres pages sont dans le menu Plus.
+//  data-place : la place du bouton dans la barre du téléphone (sans effet sur ordinateur).
 // =====================================================================
+import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { NOCTHEMAR_SITE, lienSite } from '../lib/lienSite.js';
 import { useAuth, connexionDiscord, deconnexion } from '../lib/auth.js';
@@ -17,6 +22,9 @@ const ICONES = {
   marche: <><path d="M12 3v18M7 21h10" /><path d="M4 7h16" /><path d="M6 7l-3 7a3 3 0 0 0 6 0zM18 7l-3 7a3 3 0 0 0 6 0z" /></>,
   reglages: <><circle cx="12" cy="12" r="3" /><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1" /></>,
   succes: <><circle cx="12" cy="9" r="6" /><path d="M8.5 14L7 22l5-3 5 3-1.5-8" /></>,
+  profil: <><circle cx="12" cy="8" r="4" /><path d="M4 21a8 8 0 0 1 16 0" /></>,
+  plus: <><circle cx="5" cy="12" r="1.3" /><circle cx="12" cy="12" r="1.3" /><circle cx="19" cy="12" r="1.3" /></>,
+  deconnexion: <><path d="M12 3v8" /><path d="M7 6.5a7 7 0 1 0 10 0" /></>,
 };
 
 function Icone({ nom }) {
@@ -31,26 +39,28 @@ function Icone({ nom }) {
 
 // Les pages du jeu, dans l'ordre de l'ancienne barre.
 // actifSur : d'autres chemins où l'élément est éclairé (« Modes de jeu » : le Duel et l'Histoire)
+// place : sa place dans la barre du téléphone ; sans place, la page est dans le menu « Plus »
 const PAGES = [
-  { icone: 'cartes', libelle: 'Modes de jeu', chemin: '/duel', actifSur: ['/histoire'] },
+  { icone: 'cartes', libelle: 'Modes de jeu', chemin: '/duel', actifSur: ['/histoire'], place: 1 },
   { icone: 'pass', libelle: 'Pass de saison', chemin: '/pass' },
-  { icone: 'collection', libelle: 'Collection', chemin: '/collection' },
+  { icone: 'collection', libelle: 'Collection', chemin: '/collection', place: 2 },
   { icone: 'catalogue', libelle: 'Toutes les cartes', chemin: '/toutes-les-cartes' },
   { icone: 'succes', libelle: 'Succès', chemin: '/succes' },
-  { icone: 'boutique', libelle: 'Boutique', chemin: '/boutique' },
+  { icone: 'boutique', libelle: 'Boutique', chemin: '/boutique', place: 4 },
   { icone: 'marche', libelle: 'Marché', chemin: '/marche' },
   { icone: 'reglages', libelle: 'Paramètres', chemin: '/parametres' },
 ];
+const DANS_LE_MENU = PAGES.filter((p) => !p.place);
 
 function LiensDuJeu() {
   const { pathname } = useLocation();
   return (
     <div className="rail-compte-liens">
-      {PAGES.map(({ icone, libelle, chemin, actifSur = [] }) => {
+      {PAGES.map(({ icone, libelle, chemin, actifSur = [], place }) => {
         // La page en cours, ou un des chemins de actifSur
         const actif = pathname === chemin || actifSur.includes(pathname);
         return (
-          <Link key={chemin} to={chemin} className={`rail-item${actif ? ' is-active' : ''}`}
+          <Link key={chemin} to={chemin} className={`rail-item${actif ? ' is-active' : ''}`} data-place={place ?? 'menu'}
             aria-label={libelle} aria-current={actif ? 'page' : undefined}>
             <Icone nom={icone} />
             <span className="rail-label">{libelle}</span>
@@ -65,13 +75,52 @@ export default function BarreLaterale() {
   return (
     <nav className="rail" aria-label="Navigation">
       {/* Lien direct vers le site Nocthémar (adresse dans lib/lienSite.js) */}
-      <a className="rail-item" href={NOCTHEMAR_SITE} aria-label="Site Nocthémar">
+      <a className="rail-item" href={NOCTHEMAR_SITE} aria-label="Site Nocthémar" data-place="menu">
         <Icone nom="accueil" />
         <span className="rail-label">Site Nocthémar</span>
       </a>
       <span className="rail-sep" />
       <Compte />
+      <MenuPlus />
     </nav>
+  );
+}
+
+// Téléphone seulement : le bouton « Plus » et son menu (les pages qui n'ont pas de place dans la barre)
+function MenuPlus() {
+  const { pathname } = useLocation();
+  const { joueur } = useAuth();
+  // Le menu est ouvert « sur » un écran : changer d'écran le referme tout seul
+  const [ouvertSur, setOuvertSur] = useState(null);
+  const ouvert = ouvertSur === pathname;
+  const fermer = () => setOuvertSur(null);
+  const actif = DANS_LE_MENU.some((p) => p.chemin === pathname);
+  return (
+    <>
+      <button type="button" className={`rail-item rail-plus${actif || ouvert ? ' is-active' : ''}`} data-place="5"
+        aria-label="Plus" aria-expanded={ouvert} aria-controls="rail-menu" onClick={() => setOuvertSur(ouvert ? null : pathname)}>
+        <Icone nom="plus" />
+      </button>
+      {ouvert && (
+        <>
+          <div className="rail-menu-fond" onClick={fermer} aria-hidden="true" />
+          <div className="rail-menu" id="rail-menu" role="menu" onKeyDown={(e) => { if (e.key === 'Escape') fermer(); }}>
+            {DANS_LE_MENU.map(({ icone, libelle, chemin }) => (
+              <Link key={chemin} to={chemin} role="menuitem" className={`rail-menu__item${pathname === chemin ? ' is-active' : ''}`} onClick={fermer}>
+                <Icone nom={icone} /><span>{libelle}</span>
+              </Link>
+            ))}
+            <a className="rail-menu__item" role="menuitem" href={NOCTHEMAR_SITE}><Icone nom="accueil" /><span>Site Nocthémar</span></a>
+            {joueur?.is_mj && <a className="rail-menu__item" role="menuitem" href={lienSite('mj.html')}><span className="rail-ico">MJ</span><span>Panneau MJ</span></a>}
+            {joueur && (
+              <button type="button" className="rail-menu__item rail-menu__item--sortie" role="menuitem" onClick={() => { fermer(); deconnexion(); }}>
+                <Icone nom="deconnexion" /><span>Se déconnecter</span>
+              </button>
+            )}
+          </div>
+        </>
+      )}
+    </>
   );
 }
 
@@ -79,6 +128,7 @@ export default function BarreLaterale() {
 // (lien vers son profil), puis les pages du jeu, puis la déconnexion et, pour un MJ, le panneau MJ du site
 function Compte() {
   const { joueur, chargement } = useAuth();
+  const { pathname } = useLocation();
 
   // Pendant le chargement (une fraction de seconde) : ni bouton ni avatar, seulement les liens des pages
   if (chargement) return <div id="discord-auth"><LiensDuJeu /></div>;
@@ -86,7 +136,7 @@ function Compte() {
   if (!joueur) {
     return (
       <div id="discord-auth">
-        <button type="button" className="btn-discord" aria-label="Connecter Discord" onClick={connexionDiscord}>
+        <button type="button" className="btn-discord" aria-label="Connecter Discord" onClick={connexionDiscord} data-place="3">
           <span className="btn-discord__logo" aria-hidden="true" />
           <span className="btn-discord__texte">Connecter Discord</span>
         </button>
@@ -98,8 +148,10 @@ function Compte() {
   // Le pseudo est affiché comme du texte par React : un pseudo ne peut pas injecter de code dans la page
   return (
     <div id="discord-auth">
-      <Link className="auth-user" to="/profil">
+      <Link className={`auth-user${pathname === '/profil' ? ' est-actif' : ''}`} to="/profil" data-place="3" aria-label="Mon profil">
         {joueur.avatar_url && <img className="auth-user__avatar" src={joueur.avatar_url} alt="" />}
+        {/* (téléphone : sans avatar Discord, une silhouette tient sa place) */}
+        {!joueur.avatar_url && <span className="auth-user__silhouette"><Icone nom="profil" /></span>}
         <span className="auth-user__nom">{joueur.username ?? 'Mon profil'}</span>
       </Link>
       <LiensDuJeu />
@@ -107,7 +159,7 @@ function Compte() {
         <button type="button" className="btn-deco" title="Se déconnecter" aria-label="Se déconnecter" onClick={deconnexion}>
           {/* Le symbole ⏻ manque dans les polices d'Android (un carré vide s'affichait) : icône dessinée */}
           <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
-            <path d="M12 3v8" /><path d="M7 6.5a7 7 0 1 0 10 0" />
+            {ICONES.deconnexion}
           </svg>
         </button>
         {joueur.is_mj && <a className="lien-mj" href={lienSite('mj.html')} title="Panneau MJ" aria-label="Panneau MJ">MJ</a>}
