@@ -4,6 +4,7 @@
 |---|---|---|
 | `schema.sql` | NOUVEAU projet | Toutes les tables, fonctions, règles RLS, triggers, droits et règles Realtime |
 | `donnees.sql` | NOUVEAU projet | Les données de référence telles que décrites dans `ancien/SQL` (cartes, boosters, plateaux, Histoire, Pass, succès, thèmes) |
+| `erreurs.sql` | les DEUX projets (dev et vrai jeu) | Le journal des erreurs du jeu (table `erreurs_jeu`, déjà dans `schema.sql`, partie 15) |
 | `exporter-depuis-ancien.sql` | ANCIEN projet (lecture seule) | Partie A : comparer les tables du site ; partie B : copier les vraies données de référence |
 
 Les deux premiers scripts ont été testés sur un PostgreSQL vide (installés deux fois de suite, puis le parcours d'un joueur et les droits du navigateur).
