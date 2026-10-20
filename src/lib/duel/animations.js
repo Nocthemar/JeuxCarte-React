@@ -16,6 +16,7 @@ import { particules, onde, flash, voile, secousseEcran, eclair, briser, recul, a
 import { styleAttaque, couleursVeine } from './attaques.js';
 import { htmlCarte } from './htmlCarte.js';
 import { grandDe } from './grandDe.js';
+import { arretSurImage, coupDeCamera, chiffreDegats, pvTouches } from './frappe.js';
 
 const reduit = animationsReduites();
 const $ = (id) => document.getElementById(id);
@@ -61,7 +62,7 @@ function montrerTouche(t, el = elCible(t)) {
   if (t.texte) flotter(el, t.texte, t.etat ? 'rate' : 'buff');
   else if (t.soin) flotter(el, `+${t.valeur}`, 'soin');
   else if (t.buff) flotter(el, `+${t.valeur}/+${t.valeur}`, 'buff');
-  else { secouer(el); flotter(el, `-${t.valeur}`); }
+  else { secouer(el); chiffreDegats(el, t.valeur); if (t.heros) pvTouches(el); }
 }
 export async function montrerTouches(touches = []) {
   for (const t of touches) {
@@ -262,18 +263,23 @@ export async function animer(ev) {
       if (ev.info.q === 'echec') jouerSon('echec');
       else if (ev.info.q === 'critique') jouerSon('tonnerre');
       if (ev.degats > 0) {
+        const critique = ev.info.q === 'critique';
+        // l'impact : tout se fige un instant (plus longtemps sur un critique), puis la caméra donne un coup vers la cible
+        await arretSurImage(critique ? 170 : ev.cible.heros ? 120 : 90);
+        coupDeCamera(cib, critique ? 0.07 : ev.cible.heros ? 0.05 : 0.03);
         if (att && cib) {
           const ra = att.getBoundingClientRect(); const rc = cib.getBoundingClientRect();
-          recul(cib, rc.left - ra.left, rc.top - ra.top, ev.info.q === 'critique' ? 26 : 14);
+          recul(cib, rc.left - ra.left, rc.top - ra.top, critique ? 30 : 18);
         }
         impact(cib, ev.info.q, !!ev.cible.heros);
+        if (ev.cible.heros && !ev.bouclier) pvTouches(cib);
       }
-      if (ev.info.q === 'critique' && ev.degats > 0) flotter(cib, 'Critique !', 'critique');
       if (ev.bouclier) {
         flotter(cib, 'Bouclier !', 'buff');
         onde(cib, '#bfe3f0', 2.2, 600);
         jouerSon('acier', 0.05);
-      } else flotter(cib, ev.degats > 0 ? `-${ev.degats}` : 'Raté', ev.degats > 0 ? 'degats' : 'rate');
+      } else if (ev.degats > 0) chiffreDegats(cib, ev.degats, ev.info.q === 'critique');
+      else flotter(cib, 'Raté', 'rate');
       retirerAnnonce();
       if (ev.drain > 0) {
         const heros = elHeros(ev.qui);
@@ -283,7 +289,8 @@ export async function animer(ev) {
         setTimeout(() => {
           if (ev.bouclierAttaquant) { flotter(att, 'Bouclier !', 'buff'); return; }
           secouer(att);
-          flotter(att, `Riposte -${ev.riposte}`);
+          chiffreDegats(att, ev.riposte);
+          flotter(att, 'Riposte', 'rate');
           particules(att, { n: 8, couleurs: ['#ffffff', '#c5cad3'], vitesse: 110, gravite: 60, taille: [2, 5], duree: 500 });
         }, reduit ? 0 : 200);
       }

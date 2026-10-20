@@ -104,3 +104,26 @@
 /* Effets légers (Paramètres) : pas de halo tournant ni de voile */
 :root.effets-legers .gd-scene.est-eclatant .gd-halo { animation: none; }
 :root.effets-legers .gd-scene::before { display: none; }
+
+/* ---------- Des coups qui frappent (lib/duel/frappe.js) ---------- */
+/* Le gros chiffre des dégâts : il jaillit, rebondit, puis monte et s'efface */
+.coup-chiffre {
+  position: fixed; z-index: 50; pointer-events: none;
+  font-family: "Cinzel","Cinzel Repli", serif; font-weight: 800;
+  font-size: var(--taille, 2rem); line-height: 1;
+  color: #ff5a66;
+  -webkit-text-stroke: 1.5px #3a0a10;
+  paint-order: stroke fill;
+  text-shadow: 0 4px 0 #5a0d16, 0 0 18px rgba(255,60,80,.7), 0 6px 14px rgba(0,0,0,.9);
+  transform: translate(-50%, -50%);
+  white-space: nowrap;
+}
+.coup-chiffre--critique {
+  color: #ffe08a;
+  -webkit-text-stroke: 2px #5a3a08;
+  text-shadow: 0 5px 0 #6b4510, 0 0 26px rgba(255,210,110,.95), 0 0 50px rgba(255,170,60,.6), 0 8px 16px rgba(0,0,0,.9);
+}
+/* L'élan d'une unité qui attaque : plus ample */
+/* (!important : la règle d'origine, .fx-elan dans jeu-cartes.css, en a un) */
+.page-jeu .dc-unite.fx-elan { transform: translate(var(--dx), var(--dy)) scale(1.16) !important; transition: transform .2s cubic-bezier(.55,0,.8,.2) !important; }
+:root.anim-reduites .coup-chiffre { display: none; }
