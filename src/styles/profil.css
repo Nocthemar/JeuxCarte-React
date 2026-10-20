@@ -772,6 +772,9 @@ body.page-fiche::before,
   object-fit: contain;
   filter: drop-shadow(0 6px 8px rgba(40,20,5,.45)) drop-shadow(0 0 var(--halo-taille, 0px) var(--halo-couleur, transparent));
 }
+/* L'image reste carrée quelle que soit l'étape de la pièce qui tourne (correction : la pièce vue de profil,
+   haute et fine, agrandissait l'image et la niche, et la pièce s'étirait) */
+.tresor__or .piece-icone { height: auto; aspect-ratio: 1; }
 .tresor__or .piece-icone--vide { width: 56%; height: 56%; filter: grayscale(1) brightness(.8) drop-shadow(0 4px 6px rgba(40,20,5,.4)); opacity: .7; }
 .page-fiche .duelliste .tresor__or .bourse-etincelles { grid-area: 1 / 1; position: absolute; inset: 22% 20% 26%; width: auto; height: auto; margin: 0; }
 
