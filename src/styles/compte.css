@@ -1,0 +1,430 @@
+/* =====================================================================
+   Styles des comptes joueurs (bouton Discord + page profil)
+   Les couleurs sont en variables : adapte-les à celles de ton site.
+   ===================================================================== */
+:root {
+  --fond: #131010;         /* = --ink du site */
+  --carte: #1a1616;        /* = --ink-2 du site */
+  --bord: rgba(240,236,227,0.27); /* = --line-strong du site */
+  --texte: #f2eee6;        /* = --parchment du site */
+  --texte-doux: #bcb2a4;   /* = --parchment-dim du site */
+  --accent: #ece6d9;       /* = --bronze du site — remplacé par le thème équipé du joueur */
+  --accent2: var(--accent); /* 2e couleur du thème (optionnelle) — vaut --accent par défaut */
+  --discord: #5865f2;      /* couleur de marque Discord, ne pas thémer */
+  --gain: #6fbf73;
+  --perte: #c22f38;        /* = --blood du site */
+  --rayon: 0;              /* le site n'utilise que des arêtes vives (pas de coins arrondis, hors icônes rondes) */
+}
+
+/* L'attribut hidden (utilisé par les scripts pour masquer un bloc) doit toujours
+   l'emporter, même sur un élément stylé en display:flex ou grid */
+[hidden] { display: none !important; }
+
+/* ---------- Barre du haut en verre (même style que l'accueil) ----------
+   Ici elle reste collée en haut (sticky) et garde sa place dans la page ;
+   sur l'accueil, CSS/accueil.css la fait flotter par-dessus le héros (fixed). */
+.topbar {
+  position: sticky;
+  top: 14px;
+  width: min(1180px, calc(100% - 28px));
+  margin: 14px auto 0;
+  padding: 0.6em 0.8em 0.6em 1.6em;
+  border: 1px solid rgba(255,248,235,0.16);
+  border-radius: 999px;
+  /* fond presque opaque au lieu d'un flou : le flou était recalculé à chaque image (lag) */
+  background: rgba(22,18,18,0.92);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.08);
+}
+.topbar .nav-search { border-color: rgba(255,248,235,0.16); background: rgba(255,255,255,0.04); }
+.topbar .back { border-radius: 999px; border-color: rgba(255,248,235,0.16); }
+@media (max-width: 980px) {
+  .topbar { padding: 0.55em 0.7em 0.55em 1.2em; }
+}
+@media (max-width: 600px) {
+  .topbar { top: 8px; margin-top: 8px; width: calc(100% - 16px); }
+}
+
+/* ---------- Lien Boutique (nav) ---------- */
+/* Reprend la typo de .nav-links a (CSS/index.css) pour s'intégrer à la
+   topbar sur toutes les pages, y compris celles qui n'ont pas de nav-links
+   (elles utilisent un fil d'Ariane "crumb" à la place). */
+.nav-boutique {
+  font-family: "Cinzel","Cinzel Repli", serif;
+  font-size: 0.78em;
+  letter-spacing: 0.1em;
+  color: var(--texte-doux);
+  white-space: nowrap;
+  transition: color .2s ease;
+}
+.nav-boutique:hover { color: var(--accent); }
+
+/* ---------- Bouton de connexion (nav) ---------- */
+#discord-auth {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  /* Place réservée dès le chargement : le bouton (ou le pseudo) arrive après
+     la vérification du compte, et ne pousse plus les liens de la barre (CLS) */
+  min-width: 150px;
+  min-height: 32px;
+}
+
+.btn-discord {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border: 0;
+  border-radius: var(--rayon);
+  background: var(--discord);
+  color: #fff;
+  font: inherit;
+  font-size: .85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: filter .15s;
+}
+.btn-discord:hover { filter: brightness(1.1); }
+
+.btn-discord__logo {
+  width: 15px;
+  height: 12px;
+  background: currentColor;
+  /* logo Discord simplifié en masque SVG */
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 127 96'%3E%3Cpath d='M107.7 8A105 105 0 0 0 81.5 0a72 72 0 0 0-3.4 6.9 97.7 97.7 0 0 0-29.1 0A72 72 0 0 0 45.6 0a105.9 105.9 0 0 0-26.3 8C2.8 32.7-1.7 56.7.5 80.4A105.7 105.7 0 0 0 32.7 96a78 78 0 0 0 6.9-11.2 68.4 68.4 0 0 1-10.8-5.2l2.7-2.1a75.6 75.6 0 0 0 64.3 0l2.7 2.1a68.7 68.7 0 0 1-10.9 5.2 77 77 0 0 0 6.9 11.2 105.3 105.3 0 0 0 32.2-15.6c2.6-27.5-4.5-51.3-18.9-72.4ZM42.5 65.9c-6.3 0-11.4-5.8-11.4-12.9s5-12.9 11.4-12.9 11.5 5.8 11.4 12.9-5 12.9-11.4 12.9Zm42.1 0c-6.3 0-11.4-5.8-11.4-12.9s5-12.9 11.4-12.9 11.5 5.8 11.4 12.9-5 12.9-11.4 12.9Z'/%3E%3C/svg%3E") center / contain no-repeat;
+          mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 127 96'%3E%3Cpath d='M107.7 8A105 105 0 0 0 81.5 0a72 72 0 0 0-3.4 6.9 97.7 97.7 0 0 0-29.1 0A72 72 0 0 0 45.6 0a105.9 105.9 0 0 0-26.3 8C2.8 32.7-1.7 56.7.5 80.4A105.7 105.7 0 0 0 32.7 96a78 78 0 0 0 6.9-11.2 68.4 68.4 0 0 1-10.8-5.2l2.7-2.1a75.6 75.6 0 0 0 64.3 0l2.7 2.1a68.7 68.7 0 0 1-10.9 5.2 77 77 0 0 0 6.9 11.2 105.3 105.3 0 0 0 32.2-15.6c2.6-27.5-4.5-51.3-18.9-72.4ZM42.5 65.9c-6.3 0-11.4-5.8-11.4-12.9s5-12.9 11.4-12.9 11.5 5.8 11.4 12.9-5 12.9-11.4 12.9Zm42.1 0c-6.3 0-11.4-5.8-11.4-12.9s5-12.9 11.4-12.9 11.5 5.8 11.4 12.9-5 12.9-11.4 12.9Z'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+
+.auth-user {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: inherit;
+  text-decoration: none;
+  font-weight: 600;
+}
+.auth-user:hover .auth-user__nom { color: var(--accent); }
+
+.auth-user__avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2px solid var(--accent);
+  object-fit: cover;
+}
+
+/* Lien "Panneau MJ", visible seulement pour les joueurs avec is_mj = true */
+/* Petit rond "MJ", même taille que le bouton de déconnexion */
+/* Couleur fixe (blanc du site) : ne suit pas le thème équipé par le joueur */
+.lien-mj {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--texte);
+  border-radius: 50%;
+  color: var(--texte);
+  font-family: "Cinzel","Cinzel Repli", serif;
+  font-size: .65rem;
+  font-weight: 700;
+  letter-spacing: .02em;
+  white-space: nowrap;
+  transition: background .15s, color .15s;
+}
+.lien-mj:hover { background: var(--texte); color: var(--fond); }
+
+.btn-deco {
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--bord);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--texte-doux);
+  cursor: pointer;
+}
+.btn-deco:hover { color: var(--perte); border-color: var(--perte); }
+
+/* Téléphones : la barre du haut n'a pas la place pour tout afficher en entier.
+   Bouton Discord réduit au logo, pseudo masqué (l'avatar reste), "← Catégories" réduit à la flèche. */
+@media (max-width: 600px) {
+  #discord-auth { min-width: 0; gap: 6px; }
+  .btn-discord { padding: 8px 10px; }
+  .btn-discord__texte { display: none; }
+  .auth-user__nom { display: none; }
+  .auth-user__avatar, .btn-deco, .lien-mj { width: 28px; height: 28px; }
+  .nav-boutique { font-size: .68em; letter-spacing: .06em; }
+  .topbar .back { font-size: 0; padding: 6px 10px; }
+  .topbar .back::before { content: "←"; font-size: 1rem; }
+}
+
+
+/* ---------- Page profil ---------- */
+.page-profil {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--fond);
+  color: var(--texte);
+  font-family: "EB Garamond","EB Garamond Repli", serif;
+}
+
+.profil-wrap {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 24px 16px 64px;
+}
+
+/* .entete et .carte sont des balises <section> : sans ça elles héritent des
+   styles génériques `section` de CSS/index.css (gros padding, centrage par
+   marges auto, et bordure basse retirée sur le dernier <section> d'un
+   parent via `section:last-of-type`, plus spécifique qu'une simple classe). */
+.page-profil .entete {
+  padding: 0;
+}
+.page-profil .carte {
+  max-width: none;
+  margin-left: 0;
+  margin-right: 0;
+  border-bottom: 1px solid var(--bord);
+}
+
+.carte {
+  background: var(--carte);
+  border: 1px solid var(--bord);
+  border-radius: var(--rayon);
+  padding: 20px;
+  margin-top: 20px;
+}
+.carte h2 {
+  margin: 0 0 14px;
+  font-family: "Cinzel","Cinzel Repli", serif;
+  font-size: 1.05rem;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--accent2);
+}
+.centre { text-align: center; }
+
+.vide { color: var(--texte-doux); font-style: italic; }
+
+/* En-tête */
+/* La bannière couvre tout le cadre ; avatar, pseudo et titre sont posés dessus,
+   sur un dégradé sombre qui garde le texte lisible quelle que soit l'image. */
+.entete {
+  position: relative;
+  /* Si la bannière impose ses proportions (aspect-ratio, voir profil.js),
+     l'avatar et le pseudo restent calés en bas du cadre */
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  border-radius: var(--rayon);
+  overflow: hidden;
+  border: 1px solid var(--bord);
+  background: var(--carte);
+}
+.entete__banniere {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, var(--carte), var(--fond)) center / cover;
+}
+.entete__banniere::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 35%, rgba(19,16,16,.55) 70%, rgba(19,16,16,.9) 100%);
+}
+.entete__infos {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  gap: 16px;
+  padding: 132px 20px 18px;
+}
+.entete__infos h1,
+.entete__titre { text-shadow: 0 1px 3px rgba(0,0,0,.9), 0 0 12px rgba(0,0,0,.6); }
+.entete__avatar {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  border: 4px solid var(--carte);
+  outline: 2px solid var(--accent);
+  object-fit: cover;
+  background: var(--fond);
+}
+.entete h1 { margin: 0; font-family: "Cinzel Decorative","Cinzel Decorative Repli", serif; font-size: 1.6rem; }
+.entete__titre { margin: 2px 0 0; color: var(--accent); font-style: italic; }
+
+/* Reliquat : clés non reconnues, dans une grille simple comme avant */
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 10px;
+  margin: 0;
+}
+/* Une valeur en liste (ex : inventaire) prend toute la largeur, objets côte à côte */
+.stat:has(.stat__liste) { grid-column: 1 / -1; }
+.perso__bas:not(:has(> :not([hidden]))) { display: none; }
+.perso__bas:has(> .perso__bourse[hidden]) > .perso__inventaire { grid-column: 1 / -1; }
+.objet-image {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  padding: 4px;
+  border: 1px solid transparent;
+  border-radius: var(--rayon);
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+.objet-image--choisi { border-color: rgba(201,162,74,.5); background: rgba(255,255,255,.04); }
+
+/* Fiche de l'objet cliqué : nom, caractéristiques, description */
+.objet-fiche {
+  margin-top: 10px;
+  padding: 10px 12px;
+  border-top: 1px solid var(--bord);
+}
+.objet-fiche__nom { font-family: "Cinzel","Cinzel Repli", serif; font-size: 1rem; }
+.objet-fiche__carac { display: flex; flex-wrap: wrap; gap: 4px 16px; margin: 6px 0; }
+.objet-fiche__carac dt { display: inline; font-size: .72rem; text-transform: uppercase; letter-spacing: .06em; color: var(--texte-doux); }
+.objet-fiche__carac dd { display: inline; margin: 0 0 0 6px; font-weight: 400; }
+.objet-fiche__desc { margin: 0; font-size: .9rem; font-style: italic; color: var(--texte-doux); }
+.objet-image img {
+  width: 100%;
+  max-width: 60px;
+  aspect-ratio: 1;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,.6));
+  transition: transform .15s;
+}
+.objet-image:hover img { transform: scale(1.08); }
+.objet-image__nom { display: none; font-size: .8rem; text-align: center; }
+.objet-image--sans .objet-image__nom { display: block; }
+#bourse[data-richesse="1"] { --halo-taille: 2px; --halo-couleur: rgba(255,200,90,.15); }
+#bourse[data-richesse="2"] { --halo-taille: 3px; --halo-couleur: rgba(255,200,90,.2); }
+#bourse[data-richesse="3"] { --halo-taille: 4px; --halo-couleur: rgba(255,205,95,.25); }
+#bourse[data-richesse="4"] { --halo-taille: 4px; --halo-couleur: rgba(255,210,100,.2); }
+#bourse[data-richesse="5"] { --halo-taille: 5px; --halo-couleur: rgba(255,215,110,.25); }
+
+/* Étincelles : même case que l'or (2e ligne), posées par-dessus, de la taille de l'or affiché */
+.bourse-etincelles {
+  grid-area: 2 / 1;
+  position: relative;
+  z-index: 1;
+  width: min(100%, 140px);
+  height: 90px;           /* = max-height de l'or */
+  margin-top: 14px;       /* = marge au-dessus de l'or */
+  pointer-events: none;
+}
+.etincelle {
+  position: absolute;
+  width: var(--taille);
+  height: var(--taille);
+  translate: -50% -50%;
+  background: radial-gradient(circle, #fffbe8 0%, #ffe08a 40%, #f5b93a 75%);
+  /* Étoile à 4 branches */
+  clip-path: polygon(50% 0%, 60% 40%, 100% 50%, 60% 60%, 50% 100%, 40% 60%, 0% 50%, 40% 40%);
+  filter: drop-shadow(0 0 3px rgba(255,230,150,.9));
+  opacity: 0;
+  animation: etincelle ease-in-out infinite;
+}
+@keyframes etincelle {
+  0%, 100% { opacity: 0; transform: scale(.2) rotate(0deg); }
+  45%      { opacity: 1; transform: scale(1) rotate(45deg); }
+  60%      { opacity: .9; transform: scale(.9) rotate(60deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .etincelle { animation: none; opacity: .8; transform: none; }
+}
+.piece-icone {
+  width: 1em;
+  height: 1em;
+  object-fit: contain;
+  vertical-align: -0.1em;
+  margin-left: 4px;
+}
+
+/* Listes */
+.grille {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 0 20px;
+}
+.liste { list-style: none; margin: 0; padding: 0; }
+.liste > li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--bord);
+}
+.liste > li:last-child { border-bottom: 0; }
+
+.objet__type {
+  display: block;
+  font-size: .7rem;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: var(--texte-doux);
+}
+.objet__qte { color: var(--texte-doux); }
+
+.transac { animation: transac-entree .35s ease both; }
+@keyframes transac-entree {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.transac small { display: block; color: var(--texte-doux); }
+.gain  { color: var(--gain); }
+.perte { color: var(--perte); }
+
+.btn-petit {
+  padding: 5px 12px;
+  border: 1px solid var(--accent);
+  border-radius: var(--rayon);
+  background: transparent;
+  color: var(--accent);
+  font: inherit;
+  cursor: pointer;
+}
+.btn-petit:hover { background: var(--accent); color: var(--fond); }
+.btn-petit:disabled { opacity: .5; cursor: wait; }
+.btn-petit--retirer { border-color: var(--perte); color: var(--perte); }
+.btn-petit--retirer:hover { background: var(--perte); color: var(--texte); }
+.btn-petit--lien { border: none; padding: 0; }
+.btn-petit--lien:hover { background: transparent; color: var(--accent); text-decoration: underline; }
+
+
+/* =====================================================================
+   Essai : profil simplifié (moins de cadres, plus d'air).
+   Pour revenir en arrière, supprimer tout ce bloc (jusqu'à « Fin de l'essai »).
+   ===================================================================== */
+
+/* Plus d'espace entre les grandes sections */
+.page-profil .carte { margin-top: 28px; }
+
+/* Collection / Historique : titres un peu plus discrets que les sections principales */
+#prive .carte h2 { font-size: .9rem; color: var(--texte-doux); }
+/* ===================== Fin de l'essai ===================== */
+
+@media (max-width: 600px) {
+  .entete__infos { padding-top: 84px; }
+  .entete__avatar { width: 72px; height: 72px; }
+  .entete h1 { font-size: 1.3rem; }
+}
+
+
+
+/* Paramètres (parametres.html) : animations réduites et effets légers, sur toutes les pages
+   (classes posées sur <html> par JS/barre-laterale.js et JS/preferences.js) */
+html.anim-reduites *, html.anim-reduites *::before, html.anim-reduites *::after {
+  animation-duration: .01ms !important; animation-iteration-count: 1 !important;
+  transition-duration: .01ms !important; scroll-behavior: auto !important;
+}
+html.effets-legers .fx-couche, html.effets-legers #embers { display: none !important; }
+html.effets-legers * { backdrop-filter: none !important; }

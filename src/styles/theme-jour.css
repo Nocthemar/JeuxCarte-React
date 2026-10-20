@@ -1,0 +1,88 @@
+/* =====================================================================
+   Thème clair (« jour ») de tout le site
+   Activé par <html data-theme="jour">, posé dans le <head> de chaque page
+   (choix retenu dans le navigateur) et basculé par le bouton soleil / lune
+   de la barre latérale (JS/barre-laterale.js).
+   Les pages gardent leurs propres couleurs : ici on ne fait qu'inverser la
+   palette commune (--ink, --parchment…) et corriger ce qui est écrit en dur.
+   Le jeu de cartes et la fiche du profil ont leur propre décor : non concernés.
+   ===================================================================== */
+
+:root[data-theme="jour"] {
+  color-scheme: light;
+  /* fonds : papier clair */
+  --ink: #e1dacd;
+  --ink-2: #d8d0c1;
+  --ink-3: #cdc3b1;
+  /* textes : encre brune */
+  --parchment: #221a15;
+  --parchment-dim: #4d4238;
+  --parchment-faint: #74685b;
+  --blood: #a8232c;
+  --blood-dim: #d9a3a6;
+  --bronze: #3c2b1d;
+  --bronze-dim: #7a6955;
+  --verdigris: #6a6052;
+  --verdigris-dim: #a39886;
+  --violet: #9c2d34;
+  --violet-dim: #e3c3c5;
+  --line: rgba(50,35,20,.14);
+  --line-strong: rgba(50,35,20,.3);
+  /* palette des pages de compte (CSS/compte.css) */
+  --fond: #e1dacd;
+  --carte: #d8d0c1;
+  --bord: rgba(50,35,20,.3);
+  --texte: #221a15;
+  --texte-doux: #4d4238;
+  --accent: #3c2b1d;
+  --perte: #a8232c;
+  --gain: #2f7a3a;
+}
+
+:root[data-theme="jour"] ::selection { background: #e3c3c5; color: #221a15; }
+
+/* Le vignettage sombre du site devient un voile doux */
+:root[data-theme="jour"] body::before {
+  background-image: radial-gradient(ellipse 140% 100% at 50% 50%, transparent 55%, rgba(120,95,60,.18) 100%);
+}
+
+/* ---------- Jeu de cartes et fiche de profil : décors à part, restent tels quels ---------- */
+/* (et les îlots sombres : panneaux de la boutique, dont le bois et les enseignes restent nocturnes) */
+:root[data-theme="jour"] body.page-jeu,
+:root[data-theme="jour"] body.page-fiche,
+:root[data-theme="jour"] .echoppe {
+  --ink: #131010; --ink-2: #1a1616; --ink-3: #221d1c;
+  --parchment: #f2eee6; --parchment-dim: #bcb2a4; --parchment-faint: #8a8073;
+  --bronze: #ece6d9; --bronze-dim: #9a9284;
+  --line: rgba(240,236,227,.14); --line-strong: rgba(240,236,227,.27);
+}
+:root[data-theme="jour"] .echoppe {
+  --fond: #131010; --carte: #1a1616; --bord: rgba(240,236,227,.27);
+  --texte: #f2eee6; --texte-doux: #bcb2a4; --accent: #ece6d9; --perte: #c22f38; --gain: #6fbf73;
+}
+
+/* ---------- Barre latérale ---------- */
+:root[data-theme="jour"] body:not(.page-jeu):not(.page-fiche) .rail {
+  background: rgba(232,225,213,.9);
+  border-color: rgba(60,40,20,.18);
+  box-shadow: 0 14px 40px rgba(60,40,20,.22), inset 0 1px 0 rgba(255,255,255,.7);
+}
+@media (hover:hover) and (min-width:701px){
+  :root[data-theme="jour"] body:not(.page-jeu):not(.page-fiche) .rail:hover:not(:has(.search-panel.open)) { background: rgba(232,225,213,.97); }
+}
+@media (min-width:701px){
+  :root[data-theme="jour"] body:not(.page-jeu):not(.page-fiche) .rail:focus-within:not(:has(.search-panel.open)) { background: rgba(232,225,213,.97); }
+}
+:root[data-theme="jour"] body:not(.page-jeu):not(.page-fiche) .rail-item:hover,
+:root[data-theme="jour"] body:not(.page-jeu):not(.page-fiche) .rail-item:focus-visible { background: rgba(60,40,20,.07); }
+:root[data-theme="jour"] body:not(.page-jeu):not(.page-fiche) .rail-item.is-active { background: rgba(60,40,20,.08); color: #8a6a2c; }
+:root[data-theme="jour"] body:not(.page-jeu):not(.page-fiche) .rail-item.is-active::before { background: #8a6a2c; }
+:root[data-theme="jour"] body:not(.page-jeu):not(.page-fiche) .rail-sep { background: rgba(60,40,20,.16); }
+
+/* ---------- Accueil : héros, carrousel, dock, pied de page ---------- */
+
+/* Barre latérale du jeu et du profil : elle reste sombre, ses boutons de compte (déconnexion, MJ) gardent donc leurs couleurs claires */
+:root[data-theme="jour"] body.page-jeu .rail,
+:root[data-theme="jour"] body.page-fiche .rail {
+  --texte: #f2eee6; --texte-doux: #bcb2a4; --bord: rgba(240,236,227,.27); --fond: #131010;
+}

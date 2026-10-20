@@ -1,0 +1,3214 @@
+/* =====================================================================
+   Page jeu-cartes.html — Duel des Couronnes
+   Low poly très visible + fantasy médiévale sombre : formes à facettes,
+   gris / noir / blanc / bleu nuit, un seul accent ambre.
+   Décor : forteresse en ruine sous la lune (img/Fond/profil-forteresse.svg),
+   brume (décor fixe : rien n'y bouge, pour la fluidité).
+   ===================================================================== */
+
+.page-jeu {
+  --nuit: #0b0d12;
+  --ardoise: #161a22;
+  --ardoise-2: #1e232d;
+  --ligne: rgba(205,214,230,.16);
+  --ligne-forte: rgba(205,214,230,.34);
+  --blanc: #eef0f4;
+  --gris: #9aa1ad;
+  --ambre: #d9a441;
+  --ambre-lueur: rgba(217,164,65,.45);
+  --sang: #b7444b;
+  --soin: #7fb08f;
+  --facette: polygon(10px 0, calc(100% - 10px) 0, 100% 10px, 100% calc(100% - 10px), calc(100% - 10px) 100%, 10px 100%, 0 calc(100% - 10px), 0 10px);
+
+  --texte: var(--blanc);
+  --texte-doux: var(--gris);
+  --bord: var(--ligne);
+  background: var(--nuit);
+  color: var(--blanc);
+}
+
+
+/* ---------- Décor ---------- */
+.scene {
+  position: fixed; inset: 0; z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.scene__fond {
+  position: absolute; inset: -40px;
+  background:
+    radial-gradient(ellipse 120% 90% at 50% 40%, transparent 40%, rgba(0,0,0,.75) 100%),
+    linear-gradient(180deg, rgba(11,13,18,.35), rgba(11,13,18,.8) 70%),
+    url("/img/Fond/profil-forteresse.svg") center bottom / cover no-repeat,
+    var(--nuit);
+  transform: scale(1.03);
+}
+.scene__brume {
+  position: absolute; left: -30%; right: -30%; bottom: 0; height: 55%;
+  background:
+    radial-gradient(ellipse 40% 50% at 30% 70%, rgba(170,180,200,.10), transparent 70%),
+    radial-gradient(ellipse 35% 40% at 75% 80%, rgba(170,180,200,.08), transparent 70%);
+}
+.scene__brume--2 { bottom: 15%; opacity: .7; }
+
+.jeu-wrap {
+  position: relative; z-index: 1;
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: 18px 16px 40px;
+}
+.page-jeu .vide { color: var(--gris); font-style: italic; }
+
+
+/* ---------- Boutons ---------- */
+.btn-dc {
+  display: inline-flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 1px;
+  min-height: 42px;
+  padding: 8px 20px;
+  border: 0;
+  clip-path: polygon(8px 0, calc(100% - 8px) 0, 100% 50%, calc(100% - 8px) 100%, 8px 100%, 0 50%);
+  background:
+    linear-gradient(160deg, rgba(255,255,255,.1) 0 40%, transparent 40.1%),
+    var(--ardoise-2);
+  box-shadow: inset 0 0 0 1px var(--ligne-forte);
+  color: var(--blanc);
+  font-family: "Cinzel","Cinzel Repli", serif;
+  font-size: .85rem; font-weight: 700; letter-spacing: .08em;
+  cursor: pointer;
+  transition: filter .15s, transform .15s;
+}
+.btn-dc small { font-family: "EB Garamond", serif; font-size: .72rem; font-weight: 400; letter-spacing: 0; opacity: .7; }
+.btn-dc:hover:not(:disabled) { filter: brightness(1.25); transform: translateY(-1px); }
+.btn-dc:disabled { opacity: .4; cursor: not-allowed; }
+.btn-dc--ambre {
+  color: #1b1408;
+  background: linear-gradient(160deg, #f0c873 0 40%, var(--ambre) 40.1%);
+}
+.btn-dc:focus-visible, .btn-outil:focus-visible, .dc-carte:focus-visible, .dc-unite:focus-visible, .dc-heros:focus-visible {
+  outline: 2px solid var(--ambre); outline-offset: 3px;
+}
+
+
+/* ---------- Accueil ---------- */
+.accueil { padding: 30px 0 10px; text-align: center; }
+.accueil__sur { font-family: "Cinzel","Cinzel Repli", serif; font-size: .75rem; letter-spacing: .3em; text-transform: uppercase; color: var(--gris); }
+.accueil__titre {
+  margin: 8px 0 12px;
+  font-family: "Cinzel Decorative","Cinzel","Cinzel Repli", serif;
+  font-size: clamp(2rem, 6vw, 3.4rem);
+  color: var(--blanc);
+  text-shadow: 0 4px 30px rgba(0,0,0,.8);
+}
+.accueil__texte { max-width: 60ch; margin: 0 auto 22px; color: #c9ced8; font-size: 1.1rem; }
+.accueil__actions { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; margin-bottom: 34px; }
+.accueil__deck-titre { font-family: "Cinzel","Cinzel Repli", serif; font-size: .9rem; letter-spacing: .14em; text-transform: uppercase; color: var(--gris); margin-bottom: 14px; }
+.accueil__deck {
+  display: flex; flex-wrap: wrap; justify-content: center; gap: 12px;
+  --carte-l: 108px;
+}
+.accueil__deck .dc-carte { cursor: default; }
+
+
+/* Main de l'Ombre : dos de cartes */
+.main-adverse { display: flex; justify-content: flex-end; }
+.dos {
+  width: 26px; aspect-ratio: 5 / 7;
+  clip-path: polygon(4px 0, calc(100% - 4px) 0, 100% 4px, 100% calc(100% - 4px), calc(100% - 4px) 100%, 4px 100%, 0 calc(100% - 4px), 0 4px);
+  background:
+    linear-gradient(135deg, transparent 45%, rgba(217,164,65,.35) 45% 55%, transparent 55%),
+    linear-gradient(45deg, transparent 45%, rgba(217,164,65,.35) 45% 55%, transparent 55%),
+    linear-gradient(160deg, #2a3140, #151921);
+  box-shadow: inset 0 0 0 1px var(--ligne-forte);
+}
+.dos + .dos { margin-left: -12px; }
+
+
+/* ---------- Plateau ---------- */
+.table {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 210px;
+  gap: 18px;
+  align-items: start;
+}
+.table__plateau {
+  position: relative;
+  display: flex; flex-direction: column; gap: 8px;
+  padding: 12px 14px;
+  clip-path: polygon(18px 0, calc(100% - 18px) 0, 100% 18px, 100% calc(100% - 18px), calc(100% - 18px) 100%, 18px 100%, 0 calc(100% - 18px), 0 18px);
+  background:
+    linear-gradient(200deg, rgba(200,214,240,.05) 0 25%, transparent 25.1%),
+    linear-gradient(160deg, transparent 0 65%, rgba(0,0,0,.18) 65.1%),
+    rgba(14,17,24,.72);
+  box-shadow: inset 0 0 0 1px var(--ligne);
+  backdrop-filter: blur(4px);
+}
+.camp { display: flex; flex-direction: column; gap: 10px; }
+.pile { display: inline-flex; align-items: center; gap: 6px; font-family: "Cinzel","Cinzel Repli", serif; font-size: .75rem; letter-spacing: .06em; color: var(--gris); }
+
+/* Terrain : 5 emplacements */
+.terrain {
+  display: grid;
+  grid-template-columns: repeat(5, var(--unite-l));
+  justify-content: center;
+  gap: clamp(6px, 1.2vw, 14px);
+  --unite-l: clamp(58px, 6.4vw, 90px);
+}
+/* Héros */
+.dc-heros {
+  display: flex; align-items: center; gap: 10px;
+  padding: 4px 16px 4px 4px;
+  border: 0;
+  clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 50%, calc(100% - 12px) 100%, 0 100%);
+  background: linear-gradient(160deg, rgba(255,255,255,.06) 0 40%, transparent 40.1%), var(--ardoise-2);
+  box-shadow: inset 0 0 0 1px var(--ligne-forte);
+  color: var(--blanc); font: inherit; text-align: left;
+  cursor: pointer;
+}
+.dc-heros.est-ciblable { background: linear-gradient(160deg, rgba(255,255,255,.06) 0 40%, transparent 40.1%), #3a1d22; box-shadow: inset 0 0 0 2px #f07a80; }
+.dc-heros__portrait {
+  display: grid; place-items: center;
+  width: 52px; height: 52px; flex-shrink: 0;
+  clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+  background: linear-gradient(160deg, #3a4252, #1a1e27);
+  overflow: hidden;
+}
+.dc-heros__portrait img { width: 100%; height: 100%; object-fit: cover; }
+.dc-heros__portrait svg { width: 60%; height: 60%; fill: var(--ambre); }
+.dc-heros__infos { display: flex; flex-direction: column; gap: 3px; min-width: 120px; }
+.dc-heros__nom { font-family: "Cinzel","Cinzel Repli", serif; font-size: .82rem; font-weight: 700; letter-spacing: .04em; }
+.dc-heros__pv { display: flex; align-items: center; gap: 8px; font-size: .8rem; color: var(--gris); }
+.dc-heros__pv strong { font-family: "Cinzel","Cinzel Repli", serif; font-size: 1.15rem; color: var(--blanc); }
+.dc-heros__jauge { width: 80px; height: 6px; background: rgba(255,255,255,.08); clip-path: polygon(3px 0, 100% 0, calc(100% - 3px) 100%, 0 100%); }
+.dc-heros__jauge i { display: block; height: 100%; background: linear-gradient(90deg, #8e3238, #c45b61); transition: width .4s ease; }
+
+/* Énergie : 10 cristaux taillés */
+.energie { display: flex; align-items: center; gap: 4px; }
+.cristal {
+  width: 11px; height: 16px;
+  clip-path: polygon(50% 0, 100% 30%, 80% 100%, 20% 100%, 0 30%);
+  background: rgba(255,255,255,.06);
+}
+.cristal--plein { background: linear-gradient(160deg, #f6d995 0 45%, var(--ambre) 45.1%); filter: drop-shadow(0 0 4px var(--ambre-lueur)); }
+.cristal--vide { background: rgba(217,164,65,.22); }
+.energie__texte { margin-left: 6px; font-family: "Cinzel","Cinzel Repli", serif; font-size: .82rem; color: var(--ambre); }
+
+/* Ligne centrale : le d20 */
+.centre {
+  display: flex; align-items: center; justify-content: center; gap: 16px;
+  min-height: 62px;
+  border-top: 1px solid var(--ligne);
+  border-bottom: 1px solid var(--ligne);
+  margin: 4px 0;
+}
+.d20 { position: relative; width: 64px; height: 64px; flex-shrink: 0; }
+.d20 svg { width: 100%; height: 100%; }
+.d20 polygon { fill: #1e232d; stroke: var(--ligne-forte); stroke-width: 2; }
+.d20 path { fill: none; stroke: rgba(205,214,230,.18); stroke-width: 1.2; }
+.d20__face {
+  position: absolute; inset: 0;
+  display: grid; place-items: center;
+  font-family: "Cinzel","Cinzel Repli", serif; font-size: 1.25rem; font-weight: 800;
+  color: var(--blanc); text-shadow: 0 1px 3px #000;
+}
+.d20.roule svg { animation: roule .35s linear infinite; }
+@keyframes roule { to { transform: rotate(360deg); } }
+.d20--critique polygon, .d20--grace polygon { fill: #5a4518; stroke: var(--ambre); }
+.d20--critique, .d20--grace { filter: drop-shadow(0 0 14px var(--ambre)); }
+.d20--echec polygon, .d20--malediction polygon { fill: #3a1d22; stroke: #c45b61; }
+.d20--solide polygon, .d20--benediction polygon { stroke: #e7ecf4; }
+.d20--destin polygon { stroke-dasharray: 4 3; }
+.centre__resultat { margin: 0; min-width: 9em; font-family: "Cinzel","Cinzel Repli", serif; font-size: 1rem; font-weight: 700; letter-spacing: .06em; }
+.centre__resultat--critique, .centre__resultat--grace { color: var(--ambre); }
+.centre__resultat--echec, .centre__resultat--malediction { color: #f07a80; }
+.centre__resultat--faible { color: var(--gris); }
+.centre__consigne { margin: 0; max-width: 34ch; color: var(--gris); font-size: .9rem; font-style: italic; }
+
+
+/* ---------- Historique des jets ---------- */
+.historique {
+  position: sticky; top: 90px;
+  padding: 14px;
+  clip-path: polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px);
+  background: rgba(14,17,24,.78);
+  box-shadow: inset 0 0 0 1px var(--ligne);
+}
+.historique__titre { margin: 0 0 10px; font-family: "Cinzel","Cinzel Repli", serif; font-size: .78rem; letter-spacing: .16em; text-transform: uppercase; color: var(--gris); }
+.historique__liste { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.jet { display: flex; align-items: center; gap: 10px; font-size: .82rem; line-height: 1.15; }
+.jet b {
+  display: grid; place-items: center; flex-shrink: 0;
+  width: 30px; height: 30px;
+  clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+  background: #262c38;
+  font-family: "Cinzel","Cinzel Repli", serif;
+}
+.jet small { display: block; color: var(--gris); font-size: .72rem; }
+.jet--moi span { color: var(--blanc); }
+.jet:not(.jet--moi) span { color: #b9bfca; }
+.jet--critique b, .jet--grace b { background: var(--ambre); color: #1b1408; }
+.jet--echec b, .jet--malediction b { background: #8e3238; }
+.jet--vide { color: var(--gris); font-style: italic; }
+.historique__outils { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--ligne); }
+
+/* Curseur du volume, sous les boutons du panneau */
+.volume {
+  flex: 1 0 100%;
+  display: grid; grid-template-columns: auto 1fr 3.2em; align-items: center; gap: 8px;
+  font-family: "Cinzel","Cinzel Repli", serif; font-size: .68rem; letter-spacing: .06em;
+  color: var(--gris);
+}
+.volume__valeur { text-align: right; color: var(--blanc); font-variant-numeric: tabular-nums; }
+.volume input {
+  --pct: 80%;
+  appearance: none; -webkit-appearance: none;
+  width: 100%; height: 6px; margin: 0;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--ambre, #d9a441) var(--pct), rgba(255,255,255,.14) var(--pct));
+  cursor: pointer;
+}
+.volume input::-webkit-slider-thumb {
+  -webkit-appearance: none; appearance: none;
+  width: 14px; height: 14px; border-radius: 50%;
+  background: #f6d995; box-shadow: 0 0 0 2px #1a1416, 0 0 8px rgba(240,200,115,.6);
+}
+.volume input::-moz-range-thumb {
+  width: 14px; height: 14px; border: 0; border-radius: 50%;
+  background: #f6d995; box-shadow: 0 0 0 2px #1a1416, 0 0 8px rgba(240,200,115,.6);
+}
+.volume input:focus-visible { outline: 2px solid var(--ambre, #d9a441); outline-offset: 3px; }
+@media (max-width: 600px) { .volume { display: none; } }
+.btn-outil {
+  display: grid; place-items: center;
+  width: 36px; height: 36px; padding: 0;
+  border: 0;
+  clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+  background: var(--ardoise-2);
+  color: var(--blanc); font-family: "Cinzel","Cinzel Repli", serif; font-weight: 700;
+  cursor: pointer;
+}
+.btn-outil:hover { background: #2c3341; }
+.ico-son { width: 18px; height: 18px; fill: var(--blanc); stroke: var(--blanc); stroke-width: 1.6; stroke-linecap: round; }
+.ico-son__ondes { fill: none; }
+.ico-son__barre { display: none; fill: none; }
+.est-muet .ico-son__ondes { display: none; }
+.est-muet .ico-son__barre { display: inline; }
+
+
+/* ---------- Bannière, aperçu de sort ---------- */
+.banniere {
+  position: fixed; left: 50%; top: 42%; z-index: 40;
+  translate: -50% -50%;
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  padding: 16px 60px;
+  clip-path: polygon(0 50%, 30px 0, calc(100% - 30px) 0, 100% 50%, calc(100% - 30px) 100%, 30px 100%);
+  background: rgba(11,13,18,.92);
+  box-shadow: inset 0 0 0 1px var(--ligne-forte);
+  pointer-events: none;
+  opacity: 0; scale: .9;
+  transition: opacity .25s, scale .25s;
+}
+.banniere.est-visible { opacity: 1; scale: 1; }
+.banniere strong { font-family: "Cinzel Decorative","Cinzel","Cinzel Repli", serif; font-size: 1.6rem; color: var(--blanc); }
+.banniere span { color: var(--gris); font-size: .95rem; }
+.banniere--moi strong, .banniere--grace strong, .banniere--benediction strong { color: var(--ambre); }
+.banniere--malediction strong { color: #f07a80; }
+
+.apercu {
+  position: fixed; left: 50%; top: 45%; z-index: 39;
+  translate: -50% -50%;
+  pointer-events: none;
+  opacity: 0; scale: .7;
+  transition: opacity .2s, scale .25s;
+}
+.apercu .dc-carte { --carte-l: 170px; }
+.apercu.est-visible { opacity: 1; scale: 1; }
+
+
+/* ---------- Effets ---------- */
+.flotte {
+  position: fixed; z-index: 50;
+  translate: -50% -50%;
+  font-family: "Cinzel","Cinzel Repli", serif; font-size: 1.6rem; font-weight: 800;
+  text-shadow: 0 2px 4px #000, 0 0 12px rgba(0,0,0,.8);
+  pointer-events: none;
+  animation: flotte 1.2s ease-out forwards;
+}
+.flotte--degats { color: #ff8a8f; }
+.flotte--soin { color: #9fd9b0; }
+.flotte--buff { color: var(--ambre); font-size: 1.2rem; }
+.flotte--rate { color: var(--gris); font-size: 1.1rem; }
+.flotte--critique {
+  margin-top: -34px;
+  color: #f6d995; font-size: 1.15rem; letter-spacing: .12em; text-transform: uppercase;
+  text-shadow: 0 0 10px rgba(240,200,115,.9), 0 2px 4px #000;
+}
+@keyframes flotte { 0% { opacity: 0; transform: translateY(10px) scale(.8); } 15% { opacity: 1; transform: translateY(0) scale(1.15); } 100% { opacity: 0; transform: translateY(-50px) scale(1); } }
+
+.fx-secousse { animation: secousse .4s ease; }
+@keyframes secousse { 20% { translate: -6px 0; } 40% { translate: 5px 0; } 60% { translate: -4px 0; } 80% { translate: 2px 0; } }
+.fx-elan { transform: translate(var(--dx), var(--dy)) scale(1.08) !important; transition: transform .22s cubic-bezier(.5,0,.75,0) !important; z-index: 10; }
+.fx-arrivee { animation: arrivee .6s cubic-bezier(.2,1.4,.4,1); }
+@keyframes arrivee { from { transform: translateY(-30px) scale(1.3); opacity: 0; } }
+@keyframes mort { to { transform: scale(.6) rotate(-6deg); opacity: 0; filter: grayscale(1) brightness(2); } }
+@keyframes eclat { from { opacity: 1; transform: scale(.6); } to { opacity: 0; transform: scale(1.4); } }
+@keyframes vague { 30% { filter: brightness(1.6) hue-rotate(-20deg); translate: 0 -4px; } }
+@keyframes eclair { 10%, 40% { filter: brightness(1.8); } 25% { filter: brightness(1); } }
+
+
+/* ---------- Règles ---------- */
+.regles {
+  max-width: 680px; width: calc(100% - 32px);
+  max-height: calc(100vh - 60px);
+  padding: 26px 30px;
+  border: 0;
+  clip-path: polygon(16px 0, calc(100% - 16px) 0, 100% 16px, 100% calc(100% - 16px), calc(100% - 16px) 100%, 16px 100%, 0 calc(100% - 16px), 0 16px);
+  background: #12151c;
+  box-shadow: inset 0 0 0 1px var(--ligne-forte);
+  color: var(--blanc);
+}
+.regles::backdrop { background: rgba(5,6,9,.75); backdrop-filter: blur(3px); }
+.regles h2 { margin: 0 0 16px; font-family: "Cinzel","Cinzel Repli", serif; font-size: 1.2rem; color: var(--ambre); }
+.regles > ul { margin: 0 0 20px; padding-left: 18px; display: flex; flex-direction: column; gap: 8px; font-size: 1rem; line-height: 1.45; }
+.regles__table { list-style: none; margin: 6px 0 0; padding: 0; display: flex; flex-direction: column; gap: 3px; }
+.regles__table b { display: inline-block; min-width: 3.4em; font-family: "Cinzel","Cinzel Repli", serif; color: var(--ambre); }
+
+
+/* ---------- Fin du duel ---------- */
+.fin {
+  position: fixed; inset: 0; z-index: 60;
+  display: grid; place-items: center;
+  padding: 16px;
+  background: rgba(5,6,9,.78);
+  backdrop-filter: blur(4px);
+}
+.fin__cadre {
+  width: min(520px, 100%);
+  padding: 34px 30px 28px;
+  text-align: center;
+  clip-path: polygon(20px 0, calc(100% - 20px) 0, 100% 20px, 100% calc(100% - 20px), calc(100% - 20px) 100%, 20px 100%, 0 calc(100% - 20px), 0 20px);
+  background: linear-gradient(200deg, rgba(200,214,240,.06) 0 30%, transparent 30.1%), #12151c;
+  box-shadow: inset 0 0 0 1px var(--ligne-forte);
+}
+.fin__sur { font-family: "Cinzel","Cinzel Repli", serif; font-size: .75rem; letter-spacing: .25em; text-transform: uppercase; color: var(--gris); }
+.fin__titre { margin: 6px 0 8px; font-family: "Cinzel Decorative","Cinzel","Cinzel Repli", serif; font-size: 2.6rem; }
+.fin__titre--victoire { color: var(--ambre); text-shadow: 0 0 30px var(--ambre-lueur); }
+.fin__titre--defaite { color: #c9ced8; }
+.fin__texte { margin: 0 auto 18px; color: #c9ced8; }
+/* « +100 XP de pass » : un petit badge, lien vers la page du Pass de saison */
+.fin__pass {
+  display: inline-block;
+  margin: -6px auto 18px;
+  padding: 5px 16px;
+  border: 1px solid rgba(240,200,115,.55);
+  background: rgba(240,200,115,.12);
+  color: #f6d995;
+  font-family: "Cinzel","Cinzel Repli", serif; font-size: .82rem; font-weight: 700; letter-spacing: .06em;
+  text-decoration: none;
+  animation: fin-pass .5s cubic-bezier(.2,1.4,.4,1) both;
+}
+.fin__pass:hover { background: rgba(240,200,115,.22); }
+.fin__pass--vide { border-color: rgba(240,236,227,.2); background: rgba(255,255,255,.04); color: #bcb2a4; font-weight: 600; }
+@keyframes fin-pass { from { opacity: 0; transform: scale(.8); } }
+.fin__stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 0 0 24px; }
+.fin__stats div { padding: 10px 6px; background: rgba(255,255,255,.04); clip-path: var(--facette); }
+.fin__stats dt { font-size: .72rem; color: var(--gris); }
+.fin__stats dd { margin: 2px 0 0; font-family: "Cinzel","Cinzel Repli", serif; font-size: 1.4rem; font-weight: 800; }
+.fin__actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+
+
+/* ---------- Écrans moyens et téléphones ---------- */
+@media (max-width: 1000px) {
+  .table { grid-template-columns: minmax(0, 1fr); }
+  .historique { position: static; }
+  .historique__liste { flex-direction: row; flex-wrap: wrap; }
+  .historique__liste .jet { width: calc(50% - 4px); }
+}
+@media (max-width: 600px) {
+  .jeu-wrap { padding: 8px 6px 30px; }
+  .table__plateau { padding: 8px 6px; clip-path: none; }
+  .terrain { gap: 4px; }
+  .dc-heros__infos { min-width: 0; }
+  .dc-heros__jauge { width: 54px; }
+  .dc-heros__portrait { width: 40px; height: 40px; }
+  .btn-dc { padding: 6px 14px; font-size: .75rem; }
+  .main { overflow-x: auto; justify-content: flex-start; padding-top: 30px; }
+  .centre { min-height: 60px; gap: 10px; }
+  .d20 { width: 50px; height: 50px; }
+  .centre__consigne { display: none; }
+  .fin__stats { grid-template-columns: repeat(2, 1fr); }
+  .historique__liste .jet { width: 100%; }
+}
+
+/* Réduire les animations : rien ne bouge */
+@media (prefers-reduced-motion: reduce) {
+  .d20.roule svg, .dc-unite.est-ciblable, .dc-heros.est-ciblable { animation: none !important; }
+  .scene__fond { transform: none; transition: none; }
+  .dc-carte { transform: none; transition: none; }
+  .fx-secousse, .fx-arrivee, .fx-mort, .fx-vague, .fx-eclair, .flotte { animation-duration: .01s !important; }
+}
+
+/* ---------- Ajustements du plateau (une seule ligne pour le joueur, main dans l'écran) ---------- */
+.energie__texte { white-space: nowrap; }
+.dos { width: 20px; }
+.dos + .dos { margin-left: -10px; }
+/* Téléphones : les 5 emplacements se partagent la largeur du plateau */
+@media (max-width: 600px) {
+  .terrain { grid-template-columns: repeat(5, minmax(0, 1fr)); --unite-l: 100%; }
+  .dc-unite, .dc-place { width: 100%; }
+}
+
+
+/* =====================================================================
+   Mode en ligne : onglets, salon, salle d'attente
+   ===================================================================== */
+.modes {
+  display: inline-flex;
+  margin: 0 auto 22px;
+  clip-path: polygon(12px 0, calc(100% - 12px) 0, 100% 50%, calc(100% - 12px) 100%, 12px 100%, 0 50%);
+  background: rgba(14,17,24,.8);
+  box-shadow: inset 0 0 0 1px var(--ligne-forte);
+}
+.mode {
+  display: flex; flex-direction: column; gap: 2px;
+  padding: 10px 30px;
+  border: 0; background: none;
+  color: var(--gris); font: inherit;
+  cursor: pointer;
+  transition: background .15s, color .15s;
+}
+.mode + .mode { border-left: 1px solid var(--ligne); }
+.mode:hover { color: var(--blanc); background: rgba(255,255,255,.04); }
+.mode:focus-visible { outline: 2px solid var(--ambre); outline-offset: -4px; }
+.mode__titre { font-family: "Cinzel","Cinzel Repli", serif; font-size: .9rem; font-weight: 700; letter-spacing: .08em; }
+.mode__texte { font-size: .82rem; font-style: italic; }
+.mode.est-actif { color: var(--blanc); background: linear-gradient(160deg, rgba(217,164,65,.18) 0 40%, rgba(217,164,65,.08) 40.1%); }
+.mode.est-actif .mode__titre { color: var(--ambre); }
+
+.ligne { max-width: 760px; margin: 0 auto 24px; text-align: left; }
+.ligne__accueil { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.ligne__bloc {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 10px;
+  padding: 18px 20px;
+  clip-path: var(--facette);
+  background: linear-gradient(200deg, rgba(200,214,240,.05) 0 30%, transparent 30.1%), rgba(14,17,24,.8);
+  box-shadow: inset 0 0 0 1px var(--ligne);
+}
+.ligne__bloc--centre { align-items: center; text-align: center; }
+.ligne__bloc h3 { margin: 0; font-family: "Cinzel","Cinzel Repli", serif; font-size: .95rem; letter-spacing: .08em; color: var(--blanc); }
+.ligne__bloc p { margin: 0; flex: 1; color: var(--gris); font-size: .95rem; font-style: italic; }
+.ligne__rejoindre { display: flex; gap: 8px; width: 100%; }
+.ligne__rejoindre input {
+  flex: 1; min-width: 0;
+  padding: 8px 12px;
+  border: 0;
+  background: rgba(0,0,0,.35);
+  box-shadow: inset 0 0 0 1px var(--ligne-forte);
+  color: var(--blanc);
+  font-family: "Cinzel","Cinzel Repli", serif; font-size: 1.1rem; letter-spacing: .3em; text-transform: uppercase;
+}
+.ligne__rejoindre input:focus { outline: 2px solid var(--ambre); outline-offset: 0; }
+
+.salon {
+  padding: 18px 20px;
+  clip-path: var(--facette);
+  background: rgba(14,17,24,.82);
+  box-shadow: inset 0 0 0 1px var(--ligne-forte);
+}
+.salon__tete { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+.salon__code { display: flex; align-items: baseline; gap: 12px; }
+.salon__label { font-family: "Cinzel","Cinzel Repli", serif; font-size: .75rem; letter-spacing: .2em; text-transform: uppercase; color: var(--gris); }
+.salon__code strong { font-family: "Cinzel","Cinzel Repli", serif; font-size: 1.6rem; letter-spacing: .3em; color: var(--ambre); }
+.salon__boutons { display: flex; gap: 8px; }
+.salon__boutons .btn-dc { min-height: 34px; padding: 4px 16px; font-size: .75rem; }
+.salon__joueurs { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.salon__joueur {
+  display: grid;
+  grid-template-areas: "avatar nom" "avatar role" "avatar pret";
+  grid-template-columns: auto 1fr;
+  column-gap: 12px;
+  align-items: center;
+  padding: 10px 12px;
+  background: rgba(255,255,255,.03);
+  box-shadow: inset 0 0 0 1px var(--ligne);
+}
+.salon__joueur.est-pret { box-shadow: inset 0 0 0 1px var(--ambre), inset 0 0 22px rgba(217,164,65,.1); }
+.salon__joueur--vide { grid-template-areas: "avatar nom"; opacity: .6; }
+.salon__avatar {
+  grid-area: avatar;
+  display: grid; place-items: center;
+  width: 44px; height: 44px;
+  clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+  background: #262c38;
+  object-fit: cover;
+  color: var(--gris);
+}
+.salon__nom { grid-area: nom; font-family: "Cinzel","Cinzel Repli", serif; font-size: .9rem; font-weight: 700; }
+.salon__nom small { font-family: "EB Garamond", serif; font-weight: 400; color: var(--gris); }
+.salon__role { grid-area: role; font-size: .8rem; color: var(--gris); }
+.salon__pret { grid-area: pret; font-size: .8rem; font-style: italic; color: var(--gris); }
+.est-pret .salon__pret { color: var(--ambre); font-style: normal; }
+.salon__etat { margin: 12px 0; text-align: center; color: #c9ced8; font-style: italic; }
+.salon__pret-btn { display: flex; margin: 0 auto; }
+
+/* Notification (copie du lien, erreurs) */
+.notif {
+  position: fixed; left: 50%; bottom: 24px; z-index: 70;
+  transform: translate(-50%, 20px);
+  max-width: calc(100% - 32px);
+  padding: 12px 20px;
+  clip-path: var(--facette);
+  background: #12151c;
+  box-shadow: inset 0 0 0 1px var(--ligne-forte);
+  color: var(--blanc);
+  opacity: 0; pointer-events: none;
+  transition: opacity .2s, transform .2s;
+}
+.notif--visible { opacity: 1; transform: translate(-50%, 0); }
+.notif--erreur { box-shadow: inset 0 0 0 1px #c45b61; }
+
+@media (max-width: 600px) {
+  .ligne__accueil, .salon__joueurs { grid-template-columns: 1fr; }
+  .mode { padding: 8px 16px; }
+}
+
+/* Annule le style générique des <section> de CSS/index.css (grande marge, filet, largeur bornée) */
+.jeu-wrap .table, .jeu-wrap .ligne { padding: 0; border-bottom: 0; }
+.jeu-wrap .table { max-width: none; }
+
+/* Le plateau descend un peu sous le haut de la page */
+.jeu-wrap .table { margin-top: 56px; }
+@media (max-width: 600px) { .jeu-wrap .table { margin-top: 24px; } }
+
+.fx-visee { filter: drop-shadow(0 0 12px rgba(240,122,128,.85)); }
+
+/* Énergie : des gouttes au lieu des cristaux (carré arrondi sauf un coin, tourné : pointe en haut) */
+.page-jeu .cristal,
+.page-jeu .camp--joueur .cristal {
+  width: 11px; height: 11px;
+  margin: 3px 2px 0;
+  clip-path: none;
+  border-radius: 50% 0 50% 50%;
+  transform: rotate(-45deg);
+}
+.page-jeu .cristal--plein { background: radial-gradient(circle at 35% 65%, #ffe9b8 0 18%, #f0c873 30%, var(--ambre) 75%); }
+
+/* Gouttes d'énergie en violet */
+.page-jeu { --energie: #9a6cf0; --energie-claire: #c9b2fb; --energie-lueur: rgba(154,108,240,.55); }
+.page-jeu .cristal--plein {
+  background: radial-gradient(circle at 35% 65%, #efe6ff 0 18%, var(--energie-claire) 30%, var(--energie) 75%);
+  filter: drop-shadow(0 0 4px var(--energie-lueur));
+}
+.page-jeu .cristal--vide { background: rgba(154,108,240,.25); }
+.page-jeu .energie__texte { color: var(--energie-claire); }
+
+
+
+/* =====================================================================
+   Cartes : main, terrain, aperçu, accueil — toutes à la forme des vraies cartes
+   - vraie carte : l'illustration originale en entier (son cadre, son nom, sa rareté)
+   - carte du Codex : la même silhouette (sommet en arc, pointe en bas), cadre argenté
+   Par-dessus : coût, capacité, attaque / vie. Les lueurs (jouable, prête, ciblée…)
+   sont des drop-shadow : elles épousent la forme de la carte.
+   ===================================================================== */
+.dc-carte, .dc-unite {
+  --rx: 0deg; --ry: 0deg; --mx: 50%; --my: 50%; --dx: 0px; --dy: 0px;
+  --ombre: drop-shadow(0 6px 9px rgba(0,0,0,.65));
+  position: relative;
+  flex-shrink: 0;
+  aspect-ratio: 2 / 3;
+  padding: 0; border: 0;
+  background: none; clip-path: none;
+  color: var(--blanc); font: inherit; text-align: left;
+  cursor: pointer;
+  filter: var(--ombre);
+  transition: transform .2s ease, filter .2s ease, translate .2s ease;
+}
+.dc-carte {
+  width: var(--carte-l, clamp(84px, 9vw, 120px));
+  transform: perspective(700px) rotateX(var(--rx)) rotateY(var(--ry));
+}
+.dc-carte.incline { transition: transform .06s linear, translate .2s ease, filter .2s ease; }
+.dc-unite { width: var(--unite-l); }
+.dc-carte__corps, .dc-unite__corps { position: absolute; inset: 0; display: block; }
+
+/* --- Face de la carte --- */
+.dc-face { position: absolute; inset: 0; width: 100%; height: 100%; }
+.dc-face--image { display: block; object-fit: contain; pointer-events: none; }
+/* Vraie carte : l'image + le texte de son cadre noir (CSS/carte-infos.css, tailles en % de la carte) */
+.dc-face--hote { display: block; container: carte / inline-size; pointer-events: none; }
+/* Silhouette des vraies cartes, reprise pour les cartes du Codex */
+.dc-face--codex, .dc-place {
+  --silhouette: polygon(50% 0, 64% 2.5%, 80% 4%, 92% 7%, 97% 12%, 100% 20%, 100% 82%, 95% 89%, 80% 93%, 60% 95.5%, 50% 100%,
+                        40% 95.5%, 20% 93%, 5% 89%, 0 82%, 0 20%, 3% 12%, 8% 7%, 20% 4%, 36% 2.5%);
+}
+.dc-face--codex {
+  clip-path: var(--silhouette);
+  background: linear-gradient(160deg, #eef1f6, #7b8494 32%, #cfd5df 52%, #5d6574 78%, #dfe4ec);
+}
+.dc-face__art { flex: 0 0 60%; overflow: hidden; }
+.dc-face__art svg { display: block; width: 100%; height: 100%; }
+.dc-face__panneau {
+  position: relative; z-index: 1;
+  flex: 1;
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  margin: -7% 7% 15%;
+  padding: 6% 5% 3%;
+  border-radius: 10% / 14%;
+  background: linear-gradient(180deg, #171b23, #07080b);
+  box-shadow: inset 0 1px 0 rgba(205,214,230,.3), 0 -4px 10px rgba(0,0,0,.5);
+  text-align: center;
+  overflow: hidden;
+}
+.dc-face__nom {
+  font-family: "Cinzel","Cinzel Repli", serif; font-size: .56rem; font-weight: 700; line-height: 1.12;
+  overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+}
+.dc-face__texte { font-size: .54rem; line-height: 1.15; color: var(--gris); overflow: hidden; }
+.dc-unite .dc-face__texte { display: none; }
+
+/* --- Informations du duel posées sur la carte --- */
+.dc-cout {
+  position: absolute; top: 2%; left: 3%; z-index: 2;
+  display: grid; place-items: center;
+  width: 24px; height: 26px;
+  clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+  background: linear-gradient(160deg, #f0c873 0 45%, var(--ambre) 45.1%);
+  color: #1b1408;
+  font-family: "Cinzel","Cinzel Repli", serif; font-weight: 800; font-size: .85rem;
+}
+.dc-k {
+  position: absolute; top: 3%; right: 5%; z-index: 2;
+  width: 20px; height: 20px; padding: 3px;
+  background: rgba(8,10,14,.82);
+  clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+}
+.dc-k svg { width: 100%; height: 100%; fill: var(--blanc); }
+.dc-stat {
+  position: absolute; bottom: 4%; z-index: 2;
+  display: grid; place-items: center;
+  min-width: 22px; height: 20px; padding: 0 4px;
+  clip-path: polygon(4px 0, calc(100% - 4px) 0, 100% 50%, calc(100% - 4px) 100%, 4px 100%, 0 50%);
+  font-family: "Cinzel","Cinzel Repli", serif; font-size: .78rem; font-weight: 800;
+  color: #fff; text-shadow: 0 1px 1px rgba(0,0,0,.6);
+}
+.dc-stat--a { left: 5%; background: linear-gradient(160deg, #6a7385 0 45%, #474e5c 45.1%); }
+.dc-stat--h { right: 5%; background: linear-gradient(160deg, #c45b61 0 45%, #8e3238 45.1%); }
+.dc-unite.est-blessee .dc-stat--h { background: linear-gradient(160deg, #f07a80 0 45%, #b7444b 45.1%); }
+/* Reflet qui suit la souris, découpé à la forme de la carte (masque = l'image elle-même) */
+.dc-reflet {
+  position: absolute; inset: 0; z-index: 1; pointer-events: none;
+  background: radial-gradient(circle at var(--mx) var(--my), rgba(255,255,255,.28), transparent 45%);
+  -webkit-mask: var(--masque) center / contain no-repeat;
+          mask: var(--masque) center / contain no-repeat;
+  opacity: 0; transition: opacity .2s;
+}
+/* (reflet retiré : plus d'éclat blanc au survol des cartes) */
+.dc-reflet { display: none; }
+
+/* --- Main du joueur --- */
+.main { min-height: calc(clamp(78px, 8vw, 108px) * 1.5 + 14px); }
+.main .dc-carte { --carte-l: clamp(78px, 8vw, 108px); translate: 0 14px; filter: brightness(.68) saturate(.8) var(--ombre); }
+.main .dc-carte + .dc-carte { margin-left: calc(var(--carte-l) * -0.14); }
+.main .dc-carte.est-jouable { translate: 0 6px; filter: drop-shadow(0 0 3px #f0c873) drop-shadow(0 0 8px var(--ambre-lueur)) var(--ombre); }
+.main .dc-carte:hover, .main .dc-carte:focus-visible { translate: 0 -18px; z-index: 5; }
+.main .dc-carte.est-choisie { translate: 0 -26px; z-index: 6; filter: drop-shadow(0 0 4px #f6d995) drop-shadow(0 0 16px var(--ambre)) var(--ombre); }
+.accueil__deck { --carte-l: 104px; }
+.accueil__deck .dc-carte { cursor: default; }
+
+/* --- Terrain --- */
+.dc-place {
+  width: var(--unite-l); aspect-ratio: 2 / 3;
+  clip-path: var(--silhouette);
+  background: rgba(205,214,230,.05);
+}
+.dc-unite.a-garde { filter: drop-shadow(0 0 2px #e6eaf1) drop-shadow(0 0 7px rgba(205,214,230,.55)) var(--ombre); }
+.dc-unite.est-epuisee .dc-face { filter: grayscale(.45) brightness(.72); }
+.dc-unite.est-prete { filter: drop-shadow(0 0 3px #f0c873) drop-shadow(0 0 10px var(--ambre-lueur)) var(--ombre); }
+.dc-unite.est-prete:hover { transform: translateY(-4px); }
+.dc-unite.est-choisie { transform: translateY(-10px) scale(1.05); filter: drop-shadow(0 0 4px #f6d995) drop-shadow(0 0 16px var(--ambre)) var(--ombre); }
+.dc-unite.est-ciblable { animation: ciblable-carte 1s ease-in-out infinite; }
+@keyframes ciblable-carte {
+  0%, 100% { filter: drop-shadow(0 0 3px #f07a80) drop-shadow(0 0 6px rgba(240,122,128,.5)) var(--ombre); }
+  50%      { filter: drop-shadow(0 0 4px #ff9aa0) drop-shadow(0 0 16px rgba(240,122,128,.9)) var(--ombre); }
+}
+.dc-heros.est-ciblable { animation: ciblable 1s ease-in-out infinite; }
+@keyframes ciblable { 50% { filter: drop-shadow(0 0 12px rgba(240,122,128,.8)); } }
+.vise .dc-unite:not(.est-ciblable):not(.est-choisie), .vise .dc-heros:not(.est-ciblable) { opacity: .5; }
+.dc-unite.fx-prepare { transform: translateY(-8px) scale(1.06); filter: drop-shadow(0 0 5px #f6d995) drop-shadow(0 0 16px var(--ambre)) var(--ombre); z-index: 10; }
+.dc-unite.fx-elan { transform: translate(var(--dx), var(--dy)) scale(1.08); transition: transform .22s cubic-bezier(.5,0,.75,0); z-index: 10; }
+@media (max-width: 600px) {
+  .terrain { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  .dc-unite, .dc-place { width: 100%; }
+  .dc-cout { width: 18px; height: 20px; font-size: .7rem; }
+  .dc-stat { min-width: 17px; height: 16px; font-size: .65rem; }
+  .dc-k { width: 16px; height: 16px; }
+}
+
+
+/* =====================================================================
+   Effets : éclats de carte détruite, étincelles, ondes, braises, éclairs,
+   poussière, voile rouge, secousse de l'écran (JS/jeu-cartes-arene.js)
+   ===================================================================== */
+.fx-couche { position: fixed; inset: 0; z-index: 45; pointer-events: none; overflow: hidden; }
+.fx-eclat { position: fixed; margin: 0; pointer-events: none; will-change: transform, opacity; }
+.fx-particule {
+  position: fixed; width: var(--t, 6px); height: var(--t, 6px);
+  margin: calc(var(--t, 6px) / -2) 0 0 calc(var(--t, 6px) / -2);
+  background: var(--c, #f0c873);
+  box-shadow: 0 0 8px var(--c, #f0c873);
+  clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+  will-change: transform, opacity;
+}
+.fx-particule--rond { clip-path: none; border-radius: 50%; }
+.fx-onde {
+  position: fixed; border-radius: 50%;
+  border: 3px solid var(--c, #f0c873);
+  box-shadow: 0 0 20px var(--c, #f0c873), inset 0 0 20px var(--c, #f0c873);
+  translate: -50% -50%;
+}
+.fx-flash { position: fixed; translate: -50% -50%; border-radius: 50%; background: radial-gradient(circle, var(--c, #fff) 0, transparent 70%); }
+.fx-voile { position: fixed; inset: 0; background: radial-gradient(ellipse at 50% 50%, transparent 40%, var(--c, rgba(183,40,48,.55)) 100%); }
+.fx-eclair-trait {
+  position: fixed; width: 22px;
+  translate: -50% 0;
+  background: linear-gradient(180deg, transparent, #e8eeff 20%, #b8c6ff 80%, transparent);
+  filter: drop-shadow(0 0 8px #b8c6ff);
+  clip-path: polygon(40% 0, 100% 0, 55% 40%, 100% 40%, 20% 100%, 45% 55%, 0 55%);
+}
+/* --- Attaques (JS/jeu-cartes-attaques.js) : projectiles, griffures, rayons, symboles, pointes --- */
+.fx-projectile {
+  position: fixed; width: var(--t, 26px); height: var(--t, 26px);
+  display: grid; place-items: center;
+  will-change: transform;
+}
+.fx-projectile--orbe {
+  border-radius: 50%;
+  background: radial-gradient(circle at 40% 35%, #fff 0, var(--c, #f0c873) 35%, transparent 72%);
+  box-shadow: 0 0 18px var(--c, #f0c873);
+}
+.fx-projectile--texte, .fx-symbole {
+  font-size: var(--t, 26px); line-height: 1;
+  color: var(--c, #f0c873);
+  text-shadow: 0 0 10px var(--c, #f0c873), 0 0 3px #000;
+}
+.fx-symbole { position: fixed; font-family: "Cinzel","Cinzel Repli", serif; font-weight: 700; white-space: nowrap; will-change: transform, opacity; }
+.fx-griffe {
+  position: fixed;
+  border-radius: 50%;
+  background: linear-gradient(90deg, transparent, #fff 20%, var(--c, #ff4b5c) 55%, transparent);
+  box-shadow: 0 0 10px var(--c, #ff4b5c);
+  transform-origin: 50% 50%;
+  will-change: transform, opacity;
+}
+.fx-rayon {
+  position: fixed;
+  transform-origin: 0 50%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--c, #c9b2fb), #fff 50%, var(--c, #c9b2fb));
+  box-shadow: 0 0 16px var(--c, #c9b2fb), 0 0 4px #fff;
+  will-change: transform, opacity;
+}
+.fx-pointe {
+  position: fixed;
+  transform-origin: 50% 100%;
+  background: linear-gradient(0deg, color-mix(in srgb, var(--c, #6fae5b) 60%, #000), var(--c, #6fae5b));
+  clip-path: polygon(50% 0, 100% 100%, 0 100%);
+  will-change: transform, opacity;
+}
+/* Nom de l'attaque au-dessus de l'attaquant */
+.fx-annonce {
+  position: fixed; z-index: 2;
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 5px 13px 5px 8px;
+  border: 1px solid var(--c, #f0c873);
+  border-radius: 999px;
+  background: rgba(12,10,14,.92);
+  box-shadow: 0 0 14px color-mix(in srgb, var(--c, #f0c873) 55%, transparent), 0 6px 14px rgba(0,0,0,.6);
+  color: #f2eee6;
+  font-family: "Cinzel","Cinzel Repli", serif; font-size: .78rem; font-weight: 700; letter-spacing: .06em;
+  white-space: nowrap;
+  transform: translate(-50%, -100%);
+}
+.fx-annonce i { font-style: normal; font-size: 1rem; line-height: 1; }
+.fx-annonce b { color: var(--c, #f0c873); }
+/* Carte jouée qui vole de la main au plateau */
+.fx-envol { position: fixed; z-index: 3; pointer-events: none; will-change: transform; rotate: 0deg !important; translate: 0 0 !important; }
+/* Carte piochée : elle glisse depuis le Grimoire (à droite) jusqu'à la main */
+.fx-piochee .dc-carte__corps, .dos.fx-piochee { animation: piochee .55s cubic-bezier(.2,.9,.3,1.15) var(--d, 0ms) both; }
+@keyframes piochee {
+  from { opacity: 0; transform: translate(180px, -90px) rotate(28deg) scale(.55); }
+  60%  { opacity: 1; }
+}
+
+/* Reflet des cartes du Codex : découpé à la silhouette (pas d'image pour servir de masque) */
+.dc-reflet--codex {
+  -webkit-mask: none; mask: none;
+  clip-path: polygon(50% 0, 64% 2.5%, 80% 4%, 92% 7%, 97% 12%, 100% 20%, 100% 82%, 95% 89%, 80% 93%, 60% 95.5%, 50% 100%,
+                     40% 95.5%, 20% 93%, 5% 89%, 0 82%, 0 20%, 3% 12%, 8% 7%, 20% 4%, 36% 2.5%);
+}
+/* Main du joueur : cartes serrées, centrées, alignées par le bas */
+.main { display: flex; justify-content: center; align-items: flex-end; padding: 10px 8px 4px; }
+@media (max-width: 600px) { .main { overflow-x: auto; justify-content: flex-start; padding-top: 30px; } }
+
+
+/* =====================================================================
+   Plateau : la table de guerre
+   - une table ovale en bois, tapis bleu nuit brodé d'or, vue en légère
+     perspective, deux bougies (table de jeu en bois)
+   - héros au centre dans de grands cadres, PV dans une goutte de sang,
+     mains en éventail, « Fin du tour » sur le côté de la table
+   - un grand orbe d'énergie lumineux, ciel traversé de lueurs violettes
+   ===================================================================== */
+
+/* Ciel : lueurs violettes et bleues derrière la table */
+.page-jeu .scene__fond {
+  background:
+    radial-gradient(ellipse 45% 35% at 22% 30%, rgba(130,80,210,.22), transparent 70%),
+    radial-gradient(ellipse 40% 30% at 80% 22%, rgba(70,110,220,.18), transparent 70%),
+    radial-gradient(ellipse 120% 90% at 50% 40%, transparent 40%, rgba(0,0,0,.75) 100%),
+    linear-gradient(rgba(0,0,0,.65), rgba(0,0,0,.65)),   /* voile noir sur l'image (plus foncé : augmenter .65) */
+    url("/img/Fond/Duel.png?v=3") center / cover no-repeat,   /* remplit la page, rognée au minimum */
+    var(--nuit);
+  inset: 0;
+  transform: none;
+}
+
+/* Le plateau n'est plus un panneau : la table elle-même fait le décor */
+.page-jeu .table__plateau {
+  display: flex; flex-direction: column; align-items: stretch; gap: 6px;
+  padding: 0;
+  clip-path: none;
+  background: none;
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
+/* --- Haut et bas : héros au centre --- */
+.tg-haut, .tg-bas {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 16px;
+  position: relative; z-index: 3;
+}
+.tg-haut .main-adverse { justify-self: start; }
+.tg-infos { justify-self: end; display: flex; align-items: center; gap: 14px; color: var(--gris); font-size: .85rem; }
+.tg-heros { justify-self: center; }
+.tg-bas { margin-top: -6px; }
+.tg-energie { justify-self: start; display: flex; align-items: center; gap: 14px; }
+.tg-pile { justify-self: end; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; text-align: right; }
+.tg-pile .centre__consigne { max-width: 26ch; font-size: .85rem; }
+
+/* --- Héros : cadre hexagonal, goutte de PV, cartouche du nom --- */
+.page-jeu .dc-heros {
+  position: relative;
+  display: flex; flex-direction: column; align-items: center; gap: 0;
+  padding: 0;
+  clip-path: none;
+  background: none;
+  box-shadow: none;
+}
+.dc-heros__cadre {
+  display: grid; place-items: center;
+  width: 86px; height: 96px;
+  clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+  background: linear-gradient(160deg, #f6d995, #8a6a2c 35%, #e8c77e 55%, #6e5322 80%, #f0d08a);
+  filter: drop-shadow(0 6px 10px rgba(0,0,0,.7));
+}
+.page-jeu .dc-heros__portrait {
+  width: 78px; height: 88px;
+  clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+  background: radial-gradient(circle at 50% 35%, #3a4252, #11141b);
+}
+.page-jeu .dc-heros__portrait svg { width: 52%; height: 52%; fill: var(--ambre); }
+/* PV : goutte de sang en bas à droite du portrait */
+.page-jeu .dc-heros__pv {
+  position: absolute; right: -12px; bottom: 16px;
+  display: grid; place-items: center;
+  width: 34px; height: 34px;
+  border-radius: 50% 0 50% 50%;
+  transform: rotate(-45deg);
+  background: radial-gradient(circle at 35% 65%, #ff9aa0 0 10%, #c33a42 45%, #6e161c 100%);
+  box-shadow: 0 0 0 2px #2a0d10, 0 4px 8px rgba(0,0,0,.6);
+  font-family: "Cinzel","Cinzel Repli", serif; font-size: 1rem; font-weight: 800; line-height: 1;
+  color: #fff;
+  text-shadow: 0 1px 2px #000;
+}
+.dc-heros__pv > span { transform: rotate(45deg); }   /* le chiffre reste droit dans la goutte tournée */
+.dc-heros.est-en-danger .dc-heros__pv { animation: danger 1.2s ease-in-out infinite; }
+@keyframes danger { 50% { box-shadow: 0 0 0 2px #2a0d10, 0 0 16px 4px rgba(255,80,90,.7); } }
+.page-jeu .dc-heros__nom {
+  margin-top: -10px;
+  padding: 3px 18px;
+  clip-path: polygon(10px 0, calc(100% - 10px) 0, 100% 50%, calc(100% - 10px) 100%, 10px 100%, 0 50%);
+  background: linear-gradient(180deg, #232836, #11141b);
+  box-shadow: inset 0 0 0 1px rgba(217,164,65,.5);
+  font-family: "Cinzel","Cinzel Repli", serif; font-size: .75rem; font-weight: 700; letter-spacing: .06em;
+  white-space: nowrap;
+}
+.page-jeu .dc-heros.est-ciblable .dc-heros__cadre { background: linear-gradient(160deg, #ffb3b8, #b7444b 40%, #ffd0d3 60%, #8e3238); }
+.page-jeu .dc-heros.est-ciblable { animation: ciblable 1s ease-in-out infinite; }
+
+/* --- La table --- */
+.tg-table {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 18px;
+}
+.tg-perspective { perspective: 1400px; perspective-origin: 50% 20%; }
+.tg-bord {
+  padding: 16px;
+  border-radius: 140px / 90px;
+  background:
+    linear-gradient(180deg, rgba(255,220,170,.14), transparent 30%, rgba(0,0,0,.35)),
+    url("/img/Fond/bois.svg") 0 0 / 300px 300px,
+    #3b2616;
+  box-shadow:
+    inset 0 2px 0 rgba(255,220,170,.25),
+    inset 0 -3px 0 rgba(0,0,0,.5),
+    0 0 0 2px #1a0f08,
+    0 30px 60px rgba(0,0,0,.75),
+    0 0 80px rgba(130,80,210,.15);
+  transform: rotateX(14deg);
+  transform-origin: 50% 100%;
+}
+.tg-tapis {
+  position: relative;
+  display: flex; flex-direction: column; gap: 6px;
+  padding: 18px 26px;
+  border-radius: 124px / 76px;
+  background:
+    radial-gradient(ellipse 70% 60% at 50% 45%, rgba(110,130,190,.16), transparent 75%),
+    repeating-linear-gradient(45deg, rgba(217,164,65,.035) 0 2px, transparent 2px 26px),
+    repeating-linear-gradient(-45deg, rgba(217,164,65,.035) 0 2px, transparent 2px 26px),
+    linear-gradient(180deg, #1a2338, #0f1524);
+  box-shadow:
+    inset 0 0 0 5px #121a2b,
+    inset 0 0 0 6px rgba(217,164,65,.45),     /* broderie d'or */
+    inset 0 0 0 10px #121a2b,
+    inset 0 0 0 11px rgba(217,164,65,.2),
+    inset 0 8px 30px rgba(0,0,0,.6);
+}
+.page-jeu .tg-tapis .centre {
+  min-height: 58px;
+  margin: 2px 0;
+  border: 0;
+  background: linear-gradient(90deg, transparent 5%, rgba(217,164,65,.45) 30%, rgba(217,164,65,.45) 70%, transparent 95%) center / 100% 1px no-repeat;
+}
+.tg-tapis .d20 { filter: drop-shadow(0 4px 6px rgba(0,0,0,.7)); }
+.tg-tapis .d20 polygon { fill: #232a3a; }
+.tg-tapis .centre__resultat { min-width: 0; padding: 2px 12px; background: #121a2b; }
+.tg-tapis .dc-place { background: rgba(217,164,65,.06); }
+
+/* --- Bougies --- */
+.tg-bougie {
+  position: absolute; bottom: 18%; z-index: 2;
+  width: 16px; height: 56px;
+  border-radius: 3px 3px 2px 2px;
+  background: linear-gradient(90deg, #cfc4ab, #f3ead6 45%, #bfb39a);
+  box-shadow: 0 6px 8px rgba(0,0,0,.6);
+  pointer-events: none;
+}
+.tg-bougie--g { left: -8px; }
+.tg-bougie--d { right: 150px; }
+.tg-bougie::before {   /* flamme */
+  content: "";
+  position: absolute; left: 50%; bottom: 100%;
+  width: 10px; height: 18px;
+  margin-left: -5px;
+  border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+  background: radial-gradient(circle at 50% 75%, #fff8e0 0 20%, #ffd27a 45%, #ff8a3d 80%);
+  box-shadow: 0 0 12px 4px rgba(255,170,70,.6);
+  transform-origin: 50% 100%;
+  animation: flamme 1.6s ease-in-out infinite alternate;
+}
+.tg-bougie::after {    /* halo */
+  content: "";
+  position: absolute; left: 50%; bottom: 60%;
+  width: 220px; height: 220px;
+  margin-left: -110px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,180,90,.16), transparent 65%);
+  animation: halo 2.4s ease-in-out infinite alternate;
+}
+@keyframes flamme { 0% { transform: scale(1, 1) rotate(-2deg); } 50% { transform: scale(.9, 1.1) rotate(3deg); } 100% { transform: scale(1.05, .95) rotate(-1deg); } }
+@keyframes halo { to { opacity: .7; transform: scale(.94); } }
+
+/* --- Côté de la table : fin du tour, Destin --- */
+.tg-cote { display: flex; flex-direction: column; align-items: stretch; gap: 12px; width: 140px; }
+.btn-fin, .btn-destin {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+  border: 0;
+  font-family: "Cinzel","Cinzel Repli", serif; font-weight: 800; letter-spacing: .06em;
+  cursor: pointer;
+  transition: filter .15s, transform .15s;
+}
+.btn-fin small, .btn-destin small { font-family: "EB Garamond", serif; font-size: .72rem; font-weight: 400; letter-spacing: 0; opacity: .75; }
+.btn-fin {
+  min-height: 64px;
+  padding: 10px 14px;
+  clip-path: polygon(14px 0, calc(100% - 14px) 0, 100% 50%, calc(100% - 14px) 100%, 14px 100%, 0 50%);
+  background: linear-gradient(160deg, #f6d995 0 40%, var(--ambre) 40.1% 75%, #b8862e 75.1%);
+  color: #1b1408;
+  font-size: .95rem;
+  filter: drop-shadow(0 0 14px rgba(217,164,65,.55));
+}
+.btn-fin:hover:not(:disabled) { filter: brightness(1.12) drop-shadow(0 0 22px rgba(217,164,65,.8)); transform: translateY(-2px); }
+.btn-fin:disabled { background: linear-gradient(160deg, #4a4f5c 0 40%, #353a46 40.1%); color: #9aa1ad; filter: none; cursor: not-allowed; }
+.btn-destin {
+  flex-direction: row; gap: 10px;
+  padding: 8px 12px;
+  clip-path: polygon(10px 0, calc(100% - 10px) 0, 100% 50%, calc(100% - 10px) 100%, 10px 100%, 0 50%);
+  background: linear-gradient(160deg, rgba(154,108,240,.35) 0 40%, rgba(90,60,160,.35) 40.1%), #171a26;
+  box-shadow: inset 0 0 0 1px rgba(201,178,251,.5);
+  color: #e6dcff;
+  font-size: .8rem;
+}
+.btn-destin span { display: flex; flex-direction: column; align-items: flex-start; }
+.btn-destin svg { width: 30px; height: 30px; flex-shrink: 0; }
+.btn-destin polygon { fill: #2a2140; stroke: #c9b2fb; stroke-width: 5; }
+.btn-destin path { fill: none; stroke: #c9b2fb; stroke-width: 4; }
+.btn-destin:hover:not(:disabled) { filter: brightness(1.3) drop-shadow(0 0 12px rgba(154,108,240,.7)); }
+.btn-destin:disabled { opacity: .4; cursor: not-allowed; }
+
+/* --- Orbe d'énergie --- */
+.orbe {
+  position: relative;
+  display: flex; align-items: baseline; justify-content: center; gap: 2px;
+  width: 78px; height: 78px; padding-top: 18px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 35% 30%, rgba(255,255,255,.55) 0 8%, transparent 25%),
+    radial-gradient(circle at 50% 55%, #b48cff, #6a3fd0 55%, #2a1660 100%);
+  box-shadow:
+    0 0 0 3px #1a1230,
+    0 0 0 5px rgba(201,178,251,.6),
+    0 0 26px 6px rgba(154,108,240,.55),
+    inset 0 -8px 16px rgba(20,8,50,.6);
+  animation: orbe 3s ease-in-out infinite;
+}
+.orbe strong { font-family: "Cinzel","Cinzel Repli", serif; font-size: 1.9rem; font-weight: 800; color: #fff; text-shadow: 0 0 10px rgba(255,255,255,.6), 0 2px 3px rgba(30,10,70,.8); line-height: 1; }
+@keyframes orbe { 50% { box-shadow: 0 0 0 3px #1a1230, 0 0 0 5px rgba(201,178,251,.6), 0 0 38px 10px rgba(154,108,240,.7), inset 0 -8px 16px rgba(20,8,50,.6); } }
+.tg-energie .energie { flex-wrap: wrap; max-width: 130px; }
+.tg-energie .energie__texte { display: none; }
+
+/* --- Mains en éventail --- */
+.page-jeu .main { padding-top: 22px; min-height: calc(clamp(78px, 8vw, 108px) * 1.5 + 34px); }
+.page-jeu .main .dc-carte {
+  rotate: calc(var(--k, 0) * 5deg);
+  top: calc(var(--k, 0) * var(--k, 0) * 4px);
+  transform-origin: 50% 120%;
+}
+.page-jeu .main .dc-carte + .dc-carte { margin-left: calc(var(--carte-l) * -0.24); }
+.page-jeu .main .dc-carte:hover, .page-jeu .main .dc-carte:focus-visible, .page-jeu .main .dc-carte.est-choisie { rotate: 0deg; top: 0; }
+.page-jeu .main-adverse { padding-top: 4px; }
+.page-jeu .main-adverse .dos {
+  width: 30px;
+  rotate: calc(var(--k, 0) * -6deg);
+  margin-top: calc(var(--k, 0) * var(--k, 0) * -2px);
+  transform-origin: 50% -40%;
+  box-shadow: inset 0 0 0 1px rgba(217,164,65,.45), 0 3px 6px rgba(0,0,0,.6);
+}
+.page-jeu .main-adverse .dos + .dos { margin-left: -16px; }
+
+/* --- Écrans moyens : boutons sous la table --- */
+@media (max-width: 1100px) {
+  .tg-table { grid-template-columns: minmax(0, 1fr); }
+  .tg-cote { flex-direction: row; width: auto; justify-content: center; }
+  .tg-cote .btn-fin, .tg-cote .btn-destin { min-width: 160px; }
+  .tg-bougie--d { right: -8px; }
+}
+/* --- Téléphones : pas de perspective ni de bougies --- */
+@media (max-width: 600px) {
+  .tg-bord { transform: none; padding: 8px; border-radius: 40px / 30px; }
+  .tg-tapis { padding: 10px 8px; border-radius: 32px / 24px; }
+  .tg-bougie { display: none; }
+  .tg-haut, .tg-bas { grid-template-columns: auto 1fr auto; gap: 8px; }
+  .dc-heros__cadre { width: 60px; height: 68px; }
+  .page-jeu .dc-heros__portrait { width: 54px; height: 62px; }
+  .page-jeu .dc-heros__pv { width: 28px; height: 28px; font-size: .85rem; right: -10px; bottom: 12px; }
+  .orbe { width: 58px; height: 58px; padding-top: 13px; }
+  .orbe strong { font-size: 1.4rem; }
+  .tg-energie .energie { display: none; }
+  .tg-pile .centre__consigne { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tg-bougie::before, .tg-bougie::after, .orbe, .dc-heros.est-en-danger .dc-heros__pv { animation: none; }
+}
+
+/* --- Tout le plateau tient dans l'écran --- */
+.jeu-wrap .table { margin-top: 20px; }
+.page-jeu .terrain { --unite-l: clamp(54px, 5.6vw, 80px); }
+.tg-tapis { padding: 14px 24px; }
+.page-jeu .tg-tapis .centre { min-height: 50px; }
+.page-jeu .tg-tapis .d20 { width: 52px; height: 52px; }
+.dc-heros__cadre { width: 72px; height: 80px; }
+.page-jeu .dc-heros__portrait { width: 64px; height: 72px; }
+.tg-haut { margin-bottom: -6px; }
+.page-jeu .main { margin-top: -10px; padding-top: 16px; min-height: calc(clamp(74px, 7vw, 100px) * 1.5 + 26px); }
+.page-jeu .main .dc-carte { --carte-l: clamp(74px, 7vw, 100px); }
+.page-jeu .main-adverse .dos { width: 24px; }
+.page-jeu .main-adverse .dos + .dos { margin-left: -12px; }
+@media (max-width: 600px) {
+  .tg-infos .energie { display: none; }
+  .tg-infos { flex-direction: column; align-items: flex-end; gap: 2px; font-size: .75rem; }
+  .page-jeu .main-adverse .dos { width: 16px; }
+  .page-jeu .main-adverse .dos + .dos { margin-left: -9px; }
+}
+
+
+/* =====================================================================
+   Pendant un duel : le jeu prend tout l'écran (body.en-duel, posé par JS/jeu-cartes.js)
+   Plus de barre du site ni de défilement ; les tailles suivent la hauteur
+   de la fenêtre ; la main dépasse du bas de l'écran comme dans un jeu.
+   ===================================================================== */
+body.en-duel { overflow: hidden; padding: 0 !important; }
+.en-duel .topbar, .en-duel .rail { display: none !important; }
+.en-duel .jeu-wrap { max-width: none; padding: 0; }
+.en-duel .table {
+  position: fixed; inset: 0; z-index: 2;
+  display: block;
+  margin: 0 !important;
+}
+.en-duel .table__plateau {
+  position: absolute; inset: 0;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 0;
+  padding: 1.2vh 24px 0;
+}
+.en-duel .tg-haut { width: min(1200px, 100%); justify-self: center; margin: 0; }
+.en-duel .tg-table { width: min(1260px, 100%); justify-self: center; align-self: center; }
+.en-duel .tg-bas { width: min(1200px, 100%); justify-self: center; margin: 0; }
+
+/* Tailles réglées sur la hauteur de la fenêtre */
+.en-duel .terrain { --unite-l: min(6.4vw, 11.5vh); gap: min(1.2vw, 1.6vh); }
+.en-duel .tg-tapis { padding: 1.6vh 30px; }
+.en-duel .dc-heros__cadre { width: min(88px, 9.5vh); height: min(98px, 10.6vh); }
+.en-duel .dc-heros__portrait { width: min(80px, 8.6vh); height: min(90px, 9.7vh); }
+/* bulle d'énergie plus petite */
+.en-duel .orbe { width: min(62px, 7vh); height: min(62px, 7vh); padding: 0; align-items: center; }
+.en-duel .orbe strong { font-size: min(1.5rem, 2.6vh); }
+.en-duel .tg-tapis .d20 { width: min(58px, 6.4vh); height: min(58px, 6.4vh); }
+
+/* La main sort du bas de l'écran ; une carte survolée remonte en entier */
+.en-duel .main {
+  --carte-l: min(8.4vw, 16vh);
+  min-height: 0;
+  height: calc(var(--carte-l) * 1.5 * .62);
+  margin: 0;
+  padding: 0;
+  align-items: flex-start;
+  overflow: visible;
+}
+.en-duel .main .dc-carte { --carte-l: min(8.4vw, 16vh); }
+.en-duel .main .dc-carte:hover, .en-duel .main .dc-carte:focus-visible { translate: 0 calc(var(--carte-l) * -0.55); }
+.en-duel .main .dc-carte.est-choisie { translate: 0 calc(var(--carte-l) * -0.6); }
+.en-duel .main .dc-carte.est-jouable:not(:hover):not(.est-choisie) { translate: 0 -6px; }
+
+/* Historique : petit panneau en haut à droite, défilant */
+.en-duel .historique {
+  position: absolute; top: 12px; right: 12px; z-index: 6;
+  width: 210px;
+  max-height: 34vh;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  padding: 10px 12px;
+}
+.en-duel .historique__titre { margin-bottom: 6px; font-size: .7rem; }
+.en-duel .jet { font-size: .76rem; }
+.en-duel .jet b { width: 24px; height: 24px; font-size: .8rem; }
+.en-duel .historique__outils { position: sticky; bottom: -10px; margin: 10px -12px -10px; padding: 8px 12px; background: rgba(14,17,24,.95); }
+.btn-outil svg { width: 16px; height: 16px; fill: none; stroke: var(--blanc); stroke-width: 2; stroke-linecap: round; }
+.btn-outil.est-actif { background: rgba(217,164,65,.35); }
+
+/* Bannière et aperçu au centre de la table */
+.en-duel .banniere { top: 46%; }
+
+@media (max-width: 1100px) {
+  .en-duel .historique { width: 170px; max-height: 24vh; }
+}
+@media (max-width: 600px) {
+  .en-duel .table__plateau { padding: 6px 6px 0; }
+  .en-duel .terrain { --unite-l: auto; }
+  .en-duel .main { --carte-l: 19vw; overflow-x: auto; }
+  .en-duel .main .dc-carte { --carte-l: 19vw; }
+  /* Sur téléphone, l'historique se réduit aux boutons */
+  .en-duel .historique { width: auto; max-height: none; padding: 0; background: none; box-shadow: none; clip-path: none; }
+  .en-duel .historique__titre, .en-duel .historique__liste { display: none; }
+  .en-duel .historique__outils { position: static; margin: 0; padding: 0; border: 0; background: none; }
+}
+/* L'animation d'apparition de <main> (CSS/index.css) lui laisse une transformation :
+   elle servirait de repère au plateau en position fixe, qui n'aurait alors aucune hauteur */
+.en-duel main { animation: none; opacity: 1; transform: none; }
+/* Les infos de l'adversaire restent à gauche du panneau des jets */
+@media (min-width: 601px) { .en-duel .tg-haut { padding-right: 230px; } }
+@media (min-width: 601px) and (max-width: 1100px) { .en-duel .tg-haut { padding-right: 190px; } }
+
+
+/* =====================================================================
+   Habillage du duel : lumière de cinéma, table ouvragée, HUD regroupés
+   (vient après tout le reste : ces règles l'emportent)
+   ===================================================================== */
+
+/* --- La pièce : une salle plongée dans l'ombre, montagnes lointaines, brume --- */
+.en-duel .scene__fond {
+  background:
+    radial-gradient(ellipse 60% 55% at 50% 52%, rgba(255,190,110,.10), transparent 70%),
+    radial-gradient(ellipse 38% 30% at 18% 18%, rgba(130,80,210,.16), transparent 70%),
+    radial-gradient(ellipse 34% 26% at 84% 14%, rgba(70,110,220,.13), transparent 70%),
+    radial-gradient(ellipse 100% 80% at 50% 50%, transparent 35%, rgba(3,4,7,.92) 100%),
+    linear-gradient(180deg, rgba(8,10,16,.55), rgba(8,10,16,.85) 60%, #05060a),
+    url("/img/Fond/profil-lowpoly.svg") center 30% / cover no-repeat,
+    #07080d;
+  filter: saturate(.9);
+}
+.en-duel .scene__brume { opacity: .55; }
+
+/* --- Lumière : un grand halo chaud tombe sur la table --- */
+.tg-lumiere {
+  position: absolute; left: 50%; top: 50%; z-index: -1;
+  width: 120%; height: 160%;
+  translate: -50% -50%;
+  background:
+    radial-gradient(ellipse 45% 42% at 50% 50%, rgba(255,196,120,.16), rgba(255,170,90,.06) 45%, transparent 70%);
+  pointer-events: none;
+}
+
+/* --- La table : plus grande, bois épais, liseré d'or, coins en laiton --- */
+.en-duel .tg-table { display: block; width: min(1500px, 100%); }
+.en-duel .tg-perspective { margin: 0 clamp(150px, 12vw, 200px); perspective: 1600px; perspective-origin: 50% 0%; }
+.page-jeu .tg-bord {
+  position: relative;
+  padding: clamp(14px, 1.8vh, 22px);
+  border-radius: 46% 46% 46% 46% / 22% 22% 22% 22%;
+  border-radius: 180px / 110px;
+  background:
+    radial-gradient(ellipse 60% 40% at 50% 0%, rgba(255,220,170,.18), transparent 70%),
+    linear-gradient(180deg, rgba(255,210,150,.10), transparent 35%, rgba(0,0,0,.45)),
+    url("/img/Fond/bois.svg") 0 0 / 320px 320px,
+    #3a2414;
+  box-shadow:
+    inset 0 2px 0 rgba(255,225,180,.35),
+    inset 0 0 0 4px #2a180c,
+    inset 0 0 0 6px rgba(217,164,65,.55),          /* liseré d'or dans le bois */
+    inset 0 0 0 7px #1d1008,
+    inset 0 -6px 12px rgba(0,0,0,.55),
+    0 0 0 2px #0e0805,
+    0 40px 70px rgba(0,0,0,.85),
+    0 0 120px rgba(255,180,100,.10);
+  transform: rotateX(16deg);
+}
+/* Coins en laiton (gauche et droite) */
+.page-jeu .tg-bord::before,
+.page-jeu .tg-bord::after {
+  content: "";
+  position: absolute; top: 50%; z-index: 2;
+  width: 26px; height: 46px;
+  translate: 0 -50%;
+  clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+  background: linear-gradient(160deg, #fbe3a6, #b8862e 40%, #f3d491 55%, #7a5418);
+  filter: drop-shadow(0 3px 4px rgba(0,0,0,.6));
+}
+.page-jeu .tg-bord::before { left: -6px; }
+.page-jeu .tg-bord::after { right: -6px; }
+
+/* --- Le tapis : velours bleu nuit, grande couronne brodée au centre --- */
+.page-jeu .tg-tapis {
+  border-radius: 164px / 96px;
+  padding: clamp(14px, 2.2vh, 26px) clamp(26px, 4vw, 70px);
+  gap: clamp(4px, 1vh, 12px);
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .5 0 0 0 0 .6 0 0 0 0 .9 0 0 0 .07 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E"),
+    radial-gradient(ellipse 60% 55% at 50% 45%, #22325a, #16213d 55%, #0c1326 100%);
+  box-shadow:
+    inset 0 0 0 3px #0a0f1d,
+    inset 0 0 0 4px rgba(217,164,65,.55),
+    inset 0 0 0 9px #0d1426,
+    inset 0 0 0 10px rgba(217,164,65,.22),
+    inset 0 14px 40px rgba(0,0,0,.65),
+    inset 0 -10px 30px rgba(0,0,0,.4);
+}
+/* Couronne brodée en filigrane */
+.page-jeu .tg-tapis::before {
+  content: "";
+  position: absolute; left: 50%; top: 50%;
+  width: 34%; aspect-ratio: 1;
+  translate: -50% -50%;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' fill='none' stroke='%23d9a441' stroke-width='1.2'%3E%3Ccircle cx='50' cy='50' r='46'/%3E%3Ccircle cx='50' cy='50' r='40' stroke-dasharray='2 3'/%3E%3Cpath d='M26 62 L30 36 L41 48 L50 30 L59 48 L70 36 L74 62 Z'/%3E%3Cpath d='M28 68 H72'/%3E%3Ccircle cx='30' cy='35' r='2'/%3E%3Ccircle cx='50' cy='29' r='2'/%3E%3Ccircle cx='70' cy='35' r='2'/%3E%3Cpath d='M50 4 V12 M50 88 V96 M4 50 H12 M88 50 H96'/%3E%3C/svg%3E") center / contain no-repeat;
+  opacity: .14;
+  pointer-events: none;
+}
+
+/* --- Emplacements : fins contours dorés en forme de carte --- */
+.page-jeu .tg-tapis .dc-place {
+  position: relative;
+  background: rgba(217,164,65,.22);
+}
+.page-jeu .tg-tapis .dc-place::after {
+  content: "";
+  position: absolute; inset: 1.5px;
+  clip-path: inherit;
+  background: radial-gradient(ellipse at 50% 40%, #1d2a4b, #121b33);
+}
+.page-jeu .terrain { position: relative; z-index: 1; }
+
+/* --- Ligne centrale : d20, résultat, consigne --- */
+.page-jeu .tg-tapis .centre { position: relative; z-index: 1; background: none; min-height: 0; flex-wrap: wrap; }
+.page-jeu .tg-tapis .centre::before,
+.page-jeu .tg-tapis .centre::after {
+  content: ""; flex: 1; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(217,164,65,.5));
+}
+.page-jeu .tg-tapis .centre::after { transform: scaleX(-1); }
+.page-jeu .tg-tapis .centre__resultat:empty { display: none; }
+.page-jeu .tg-tapis .centre__resultat {
+  order: 0;
+  padding: 4px 16px;
+  clip-path: polygon(10px 0, calc(100% - 10px) 0, 100% 50%, calc(100% - 10px) 100%, 10px 100%, 0 50%);
+  background: rgba(8,12,24,.85);
+}
+.page-jeu .tg-tapis .d20 polygon { fill: #1b2440; stroke: rgba(217,164,65,.7); }
+.page-jeu .tg-tapis .d20 path { stroke: rgba(217,164,65,.3); }
+.page-jeu .tg-tapis > .centre__consigne {
+  position: relative; z-index: 1;
+  margin: 0 auto;
+  max-width: none;
+  min-height: 1.3em;
+  text-align: center;
+  font-size: .82rem;
+  color: rgba(214,220,232,.6);
+}
+
+/* --- Fin du tour / Destin accrochés au bord droit de la table --- */
+.en-duel .tg-cote {
+  position: absolute; right: 0; top: 50%; z-index: 4;
+  width: clamp(130px, 10vw, 170px);
+  translate: 0 -50%;
+}
+.en-duel .tg-bougie--d { right: clamp(150px, 12vw, 200px); }
+.en-duel .tg-bougie--g { left: calc(clamp(150px, 12vw, 200px) - 30px); }
+.en-duel .btn-fin { min-height: 74px; font-size: 1rem; }
+
+/* --- Barres des joueurs : regroupées sur une plaque sous / sur la table --- */
+.en-duel .tg-haut, .en-duel .tg-bas {
+  grid-template-columns: auto auto auto;
+  justify-content: center;
+  gap: clamp(20px, 3vw, 54px);
+  width: auto;
+  padding: 6px 34px;
+  justify-self: center;
+}
+.en-duel .tg-haut { padding-right: 34px; }
+.en-duel .tg-bas::before, .en-duel .tg-haut::before {
+  content: "";
+  position: absolute; inset: 18% 0;
+  z-index: -1;
+  clip-path: polygon(30px 0, calc(100% - 30px) 0, 100% 50%, calc(100% - 30px) 100%, 30px 100%, 0 50%);
+  background: linear-gradient(180deg, rgba(20,24,34,.92), rgba(8,10,16,.92));
+  box-shadow: inset 0 0 0 1px rgba(217,164,65,.4);
+}
+.en-duel .tg-haut::before { background: linear-gradient(180deg, rgba(8,10,16,.92), rgba(20,24,34,.92)); }
+.en-duel .tg-energie, .en-duel .tg-pile, .en-duel .tg-infos, .en-duel .tg-haut .main-adverse { justify-self: center; }
+.en-duel .tg-bas { margin-top: -1.2vh; }
+.en-duel .tg-haut { margin-bottom: -1.2vh; }
+/* La barre de l'adversaire (sa main, son héros, son énergie) plus petite : tout est réduit d'un bloc,
+   proportions gardées, et la place gagnée revient au plateau (zoom réduit aussi la place occupée) */
+.en-duel .tg-haut { zoom: .7; }
+.page-jeu #pioche-joueur { display: block; }
+.energie--adverse { gap: 2px; }
+.energie--adverse .cristal { width: 7px !important; height: 7px !important; margin: 2px 1px 0 !important; }
+.energie--adverse .energie__texte { font-size: .7rem; margin-left: 4px; }
+
+/* --- Dos des cartes de l'adversaire : le vrai verso du site --- */
+.page-jeu .main-adverse .dos {
+  width: 34px; aspect-ratio: 2 / 3;
+  clip-path: none;
+  background: url("/img/Cartes/Verso-Carte.webp") center / contain no-repeat;
+  box-shadow: none;
+  filter: drop-shadow(0 3px 3px rgba(0,0,0,.7));
+}
+.page-jeu .main-adverse .dos + .dos { margin-left: -18px; }
+
+/* --- Main du joueur : cartes plus grandes --- */
+.en-duel .main, .en-duel .main .dc-carte { --carte-l: min(9.6vw, 18.5vh); }
+.en-duel .main .dc-carte + .dc-carte { margin-left: calc(var(--carte-l) * -0.3); }
+
+/* --- Héros : un peu plus imposants, halo selon le camp --- */
+.en-duel .dc-heros__cadre { filter: drop-shadow(0 0 14px rgba(217,164,65,.35)) drop-shadow(0 6px 10px rgba(0,0,0,.7)); }
+
+/* --- Panneau des jets : plus discret --- */
+.en-duel .historique { background: rgba(8,10,16,.72); box-shadow: inset 0 0 0 1px rgba(217,164,65,.25); }
+
+/* --- Écrans moyens et téléphones --- */
+@media (max-width: 1100px) {
+  .en-duel .tg-perspective { margin: 0 8px; }
+  .en-duel .tg-cote { position: static; translate: none; width: auto; margin-top: 8px; display: flex; flex-direction: row; justify-content: center; }
+  .en-duel .tg-bougie--d { right: 0; }
+  .en-duel .tg-bougie--g { left: 0; }
+}
+@media (max-width: 600px) {
+  .page-jeu .tg-tapis::before { width: 60%; }
+  .en-duel .tg-haut, .en-duel .tg-bas { gap: 12px; padding: 4px 18px; }
+  .energie--adverse { display: none !important; }
+  .en-duel .main, .en-duel .main .dc-carte { --carte-l: 21vw; }
+}
+/* Emplacements vides : des fantômes de carte, juste suggérés */
+.page-jeu .tg-tapis .dc-place { opacity: .5; }
+/* Le panneau des jets s'arrête au-dessus de « Fin du tour » */
+@media (min-width: 1101px) {
+  .en-duel .historique { max-height: calc(42vh - 110px); }
+  .en-duel .tg-cote { top: 56%; }
+}
+/* Téléphones : une bande en haut pour les boutons du panneau */
+@media (max-width: 600px) {
+  .en-duel .table__plateau { padding-top: 50px; }
+  .en-duel .historique { top: 6px; right: 6px; }
+}
+
+/* --- Main du joueur : cartes entièrement visibles (plus de cartes coupées par le bas) --- */
+.en-duel .main, .en-duel .main .dc-carte { --carte-l: min(8.2vw, 14.5vh); }
+.en-duel .main {
+  height: auto;
+  min-height: calc(var(--carte-l) * 1.5 + 30px);   /* hauteur d'une carte + la courbe de l'éventail */
+  padding: 8px 0 14px;
+  align-items: flex-start;
+}
+.en-duel .main .dc-carte + .dc-carte { margin-left: calc(var(--carte-l) * -0.18); }
+.en-duel .main .dc-carte { translate: 0 0; }
+.en-duel .main .dc-carte.est-jouable:not(:hover):not(.est-choisie) { translate: 0 -4px; }
+/* Au survol, la carte se redresse, monte un peu et grossit pour se lire */
+.en-duel .main .dc-carte:hover, .en-duel .main .dc-carte:focus-visible { translate: 0 -12px; scale: 1.18; }
+.en-duel .main .dc-carte.est-choisie { translate: 0 -14px; scale: 1.18; }
+@media (max-width: 600px) {
+  .en-duel .main, .en-duel .main .dc-carte { --carte-l: 19vw; }
+  .en-duel .main .dc-carte:hover, .en-duel .main .dc-carte.est-choisie { scale: 1.05; }
+}
+
+/* --- Cartes de pouvoir (objets) : cadre ambré, illustration de l'objet sur un fond chaud --- */
+.dc-face__art--objet {
+  display: grid; place-items: center;
+  background: radial-gradient(circle at 50% 55%, rgba(255,200,120,.35), transparent 65%), linear-gradient(180deg, #2a2030, #120e16);
+}
+.dc-face__art--objet img { width: 78%; height: 88%; object-fit: contain; filter: drop-shadow(0 4px 6px rgba(0,0,0,.7)); }
+/* Coût réduit par le Jeton du marchand */
+.dc-cout--reduit { background: linear-gradient(160deg, #b9f5c8 0 45%, #5fbf7a 45.1%); }
+.accueil__note { flex-basis: 100%; margin: 8px 0 0; color: var(--gris); font-style: italic; text-align: center; }
+/* Objets : texte un peu plus petit pour que l'effet tienne en entier */
+.rar-objet .dc-face__art { flex-basis: 55%; }
+.rar-objet .dc-face__nom { font-size: .5rem; }
+.rar-objet .dc-face__texte { font-size: .48rem; line-height: 1.12; }
+
+
+/* ---------- Choix du deck (menu) ---------- */
+.accueil__deck { align-items: center; }
+.deck-place { display: block; position: relative; }
+.deck-place--vide {
+  display: grid; place-items: center;
+  width: var(--carte-l); aspect-ratio: 2 / 3;
+  border: 1px dashed rgba(217,164,65,.35);
+  border-radius: 10px;
+  background: rgba(10,12,20,.35);
+  color: rgba(217,164,65,.5);
+  font-size: 1.6rem;
+}
+.deck-modifier { margin-left: 10px; align-self: center; }
+.accueil__deck-titre.est-invalide { color: #e07a6a; }
+
+/* En mode choix : un clic sur une carte du deck la retire */
+.accueil__deck.est-en-edition .deck-place[data-cle] .dc-carte { cursor: pointer; }
+.accueil__deck.est-en-edition .deck-place[data-cle]::after {
+  content: "×";
+  position: absolute; top: -8px; right: -8px; z-index: 3;
+  display: grid; place-items: center;
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  background: #7d2630; color: #fff;
+  font-size: 15px; line-height: 1;
+  box-shadow: 0 2px 6px rgba(0,0,0,.6);
+  pointer-events: none;
+}
+
+.choix-deck {
+  max-width: 1100px;
+  margin: 26px auto 0;
+  padding: 18px 22px 22px;
+  border: 1px solid rgba(217,164,65,.25);
+  border-radius: 12px;
+  background: linear-gradient(180deg, rgba(20,22,34,.85), rgba(12,13,20,.9));
+  box-shadow: 0 18px 40px rgba(0,0,0,.45);
+}
+.choix-deck__aide { max-width: none; margin: 0 auto 14px; color: var(--gris); font-style: italic; text-align: center; }
+.choix-deck__titre {
+  margin: 0 0 12px;
+  font-family: "Cinzel","Cinzel Repli", serif;
+  font-size: .8rem; letter-spacing: .14em; text-transform: uppercase;
+  color: var(--ambre);
+}
+.choix-deck__titre span { color: var(--gris); margin-left: 4px; }
+.choix-deck__cartes {
+  display: flex; flex-wrap: wrap; justify-content: center; gap: 14px;
+  --carte-l: 96px;
+}
+.choix-deck .dc-carte { cursor: pointer; transition: transform .15s, filter .15s, opacity .15s; }
+.choix-deck .dc-carte:hover { transform: translateY(-4px); }
+.choix-deck .dc-carte.est-choisie { transform: translateY(-6px); filter: drop-shadow(0 0 4px #f6d995) drop-shadow(0 0 14px var(--ambre)); }
+.choix-deck .deck-place:has(.est-choisie)::after {
+  content: "✓";
+  position: absolute; top: -10px; right: -6px; z-index: 3;
+  display: grid; place-items: center;
+  width: 22px; height: 22px; border-radius: 50%;
+  background: var(--ambre); color: #1a1208; font-weight: 700; font-size: 13px;
+  box-shadow: 0 2px 6px rgba(0,0,0,.6);
+}
+.choix-deck .deck-place.est-bloquee .dc-carte { opacity: .4; filter: grayscale(.6); }
+@media (max-width: 600px) {
+  .deck-modifier { margin: 6px 0 0; flex-basis: 100%; }
+  .choix-deck { padding: 14px 10px; }
+  .choix-deck__cartes { --carte-l: 80px; gap: 10px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .choix-deck .dc-carte { transition: none; }
+}
+
+
+/* =====================================================================
+   Accueil du duel : le hall des Couronnes
+   - en tête : titre sur une ligne, filet à losange
+   - trois bannières pour les modes de jeu (la choisie s'éclaire d'or et se lève)
+   - la salle : un grand panneau sombre aux coins dorés, réglages et lancement
+     à gauche, le Grimoire en éventail sur son autel à droite
+   - en pied : le duel en quatre chiffres
+   ===================================================================== */
+.accueil {
+  position: relative;
+  min-height: calc(100vh - 40px);
+  padding: 56px 0 40px;
+  text-align: center;
+}
+/* Lueurs : ambre derrière le titre, violette derrière la salle */
+.accueil::before {
+  content: "";
+  position: absolute; inset: -40px -10vw auto;
+  height: 1100px;
+  z-index: -1;
+  background:
+    radial-gradient(ellipse 40% 26% at 50% 14%, rgba(217,164,65,.14), transparent 70%),
+    radial-gradient(ellipse 46% 30% at 62% 66%, rgba(154,108,240,.08), transparent 70%);
+  pointer-events: none;
+}
+.menu {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);   /* rien ne dépasse de l'écran, même sur téléphone */
+  gap: 34px;
+  max-width: 1180px;
+  margin: 0 auto;
+}
+
+/* ---------- Tête : titre, accroche ---------- */
+.menu__tete { display: flex; flex-direction: column; align-items: center; }
+/* Sur-titre encadré de deux traits */
+.menu .accueil__sur {
+  display: flex; align-items: center; gap: 16px;
+  letter-spacing: .42em;
+  color: #c6ccd6;
+}
+.menu .accueil__sur::before,
+.menu .accueil__sur::after {
+  content: "";
+  width: clamp(30px, 6vw, 70px); height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(217,164,65,.7));
+}
+.menu .accueil__sur::after { background: linear-gradient(90deg, rgba(217,164,65,.7), transparent); }
+.menu .accueil__titre {
+  margin: 10px 0 0;
+  font-size: clamp(2.4rem, 6vw, 5rem);
+  line-height: 1.04;
+  letter-spacing: .02em;
+  text-shadow: 0 6px 40px rgba(0,0,0,.9);
+}
+.menu .accueil__titre span {
+  background: linear-gradient(180deg, #fff1c8 5%, #ecc061 50%, #a8741f 95%);
+  -webkit-background-clip: text;
+          background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 4px 22px rgba(217,164,65,.4));
+}
+/* Filet doré à losange central, au-dessus de l'accroche */
+.menu__tete .accueil__texte::before {
+  content: "";
+  display: block;
+  width: 280px; max-width: 70%; height: 11px;
+  margin: 18px auto 16px;
+  background:
+    linear-gradient(90deg, transparent, var(--ambre)) 0 5px / calc(50% - 12px) 1px no-repeat,
+    linear-gradient(90deg, var(--ambre), transparent) 100% 5px / calc(50% - 12px) 1px no-repeat,
+    linear-gradient(45deg, transparent 30%, #f3cf7c 31% 69%, transparent 70%) 50% 0 / 11px 11px no-repeat;
+}
+.menu .accueil__texte {
+  max-width: 58ch;
+  margin: 0 auto;
+  color: #d2d6de;
+  font-size: 1.12rem;
+  line-height: 1.6;
+  text-shadow: 0 2px 12px rgba(0,0,0,.9);
+}
+
+/* ---------- Modes de jeu : trois bannières ---------- */
+.menu .modes {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+  max-width: 900px;
+  margin: 0 auto;
+  width: 100%;
+  clip-path: none;
+  background: none;
+  box-shadow: none;
+}
+.menu .mode {
+  position: relative;
+  display: flex; flex-direction: column; align-items: center; gap: 12px;
+  padding: 26px 18px 44px;
+  text-align: center;
+  color: var(--gris);
+  text-decoration: none;
+  /* Bannière : pointe en bas */
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 24px), 50% 100%, 0 calc(100% - 24px));
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.05), transparent 40%),
+    linear-gradient(180deg, rgba(26,30,42,.94), rgba(11,13,19,.92));
+  box-shadow: inset 0 3px 0 rgba(205,214,230,.25), inset 0 0 0 1px var(--ligne);
+  transition: transform .25s cubic-bezier(.25,.8,.3,1), background .25s, color .25s;
+}
+.menu .mode + .mode { border-left: 0; }
+.menu .mode:hover { transform: translateY(-4px); color: var(--blanc); }
+.menu .mode:focus-visible { outline: 2px solid var(--ambre); outline-offset: -6px; }
+.mode__ico {
+  display: grid; place-items: center;
+  width: 62px; height: 62px;
+  clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+  background:
+    linear-gradient(160deg, rgba(255,255,255,.14) 0 45%, transparent 45.1%),
+    #232836;
+  color: #c6ccd6;
+  transition: background .25s, color .25s;
+}
+.mode__ico svg { width: 26px; height: 26px; }
+.mode__corps { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.menu .mode__titre { font-size: 1.05rem; letter-spacing: .14em; color: var(--blanc); text-transform: uppercase; }
+.menu .mode__texte { font-size: .95rem; line-height: 1.35; }
+.menu .mode__fleche { display: none; }
+/* La bannière choisie : or, levée */
+.menu .mode.est-actif {
+  transform: translateY(-8px);
+  color: #e9dcc0;
+  background:
+    radial-gradient(ellipse 80% 50% at 50% 0, rgba(243,207,124,.28), transparent 70%),
+    linear-gradient(180deg, rgba(64,46,18,.95), rgba(22,17,10,.94));
+  box-shadow: inset 0 3px 0 #f3cf7c, inset 0 0 0 1px rgba(217,164,65,.55);
+}
+.menu .mode.est-actif .mode__ico {
+  background: linear-gradient(160deg, #fff0c4 0 45%, var(--ambre) 45.1%);
+  color: #1b1408;
+}
+.menu .mode.est-actif .mode__titre { color: #f3cf7c; }
+
+/* ---------- La salle : panneau sombre aux coins dorés ---------- */
+.menu__salle {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 420px) minmax(0, 1fr);
+  gap: clamp(26px, 4vw, 56px);
+  align-items: center;
+  padding: 36px clamp(22px, 3.5vw, 44px);
+  text-align: left;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.035), transparent 30%),
+    linear-gradient(180deg, rgba(13,15,22,.82), rgba(7,8,13,.9));
+  border: 1px solid rgba(217,164,65,.26);
+  box-shadow: 0 30px 70px rgba(0,0,0,.55), inset 0 0 60px rgba(0,0,0,.35);
+  -webkit-backdrop-filter: blur(6px);
+          backdrop-filter: blur(6px);
+}
+/* Équerres dorées aux quatre coins */
+.menu__salle::before {
+  content: "";
+  position: absolute; inset: 8px;
+  pointer-events: none;
+  --c: #e2b24f;
+  background:
+    linear-gradient(var(--c), var(--c)) 0 0 / 22px 2px no-repeat,
+    linear-gradient(var(--c), var(--c)) 0 0 / 2px 22px no-repeat,
+    linear-gradient(var(--c), var(--c)) 100% 0 / 22px 2px no-repeat,
+    linear-gradient(var(--c), var(--c)) 100% 0 / 2px 22px no-repeat,
+    linear-gradient(var(--c), var(--c)) 0 100% / 22px 2px no-repeat,
+    linear-gradient(var(--c), var(--c)) 0 100% / 2px 22px no-repeat,
+    linear-gradient(var(--c), var(--c)) 100% 100% / 22px 2px no-repeat,
+    linear-gradient(var(--c), var(--c)) 100% 100% / 2px 22px no-repeat;
+}
+.menu__gauche { display: flex; flex-direction: column; gap: 22px; min-width: 0; }
+/* Séparation verticale entre les deux moitiés : un trait doré qui s'efface aux extrémités */
+.menu__droite {
+  min-width: 0;
+  padding-left: clamp(20px, 3vw, 44px);
+  border-left: 1px solid;
+  border-image: linear-gradient(180deg, transparent, rgba(217,164,65,.4), transparent) 1;
+}
+
+/* ---------- Difficulté (contre l'Ombre) ---------- */
+.difficulte {
+  display: grid; grid-template-columns: 1fr;
+  gap: 10px;
+  margin: 0;
+}
+.difficulte[hidden] { display: none; }
+.difficulte__titre {
+  font-family: "Cinzel","Cinzel Repli", serif; font-size: .78rem; letter-spacing: .24em; text-transform: uppercase;
+  color: #c6ccd6;
+}
+.difficulte__choix {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  clip-path: var(--facette);
+  background: rgba(6,7,11,.7);
+  box-shadow: inset 0 0 0 1px var(--ligne);
+}
+.difficulte__btn {
+  min-height: 46px; padding: 0 10px;
+  border: 0; background: none; cursor: pointer;
+  font-family: "Cinzel","Cinzel Repli", serif; font-size: .82rem; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--gris);
+  transition: background .2s, color .2s;
+}
+.difficulte__btn + .difficulte__btn { box-shadow: inset 1px 0 0 var(--ligne); }
+.difficulte__btn:hover { color: #e8e2d4; background: rgba(255,255,255,.05); }
+.difficulte__btn:focus-visible { outline: 2px solid var(--ambre); outline-offset: -4px; }
+.difficulte__btn[aria-checked="true"] {
+  color: #1b1408;
+  background: linear-gradient(180deg, #f3cf7c, var(--ambre) 60%, #b07a26);
+}
+.difficulte__btn[data-difficulte="facile"][aria-checked="true"]    { background: linear-gradient(180deg, #b9dca0, #7fae5f 60%, #4f7a38); }
+.difficulte__btn[data-difficulte="difficile"][aria-checked="true"] { background: linear-gradient(180deg, #f08a7a, #c4473a 60%, #8a2a22); color: #fff3ee; }
+.difficulte__texte { margin: 0; min-height: 2.6em; font-size: .95rem; font-style: italic; color: var(--gris); }
+
+/* ---------- Lancement ---------- */
+.menu .accueil__actions { flex-direction: column; align-items: stretch; gap: 12px; margin: 0; }
+.menu__jouer {
+  min-height: 64px;
+  padding: 0 40px;
+  font-size: 1.05rem;
+  letter-spacing: .22em;
+  clip-path: polygon(16px 0, calc(100% - 16px) 0, 100% 50%, calc(100% - 16px) 100%, 16px 100%, 0 50%);
+  background: linear-gradient(180deg, #ffe7a6, #e9b955 45%, #b9842c);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.6), inset 0 -2px 0 rgba(0,0,0,.25);
+}
+.menu__jouer[hidden] { display: none; }
+/* Le bouton principal respire doucement */
+.menu .accueil__actions .menu__jouer:not(:disabled) { animation: appel 2.8s ease-in-out infinite; }
+@keyframes appel {
+  0%, 100% { filter: brightness(1); }
+  50% { filter: brightness(1.15) saturate(1.1); }
+}
+.menu__regles {
+  flex-direction: row; gap: 10px;
+  align-self: center;
+  min-height: 0; padding: 6px 12px;
+  clip-path: none;
+  background: none; box-shadow: none;
+  color: var(--gris);
+  font-size: .8rem; letter-spacing: .14em;
+}
+.menu__regles:hover:not(:disabled) { color: #f3cf7c; filter: none; }
+.menu__regles-ico { display: grid; width: 18px; height: 18px; }
+.menu__regles-ico svg { width: 18px; height: 18px; }
+.menu .ligne { max-width: none; margin: 0; }
+
+/* ---------- L'autel du Grimoire ---------- */
+.menu__autel {
+  position: relative;
+  padding: 0 0 6px;
+  text-align: center;
+}
+/* Halo derrière les cartes */
+.menu__autel::before {
+  content: "";
+  position: absolute; left: 50%; top: 46%;
+  width: min(640px, 112%); height: 360px;
+  translate: -50% -50%;
+  z-index: -1;
+  background: radial-gradient(ellipse 50% 50% at 50% 50%, rgba(217,164,65,.16), rgba(154,108,240,.07) 50%, transparent 72%);
+  pointer-events: none;
+}
+.menu .accueil__deck-titre {
+  display: inline-block;
+  margin: 0 0 6px;
+  padding: 0 30px;
+  background:
+    linear-gradient(90deg, transparent, rgba(217,164,65,.6)) 0 50% / 22px 1px no-repeat,
+    linear-gradient(90deg, rgba(217,164,65,.6), transparent) 100% 50% / 22px 1px no-repeat;
+  color: #d8cdb4;
+  font-size: .8rem;
+  letter-spacing: .16em;
+}
+.menu .accueil__deck-titre.est-invalide { color: #e07a6a; }
+
+/* L'éventail : 5 places, en arc */
+.menu .accueil__deck {
+  --carte-l: clamp(84px, 7.4vw, 116px);
+  display: grid;
+  grid-template-columns: repeat(5, auto);
+  justify-content: center;
+  align-items: end;
+  gap: 0;
+  padding-top: 34px;
+}
+.menu .accueil__deck > .deck-place,
+.menu .accueil__deck > .dc-carte {
+  margin: 0 calc(var(--carte-l) * -0.03);
+  transform-origin: 50% 100%;
+  transform: translateY(var(--y, 0)) rotate(var(--r, 0deg));
+  transition: transform .35s cubic-bezier(.25,.8,.3,1), filter .25s;
+  filter: drop-shadow(0 14px 14px rgba(0,0,0,.6));
+}
+.menu .accueil__deck > :nth-child(1) { --r: -12deg; --y: 26px; }
+.menu .accueil__deck > :nth-child(2) { --r: -6deg;  --y: 7px; }
+.menu .accueil__deck > :nth-child(3) { --r: 0deg;   --y: 0px; z-index: 1; }
+.menu .accueil__deck > :nth-child(4) { --r: 6deg;   --y: 7px; }
+.menu .accueil__deck > :nth-child(5) { --r: 12deg;  --y: 26px; }
+.menu .accueil__deck > .deck-place:hover,
+.menu .accueil__deck > .dc-carte:hover {
+  z-index: 3;
+  transform: translateY(calc(var(--y, 0px) - 22px)) rotate(var(--r, 0deg)) scale(1.06);
+  filter: drop-shadow(0 0 16px rgba(217,164,65,.45)) drop-shadow(0 18px 16px rgba(0,0,0,.6));
+}
+.menu .deck-place--vide { background: rgba(10,12,20,.55); }
+/* Socle : une dalle de lumière sous l'éventail */
+.menu .accueil__deck::after {
+  content: "";
+  grid-column: 1 / -1; grid-row: 2;
+  justify-self: center;
+  width: min(460px, 92%); height: 26px;
+  margin-top: 4px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at center, rgba(240,200,115,.32), rgba(240,200,115,.08) 55%, transparent 72%);
+  pointer-events: none;
+}
+/* Bouton « Choisir mes cartes » et note : sous l'éventail */
+.menu .accueil__deck > .deck-modifier,
+.menu .accueil__deck > .accueil__note,
+.menu .accueil__deck > .vide {
+  grid-column: 1 / -1;
+  justify-self: center;
+  margin: 14px 0 0;
+}
+.menu .accueil__deck > .deck-modifier { grid-row: 3; }
+.menu .accueil__deck > .accueil__note { grid-row: 4; margin-top: 12px; max-width: 52ch; }
+
+/* ---------- Le duel en quatre chiffres ---------- */
+.menu__atouts {
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  max-width: 820px; width: 100%;
+  margin: 0 auto; padding: 0;
+  list-style: none;
+}
+.menu__atouts li {
+  position: relative;
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  padding: 6px 12px;
+}
+/* Petit losange doré entre deux chiffres */
+.menu__atouts li + li::before {
+  content: "";
+  position: absolute; left: -4px; top: 50%;
+  width: 8px; height: 8px;
+  translate: 0 -50%; rotate: 45deg;
+  background: rgba(217,164,65,.55);
+}
+.menu__atouts strong {
+  font-family: "Cinzel Decorative","Cinzel","Cinzel Repli", serif;
+  font-size: 1.7rem; line-height: 1.05;
+  background: linear-gradient(180deg, #fff1c8, #e2b24f 60%, #a8741f);
+  -webkit-background-clip: text;
+          background-clip: text;
+  color: transparent;
+}
+.menu__atouts span { font-size: .9rem; color: #b5bcc8; text-shadow: 0 2px 8px rgba(0,0,0,.9); }
+
+/* ---------- Écrans moyens et téléphones ---------- */
+@media (max-width: 980px) {
+  .accueil { padding-top: 84px; min-height: 0; }
+  .menu__salle { grid-template-columns: 1fr; }
+  .menu__droite { padding: 22px 0 0; border-left: 0; border-top: 1px solid; border-image: linear-gradient(90deg, transparent, rgba(217,164,65,.4), transparent) 1; }
+  .menu__gauche { max-width: 520px; width: 100%; margin: 0 auto; }
+}
+@media (max-width: 760px) {
+  .menu { gap: 26px; }
+  .menu .modes { grid-template-columns: 1fr; gap: 10px; max-width: 520px; }
+  /* Les bannières deviennent des lignes : icône à gauche, texte à droite */
+  .menu .mode {
+    flex-direction: row; gap: 16px;
+    padding: 14px 18px;
+    text-align: left;
+    clip-path: var(--facette);
+  }
+  .menu .mode.est-actif { transform: none; }
+  .menu .mode:hover { transform: translateX(3px); }
+  .mode__corps { align-items: flex-start; gap: 2px; }
+  .mode__ico { flex: none; width: 48px; height: 48px; }
+  .mode__ico svg { width: 22px; height: 22px; }
+}
+@media (max-width: 600px) {
+  .accueil { padding-top: 10px; }
+  .menu .accueil__sur { gap: 10px; letter-spacing: .22em; font-size: .68rem; }
+  .menu .accueil__sur::before, .menu .accueil__sur::after { width: 20px; }
+  .menu__salle { padding: 26px 16px; }
+  .difficulte__btn { font-size: .74rem; letter-spacing: .06em; }
+  .menu .accueil__deck { --carte-l: 64px; }
+  .menu__jouer { padding: 0 24px; min-height: 56px; }
+  .menu__atouts { grid-template-columns: repeat(2, 1fr); row-gap: 14px; }
+  .menu__atouts li:nth-child(3)::before { display: none; }
+  .menu__atouts strong { font-size: 1.4rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .menu .accueil__actions .menu__jouer { animation: none; }
+  .menu .mode, .menu .accueil__deck > .deck-place, .menu .accueil__deck > .dc-carte { transition: none; }
+}
+/* Les cartes de personnage ont un cadre décoratif transparent autour : les objets, un peu réduits, paraissent de la même taille */
+.menu .accueil__deck .dc-carte.rar-objet { scale: .86; translate: 0 -4%; }
+/* Mode en ligne : la partie privée (deux boutons côte à côte) puis le classé, chacun sur toute la largeur */
+.menu .ligne__accueil { grid-template-columns: minmax(0, 1fr); gap: 10px; }
+.prive { grid-column: 1 / -1; }
+.prive__boutons { display: flex; flex-wrap: wrap; gap: 10px; }
+.prive__code { display: grid; gap: 6px; width: 100%; max-width: 360px; }
+.prive__code[hidden] { display: none; }
+.prive__code label { font-size: .9rem; font-style: italic; color: var(--gris); }
+#btn-ouvrir-code[aria-expanded="true"] { filter: brightness(.85); }
+.menu .ligne__bloc { min-width: 0; }
+
+/* --- Fond du plateau : la ruelle de Nocthémar (img/Fond/font plateux jeux.jpg),
+       assombrie sur les bords pour que la table ressorte --- */
+.en-duel .scene__fond {
+  inset: -60px;
+  background:
+    radial-gradient(ellipse 60% 55% at 50% 52%, rgba(255,190,110,.08), transparent 70%),
+    radial-gradient(ellipse 100% 85% at 50% 50%, transparent 40%, rgba(3,4,7,.85) 100%),
+    linear-gradient(180deg, rgba(8,10,16,.35), rgba(8,10,16,.55) 60%, rgba(5,6,10,.8)),
+    url("/img/Fond/font%20plateux%20jeux.jpg") center / cover no-repeat,
+    #07080d;
+  filter: saturate(.95);
+  transform: scale(1.04);
+}
+
+/* Le dé et son résultat : cachés au repos, ils apparaissent pendant un lancer (attaque ou Destin) */
+.tg-tapis .d20,
+.tg-tapis .centre__resultat {
+  opacity: 0;
+  scale: .7;
+  pointer-events: none;
+  transition: opacity .35s ease, scale .35s ease;
+}
+.tg-tapis .d20.est-visible,
+.tg-tapis .centre__resultat.est-visible { opacity: 1; scale: 1; }
+@media (prefers-reduced-motion: reduce) {
+  .tg-tapis .d20, .tg-tapis .centre__resultat { transition: none; scale: 1; }
+}
+
+
+/* =====================================================================
+   Grimoire, Tombeau, Défausser, Méditer, renvoi de main
+   ===================================================================== */
+
+/* --- Le Tombeau : une petite pierre tombale cliquable, à côté du Grimoire --- */
+.tombeau {
+  display: inline-flex; align-items: center; gap: 8px;
+  min-width: 0;
+  padding: 4px 10px 4px 6px;
+  border: 0;
+  clip-path: polygon(8px 0, calc(100% - 8px) 0, 100% 50%, calc(100% - 8px) 100%, 8px 100%, 0 50%);
+  background: rgba(14,17,24,.85);
+  box-shadow: inset 0 0 0 1px var(--ligne-forte);
+  color: var(--gris);
+  font: inherit;
+  cursor: pointer;
+  transition: filter .15s, box-shadow .15s;
+}
+.tombeau:hover { filter: brightness(1.3); }
+.tombeau__pierre { display: grid; width: 22px; height: 26px; }
+.tombeau__pierre svg { width: 100%; height: 100%; }
+.tombeau__pierre path:first-child { fill: #3a3f4b; stroke: #9aa1ad; stroke-width: 1.4; }
+.tombeau__pierre path:last-child { fill: none; stroke: #c5cad3; stroke-width: 1.6; stroke-linecap: round; }
+.tombeau__texte { display: flex; flex-direction: column; align-items: flex-start; line-height: 1.1; text-align: left; }
+.tombeau__texte b { font-family: "Cinzel","Cinzel Repli", serif; font-size: .95rem; color: var(--blanc); }
+.tombeau__texte small { max-width: 92px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: .7rem; font-style: italic; }
+/* Une carte glissée de la main : le Tombeau s'allume pour la recevoir */
+.tombeau.est-cible { box-shadow: inset 0 0 0 2px var(--ambre), 0 0 18px var(--ambre-lueur); filter: brightness(1.3); }
+
+.tg-pile { flex-direction: row; align-items: center; gap: 10px; }
+.tg-infos--adverse { display: flex; align-items: center; gap: 12px; }
+.tg-infos__contenu { display: contents; }
+
+/* --- Défausser / Méditer : deux petits boutons sous le Destin --- */
+.tg-cote__petits { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.btn-action {
+  display: flex; flex-direction: column; align-items: center; gap: 1px;
+  padding: 6px 4px;
+  border: 0;
+  clip-path: polygon(6px 0, calc(100% - 6px) 0, 100% 50%, calc(100% - 6px) 100%, 6px 100%, 0 50%);
+  background: linear-gradient(160deg, rgba(255,255,255,.08) 0 40%, transparent 40.1%), var(--ardoise-2);
+  box-shadow: inset 0 0 0 1px var(--ligne-forte);
+  color: var(--blanc);
+  font-family: "Cinzel","Cinzel Repli", serif; font-size: .68rem; font-weight: 700; letter-spacing: .04em;
+  cursor: pointer;
+  transition: filter .15s;
+}
+.btn-action small { font-family: "EB Garamond", serif; font-size: .64rem; font-weight: 400; opacity: .7; }
+.btn-action:hover:not(:disabled) { filter: brightness(1.35); }
+.btn-action:disabled { opacity: .4; cursor: not-allowed; }
+.btn-action.est-actif { background: linear-gradient(160deg, #f0c873 0 40%, var(--ambre) 40.1%); color: #1b1408; }
+/* Mode défausse : les cartes de la main se teintent de gris, prêtes à partir */
+.main.en-defausse .dc-carte { filter: grayscale(.5) drop-shadow(0 0 6px rgba(197,202,211,.6)); cursor: pointer; }
+.main .dc-carte[draggable="true"] { cursor: grab; }
+
+/* --- Fenêtres : renvoi de main, Méditer, Tombeau (même habillage que les règles) --- */
+.fenetre-jeu {
+  max-width: 720px; width: calc(100% - 32px);
+  max-height: calc(100vh - 60px);
+  padding: 24px 26px;
+  border: 0;
+  clip-path: polygon(16px 0, calc(100% - 16px) 0, 100% 16px, 100% calc(100% - 16px), calc(100% - 16px) 100%, 16px 100%, 0 calc(100% - 16px), 0 16px);
+  background: #12151c;
+  box-shadow: inset 0 0 0 1px var(--ligne-forte);
+  color: var(--blanc);
+  text-align: center;
+}
+.fenetre-jeu--large { max-width: 960px; }
+.fenetre-jeu::backdrop { background: rgba(5,6,9,.75); backdrop-filter: blur(3px); }
+.fenetre-jeu h2 { margin: 0 0 8px; font-family: "Cinzel","Cinzel Repli", serif; font-size: 1.2rem; color: var(--ambre); }
+.fenetre-jeu__texte { max-width: 56ch; margin: 0 auto 16px; color: var(--gris); font-size: .98rem; }
+.fenetre-jeu__cartes {
+  --carte-l: 112px;
+  display: flex; flex-wrap: wrap; justify-content: center; gap: 12px;
+  margin: 0 0 18px;
+  max-height: 56vh; overflow-y: auto;
+  padding: 10px 4px;
+}
+.fenetre-jeu__cartes .dc-carte { cursor: pointer; transition: transform .15s, filter .15s; }
+.fenetre-jeu__cartes .dc-carte:hover { transform: translateY(-4px); }
+#tombeau-cartes .dc-carte { cursor: default; --carte-l: 96px; }
+/* Renvoi : les cartes choisies sont barrées de rouge, prêtes à repartir */
+#renvoi-main .dc-carte.est-choisie { filter: grayscale(.7) brightness(.75); transform: translateY(6px); }
+#renvoi-main .dc-carte.est-choisie::after {
+  content: "Renvoyée";
+  position: absolute; left: 50%; top: 45%; z-index: 5;
+  translate: -50% -50%; rotate: -14deg;
+  padding: 3px 10px;
+  border: 2px solid var(--sang);
+  color: #ffd2d2; background: rgba(60,10,14,.85);
+  font-family: "Cinzel","Cinzel Repli", serif; font-size: .72rem; font-weight: 800; letter-spacing: .1em; text-transform: uppercase;
+}
+.fenetre-jeu__attente { margin: -6px 0 14px; color: var(--ambre); font-style: italic; }
+.meditation__carte { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.meditation__carte small { color: var(--gris); font-size: .8rem; font-style: italic; }
+
+/* Exemplaires dans le Grimoire (choix des cartes et éventail du menu) */
+.deck-place { position: relative; }
+.deck-place__nb {
+  position: absolute; left: 50%; bottom: -8px; translate: -50% 0; z-index: 4;
+  display: grid; place-items: center;
+  min-width: 26px; height: 22px; padding: 0 5px;
+  clip-path: polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%);
+  background: var(--ambre); color: #1b1408;
+  font-family: "Cinzel","Cinzel Repli", serif; font-size: .74rem; font-weight: 800;
+  pointer-events: none;
+}
+.choix-deck__aide strong { color: var(--ambre); margin-left: 6px; }
+.choix-deck__vide { margin: -4px 0 12px; color: var(--gris); font-style: italic; text-align: center; }
+
+@media (max-width: 600px) {
+  .fenetre-jeu { padding: 18px 12px; }
+  .fenetre-jeu__cartes { --carte-l: 82px; gap: 8px; }
+  .tombeau__texte small { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .fenetre-jeu__cartes .dc-carte { transition: none; }
+}
+#renvoi-main .dc-carte { position: relative; }
+
+
+/* =====================================================================
+   Le plateau de Nocthémar : une île flottante (fond transparent), qui change avec la SAISON RÉELLE
+   (img/Plateaux de carte/plateau-defaut|automne|hiver|printemps|ete|cristaux.webp, 1672 × 941, même disposition).
+   Le plateau est posé sur <body> par JS/jeu-cartes.js (classe plateau-…) : celui choisi par le joueur
+   (acheté en boutique, SQL/plateaux.sql), sinon celui de la saison réelle ; ?saison=hiver le force.
+   Tout y est placé en % de l'image (cqw = % de la largeur du plateau), mesuré au pixel :
+   - les 10 emplacements peints : les troupes (5 en haut pour l'adversaire, 5 en bas pour toi) ;
+     la rangée du bas est plus grande et plus espacée (perspective), d'où deux réglages
+   - en haut à gauche : le Grimoire et le Tombeau de l'adversaire
+   - en bas à droite : les tiens
+   - le cercle de pierre « N » au centre : le dé
+   ===================================================================== */
+.page-jeu .tg-bord {
+  container-type: inline-size;
+  aspect-ratio: var(--plateau-ratio, 1672 / 941);
+  padding: 0;
+  border-radius: 0;
+  background: url("/img/Plateaux%20de%20carte/plateau-automne.webp") center / 100% 100% no-repeat;
+  box-shadow: none;
+  transform: none;
+  filter: drop-shadow(0 30px 40px rgba(0,0,0,.7));
+}
+.page-jeu .tg-bord::before,
+.page-jeu .tg-bord::after,
+.page-jeu .tg-tapis::before { content: none; }
+.page-jeu .tg-tapis {
+  position: absolute; inset: 0;
+  display: block;
+  padding: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+}
+.en-duel .tg-perspective { perspective: none; }
+/* Plateau de la saison (automne par défaut) */
+.page-jeu.plateau-hiver     .tg-bord { background-image: url("/img/Plateaux%20de%20carte/plateau-hiver.webp"); }
+.page-jeu.plateau-printemps .tg-bord { background-image: url("/img/Plateaux%20de%20carte/plateau-printemps.webp"); }
+.page-jeu.plateau-ete       .tg-bord { background-image: url("/img/Plateaux%20de%20carte/plateau-ete.webp"); }
+.page-jeu.plateau-automne   .tg-bord { background-image: url("/img/Plateaux%20de%20carte/plateau-automne.webp"); }
+/* Plateau par défaut (sans plateau choisi) : l'arène de pierre ; les saisons sont la même arène, décorée */
+.page-jeu.plateau-defaut    .tg-bord { background-image: url("/img/Plateaux%20de%20carte/plateau-defaut.webp"); }
+.page-jeu.plateau-cristaux  .tg-bord { background-image: url("/img/Plateaux%20de%20carte/plateau-cristaux.webp"); }
+
+/* Les troupes, sur les emplacements peints */
+.page-jeu .tg-bord .terrain {
+  position: absolute;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  justify-items: center;
+  align-items: center;
+  gap: 0;
+}
+/* Une colonne par emplacement, centrée sur son cadre peint (centres mesurés : 144 px d'écart en haut, 151 en bas).
+   Les cases sont au format des cartes (≈ 88 × 125 px en haut, 90 × 134 px en bas) : la carte recouvre
+   le fond et le cadre. Les images des vraies cartes ont ~3,5 % de marge transparente autour de leur
+   cadre : on les agrandit d'autant (plus bas, .dc-face--hote) */
+.page-jeu .tg-bord #terrain-adverse { left: 28.30%; width: 43.03%; top: 24.76%; height: 13.28%; --unite-l: 5.9cqw; }
+.page-jeu .tg-bord #terrain-joueur  { left: 27.31%; width: 45.12%; top: 58.24%; height: 14.24%; --unite-l: 6.3cqw; }
+.page-jeu .tg-bord .dc-unite,
+.page-jeu .tg-bord .dc-place { width: var(--unite-l); }
+.page-jeu .tg-bord .dc-place { opacity: 0; }   /* emplacement vide : le cadre peint suffit */
+
+/* Le dé dans le cercle de pierre, la consigne juste dessous */
+.page-jeu .tg-bord .centre {
+  position: absolute; left: var(--n-x, 50%); top: var(--n-y, 46.8%);
+  translate: -50% -50%;
+  margin: 0;
+  justify-content: center;
+}
+.page-jeu .tg-bord .centre::before,
+.page-jeu .tg-bord .centre::after { content: none; }
+.page-jeu .tg-tapis > .centre__consigne {
+  /* à gauche du cercle « N », entre les deux rangées : elle ne passe plus sur les cartes */
+  position: absolute; left: auto; right: calc(100% - var(--n-x, 50%) + 4.2cqw); top: var(--n-y, 46.8%);
+  translate: 0 -50%;
+  width: 17%;
+  margin: 0;
+  text-align: right;
+  line-height: 1.25;
+  font-size: clamp(.62rem, .95cqw, .85rem);
+  color: rgba(230,224,214,.8);
+  text-shadow: 0 1px 3px #000, 0 0 8px #000;
+}
+
+/* Les Grimoires : une pile de dos de cartes posée dans la clairière, et son nombre de cartes */
+.plateau-pile {
+  position: absolute;
+  width: 4.2cqw; aspect-ratio: 2 / 3;
+  display: grid; place-items: end center;
+  pointer-events: none;
+  background: url("/img/Cartes/Verso-Carte.webp") center / contain no-repeat;
+  filter: drop-shadow(.25cqw .25cqw 0 #2a1a14) drop-shadow(.25cqw .25cqw 0 #3a261c) drop-shadow(0 .6cqw .8cqw rgba(0,0,0,.7));
+}
+.plateau-pile--adverse { left: 17.4%; top: 24.6%; }
+.plateau-pile--joueur  { left: 77.9%; top: 58.4%; }
+.plateau-pile b {
+  translate: 0 50%;
+  display: grid; place-items: center;
+  min-width: 3.2cqw; height: 2.3cqw; padding: 0 .5cqw;
+  clip-path: polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%);
+  background: linear-gradient(180deg, #e9e6e0, #9da3ad);
+  color: #1a1416;
+  font-family: "Cinzel","Cinzel Repli", serif; font-size: 1.3cqw; font-weight: 800;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,.8));
+}
+
+/* Les Tombeaux : la dernière carte, face visible, dans le grand cadre peint */
+.page-jeu .tg-bord .tombeau {
+  position: absolute;
+  display: grid; place-items: center;
+  padding: 0;
+  clip-path: none;
+  background: none;
+  box-shadow: none;
+  cursor: pointer;
+}
+/* emplacement du Tombeau : un cadre de carte sombre, la dernière carte posée dessus */
+.page-jeu .tg-bord .tombeau--adverse { left: 22.9%; top: 24.6%; }
+.page-jeu .tg-bord .tombeau--joueur  { left: 72.4%; top: 58.4%; }
+.page-jeu .tg-bord .tombeau--adverse, .page-jeu .tg-bord .tombeau--joueur {
+  width: 4.2cqw; aspect-ratio: 2 / 3;
+  border-radius: .5cqw;
+  background: rgba(14,12,18,.55);
+  box-shadow: inset 0 0 0 1px rgba(230,224,214,.35), 0 .4cqw .8cqw rgba(0,0,0,.5);
+}
+.page-jeu .tg-bord .tombeau:hover,
+.page-jeu .tg-bord .tombeau:focus-visible { filter: brightness(1.2); outline: none; }
+.tombeau__carte { --carte-l: 4.2cqw; display: block; pointer-events: none; filter: grayscale(.35) brightness(.85); }
+.tombeau__carte > * { pointer-events: none; }
+.tombeau__compte {
+  position: absolute; left: 50%; bottom: 0; translate: -50% 50%;
+  display: flex; align-items: center; gap: .3cqw;
+  padding: .2cqw .6cqw;
+  background: rgba(10,8,10,.85);
+  box-shadow: inset 0 0 0 1px rgba(220,220,230,.35);
+  color: #e9e6e0;
+  font-family: "Cinzel","Cinzel Repli", serif; font-size: 1.1cqw; font-weight: 800;
+}
+.tombeau__compte svg { width: 1cqw; height: 1.2cqw; }
+.tombeau__compte path:first-child { fill: #3a3f4b; stroke: #c5cad3; stroke-width: 1.6; }
+.tombeau__compte path:last-child { fill: none; stroke: #e9e6e0; stroke-width: 1.8; }
+.page-jeu .tg-bord .tombeau.est-cible { box-shadow: 0 0 0 3px var(--ambre), 0 0 24px var(--ambre-lueur); }
+.tombeau__carte .dc-carte { display: block; position: relative; }
+
+
+/* =====================================================================
+   Disposition du duel sur ordinateur : un grand plateau au milieu
+   - le plateau prend toute la place libre (largeur moins les boutons à droite,
+     hauteur moins la barre de l'adversaire et la main), en gardant sa forme 1672 / 941
+   - ton énergie et ton héros : une plaque en bas à gauche de l'écran
+   - la main : des cartes plus petites, qui grossissent au survol
+   (vient en dernier : ces règles l'emportent)
+   ===================================================================== */
+.en-duel .main, .en-duel .main .dc-carte { --carte-l: min(6.2vw, 11.5vh); }
+.en-duel .main .dc-carte:hover, .en-duel .main .dc-carte:focus-visible,
+.en-duel .main .dc-carte.est-choisie { translate: 0 calc(var(--carte-l) * -0.35); scale: 1.45; z-index: 6; }
+
+@media (min-width: 1101px) {
+  .en-duel .tg-table { width: 100%; }
+  .en-duel .tg-perspective {
+    /* Grand plateau : ses bords transparents (ciel, rochers du dessous) passent sous la barre
+       de l'adversaire et sous la main, d'où les marges négatives */
+    /* .78 : le plateau un peu plus petit, il laisse de l'air autour */
+    width: min((100vw - 2 * clamp(130px, 9vw, 170px)) * .78, (100vh - 2vh) * var(--plateau-r, 1.7768) * .78);
+    margin: calc(-8vh + 8px) auto calc(-6vh - 8px);   /* remonté de 8vh, puis redescendu de 8 px (~2 mm) ; même hauteur totale */
+  }
+  .en-duel .table__plateau { --carte-l-main: min(6.2vw, 11.5vh); }
+
+  /* Ta plaque (énergie + héros) en bas à gauche, hors du flux : le plateau gagne sa hauteur */
+  .en-duel .tg-bas {
+    position: absolute; left: 14px; bottom: 14px; z-index: 5;
+    margin: 0;
+    padding: 6px 30px 6px 22px;
+    gap: 18px;
+    grid-template-columns: auto auto;
+  }
+  .en-duel .tg-bas .tg-pile { display: none; }
+  .en-duel .tg-bas .energie { max-width: 108px; }
+}
+
+/* Fin du tour, Destin, Défausser, Méditer : en bas à droite de l'écran (symétrique de ta plaque) */
+@media (min-width: 1101px) {
+  .en-duel .tg-cote {
+    position: fixed; top: auto; right: 14px; bottom: 14px; z-index: 5;
+    translate: none;
+  }
+}
+
+/* Vraies cartes posées sur le plateau : l'image est agrandie de sa marge transparente (~3,5 % de chaque côté),
+   pour que le cadre de la carte remplisse la case comme une troupe du Codex */
+/* (ancien agrandissement des vraies cartes : remplacé par le calage « cadre sur cadre » plus bas) */
+
+
+/* =====================================================================
+   Troupes posées sur le plateau : la carte d'origine, centrée sur la grande dalle de son camp.
+   Les plateaux (l’arène par défaut, ses quatre versions de saison et les cristaux d’or, 1672 × 941,
+   img/Plateaux de carte/) ont exactement la même disposition : un seul réglage, mesuré au pixel.
+   Avec --zoom-cartes = 1, le cadre de la carte (81,9 % de la hauteur de son image) a la hauteur h.
+   --h-… rangée du haut (l'adversaire), --b-… rangée du bas (toi)
+     x / l : gauche et largeur de la rangée (5 colonnes égales)
+     y / h : haut et hauteur de la zone de chaque rangée
+     u     : largeur de l'image d'une carte
+   --n-x / --n-y : centre du cercle « N » (le dé)
+   ===================================================================== */
+.page-jeu .tg-bord {
+  --h-x: 27.57%; --h-l: 44.86%; --h-y: 31.35%; --h-h: 15.41%; --h-u: 7.06cqw;
+  --b-x: 26.08%; --b-l: 47.85%; --b-y: 61.32%; --b-h: 17.00%; --b-u: 7.79cqw;
+  --n-x: 50.12%; --n-y: 50.90%;
+}
+/* --zoom-cartes : les cartes plus grandes que leur trace (1 = cadre de la carte = hauteur de la trace) */
+.page-jeu .tg-bord { --zoom-cartes: 1.082; }   /* (1.09 avant que le plateau grandisse de ~2 mm : même taille de carte à l'écran) */
+/* les deux rangées un peu remontées par rapport aux traces (environ 8 px sur un grand écran) */
+.page-jeu .tg-bord #terrain-adverse, .page-jeu .tg-bord #terrain-joueur { translate: 0 -.8cqw; }
+.page-jeu .tg-bord #terrain-adverse { left: var(--h-x); width: var(--h-l); top: var(--h-y); height: var(--h-h); --unite-l: calc(var(--h-u) * var(--zoom-cartes)); }
+.page-jeu .tg-bord #terrain-joueur  { left: var(--b-x); width: var(--b-l); top: var(--b-y); height: var(--b-h); --unite-l: calc(var(--b-u) * var(--zoom-cartes)); }
+.page-jeu .tg-bord .dc-unite,
+.page-jeu .tg-bord .dc-place { width: var(--unite-l); aspect-ratio: 2 / 3; }
+/* Agrandie, la carte reste centrée sur sa trace (son cadre est centré dans son image) :
+   la rangée de la grille, plus haute que la trace, déborde autant en haut qu'en bas (align-content),
+   sinon la carte partirait du haut de la trace et pendrait en dessous */
+.page-jeu .tg-bord .terrain { align-items: center; align-content: center; }
+/* les pastilles attaque / vie se posent sur le bas du cadre de la carte */
+.page-jeu .tg-bord .dc-unite .dc-stat { bottom: 8.5%; }
+.page-jeu .tg-bord .dc-unite .dc-stat--a { left: 9%; }
+.page-jeu .tg-bord .dc-unite .dc-stat--h { right: 9%; }
+
+/* Grimoires et Tombeaux : les nouveaux plateaux n'ont plus d'emplacement peint pour eux ;
+   ceux de l'adversaire à gauche de sa rangée, les tiens à droite de la tienne, à mi-hauteur */
+.page-jeu .tg-bord .tombeau--adverse { left: calc(var(--h-x) - 5.6%); top: calc(var(--h-y) + var(--h-h) / 2 - 3.15cqw); }
+.page-jeu .tg-bord .plateau-pile--adverse { left: calc(var(--h-x) - 10.6%); top: calc(var(--h-y) + var(--h-h) / 2 - 3.15cqw); }
+.page-jeu .tg-bord .tombeau--joueur  { left: calc(var(--b-x) + var(--b-l) + 1.4%); top: calc(var(--b-y) + var(--b-h) / 2 - 3.15cqw); }
+.page-jeu .tg-bord .plateau-pile--joueur { left: calc(var(--b-x) + var(--b-l) + 6.4%); top: calc(var(--b-y) + var(--b-h) / 2 - 3.15cqw); }
+
+
+/* =====================================================================
+   Cartes du Codex (troupes, sorts, objets de pouvoir) : même cadre que les nouvelles cartes
+   (img/Cartes/Cadre-codex.webp argenté, Cadre-objet.webp doré, tirés de l'illustration d'une vraie carte).
+   Fenêtre de l'illustration et panneau noir placés en % de l'image (1024 × 1536).
+   ===================================================================== */
+.dc-face--codex {
+  clip-path: none;
+  background: none;
+  container-type: inline-size;
+}
+.dc-face--codex .dc-face__art {
+  position: absolute; left: 11.6%; top: 10.2%; width: 76.4%; height: 58.4%;
+  overflow: hidden;
+  border-radius: 4% / 3%;
+  background: #0b0e14;
+}
+.dc-face--codex.rar-sort .dc-face__art { background: radial-gradient(circle at 50% 45%, #2b3a63, #0b0e1a 75%); }
+.dc-face--codex .dc-face__art--objet {
+  display: grid; place-items: center;
+  background: radial-gradient(circle at 50% 55%, rgba(255,200,120,.35), transparent 65%), linear-gradient(180deg, #2a2030, #120e16);
+}
+.dc-face--codex .dc-face__art--objet img { width: 82%; height: 82%; object-fit: contain; filter: drop-shadow(0 4px 6px rgba(0,0,0,.7)); }
+.dc-face__cadre-img { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+/* Panneau noir : tout tient dedans, quelle que soit la taille de la carte (tailles en cqw) :
+   le nom sur deux lignes au plus, un filet doré, l'effet sur deux lignes au plus (« … » au-delà ;
+   le texte entier est dans la loupe : clic droit sur la carte) */
+.dc-face--codex .dc-face__panneau {
+  position: absolute; left: 12%; right: 12%; top: 71.5%; height: 17%;
+  margin: 0; padding: 0 3%;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1cqw;
+  background: none; box-shadow: none; border-radius: 0;
+  overflow: hidden;
+}
+.dc-face--codex .dc-face__nom {
+  max-width: 100%;
+  font-size: 5.4cqw; line-height: 1.05; letter-spacing: .01em; color: #f2eee6;
+  text-wrap: balance;
+  -webkit-line-clamp: 2;
+}
+.dc-face--codex .dc-face__texte {
+  max-width: 100%;
+  padding-top: 1cqw;
+  border-top: 1px solid rgba(217,164,65,.35);
+  font-size: 4.6cqw; line-height: 1.15; color: #bcb2a4;
+  text-wrap: balance;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+}
+.dc-face--codex.rar-objet .dc-face__nom { font-size: 5.2cqw; color: #f6d995; }
+.dc-face--codex.rar-objet .dc-face__texte { font-size: 4.5cqw; }
+.dc-unite .dc-face--codex .dc-face__nom { font-size: 7.4cqw; }   /* troupe posée : seulement le nom */
+/* reflet : sur la fenêtre et le panneau, sans déborder du cadre */
+.dc-reflet--codex { clip-path: inset(6% 7% 8% 7%); }
+
+
+/* =====================================================================
+   Loupe : une carte en grand et sa fiche (clic droit / appui long sur une carte, JS/jeu-cartes.js)
+   ===================================================================== */
+.fenetre-jeu.loupe {
+  max-width: 880px;
+  display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 22px 28px; align-items: start;
+  text-align: left;
+}
+.fenetre-jeu.loupe:not([open]) { display: none; }
+.loupe__carte { --carte-l: min(290px, 42vh); position: sticky; top: 0; }
+.loupe__carte .dc-carte { --carte-l: min(290px, 42vh); pointer-events: none; transform: none; translate: none; scale: none; }
+.loupe__carte .dc-cout { display: none; }   /* le coût est déjà dans la fiche */
+#main-joueur .dc-cout { display: none; }   /* main : pas de pastille de coût (la loupe le donne ; les cartes jouables restent mises en avant, lueur dorée) */
+.loupe__fiche { min-width: 0; overflow: auto; max-height: calc(100vh - 140px); padding-right: 4px; }
+.loupe__fermer { grid-column: 1 / -1; justify-self: center; }
+/* en-tête de la fiche fixe pendant le défilement (même fond que la fenêtre) */
+.loupe__entete { position: sticky; top: 0; z-index: 1; padding-bottom: 4px; background: #12151c; box-shadow: 0 8px 10px -8px rgba(0,0,0,.7); }
+.loupe__nom { margin: 0; font-family: "Cinzel","Cinzel Repli", serif; font-size: 1.5rem; letter-spacing: .04em; }
+.loupe__type { margin: 4px 0 14px; color: var(--gris); font-size: .9rem; }
+.loupe__camp { color: var(--ambre); }
+.loupe__stats { display: flex; flex-wrap: wrap; gap: 8px 22px; margin: 0 0 10px; }
+.loupe__ligne { display: flex; align-items: baseline; gap: 8px; }
+.loupe__ligne dt { color: var(--gris); font-size: .78rem; letter-spacing: .1em; text-transform: uppercase; }
+.loupe__ligne dd { margin: 0; }
+.loupe__ligne small { color: var(--gris); }
+.loupe__energie, .loupe__stat {
+  display: inline-grid; place-items: center;
+  min-width: 30px; height: 28px; padding: 0 6px;
+  clip-path: polygon(5px 0, calc(100% - 5px) 0, 100% 50%, calc(100% - 5px) 100%, 5px 100%, 0 50%);
+  font-family: "Cinzel","Cinzel Repli", serif; font-weight: 800; font-size: 1rem; color: #fff;
+}
+.loupe__energie { background: linear-gradient(160deg, #b48cff 0 45%, #6a3fd0 45.1%); }   /* violet, comme la bulle d'énergie */
+.loupe__stat--a { background: linear-gradient(160deg, #6a7385 0 45%, #474e5c 45.1%); }
+.loupe__stat--h { background: linear-gradient(160deg, #c45b61 0 45%, #8e3238 45.1%); }
+.loupe__etat {
+  margin: 0 0 6px; padding: 6px 10px;
+  background: rgba(217,164,65,.1); box-shadow: inset 2px 0 0 var(--ambre);
+  font-size: .9rem;
+}
+.loupe__titre {
+  margin: 16px 0 6px;
+  font-family: "Cinzel","Cinzel Repli", serif; font-size: .8rem; letter-spacing: .14em; text-transform: uppercase;
+  color: var(--ambre);
+}
+.loupe__texte { margin: 0 0 6px; line-height: 1.45; }
+.loupe__note, .loupe__description { margin: 8px 0 0; color: var(--gris); font-size: .88rem; font-style: italic; }
+/* dégâts selon le d20 : une case par résultat */
+.loupe__jets { list-style: none; margin: 0 0 8px; padding: 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; }
+.loupe__jets li {
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  padding: 6px 4px;
+  background: rgba(255,255,255,.04); box-shadow: inset 0 0 0 1px var(--ligne);
+  text-align: center;
+}
+.loupe__jets span { font-size: .72rem; color: var(--gris); }
+.loupe__jets b { font-family: "Cinzel","Cinzel Repli", serif; font-size: 1.25rem; }
+.loupe__jets small { font-size: .66rem; color: var(--gris); line-height: 1.2; }
+/* (les classes jet--… servent aussi à l'historique : on retire son fond coloré, seul le chiffre est teinté) */
+.loupe__jets li b { background: none; box-shadow: none; padding: 0; clip-path: none; }
+.loupe__jets .jet--echec b { color: #f07a80; }
+.loupe__jets .jet--critique b { color: #f6d27a; }
+.loupe__jets .jet--solide b { color: #9fe0a8; }
+/* attaques de la carte */
+.loupe__attaques { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.loupe__attaques li { display: flex; gap: 10px; align-items: flex-start; }
+.loupe__attaques li > span:last-child { display: flex; flex-direction: column; gap: 2px; }
+.loupe__attaques em { font-style: normal; color: var(--ambre); font-weight: 700; margin-left: 4px; }
+.loupe__attaques small { color: var(--gris); font-size: .86rem; line-height: 1.35; }
+.loupe__veine { font-size: 1.2rem; line-height: 1.3; }
+.loupe__veine-nom { font-size: .72rem !important; letter-spacing: .06em; }
+@media (max-width: 700px) {
+  .fenetre-jeu.loupe { grid-template-columns: minmax(0, 1fr); justify-items: center; }
+  .loupe__carte { position: static; --carte-l: min(200px, 30vh); }
+  .loupe__carte .dc-carte { --carte-l: min(200px, 30vh); }
+  .loupe__fiche { max-height: none; justify-self: stretch; }
+  .loupe__jets { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+/* Consigne du tour (« Joue une carte… ») : plus affichée sur le plateau, gardée pour les lecteurs d'écran */
+.page-jeu .tg-tapis > .centre__consigne {
+  position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0;
+  overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; border: 0;
+}
+
+/* Loupe : pas de barres de défilement visibles (on défile toujours à la molette ou au doigt) ;
+   sur ordinateur, seule la fiche défile, la fenêtre reste fixe */
+.fenetre-jeu.loupe, .loupe__fiche { scrollbar-width: none; }
+.fenetre-jeu.loupe::-webkit-scrollbar, .loupe__fiche::-webkit-scrollbar { display: none; }
+@media (min-width: 701px) {
+  .fenetre-jeu.loupe { overflow: hidden; }
+  .loupe__fiche { max-height: calc(100vh - 170px); }
+}
+
+
+/* =====================================================================
+   Fluidité du duel : ce qui faisait ramer, remplacé par l'équivalent léger
+   (vient en dernier : ces règles l'emportent)
+   - un filtre (ombre) sur tout le plateau : il était recalculé à chaque image dès qu'une carte bougeait
+   - des lueurs animées (ombres / filtres qui changent à chaque image) : désormais un calque à part,
+     dont seule l'opacité varie
+   - les cartes : chacune sur son propre calque, leur ombre n'est plus redessinée au survol / à l'inclinaison
+   ===================================================================== */
+.page-jeu .tg-bord { filter: none; }
+.en-duel .scene__fond { filter: none; }
+.main .dc-carte, .page-jeu .dc-unite { will-change: transform; }
+
+/* Cibles possibles : lueur rouge fixe sur un calque, qui pulse en opacité */
+.dc-unite.est-ciblable { animation: none; filter: drop-shadow(0 0 4px #ff9aa0) var(--ombre); }
+.dc-unite.est-ciblable::after {
+  content: ""; position: absolute; inset: 4% 6%; z-index: -1; pointer-events: none;
+  border-radius: 10%;
+  box-shadow: 0 0 14px 5px rgba(240,122,128,.85);
+  animation: lueur-cible 1s ease-in-out infinite alternate;
+  will-change: opacity;
+}
+.dc-heros.est-ciblable, .page-jeu .dc-heros.est-ciblable { animation: none; isolation: isolate; }
+.dc-heros.est-ciblable::after {
+  content: ""; position: absolute; left: 50%; top: 0; width: 100%; aspect-ratio: 1; translate: -50% 0;
+  z-index: -1; pointer-events: none;
+  border-radius: 50%;
+  box-shadow: 0 0 16px 6px rgba(240,122,128,.8);
+  animation: lueur-cible 1s ease-in-out infinite alternate;
+  will-change: opacity;
+}
+@keyframes lueur-cible { from { opacity: .35; } to { opacity: 1; } }
+
+/* Bulle d'énergie : halo fixe, qui respire en opacité */
+.orbe { animation: none; }
+.orbe::after {
+  content: ""; position: absolute; inset: 0; border-radius: 50%; pointer-events: none;
+  box-shadow: 0 0 30px 8px rgba(154,108,240,.6);
+  animation: lueur-orbe 3s ease-in-out infinite alternate;
+  will-change: opacity;
+}
+@keyframes lueur-orbe { from { opacity: .45; } to { opacity: 1; } }
+
+/* PV en danger : même principe */
+.dc-heros.est-en-danger .dc-heros__pv { animation: none; }
+.dc-heros.est-en-danger .dc-heros__pv::after {
+  content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+  box-shadow: 0 0 16px 4px rgba(255,80,90,.75);
+  animation: lueur-cible 1.2s ease-in-out infinite alternate;
+  will-change: opacity;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dc-unite.est-ciblable::after, .dc-heros.est-ciblable::after, .orbe::after, .dc-heros.est-en-danger .dc-heros__pv::after { animation: none; }
+}
+
+
+/* =====================================================================
+   Système de combat : Défense, capacités, états, actions du tour (JS/jeu-cartes-arene.js)
+   ===================================================================== */
+/* Défense : une pastille d'acier au milieu, entre Attaque et PV */
+.dc-stat--d {
+  left: 50%; translate: -50% 0;
+  background: linear-gradient(160deg, #8aa6c2 0 45%, #4d6680 45.1%);
+}
+.page-jeu .tg-bord .dc-unite .dc-stat--d { left: 50%; }
+.dc-stat--plus  { background: linear-gradient(160deg, #b9f5c8 0 45%, #4f9f68 45.1%); }
+.dc-stat--moins { background: linear-gradient(160deg, #f0a07a 0 45%, #b5582f 45.1%); }
+.dc-stat--a.dc-stat--mod { background: linear-gradient(160deg, #f6d995 0 45%, #b8862f 45.1%); color: #1b1408; text-shadow: none; }
+
+/* Capacités : une rangée d'icônes en haut à droite (la couronne = capacité unique) */
+.dc-caps {
+  position: absolute; top: 3%; right: 5%; z-index: 2;
+  display: flex; flex-direction: column; gap: 2px;
+}
+.dc-caps .dc-k { position: static; width: 18px; height: 18px; padding: 3px; }
+.dc-k--unique { background: linear-gradient(160deg, #f6d995, #b8862f); }
+.dc-k--unique svg { fill: #1b1408; }
+@media (max-width: 760px) { .dc-caps .dc-k { width: 14px; height: 14px; padding: 2px; } }
+
+/* Cartes qui demandent 2 actions : une pastille sous le coût */
+.dc-act {
+  position: absolute; top: 15%; left: 4%; z-index: 2;
+  display: grid; place-items: center;
+  width: 18px; height: 18px; border-radius: 50%;
+  background: #6c4bb3; color: #fff;
+  font-family: "Cinzel","Cinzel Repli", serif; font-size: .66rem; font-weight: 800;
+  box-shadow: 0 0 0 1px rgba(255,255,255,.45);
+}
+.dc-act::after { content: "A"; font-size: .45rem; margin-left: 1px; }
+
+/* États sur le plateau */
+.dc-etats {
+  position: absolute; top: 20%; left: 50%; z-index: 3; translate: -50% 0;
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  pointer-events: none;
+}
+.dc-etat {
+  padding: 0 5px;
+  font-family: "Cinzel","Cinzel Repli", serif; font-size: .5rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+  color: #fff; white-space: nowrap;
+  border-radius: 2px;
+}
+.dc-etat--defense { background: rgba(77,102,128,.95); }
+.dc-etat--gelee   { background: rgba(80,150,200,.95); }
+.dc-etat--exposee { background: rgba(183,68,75,.95); }
+.dc-unite.a-defense { filter: drop-shadow(0 0 3px #bcd3ea) drop-shadow(0 0 9px rgba(140,180,220,.6)) var(--ombre); }
+.dc-unite.a-bouclier .dc-unite__corps { box-shadow: 0 0 0 2px rgba(191,227,240,.55), 0 0 12px rgba(191,227,240,.45); border-radius: 6px; }
+.dc-unite.est-gelee .dc-face { filter: grayscale(.3) brightness(.85) hue-rotate(170deg) saturate(1.4); }
+
+/* Actions du tour : des pastilles à côté de l'énergie */
+.actions { display: flex; align-items: center; gap: 4px; }
+.action-pip {
+  width: 12px; height: 12px;
+  clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+  background: rgba(255,255,255,.14);
+}
+.action-pip--pleine { background: linear-gradient(160deg, #fff3c9, #f0c873 50%, #b8862f); box-shadow: 0 0 6px rgba(240,200,115,.7); }
+.actions__texte { margin-left: 4px; font-family: "Cinzel","Cinzel Repli", serif; font-size: .72rem; color: var(--gris); white-space: nowrap; }
+.tg-energie { flex-wrap: wrap; }
+.actions--adverse .action-pip { width: 9px; height: 9px; }
+.actions--adverse .actions__texte { font-size: .62rem; }
+.tg-infos .actions, #infos-adverse .actions { margin-left: 8px; }
+
+/* Plus d'action : le bouton de fin de tour s'illumine */
+.btn-fin.est-suggere { animation: fin-suggere 1.6s ease-in-out infinite; }
+@keyframes fin-suggere { 50% { filter: brightness(1.3) drop-shadow(0 0 18px rgba(240,200,115,.9)); } }
+
+/* Défendre et capacité unique */
+.btn-action--garde:not(:disabled) { box-shadow: inset 0 0 0 1px rgba(188,211,234,.7); }
+.btn-action--capacite { grid-column: 1 / -1; background: linear-gradient(160deg, rgba(255,240,200,.18) 0 40%, transparent 40.1%), #5a4520; }
+.btn-action--capacite:not(:disabled) { box-shadow: inset 0 0 0 1px rgba(240,200,115,.8); }
+.btn-action.est-actif { filter: brightness(1.4); }
+.btn-action[hidden] { display: none; }
+
+/* Loupe : la Défense */
+.loupe__stat--d { background: linear-gradient(160deg, #8aa6c2 0 45%, #4d6680 45.1%); }
+
+@media (prefers-reduced-motion: reduce) {
+  .btn-fin.est-suggere { animation: none; filter: brightness(1.25); }
+}
+
+
+/* =====================================================================
+   Constructeur de deck (« Choisir mes cartes », JS/jeu-cartes.js) :
+   le Grimoire à gauche (limites, courbe des coûts, cartes choisies), la réserve filtrée à droite
+   ===================================================================== */
+.choix-deck { max-width: 1280px; }
+.constructeur { display: grid; grid-template-columns: 260px 1fr; gap: 22px; align-items: start; }
+.constructeur__grimoire {
+  position: sticky; top: 12px;
+  display: flex; flex-direction: column; gap: 10px;
+  padding: 14px;
+  border: 1px solid rgba(217,164,65,.25); border-radius: 8px;
+  background: rgba(8,9,14,.55);
+}
+.constructeur__grimoire .choix-deck__titre { margin: 0; }
+.constructeur__grimoire .choix-deck__titre span { color: var(--ambre); }
+.constructeur__limites { display: flex; flex-direction: column; gap: 2px; margin: 0; font-size: .82rem; color: var(--gris); }
+.constructeur__limites b { color: var(--blanc); }
+/* Courbe des coûts : une colonne par coût */
+.constructeur__courbe { display: grid; grid-template-columns: repeat(8, 1fr); gap: 4px; height: 82px; align-items: end; }
+.courbe__col { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; gap: 3px; }
+.courbe__col b {
+  display: grid; place-items: start center;
+  width: 100%; height: var(--h); min-height: 2px;
+  border-radius: 3px 3px 0 0;
+  background: linear-gradient(180deg, #b48cff, #6a3fd0);
+  font-size: .62rem; color: #fff; line-height: 1.4;
+}
+.courbe__col small { font-family: "Cinzel","Cinzel Repli", serif; font-size: .62rem; color: var(--gris); }
+.constructeur__liste { display: flex; flex-direction: column; gap: 3px; margin: 0; padding: 0; list-style: none; max-height: 46vh; overflow: auto; }
+.ligne-grimoire button {
+  display: grid; grid-template-columns: 24px 1fr auto; align-items: center; gap: 8px;
+  width: 100%; padding: 4px 6px;
+  border: 0; border-left: 3px solid var(--rar, #8d93a0);
+  background: rgba(255,255,255,.05); color: var(--blanc);
+  font: inherit; font-size: .84rem; text-align: left;
+  cursor: pointer;
+}
+.ligne-grimoire button:hover { background: rgba(183,68,75,.25); }
+.ligne-grimoire button:hover .ligne-grimoire__nb::after { content: " −"; color: #f07a80; }
+.ligne-grimoire__cout {
+  display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%;
+  background: linear-gradient(160deg, #b48cff, #6a3fd0); font-family: "Cinzel","Cinzel Repli", serif; font-size: .72rem; font-weight: 800;
+}
+.ligne-grimoire__nom { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ligne-grimoire__nb { color: var(--ambre); font-weight: 700; }
+.ligne-grimoire--vide { padding: 6px; font-size: .82rem; font-style: italic; color: var(--gris); }
+.ligne-grimoire.rar-eveillee { --rar: #4fd987; }
+.ligne-grimoire.rar-mythique { --rar: #5b9bff; }
+.ligne-grimoire.rar-legendaire { --rar: #ff4b5c; }
+.ligne-grimoire.rar-transcendante { --rar: #f6d27a; }
+.ligne-grimoire.rar-objet { --rar: #d9a441; }
+.ligne-grimoire.rar-sort { --rar: #9a6cf0; }
+.constructeur__filtres { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+.constructeur__filtres input, .constructeur__filtres select {
+  padding: 7px 10px;
+  border: 1px solid rgba(217,164,65,.3); border-radius: 4px;
+  background: rgba(8,9,14,.7); color: var(--blanc); font: inherit; font-size: .88rem;
+}
+.constructeur__filtres input { flex: 1 1 180px; }
+.constructeur .choix-deck__aide { text-align: left; margin-bottom: 12px; }
+.constructeur .choix-deck__cartes { justify-content: flex-start; }
+@media (max-width: 820px) {
+  .constructeur { grid-template-columns: 1fr; }
+  .constructeur__grimoire { position: static; }
+  .constructeur__liste { max-height: 30vh; }
+}
+
+
+/* =====================================================================
+   Le terrain du duel, au-dessus des derniers jets
+   ===================================================================== */
+.terrain-duel { display: flex; flex-direction: column; gap: 2px; margin-bottom: 12px; padding: 8px 10px; border-left: 3px solid var(--ambre); background: rgba(217,164,65,.08); }
+.terrain-duel:empty { display: none; }
+.terrain-duel__nom { font-family: "Cinzel","Cinzel Repli", serif; font-size: .74rem; letter-spacing: .08em; color: #f0d9a0; }
+.terrain-duel__texte { font-size: .78rem; line-height: 1.35; color: var(--gris); }
+
+
+
+/* =====================================================================
+   Lisibilité du combat : libellés, cartes trop chères, cibles impossibles, infobulles, effets du tour
+   ===================================================================== */
+.actions__titre { margin-right: 4px; font-family: "Cinzel","Cinzel Repli", serif; font-size: .62rem; letter-spacing: .12em; text-transform: uppercase; color: var(--gris); }
+.actions--adverse .actions__titre { display: none; }
+/* Main : carte trop chère (énergie) ou qui demande plus d'actions : simplement assombrie */
+#main-joueur .dc-carte.est-trop-chere .dc-face { filter: grayscale(.55) brightness(.7); }
+/* Pendant une attaque, une capacité ou un sort ciblé : les unités adverses impossibles à viser s'effacent */
+.dc-unite.est-hors-cible { opacity: .45; filter: grayscale(.6); }
+/* États du tour */
+.dc-etat--bouclier { background: rgba(80,130,160,.95); }
+/* Infobulle (capacités, capacités uniques) : posée sur la page, au-dessus de tout (JS/jeu-cartes-arene.js) */
+.infobulle {
+  position: fixed; z-index: 90;
+  max-width: 240px; padding: 6px 9px;
+  border: 1px solid rgba(217,164,65,.5); border-radius: 4px;
+  background: rgba(10,11,16,.96); color: var(--blanc);
+  font-family: "EB Garamond", serif; font-size: .85rem; line-height: 1.3;
+  box-shadow: 0 6px 16px rgba(0,0,0,.6);
+  pointer-events: none;
+}
+.infobulle[hidden] { display: none; }
+.dc-caps { overflow: visible; }
+.dc-k { overflow: visible; }
+
+
+
+/* Le dé posé sur le médaillon « N », son résultat à droite le long de la barre : le N et le dé restent lisibles */
+.page-jeu .tg-bord .centre { display: block; }
+.page-jeu .tg-bord .centre__resultat {
+  position: absolute; left: calc(100% + 2.6cqw); top: 50%;
+  translate: 0 -50%;
+  min-width: 0; width: max-content; max-width: 30cqw;
+  white-space: nowrap;
+  font-size: clamp(.8rem, 1.3cqw, 1.15rem);
+}
+
+/* Éraflure : le coup passe de justesse (1 dégât) */
+.centre__resultat--eraflure { color: #e6c78a; }
+.d20--eraflure polygon { stroke: #c9a45e; }
+
+
+/* =====================================================================
+   Cartes plus sobres : l'illustration d'abord. Attaque · Défense · PV en une petite barre discrète
+   au bas de la carte, capacités en petites icônes translucides (plus nettes au survol)
+   ===================================================================== */
+.dc-carte .dc-stat, .dc-unite .dc-stat,
+.page-jeu .tg-bord .dc-unite .dc-stat {
+  display: inline-flex; align-items: center; gap: 1px; white-space: nowrap;
+  bottom: 0; transform: translateY(45%);
+  min-width: 0; height: auto; padding: 1px 4px 0;
+  clip-path: none; border-radius: 3px;
+  background: rgba(8,9,13,.72);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.08);
+  font-family: "Cinzel","Cinzel Repli", serif; font-size: .6rem; font-weight: 700; line-height: 1.35;
+  text-shadow: none;
+}
+/* les trois valeurs côte à côte, centrées */
+.dc-carte .dc-stat--a, .dc-unite .dc-stat--a, .page-jeu .tg-bord .dc-unite .dc-stat--a { left: 50%; right: auto; translate: calc(-100% - 15px) 0; color: #e9d7ae; }
+.dc-carte .dc-stat--d, .dc-unite .dc-stat--d, .page-jeu .tg-bord .dc-unite .dc-stat--d { left: 50%; right: auto; translate: -50% 0; color: #a9c6e4; }
+.dc-carte .dc-stat--h, .dc-unite .dc-stat--h, .page-jeu .tg-bord .dc-unite .dc-stat--h { left: 50%; right: auto; translate: 15px 0; color: #f0959b; }
+.dc-stat--a::before, .dc-stat--d::before, .dc-stat--h::before { font-size: .85em; margin-right: 2px; opacity: .8; }
+.dc-stat--a::before { content: "⚔"; }
+.dc-stat--d::before { content: "⛨"; }
+.dc-stat--h::before { content: "♥"; }
+/* valeurs modifiées : la couleur seule le dit */
+.dc-stat.dc-stat--a.dc-stat--mod { background: rgba(8,9,13,.72); color: #ffd36b; text-shadow: none; }
+.dc-stat.dc-stat--plus { background: rgba(8,9,13,.72); color: #8fe6a6; }
+.dc-stat.dc-stat--moins { background: rgba(8,9,13,.72); color: #f2a27c; }
+.dc-unite.est-blessee .dc-stat--h { background: rgba(60,10,14,.82); color: #ffb1b5; }
+
+/* capacités : petites et translucides, nettes au survol */
+.dc-caps { top: 4%; right: 4%; gap: 1px; }
+.dc-caps .dc-k {
+  width: 13px; height: 13px; padding: 2px;
+  background: rgba(8,9,13,.62);
+  opacity: .8;
+  transition: opacity .15s;
+}
+.dc-caps .dc-k svg { fill: #e8e2d4; }
+.dc-caps .dc-k--unique { background: rgba(184,134,47,.85); }
+.dc-caps .dc-k--unique svg { fill: #1b1408; }
+.dc-carte:hover .dc-k, .dc-unite:hover .dc-k { opacity: 1; }
+@media (max-width: 760px) { .dc-caps .dc-k { width: 11px; height: 11px; padding: 1px; } }
+
+/* coût (collection, constructeur) et actions : plus petits */
+.dc-cout { width: 18px; height: 20px; font-size: .68rem; }
+.dc-act { width: 14px; height: 14px; font-size: .56rem; top: 13%; }
+
+/* états du plateau : plus fins */
+.dc-etat { padding: 0 4px; font-size: .46rem; letter-spacing: .05em; opacity: .92; }
+
+
+/* Conseils facultatifs (bouton 💡) : la consigne du tour, discrète, au-dessus de ta main */
+body.avec-conseils.page-jeu .tg-tapis > .centre__consigne {
+  position: absolute; left: 50%; top: 93%; bottom: auto; right: auto; z-index: 20;
+  width: max-content; max-width: min(560px, 80vw); height: auto; margin: 0; padding: 5px 14px;
+  overflow: visible; clip: auto; clip-path: none; white-space: normal;
+  translate: -50% 0;
+  border: 1px solid rgba(217,164,65,.35); border-radius: 999px;
+  background: rgba(10,11,16,.82);
+  color: #e8dfcc; font-size: .82rem; font-style: italic; text-align: center; line-height: 1.3;
+  pointer-events: none;
+}
+body.avec-conseils.page-jeu .tg-tapis > .centre__consigne:empty { display: none; }
+#btn-conseils.est-actif { background: rgba(217,164,65,.25); box-shadow: inset 0 0 0 1px rgba(217,164,65,.6); }
+
+/* Barre d'outils du duel : les cinq boutons sur une seule ligne */
+.en-duel .historique__outils { flex-wrap: nowrap; gap: 5px; }
+.en-duel .historique__outils .btn-outil { flex: 1 1 0; min-width: 0; }
+
+
+/* =====================================================================
+   En ligne : le classé (choix du mode, recherche, rang) et la partie privée
+   ===================================================================== */
+.ligne__sous-titre {
+  grid-column: 1 / -1; margin: 6px 0 -4px;
+  font-family: "Cinzel","Cinzel Repli", serif; font-size: .78rem; letter-spacing: .16em; text-transform: uppercase;
+  color: var(--gris);
+}
+.classe { grid-column: 1 / -1; display: grid; gap: 10px; justify-items: start; }
+.classe__rang { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; margin: 0; color: var(--gris); }
+.classe__palier {
+  padding: 2px 10px; border-radius: 3px;
+  font-family: "Cinzel","Cinzel Repli", serif; font-size: .78rem; letter-spacing: .1em; text-transform: uppercase;
+  color: #1b1408; background: #b98b5a;
+}
+.classe__palier--argent { background: #c9cfd8; }
+.classe__palier--or { background: #e7c46a; }
+.classe__palier--platine { background: #9fd9d0; }
+.classe__palier--diamant { background: #8fb6ff; }
+.classe__palier--couronne { background: linear-gradient(180deg, #fff1c4, #e7b23e); box-shadow: 0 0 10px rgba(231,178,62,.6); }
+.classe__modes { display: flex; flex-wrap: wrap; gap: 6px; }
+.classe__mode {
+  padding: 8px 16px; border: 0; clip-path: var(--facette);
+  background: rgba(14,17,24,.75); box-shadow: inset 0 0 0 1px var(--ligne);
+  color: var(--gris); font-family: "Cinzel","Cinzel Repli", serif; font-size: .8rem; letter-spacing: .08em; cursor: pointer;
+}
+.classe__mode small { margin-left: 4px; font-size: .62rem; font-style: italic; opacity: .8; }
+.classe__mode[aria-checked="true"] { color: #1b1408; background: linear-gradient(180deg, #f3cf7c, var(--ambre) 60%, #b07a26); }
+.classe__mode:disabled { opacity: .45; cursor: not-allowed; }
+.classe__etat { margin: 0; min-height: 1.2em; color: var(--gris); font-style: italic; }
+.classe.est-en-recherche .classe__etat::before {
+  content: ""; display: inline-block; width: 8px; height: 8px; margin-right: 8px; border-radius: 50%;
+  background: var(--ambre); animation: classe-pouls 1s ease-in-out infinite;
+}
+@keyframes classe-pouls { 50% { opacity: .2; } }
+.fin__classe { margin: 8px 0 0; color: var(--gris); }
+.fin__classe b { color: var(--blanc); }
+.fin__classe--gain b:first-child { color: #8fe6a6; }
+@media (prefers-reduced-motion: reduce) { .classe.est-en-recherche .classe__etat::before { animation: none; } }
+
+
+/* =====================================================================
+   2 contre 2 : le salon de quatre (format, équipes) et, pendant le duel, l'allié et les adversaires
+   ===================================================================== */
+.salon__format { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; margin: 0 0 12px; }
+.salon__format[hidden] { display: none; }
+.salon__format-btn {
+  padding: 6px 14px; border: 0; border-radius: 3px; cursor: pointer;
+  font-family: "Cinzel","Cinzel Repli", serif; font-size: .72rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
+  color: var(--gris); background: rgba(255,255,255,.04); box-shadow: inset 0 0 0 1px var(--ligne);
+}
+.salon__format-btn small { margin-left: 4px; font-family: "EB Garamond", serif; font-size: .8rem; font-weight: 400; font-style: italic; letter-spacing: 0; text-transform: none; opacity: .85; }
+.salon__format-btn[aria-checked="true"] { color: #1b1408; background: linear-gradient(180deg, #f3cf7c, var(--ambre) 60%, #b07a26); box-shadow: none; }
+.salon__format-btn:disabled { cursor: default; }
+.salon__format-btn:disabled:not([aria-checked="true"]) { opacity: .45; }
+.salon__joueurs--equipes { align-items: start; }
+.salon__equipe { display: grid; gap: 8px; min-width: 0; }
+.salon__equipe-titre {
+  margin: 0; font-family: "Cinzel","Cinzel Repli", serif; font-size: .74rem; letter-spacing: .16em; text-transform: uppercase; color: var(--ambre);
+}
+.salon__equipe-titre small { font-family: "EB Garamond", serif; font-size: .82rem; font-style: italic; letter-spacing: 0; text-transform: none; color: var(--gris); }
+.salon__equipe-btn { display: flex; margin: 10px auto 0; min-height: 34px; padding: 4px 16px; font-size: .75rem; }
+.salon__equipe-btn[hidden] { display: none; }
+
+/* Pendant le duel */
+.equipe-duel { display: flex; gap: 8px; align-items: center; font-size: .82rem; color: var(--gris); }
+.equipe-duel[hidden] { display: none; }
+.equipe-duel b { font-family: "Cinzel","Cinzel Repli", serif; font-size: .78rem; color: var(--blanc); }
+.equipe-duel small { font-style: italic; }
+.equipe-duel--allie {
+  flex-direction: column; align-items: flex-end; gap: 0;
+  padding: 6px 12px; border-radius: 4px;
+  background: rgba(10,12,18,.6); box-shadow: inset 0 0 0 1px var(--ligne);
+  transition: box-shadow .3s, background .3s;
+}
+.equipe-duel__label { font-family: "Cinzel","Cinzel Repli", serif; font-size: .62rem; letter-spacing: .16em; text-transform: uppercase; color: var(--ambre); }
+.equipe-duel--allie.est-actif { background: rgba(217,164,65,.14); box-shadow: inset 0 0 0 1px var(--ambre), 0 0 18px rgba(217,164,65,.25); }
+.equipe-duel__membre {
+  display: flex; flex-direction: column; align-items: flex-end;
+  padding: 4px 10px; border-radius: 4px; background: rgba(10,12,18,.55); box-shadow: inset 0 0 0 1px var(--ligne);
+  opacity: .7; transition: opacity .3s, box-shadow .3s;
+}
+.equipe-duel__membre.est-actif { opacity: 1; box-shadow: inset 0 0 0 1px #c45b61, 0 0 16px rgba(196,91,97,.3); }
+@media (max-width: 600px) {
+  .equipe-duel--adverse small { display: none; }
+}
+/* L'allié : posé au-dessus de ta plaque (énergie + héros), à gauche */
+.equipe-duel--allie { position: absolute; left: 18px; bottom: calc(100% + 8px); align-items: flex-start; z-index: 6; }
+
+
+/* =====================================================================
+   Accueil du duel : le panneau « En ligne » dans la salle (même habillage que le reste du hall)
+   - titres de section soulignés d'un trait doré
+   - blocs sobres coiffés d'un liseré d'or
+   - choix en barre segmentée (comme la difficulté), grands boutons dorés pleine largeur
+   - salle d'attente : code du salon en plaque, joueurs en cartouches, « Je suis prêt » en grand
+   ===================================================================== */
+.menu .ligne__accueil { gap: 12px; }
+.menu .ligne__sous-titre {
+  display: flex; align-items: center; gap: 14px;
+  margin: 4px 0 -2px;
+  font-size: .76rem; letter-spacing: .24em;
+  color: #c6ccd6;
+}
+.menu .ligne__sous-titre::after {
+  content: ""; flex: 1; height: 1px;
+  background: linear-gradient(90deg, rgba(217,164,65,.5), transparent);
+}
+.menu .ligne__bloc,
+.menu .salon {
+  position: relative;
+  gap: 12px;
+  padding: 20px 20px 18px;
+  clip-path: none;
+  background:
+    radial-gradient(ellipse 70% 60% at 50% 0, rgba(217,164,65,.07), transparent 70%),
+    rgba(255,255,255,.025);
+  border: 1px solid var(--ligne);
+  box-shadow: inset 0 2px 0 rgba(217,164,65,.55);
+}
+.menu .ligne__bloc h3 {
+  font-size: 1rem; letter-spacing: .1em;
+  color: #f3e6c4;
+}
+.menu .ligne__bloc p { font-size: .98rem; line-height: 1.5; color: #a9b0bc; }
+
+/* --- Boutons du panneau : pleine largeur, le principal en or, l'autre en contour --- */
+.menu .ligne .btn-dc {
+  min-height: 48px;
+  padding: 0 20px;
+  font-size: .82rem; letter-spacing: .14em; text-transform: uppercase;
+}
+.menu .ligne .btn-dc--ambre {
+  background: linear-gradient(180deg, #ffe7a6, #e9b955 45%, #b9842c);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.55), inset 0 -2px 0 rgba(0,0,0,.25);
+}
+.menu .prive__boutons { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; }
+/* « Rejoindre un salon » : bouton secondaire, contour doré */
+.menu #btn-ouvrir-code {
+  color: #f3cf7c;
+  background: rgba(217,164,65,.06);
+  box-shadow: inset 0 0 0 1px rgba(217,164,65,.6);
+}
+.menu #btn-ouvrir-code[aria-expanded="true"] { filter: none; background: rgba(217,164,65,.16); }
+.menu .prive__code { max-width: none; gap: 8px; }
+.menu .prive__code label { font-size: .88rem; }
+.menu .ligne__rejoindre { gap: 10px; }
+.menu .ligne__rejoindre input {
+  min-height: 48px;
+  padding: 0 14px;
+  clip-path: var(--facette);
+  background: rgba(4,5,9,.7);
+  box-shadow: inset 0 0 0 1px rgba(217,164,65,.45);
+  color: #f3cf7c;
+  text-align: center;
+  font-size: 1.25rem; letter-spacing: .4em;
+}
+.menu .ligne__rejoindre input::placeholder { color: rgba(217,164,65,.3); }
+.menu .ligne__rejoindre .btn-dc { flex: none; }
+
+/* --- Classé : rang, choix 1v1 / 2v2 en barre segmentée, recherche en grand --- */
+.menu .classe { justify-items: stretch; }
+.menu .classe__rang { font-size: .95rem; }
+.menu .classe__palier { padding: 3px 12px; clip-path: var(--facette); border-radius: 0; font-weight: 700; }
+.menu .classe__modes {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 0;
+  clip-path: var(--facette);
+  background: rgba(6,7,11,.7);
+  box-shadow: inset 0 0 0 1px var(--ligne);
+}
+.menu .classe__mode {
+  min-height: 44px; padding: 0 12px;
+  clip-path: none;
+  background: none; box-shadow: none;
+  font-size: .82rem; letter-spacing: .12em; text-transform: uppercase;
+  transition: background .2s, color .2s;
+}
+.menu .classe__mode + .classe__mode { box-shadow: inset 1px 0 0 var(--ligne); }
+.menu .classe__mode:hover:not(:disabled) { color: #e8e2d4; background: rgba(255,255,255,.05); }
+.menu .classe__mode[aria-checked="true"] { color: #1b1408; background: linear-gradient(180deg, #f3cf7c, var(--ambre) 60%, #b07a26); }
+.menu .classe__chercher { width: 100%; min-height: 54px; letter-spacing: .2em; }
+.menu .classe__etat { text-align: center; }
+.menu .classe__etat:empty { display: none; }
+
+/* --- Connexion Discord : bloc centré --- */
+.menu .ligne__bloc--centre { align-items: center; padding: 26px 22px; }
+.menu .ligne__bloc--centre p { flex: none; max-width: 40ch; }
+
+/* --- Salle d'attente --- */
+.menu .salon { display: grid; gap: 14px; }
+.menu .salon__tete { margin: 0; }
+.menu .salon__code {
+  align-items: center; gap: 14px;
+  padding: 6px 16px 6px 14px;
+  clip-path: var(--facette);
+  background: rgba(4,5,9,.7);
+  box-shadow: inset 0 0 0 1px rgba(217,164,65,.45);
+}
+.menu .salon__label { font-size: .7rem; letter-spacing: .26em; }
+.menu .salon__code strong {
+  font-family: "Cinzel","Cinzel Repli", serif; font-weight: 700;
+  font-size: 1.5rem; letter-spacing: .32em;
+  background: linear-gradient(180deg, #fff1c8, #e2b24f 60%, #a8741f);
+  -webkit-background-clip: text;
+          background-clip: text;
+  color: transparent;
+}
+.menu .salon__boutons .btn-dc {
+  min-height: 36px; padding: 0 14px;
+  font-size: .7rem; letter-spacing: .12em;
+  background: rgba(255,255,255,.04);
+  box-shadow: inset 0 0 0 1px var(--ligne-forte);
+}
+.menu .salon__boutons #btn-quitter:hover { color: #f0a19a; box-shadow: inset 0 0 0 1px #c45b61; filter: none; }
+.menu .salon__format {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 0;
+  margin: 0;
+  clip-path: var(--facette);
+  background: rgba(6,7,11,.7);
+  box-shadow: inset 0 0 0 1px var(--ligne);
+}
+.menu .salon__format[hidden] { display: none; }
+.menu .salon__format-btn { min-height: 42px; border-radius: 0; background: none; box-shadow: none; }
+.menu .salon__format-btn + .salon__format-btn { box-shadow: inset 1px 0 0 var(--ligne); }
+.menu .salon__format-btn[aria-checked="true"] { background: linear-gradient(180deg, #f3cf7c, var(--ambre) 60%, #b07a26); box-shadow: none; }
+.menu .salon__joueurs { gap: 10px; }
+.menu .salon__joueur {
+  padding: 12px 14px;
+  clip-path: var(--facette);
+  background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.015));
+  box-shadow: inset 0 0 0 1px var(--ligne);
+  transition: box-shadow .25s, background .25s;
+}
+.menu .salon__joueur.est-pret {
+  background: linear-gradient(180deg, rgba(217,164,65,.16), rgba(217,164,65,.04));
+  box-shadow: inset 0 0 0 1px rgba(217,164,65,.8), inset 0 0 22px rgba(217,164,65,.12);
+}
+.menu .salon__joueur--vide { opacity: .55; background: none; box-shadow: inset 0 0 0 1px rgba(205,214,230,.12); }
+.menu .salon__avatar { width: 48px; height: 48px; background: #1d222d; }
+.menu .salon__nom { font-size: .92rem; color: #f3e6c4; }
+.menu .salon__etat { margin: 0; }
+.menu .salon__etat:empty { display: none; }
+.menu .salon__pret-btn { width: 100%; min-height: 54px; letter-spacing: .2em; }
+.menu .salon__equipe-btn { margin: 0 auto; }
+
+@media (max-width: 600px) {
+  .menu .prive__boutons { grid-template-columns: 1fr; }
+  .menu .salon__tete { justify-content: center; }
+}
+/* Boutons côte à côte : sur une seule ligne */
+.menu .prive__boutons .btn-dc { padding: 0 10px; font-size: .76rem; letter-spacing: .08em; white-space: nowrap; }
+/* Place libre : texte en italique, comme une attente */
+.menu .salon__joueur--vide .salon__nom { font-family: "EB Garamond", serif; font-size: .98rem; font-weight: 400; font-style: italic; color: var(--gris); }
+
+
+/* =====================================================================
+   Téléphone : le duel se joue couché (paysage). JS/jeu-cartes.js (passerEnPaysage) demande le
+   plein écran et verrouille l'orientation quand le navigateur l'accepte ; sinon, en portrait,
+   l'écran « Tourne ton téléphone » ci-dessous.
+   Téléphone couché = paysage peu haut (moins de 520 px) : tout est resserré pour tenir dans la hauteur.
+   ===================================================================== */
+@media (orientation: landscape) and (max-height: 520px) {
+  .en-duel .table__plateau { padding: 4px 8px 0; }
+
+  /* Fin du tour, Destin et actions : une colonne compacte collée au bord droit, au milieu */
+  .en-duel .tg-cote {
+    position: fixed; right: 6px; top: 50%; z-index: 6;
+    display: flex; flex-direction: column; align-items: stretch; gap: 5px;
+    width: 108px; margin: 0;
+    translate: 0 -46%;
+  }
+  .en-duel .tg-cote .btn-fin,
+  .en-duel .tg-cote .btn-destin { min-width: 0; width: 100%; min-height: 0; padding: 7px 6px; font-size: .72rem; }
+  .en-duel .tg-cote .btn-fin { min-height: 50px; }
+  .en-duel .tg-cote .btn-destin svg { width: 20px; height: 20px; }
+  .en-duel .tg-cote small { font-size: .55rem; }
+  .en-duel .tg-cote__petits { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
+  .en-duel .tg-cote__petits:empty,
+  .en-duel .tg-cote__unite:not(:has(button:not([hidden]):not(:disabled))) { display: none; }
+  .en-duel .tg-cote .btn-action { min-height: 0; padding: 5px 3px; font-size: .58rem; letter-spacing: .02em; }
+  .en-duel .tg-cote .btn-action small { display: none; }
+
+  /* La main : fixée au bas de l’écran, entre le bord gauche et la colonne de boutons ;
+     le plateau lui laisse la place (padding du bas) */
+  .en-duel .table__plateau { padding-bottom: calc(min(9vw, 19vh) * 1.5 - 14px); }
+  .en-duel .main {
+    --carte-l: min(9vw, 19vh);
+    min-height: calc(var(--carte-l) * 1.5 + 8px);
+    position: fixed; left: 8px; right: 116px; bottom: 2px; z-index: 5;
+    margin: 0;
+    padding: 4px 0 0;
+  }
+  .en-duel .main .dc-carte { --carte-l: min(9vw, 19vh); }
+  .en-duel .main .dc-carte + .dc-carte { margin-left: calc(var(--carte-l) * -0.22); }
+  /* Une carte touchée monte au-dessus des autres, assez grosse pour se lire */
+  .en-duel .main .dc-carte:hover,
+  .en-duel .main .dc-carte:focus-visible,
+  .en-duel .main .dc-carte.est-choisie { translate: 0 calc(var(--carte-l) * -0.55); scale: 1.35; z-index: 5; }
+
+  /* Le panneau des jets : seulement ses boutons, en haut à droite */
+  .en-duel .historique {
+    top: 4px; right: 6px;
+    width: auto; max-height: none;
+    padding: 0;
+    background: none; box-shadow: none; clip-path: none;
+  }
+  .en-duel .historique__titre, .en-duel .historique__liste { display: none; }
+  .en-duel .historique__outils { position: static; display: flex; gap: 4px; margin: 0; padding: 0; border: 0; background: none; }
+  .en-duel .historique__outils .btn-outil { flex: none; width: 32px; height: 32px; min-height: 0; padding: 0; }
+  .en-duel .terrain-duel { display: none; }   /* le terrain est annoncé en début de partie (bannière) */
+  .en-duel .volume { display: none; }
+  .en-duel .tg-haut { padding-right: 34px; margin-right: 150px; }
+
+  /* Fenêtres du duel (main de départ, Méditer, Tombeau, loupe) et fin de partie : tout tient dans la hauteur */
+  .fenetre-jeu { max-height: calc(100vh - 16px); padding: 12px 18px; overflow-y: auto; }
+  .fenetre-jeu h2 { margin-bottom: 4px; font-size: 1rem; }
+  .fenetre-jeu__texte { margin-bottom: 8px; font-size: .86rem; line-height: 1.35; }
+  .fenetre-jeu__cartes { --carte-l: min(15vw, 24vh); max-height: none; margin-bottom: 8px; padding: 4px; gap: 8px; }
+  .fenetre-jeu .btn-dc { min-height: 36px; padding: 4px 18px; }
+  .fenetre-jeu.loupe { gap: 10px 18px; }
+  .loupe__carte, .loupe__carte .dc-carte { --carte-l: min(220px, 52vh); }
+  .loupe__fiche { max-height: calc(100vh - 80px); }
+  .fin__cadre { padding: 16px 22px 14px; max-height: calc(100vh - 20px); overflow-y: auto; }
+  .fin__titre { font-size: 1.8rem; margin: 2px 0 4px; }
+  .fin__texte { margin-bottom: 10px; font-size: .9rem; }
+
+  /* La table : un peu moins large pour laisser la colonne de droite */
+  .en-duel .tg-table { margin-right: 112px; }
+  .en-duel .banniere { font-size: .9em; }
+}
+
+/* Portrait, pendant un duel : on invite à tourner le téléphone (élément .tourne-telephone de jeu-cartes.html) */
+.tourne-telephone { display: none; }
+@media (orientation: portrait) and (max-width: 600px) {
+  .en-duel .tourne-telephone {
+    position: fixed; inset: 0; z-index: 9999;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px;
+    padding: 30px;
+    text-align: center;
+    background: radial-gradient(ellipse at 50% 40%, rgba(217,164,65,.16), transparent 60%), #0b0d12;
+    color: var(--gris);
+    font-size: 1.05rem; font-style: italic;
+  }
+  .tourne-telephone strong {
+    font-family: "Cinzel","Cinzel Repli", serif; font-size: 1.3rem; font-style: normal; letter-spacing: .08em;
+    color: #f3cf7c;
+  }
+  /* Un téléphone qui bascule à l'horizontale */
+  .tourne-telephone__icone {
+    width: 46px; height: 78px; margin-bottom: 12px;
+    border: 3px solid #f3cf7c; border-radius: 9px;
+    box-shadow: 0 0 22px rgba(217,164,65,.35), inset 0 -8px 0 -5px #f3cf7c;
+    animation: tourne-telephone 2.4s ease-in-out infinite;
+  }
+  .en-duel .table { visibility: hidden; }
+}
+@keyframes tourne-telephone { 0%, 25% { rotate: 0deg; } 55%, 85% { rotate: -90deg; } 100% { rotate: 0deg; } }
+@media (prefers-reduced-motion: reduce) { .tourne-telephone__icone { animation: none; rotate: -90deg; } }

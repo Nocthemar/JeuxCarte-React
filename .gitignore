@@ -1,0 +1,33 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Ancien jeu (HTML/CSS/JS), gardé comme référence avec son propre dépôt git
+ancien/
+# Emplacement provisoire de l’ancien jeu, avant son déplacement vers ancien/
+src/Ancient/
+
+# Configuration locale (URL et clé Supabase) : jamais publiée
+.env.local
+.env.*.local
