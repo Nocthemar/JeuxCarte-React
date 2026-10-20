@@ -15,6 +15,7 @@ import { capsDe } from '../../moteur/index.js';
 import { particules, onde, flash, voile, secousseEcran, eclair, briser, recul, annonce, envol, symbole } from './effets.js';
 import { styleAttaque, couleursVeine } from './attaques.js';
 import { htmlCarte } from './htmlCarte.js';
+import { grandDe } from './grandDe.js';
 
 const reduit = animationsReduites();
 const $ = (id) => document.getElementById(id);
@@ -84,31 +85,35 @@ export async function banniere(texte, sous = '', type = '') {
   b.className = 'banniere';
 }
 
-// d20 : il roule, puis s'arrête sur le résultat
-// Le dé n'apparaît que pendant un lancer (attaque ou Jet du Destin), puis s'efface
+// d20 : le grand dé est jeté au centre de l'écran (lib/duel/grandDe.js), puis rejoint le petit dé
+// du plateau, qui garde le résultat et le détail du calcul (label) ; court : le résultat seul, écrit en grand.
+// Le petit dé n'apparaît que pendant un lancer (attaque ou Jet du Destin), puis s'efface.
+// Animations réduites (ou onglet caché) : seulement le petit dé, sans roulement.
 let minuteurDe = null;
-export async function lancerDe(de, label, q, destin = false) {
+export async function lancerDe(de, label, q, destin = false, court = label) {
   const zone = $('d20');
   const face = $('d20-face');
   const res = $('d20-resultat');
   clearTimeout(minuteurDe);
-  zone.className = `d20 roule est-visible${destin ? ' d20--destin' : ''}`;
   res.textContent = '';
   res.className = 'centre__resultat';
   jouerSon('de');
-  if (!reduit && !document.hidden) {
-    for (let i = 0; i < 9; i++) {
-      face.textContent = 1 + Math.floor(Math.random() * 20);
-      await pause(55 + i * 8);
-    }
+  const grand = !reduit && !document.hidden;
+  if (grand) {
+    zone.className = `d20${destin ? ' d20--destin' : ''}`;   // caché pendant le grand jet
+    // les sons du résultat partent quand le grand dé se pose
+    setTimeout(() => { if (de === 20) jouerSon('fanfare'); if (de === 1) jouerSon('echec'); }, 900);
+    await grandDe(de, q, court, destin);
   }
   face.textContent = de;
   zone.className = `d20 est-visible d20--${q}${destin ? ' d20--destin' : ''}`;
   res.textContent = label;
   res.className = `centre__resultat est-visible centre__resultat--${q}`;
-  if (de === 20) jouerSon('fanfare');
-  if (de === 1) jouerSon('echec');
-  await pause(500);
+  if (!grand) {
+    if (de === 20) jouerSon('fanfare');
+    if (de === 1) jouerSon('echec');
+  }
+  await pause(grand ? 150 : 500);
   // Le résultat reste lisible un moment, puis le dé et son étiquette s'effacent
   minuteurDe = setTimeout(() => {
     zone.classList.remove('est-visible');
@@ -238,7 +243,7 @@ export async function animer(ev) {
       style.charge?.(att);
       if (ev.esquive && cib) flotter(cib, `Esquive : ${ev.des.join(' et ')}, le plus bas compte`, 'buff');
       const calcul = ev.total != null ? `${ev.esquive ? ` · Esquive (${ev.des.join(' / ')})` : ''} · ${ev.de}${ev.atk ? ` + ${ev.atk}` : ''}${ev.bonus ? ` + ${ev.bonus}` : ''} = ${ev.total} / ${ev.seuil}` : '';
-      await lancerDe(ev.de, `${ev.info.label}${calcul}`, ev.info.q);
+      await lancerDe(ev.de, `${ev.info.label}${calcul}`, ev.info.q, false, ev.info.label);
       att?.classList.remove('fx-prepare');
       cib?.classList.remove('fx-visee');
       // 2. l'attaque part (projectile, rayon, élan…) et touche
@@ -294,7 +299,7 @@ export async function animer(ev) {
       return;
     }
     case 'destin': {
-      await lancerDe(ev.de, `Destin : ${ev.info.label}`, ev.info.q, true);
+      await lancerDe(ev.de, `Destin : ${ev.info.label}`, ev.info.q, true, ev.info.label);
       const sons = { malediction: 'tonnerre', soin: 'soin', pioche: 'pioche', renfort: 'acier', benediction: 'cloche', grace: 'cloche' };
       jouerSon(sons[ev.info.q]);
       if (ev.info.q === 'malediction') { voile('rgba(110,40,150,.55)', 800); secousseEcran(8); }
@@ -345,7 +350,7 @@ export async function animer(ev) {
     case 'effet': {
       // Capacité unique à l'arrivée d'une grande carte (après sa pose)
       await banniere(ev.effet.nom, ev.effet.texte, 'banniere--grace');
-      if (ev.destin) await lancerDe(ev.destin.de, `Destin : ${ev.destin.info.label}`, ev.destin.info.q, true);
+      if (ev.destin) await lancerDe(ev.destin.de, `Destin : ${ev.destin.info.label}`, ev.destin.info.q, true, ev.destin.info.label);
       await montrerTouches(ev.touches);
       if (ev.renfort) await animer({ type: 'apres-pose', uid: ev.renfort, carte: { n: 'Milicien de la Couronne' } });
       await mourir(ev.morts);

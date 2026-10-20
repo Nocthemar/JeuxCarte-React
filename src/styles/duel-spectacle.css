@@ -1,0 +1,106 @@
+/* =====================================================================
+   Duel : les effets « spectacle » (lib/duel/grandDe.js…)
+   Chargée après jeu-cartes.css. Rien de tout cela avec les animations réduites.
+   ===================================================================== */
+
+/* ---------- Le grand d20 ---------- */
+.gd-scene {
+  --de: #1f2638; --bord: rgba(217,164,65,.75); --chiffre: #eef0f4; --lueur: rgba(160,180,230,.35);
+  --taille: min(34vmin, 230px);
+  position: fixed; inset: 0; z-index: 44; pointer-events: none;
+  display: grid; place-items: center;
+}
+/* Jet du Destin : un dé violet */
+.gd-scene--destin { --de: #2a1f44; --bord: rgba(201,178,251,.85); --lueur: rgba(154,108,240,.45); }
+/* La couleur du résultat */
+.gd-scene--critique, .gd-scene--grace { --de: #5a4214; --bord: #f3cf7c; --chiffre: #fff6dc; --lueur: rgba(243,207,124,.7); }
+.gd-scene--solide, .gd-scene--benediction, .gd-scene--renfort { --bord: #e7ecf4; --lueur: rgba(230,235,245,.45); }
+.gd-scene--faible { --bord: rgba(154,161,173,.7); --chiffre: #b4bac5; --lueur: rgba(80,90,110,.3); }
+.gd-scene--echec, .gd-scene--malediction { --de: #3a1d22; --bord: #c45b61; --chiffre: #ffd9db; --lueur: rgba(196,91,97,.5); }
+.gd-scene--soin { --bord: #9fd9b0; --lueur: rgba(127,176,143,.45); }
+.gd-scene--pioche { --bord: #c5d2ef; --lueur: rgba(160,180,230,.45); }
+
+.gd {
+  grid-area: 1 / 1;
+  width: var(--taille); height: var(--taille);
+  will-change: transform, opacity;
+}
+.gd__corps {
+  position: relative; width: 100%; height: 100%;
+  filter: drop-shadow(0 18px 24px rgba(0,0,0,.7)) drop-shadow(0 0 22px var(--lueur));
+  transition: filter .3s ease;
+}
+.gd__corps svg { width: 100%; height: 100%; overflow: visible; }
+/* Les facettes : la couleur du dé, plus ou moins éclairée selon leur pente */
+.gd__facette { stroke: var(--bord); stroke-width: 1.1; stroke-linejoin: round; transition: fill .3s ease, stroke .3s ease; }
+.gd__f1 { fill: color-mix(in srgb, var(--de) 80%, #fff); }
+.gd__f2 { fill: color-mix(in srgb, var(--de) 88%, #fff); }
+.gd__f3 { fill: var(--de); }
+.gd__f4 { fill: color-mix(in srgb, var(--de) 70%, #000); }
+.gd__contour { fill: none; stroke: var(--bord); stroke-width: 2.4; stroke-linejoin: round; }
+.gd__fissure { fill: none; stroke: #ff9ca1; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 200; stroke-dashoffset: 200; opacity: 0; filter: drop-shadow(0 0 4px #c45b61); }
+.gd__chiffre {
+  position: absolute; left: 50%; top: 56%; translate: -50% -50%;
+  font-family: "Cinzel","Cinzel Repli", serif; font-weight: 800;
+  font-size: calc(var(--taille) * .2); line-height: 1;
+  color: var(--chiffre);
+  text-shadow: 0 2px 6px rgba(0,0,0,.8);
+  font-variant-numeric: tabular-nums;
+}
+.gd-scene.est-pose .gd__chiffre { font-size: calc(var(--taille) * .24); }
+
+/* Le texte du résultat, sous le dé */
+.gd-texte {
+  grid-area: 1 / 1; align-self: center;
+  margin: calc(var(--taille) * 1.25) 0 0;
+  max-width: none;
+  font-family: "Cinzel Decorative","Cinzel","Cinzel Repli", serif; font-weight: 700;
+  font-size: clamp(1.3rem, 3.2vw, 2.2rem); letter-spacing: .06em; text-transform: uppercase;
+  color: var(--chiffre);
+  text-shadow: 0 0 18px var(--lueur), 0 3px 10px rgba(0,0,0,.9);
+  opacity: 0;
+}
+.gd-scene--critique .gd-texte, .gd-scene--grace .gd-texte {
+  font-size: clamp(2rem, 6vw, 4rem);
+  background: linear-gradient(180deg, #fff1c8 10%, #ecc061 55%, #a8741f);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+  filter: drop-shadow(0 4px 22px rgba(217,164,65,.6)) drop-shadow(0 3px 6px rgba(0,0,0,.9));
+  text-shadow: none;
+}
+.gd-scene--echec .gd-texte, .gd-scene--malediction .gd-texte { color: #ff9ca1; }
+
+/* Le halo de rayons (20 naturel) */
+.gd-halo {
+  grid-area: 1 / 1;
+  width: calc(var(--taille) * 3.4); height: calc(var(--taille) * 3.4);
+  border-radius: 50%;
+  background:
+    radial-gradient(circle, rgba(255,236,190,.55) 0 14%, rgba(243,207,124,.18) 30%, transparent 62%),
+    repeating-conic-gradient(from 0deg, rgba(255,226,160,.28) 0 6deg, transparent 6deg 18deg);
+  -webkit-mask: radial-gradient(circle, #000 25%, transparent 68%);
+          mask: radial-gradient(circle, #000 25%, transparent 68%);
+  opacity: 0; scale: .4;
+  transition: opacity .35s ease, scale .6s cubic-bezier(.2,.9,.3,1.2);
+}
+.gd-scene.est-eclatant .gd-halo { opacity: 1; scale: 1; animation: gd-rayons 6s linear infinite; }
+@keyframes gd-rayons { to { rotate: 360deg; } }
+/* Un voile doré sur tout l'écran, le temps de l'éclat */
+.gd-scene.est-eclatant::before {
+  content: ""; position: fixed; inset: 0; z-index: -1;
+  background: radial-gradient(ellipse at 50% 50%, rgba(255,226,160,.22), rgba(20,14,4,.35) 70%);
+  animation: gd-voile 1.1s ease-out forwards;
+}
+@keyframes gd-voile { 0% { opacity: 0; } 15% { opacity: 1; } 100% { opacity: .55; } }
+.gd-scene.est-eclatant .gd__corps { filter: drop-shadow(0 18px 24px rgba(0,0,0,.7)) drop-shadow(0 0 36px rgba(243,207,124,.9)); }
+
+/* Le dé brisé (1 naturel) */
+.gd-scene.est-brise .gd__fissure { opacity: 1; stroke-dashoffset: 0; transition: stroke-dashoffset .35s ease-out; }
+.gd-scene.est-brise::before {
+  content: ""; position: fixed; inset: 0; z-index: -1;
+  background: radial-gradient(ellipse at 50% 50%, transparent 35%, rgba(120,20,28,.45) 100%);
+  animation: gd-voile 1s ease-out forwards;
+}
+
+/* Effets légers (Paramètres) : pas de halo tournant ni de voile */
+:root.effets-legers .gd-scene.est-eclatant .gd-halo { animation: none; }
+:root.effets-legers .gd-scene::before { display: none; }
