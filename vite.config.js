@@ -29,8 +29,12 @@ function politiqueDeSecurite(supabase) {
 }
 
 // https://vite.dev/config/
-export default defineConfig(({ mode }) => {
+export default defineConfig(({ command, mode }) => {
+  // (.env.local sur l'ordinateur ; sur GitHub, les « Variables » du dépôt, voir .github/workflows/mise-en-ligne.yml)
   const env = loadEnv(mode, process.cwd())
+  if (command === 'build' && (!env.VITE_SUPABASE_URL || !env.VITE_SUPABASE_ANON_KEY)) {
+    throw new Error('VITE_SUPABASE_URL et VITE_SUPABASE_ANON_KEY manquent : .env.local (ordinateur) ou Variables du dépôt (GitHub).')
+  }
   return {
     // Adresses relatives : le jeu fonctionne à la racine d'un site comme dans un sous-dossier
     // (GitHub Pages : …github.io/CarteJeuxNocthemar/)

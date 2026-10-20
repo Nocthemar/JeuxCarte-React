@@ -195,10 +195,9 @@ function bilan(titre, resultats) {
   return { fins, total };
 }
 
-describe("Comparaison avec l'ancien moteur", () => {
-  it('trouve l’ancien moteur', () => {
-    expect(CHEMIN_ANCIEN, 'ancien/JS/jeu-cartes-moteur.js introuvable').toBeTruthy();
-  });
+// L'ancien code n'est pas publié avec le jeu (dossier ancien/, ignoré par git) : sur GitHub, où le jeu
+// est construit, cette comparaison est sautée ; elle tourne sur l'ordinateur qui a l'ancien code
+describe.skipIf(!CHEMIN_ANCIEN)("Comparaison avec l'ancien moteur", () => {
 
   it('transforme les cartes du catalogue en unités exactement de la même façon', async () => {
     const A = await ancienMoteur();
