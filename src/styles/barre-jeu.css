@@ -88,7 +88,7 @@
 .barre-entree:last-child { border-bottom: 1px solid rgba(200,168,106,.14); }
 .barre-ico { position: relative; flex: none; display: grid; place-items: center; width: 28px; height: 28px; color: var(--ivoire); }
 .barre-ico svg { width: 26px; height: 26px; }
-.barre-entree:hover, .barre-entree:focus-visible { background: rgba(40,36,32,.6); color: #fff; outline: none; }
+.barre-entree:not(.est-actif):hover, .barre-entree:not(.est-actif):focus-visible { background: rgba(40,36,32,.6); color: #fff; outline: none; }
 
 /* L'écran en cours : une plaque rouge sang bordée d'or vieilli, pointe hors du panneau,
    un losange d'or à gauche */
@@ -310,7 +310,7 @@
   }
   .barre-entree:last-child { border: 0; }
   .barre-ico, .barre-ico svg { width: calc(var(--u) * 62); height: calc(var(--u) * 62); }
-  .barre-entree:hover, .barre-entree:focus-visible { background: linear-gradient(90deg, rgba(200,168,106,.12), transparent 80%); }
+  .barre-entree:not(.est-actif):hover, .barre-entree:not(.est-actif):focus-visible { background: linear-gradient(90deg, rgba(200,168,106,.12), transparent 80%); }
   /* l'écran en cours : la plaque rouge sang dans l'emplacement, pointe vers la droite */
   .barre-entree.est-actif {
     margin: calc(var(--u) * 6) calc(var(--u) * -66) calc(var(--u) * 6) calc(var(--u) * -8);
