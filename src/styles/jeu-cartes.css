@@ -1167,7 +1167,7 @@
    de la fenêtre ; la main dépasse du bas de l'écran comme dans un jeu.
    ===================================================================== */
 body.en-duel { overflow: hidden; padding: 0 !important; }
-.en-duel .topbar, .en-duel .rail { display: none !important; }
+.en-duel .topbar { display: none !important; }
 .en-duel .jeu-wrap { max-width: none; padding: 0; }
 .en-duel .table {
   position: fixed; inset: 0; z-index: 2;

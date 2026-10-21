@@ -20,7 +20,7 @@ const depuisLeJeu = (css) => css.replace(/url\((['"]?)\/(?!\/)/g, `url($1${impor
 const DEBUT = ['polices', 'index', 'compte'];
 // Après : le thème de jour, puis la barre latérale (ajoutée en dernier par l'ancien barre-laterale.js)
 const FIN = ['theme-jour'];
-const RAIL = ['barre-laterale'];
+const RAIL = ['barre-jeu'];
 
 const liste = (page, { transitions = false } = {}) => [
   ...DEBUT, ...page, ...FIN, ...(transitions ? ['transitions-pages'] : []), ...RAIL,

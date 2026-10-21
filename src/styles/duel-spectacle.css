@@ -127,3 +127,69 @@
 /* (!important : la règle d'origine, .fx-elan dans jeu-cartes.css, en a un) */
 .page-jeu .dc-unite.fx-elan { transform: translate(var(--dx), var(--dy)) scale(1.16) !important; transition: transform .2s cubic-bezier(.55,0,.8,.2) !important; }
 :root.anim-reduites .coup-chiffre { display: none; }
+
+/* ---------- Le rythme ---------- */
+/* La bannière : une large bande en travers de l'écran ; le titre entre en glissant, puis repart */
+.page-jeu .banniere {
+  left: 0; right: 0; translate: 0 -50%;
+  padding: 20px 0 18px;
+  clip-path: none;
+  background: linear-gradient(90deg, transparent, rgba(8,10,15,.9) 16%, rgba(8,10,15,.94) 50%, rgba(8,10,15,.9) 84%, transparent);
+  box-shadow: none;
+  scale: 1;
+  transition: opacity .2s ease;
+}
+/* deux filets dorés qui s'étirent depuis le centre */
+.page-jeu .banniere::before, .page-jeu .banniere::after {
+  content: ""; position: absolute; left: 8%; right: 8%; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(217,164,65,.85) 30%, #f3cf7c 50%, rgba(217,164,65,.85) 70%, transparent);
+  scale: 0 1; transition: scale .45s cubic-bezier(.2,.9,.3,1);
+}
+.page-jeu .banniere::before { top: 0; }
+.page-jeu .banniere::after { bottom: 0; }
+.page-jeu .banniere.est-visible::before, .page-jeu .banniere.est-visible::after { scale: 1 1; }
+.page-jeu .banniere strong {
+  font-size: clamp(1.7rem, 4.4vw, 3rem); letter-spacing: .05em;
+  text-shadow: 0 4px 24px rgba(0,0,0,.9);
+}
+.page-jeu .banniere.est-visible strong { animation: banniere-entree .5s cubic-bezier(.2,.9,.3,1) both; }
+.page-jeu .banniere.est-visible span { animation: banniere-entree-sous .5s .08s cubic-bezier(.2,.9,.3,1) both; }
+.page-jeu .banniere.est-sortie { opacity: 0; transition: opacity .24s ease .05s; }
+.page-jeu .banniere.est-sortie strong { animation: banniere-sortie .26s cubic-bezier(.6,0,.9,.4) both; }
+.page-jeu .banniere.est-sortie span { animation: banniere-sortie-sous .26s cubic-bezier(.6,0,.9,.4) both; }
+@keyframes banniere-entree { from { opacity: 0; transform: translateX(-34vw) skewX(-14deg); filter: blur(4px); } 70% { transform: translateX(1.5vw) skewX(3deg); filter: none; } to { opacity: 1; transform: none; } }
+@keyframes banniere-entree-sous { from { opacity: 0; transform: translateX(26vw); } to { opacity: 1; transform: none; } }
+@keyframes banniere-sortie { to { opacity: 0; transform: translateX(34vw) skewX(14deg); filter: blur(4px); } }
+@keyframes banniere-sortie-sous { to { opacity: 0; transform: translateX(-26vw); } }
+/* À toi de jouer : la bande s'éclaire d'or */
+.page-jeu .banniere--moi { background: linear-gradient(90deg, transparent, rgba(40,28,8,.9) 16%, rgba(52,36,10,.95) 50%, rgba(40,28,8,.9) 84%, transparent); }
+.page-jeu .banniere--moi strong {
+  background: linear-gradient(180deg, #fff1c8 5%, #ecc061 50%, #a8741f 95%);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+  filter: drop-shadow(0 3px 14px rgba(217,164,65,.5));
+}
+.page-jeu .banniere--malediction { background: linear-gradient(90deg, transparent, rgba(40,8,12,.9) 16%, rgba(52,10,16,.95) 50%, rgba(40,8,12,.9) 84%, transparent); }
+
+/* La barre de PV du héros : la traînée claire rattrape le rouge avec un temps de retard */
+.dc-heros__barre {
+  position: relative; display: block;
+  width: 74px; height: 6px; margin-top: 4px;
+  background: rgba(8,10,15,.85);
+  box-shadow: inset 0 0 0 1px rgba(217,164,65,.45);
+  clip-path: polygon(3px 0, calc(100% - 3px) 0, 100% 50%, calc(100% - 3px) 100%, 3px 100%, 0 50%);
+}
+.dc-heros__barre i { position: absolute; left: 0; top: 1px; bottom: 1px; width: var(--pv, 100%); }
+.dc-heros__trainee { background: #f6e6c4; transition: width .7s cubic-bezier(.4,0,.2,1) .45s; }
+.dc-heros__reste { background: linear-gradient(180deg, #ff8a8f, #c33a42 60%, #8e1f27); transition: width .18s ease-out; }
+.dc-heros.est-en-danger .dc-heros__reste { background: linear-gradient(180deg, #ffb3b8, #e2434d 60%, #a11b25); }
+
+/* Mon héros en danger : les bords de l'écran battent en rouge (deux battements, puis une pause) */
+.coeur-danger {
+  position: fixed; inset: 0; z-index: 39; pointer-events: none;
+  background: radial-gradient(ellipse at 50% 50%, transparent 52%, rgba(160,18,30,.55) 100%);
+  opacity: .25;
+  animation: coeur 1.15s ease-out infinite;
+}
+@keyframes coeur { 0% { opacity: .25; } 10% { opacity: .9; } 22% { opacity: .35; } 32% { opacity: .75; } 55%, 100% { opacity: .25; } }
+:root.anim-reduites .coeur-danger, :root.effets-legers .coeur-danger { animation: none; opacity: .45; }
+@media (prefers-reduced-motion: reduce) { .coeur-danger { animation: none; opacity: .45; } }

@@ -4,6 +4,7 @@
 //  qui décide quoi faire et demande l'action au moteur.
 //  sel : la sélection en cours du joueur { monTour, attaquant, sortIndex, capacite, cibles, defausse }
 // =====================================================================
+import { createPortal } from 'react-dom';
 import { useLayoutEffect, useRef } from 'react';
 import CarteDuel, { FaceCarte, Capacites, Stats } from './CarteDuel.jsx';
 import { animationsReduites } from '../../lib/preferences.js';
@@ -101,6 +102,8 @@ function Heros({ camp, qui, avatar, sel, onClick }) {
       <span className="dc-heros__cadre"><span className="dc-heros__portrait">{avatar ? <img src={avatar} alt="" /> : COURONNE}</span></span>
       <span className="dc-heros__pv"><span>{Math.max(0, camp.pv)}</span></span>
       <span className="dc-heros__nom">{camp.nom}</span>
+      {/* La barre de PV (--pv) : le rouge descend tout de suite, la traînée claire le rattrape (styles/duel-spectacle.css) */}
+      <span className="dc-heros__barre" aria-hidden="true"><i className="dc-heros__trainee" /><i className="dc-heros__reste" /></span>
     </button>
   );
 }
@@ -173,8 +176,12 @@ export default function Plateau({
   const glissable = sel.monTour && peutDefausser(etat, 'joueur');
   usePioche(j.main, a.main.length);
 
+  // Mon héros a 5 PV ou moins : les bords de l'écran battent en rouge, comme un cœur
+  const enDanger = j.pv > 0 && j.pv <= 5;
+
   return (
     <section className="table" id="ecran-duel">
+      {enDanger && createPortal(<div className="coeur-danger" aria-hidden="true" />, document.body)}
       <div className={`table__plateau${sel.monTour ? ' mon-tour' : ''}${sel.cibles ? ' vise' : ''}`} id="scene-table">
 
         {/* Haut : la main de l'adversaire en éventail, son héros, son énergie */}

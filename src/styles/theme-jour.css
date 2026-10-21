@@ -61,29 +61,7 @@
   --texte: #f2eee6; --texte-doux: #bcb2a4; --accent: #ece6d9; --perte: #c22f38; --gain: #6fbf73;
 }
 
-/* ---------- Barre latérale ---------- */
-:root[data-theme="jour"] body:not(.page-jeu):not(.page-fiche):not(.page-boutique) .rail {
-  background: rgba(232,225,213,.9);
-  border-color: rgba(60,40,20,.18);
-  box-shadow: 0 14px 40px rgba(60,40,20,.22), inset 0 1px 0 rgba(255,255,255,.7);
-}
-@media (hover:hover) and (min-width:701px){
-  :root[data-theme="jour"] body:not(.page-jeu):not(.page-fiche):not(.page-boutique) .rail:hover:not(:has(.search-panel.open)) { background: rgba(232,225,213,.97); }
-}
-@media (min-width:701px){
-  :root[data-theme="jour"] body:not(.page-jeu):not(.page-fiche):not(.page-boutique) .rail:focus-within:not(:has(.search-panel.open)) { background: rgba(232,225,213,.97); }
-}
-:root[data-theme="jour"] body:not(.page-jeu):not(.page-fiche):not(.page-boutique) .rail-item:hover,
-:root[data-theme="jour"] body:not(.page-jeu):not(.page-fiche):not(.page-boutique) .rail-item:focus-visible { background: rgba(60,40,20,.07); }
-:root[data-theme="jour"] body:not(.page-jeu):not(.page-fiche):not(.page-boutique) .rail-item.is-active { background: rgba(60,40,20,.08); color: #8a6a2c; }
-:root[data-theme="jour"] body:not(.page-jeu):not(.page-fiche):not(.page-boutique) .rail-item.is-active::before { background: #8a6a2c; }
-:root[data-theme="jour"] body:not(.page-jeu):not(.page-fiche):not(.page-boutique) .rail-sep { background: rgba(60,40,20,.16); }
+/* (la barre de navigation reste toujours sombre : styles/barre-jeu.css) */
 
 /* ---------- Accueil : héros, carrousel, dock, pied de page ---------- */
 
-/* Barre latérale du jeu et du profil : elle reste sombre, ses boutons de compte (déconnexion, MJ) gardent donc leurs couleurs claires */
-:root[data-theme="jour"] body.page-jeu .rail,
-:root[data-theme="jour"] body.page-fiche .rail,
-:root[data-theme="jour"] body.page-boutique .rail {
-  --texte: #f2eee6; --texte-doux: #bcb2a4; --bord: rgba(240,236,227,.27); --fond: #131010;
-}

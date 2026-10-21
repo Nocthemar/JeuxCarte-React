@@ -77,12 +77,17 @@ export async function montrerTouches(touches = []) {
 }
 
 
-// Bannière au centre (changement de tour, Destin…)
+// Bannière en travers de l'écran (changement de tour, Destin…) : le texte entre en glissant,
+// reste un instant, puis repart de l'autre côté (styles/duel-spectacle.css)
 export async function banniere(texte, sous = '', type = '') {
   const b = $('banniere');
   b.innerHTML = `<strong>${esc(texte)}</strong>${sous ? `<span>${esc(sous)}</span>` : ''}`;
   b.className = `banniere est-visible ${type}`;
-  await pause(1100);
+  await pause(reduit ? 1100 : 980);
+  if (!reduit) {
+    b.className = `banniere est-visible est-sortie ${type}`;
+    await pause(240);
+  }
   b.className = 'banniere';
 }
 
