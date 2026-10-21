@@ -1,205 +1,160 @@
 /* =====================================================================
    La barre de navigation du jeu (components/BarreLaterale.jsx)
-   Un panneau de jeu : bleu nuit, double filet doré, ornements, médaillon du joueur ;
-   l'écran en cours est une bannière dorée qui déborde du panneau.
+   Direction artistique de Nocthémar : dark medieval fantasy en low poly, charbon et pierre,
+   ivoire et or vieilli, un seul accent rouge sang. Sobre, lisible.
    Toujours sombre, même en thème clair (c'est un élément du jeu, pas de la page).
    ===================================================================== */
 .barre {
-  --or: #d9a441;
-  --or-vif: #f3cf7c;
-  --or-pale: #e8d3a2;
-  --nuit: #0c111b;
-  --texte: #e6dcc6;
-  --largeur: 212px;
+  --or: #c8a86a;
+  --or-pale: #e3cf9f;
+  --ivoire: #e9e2d2;
+  --ivoire-doux: #cfc7b6;
+  --sang: #9b2730;
+  --sang-sombre: #5e1419;
+  --largeur: 260px;
   position: fixed; z-index: 40;
-  left: 12px; top: 12px; bottom: 12px;
+  left: 10px; top: 8px; bottom: 8px;
   width: var(--largeur);
-  display: flex; flex-direction: column; align-items: center;
-  padding: 10px 0 8px;
-  background:
-    radial-gradient(ellipse 120% 22% at 50% 0%, rgba(120,140,200,.16), transparent 70%),
-    radial-gradient(ellipse 120% 18% at 50% 100%, rgba(217,164,65,.10), transparent 70%),
-    linear-gradient(180deg, rgba(19,26,40,.80), rgba(9,13,21,.74) 50%, rgba(13,18,28,.84));
-  -webkit-backdrop-filter: blur(10px) saturate(1.15);
-          backdrop-filter: blur(10px) saturate(1.15);
-  /* double filet doré : le cadre extérieur, puis un filet intérieur plus fin */
-  border: 1px solid rgba(217,164,65,.7);
-  box-shadow:
-    inset 0 0 0 4px var(--nuit),
-    inset 0 0 0 5px rgba(217,164,65,.35),
-    0 18px 50px rgba(0,0,0,.6);
+  display: flex; flex-direction: column; align-items: stretch;
+  padding: 0 0 26px;
   font-family: "Cinzel","Cinzel Repli", serif;
-  color: var(--texte);
-  overflow: visible;
+  color: var(--ivoire);
 }
 
-/* Deux petits losanges dorés, au milieu des flancs du panneau */
-.barre::before, .barre::after {
-  content: ""; position: absolute; top: 50%; width: 9px; height: 9px; translate: 0 -50%; rotate: 45deg;
-  background: linear-gradient(135deg, #fff1c8, var(--or) 60%, #8a6420);
-  box-shadow: 0 0 8px rgba(243,207,124,.6);
-  pointer-events: none;
+/* Le panneau : l'image du panneau à cadre doré (770 × 2042 px), derrière le contenu.
+   border-image la découpe en neuf : les coins du haut (320 px de l'image) et la pointe du bas (560 px)
+   gardent leur forme, seul le milieu s'étire avec la hauteur de l'écran. Échelle : 260 / 770. */
+.barre__fond {
+  position: absolute; left: 0; right: 0; top: 96px; bottom: 0;
+  z-index: -1; pointer-events: none;
+  border-style: solid;
+  border-width: 108px 37px 189px 37px;
+  border-image: url("/img/HUD/panneau-barre-v2.webp") 320 110 560 110 fill / 108px 37px 189px 37px stretch;
+  filter: drop-shadow(0 18px 34px rgba(0,0,0,.65));
 }
-.barre::before { left: -5px; }
-.barre::after { right: -5px; }
 
-/* Les ornements dorés */
-.barre__ornement { flex: none; fill: none; stroke: var(--or); stroke-width: 1.3; stroke-linecap: round; stroke-linejoin: round; filter: drop-shadow(0 0 4px rgba(217,164,65,.35)); }
-.barre__ornement--haut { width: 112px; height: 32px; }
-.barre__ornement--haut circle { fill: var(--or-vif); stroke: none; }
-.barre__ornement--bas { width: 112px; height: 56px; }
-
-/* Le médaillon du joueur */
-.barre__medaillon { position: relative; display: flex; flex-direction: column; align-items: center; gap: 4px; margin: 6px 0 10px; }
-.barre__medaillon::before {
-  content: ""; position: absolute; left: 50%; top: 42px; width: 150px; height: 150px; translate: -50% -50%; z-index: -1; pointer-events: none;
-  background: radial-gradient(circle, rgba(243,207,124,.22), rgba(217,164,65,.06) 45%, transparent 70%);
+/* Le portrait dans son hexagone */
+.barre__medaillon {
+  position: relative; flex: none; align-self: center;
+  display: grid; place-items: center;
+  width: 140px; height: 154px; margin-bottom: 10px;
 }
+.barre__cadre { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; z-index: 1; filter: drop-shadow(0 6px 12px rgba(0,0,0,.7)); }
+.barre__cadre-trait { fill: none; stroke: var(--or); stroke-width: 1.6; stroke-linejoin: round; }
+.barre__cadre-trait--fin { stroke: rgba(200,168,106,.45); stroke-width: .8; }
+.barre__cadre-pointe { fill: var(--or-pale); stroke: #6b5530; stroke-width: .6; }
 .barre__portrait {
   display: grid; place-items: center;
-  width: 84px; height: 84px; padding: 0;
-  border-radius: 50%; border: 0;
-  overflow: hidden;
-  background: radial-gradient(circle at 50% 35%, #2a3348, #0d121c);
-  /* double anneau doré */
-  box-shadow: 0 0 0 2px #0b0f18, 0 0 0 4px var(--or), 0 0 0 6px #0b0f18, 0 0 0 7px rgba(217,164,65,.45), 0 8px 20px rgba(0,0,0,.6);
-  color: var(--or-pale);
+  width: 108px; height: 124px; padding: 0; border: 0;
+  clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+  background: radial-gradient(circle at 50% 35%, #2e2b28, #0f0e0d);
+  color: var(--ivoire-doux);
   cursor: pointer;
-  transition: box-shadow .25s ease, transform .25s ease;
+  transition: filter .25s ease;
 }
 .barre__portrait img { width: 100%; height: 100%; object-fit: cover; }
-.barre__portrait .barre-ico { width: 44px; height: 44px; }
-.barre__portrait .barre-ico svg { width: 44px; height: 44px; }
-.barre__portrait:hover, .barre__portrait:focus-visible, .barre__portrait.est-actif {
-  box-shadow: 0 0 0 2px #0b0f18, 0 0 0 4px var(--or-vif), 0 0 0 6px #0b0f18, 0 0 0 7px rgba(243,207,124,.7), 0 0 26px rgba(243,207,124,.45);
-  outline: none;
-}
+.barre__portrait .barre-ico, .barre__portrait .barre-ico svg { width: 52px; height: 52px; }
+.barre__portrait:hover, .barre__portrait:focus-visible, .barre__portrait.est-actif { filter: brightness(1.12) drop-shadow(0 0 10px rgba(200,168,106,.4)); outline: none; }
 .barre__portrait--vide { cursor: default; }
 .barre__discord { background: radial-gradient(circle at 50% 35%, #6f7cf7, #3c47b8); color: #fff; }
-.barre__discord .btn-discord__logo { width: 38px; height: 30px; }
-.barre__chevron { width: 10px; height: 10px; border-right: 1.5px solid var(--or); border-bottom: 1.5px solid var(--or); rotate: 45deg; margin-top: 6px; opacity: .8; }
+.barre__discord .btn-discord__logo { width: 42px; height: 32px; }
 .barre__connexion {
-  margin-top: 2px; padding: 3px 12px; border: 1px solid rgba(217,164,65,.5); background: none;
-  color: var(--or-pale); font: inherit; font-size: .7rem; letter-spacing: .12em; text-transform: uppercase; cursor: pointer;
+  align-self: center; margin: -2px 0 8px; padding: 4px 14px;
+  border: 1px solid rgba(200,168,106,.55); background: rgba(15,14,13,.8);
+  color: var(--ivoire); font: inherit; font-size: .68rem; letter-spacing: .14em; text-transform: uppercase; cursor: pointer;
 }
-.barre__connexion:hover { color: #1b1408; background: var(--or); }
+.barre__connexion:hover { background: var(--sang); }
 
-/* Les écrans */
+/* Les écrans : des rangées sombres, séparées par de fins traits */
 .barre__entrees {
-  flex: 1;
-  display: flex; flex-direction: column; justify-content: space-evenly; gap: 2px;
-  width: 100%; padding: 0 12px;
-  min-height: 0; max-height: 640px;
-  /* (pas de défilement : il couperait la bannière dorée qui déborde du panneau ; les écrans
-     se resserrent avec la hauteur de la fenêtre, voir min-height de .barre-entree) */
+  position: relative;
+  flex: 1; min-height: 0;
+  display: flex; flex-direction: column; justify-content: flex-start;
+  padding: 6px 40px 0 30px;   /* (à l'intérieur du cadre doré de l'image, dont le bord droit rentre) */
 }
 .barre-entree {
-  position: relative;
-  display: flex; align-items: center; gap: 14px;
-  min-height: clamp(36px, 5.4vh, 50px);
+  position: relative; flex: none;
+  display: flex; align-items: center; gap: 12px;
+  height: clamp(38px, calc((100vh - 230px) / 11.5), 60px);   /* les rangées remplissent la hauteur du panneau */
   padding: 0 14px;
-  border: 0; background: none;
-  color: var(--texte);
-  font-family: "EB Garamond","EB Garamond Repli", serif; font-size: 1.04rem; letter-spacing: .01em;
+  border: 0; border-top: 1px solid rgba(200,168,106,.14);
+  background: rgba(8,7,7,.42);
+  color: var(--ivoire-doux);
+  font-family: "Cinzel","Cinzel Repli", serif; font-size: .7rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
   text-decoration: none; white-space: nowrap;
   cursor: pointer;
-  transition: color .2s ease, background .2s ease;
+  transition: background .2s ease, color .2s ease;
 }
-.barre-ico { flex: none; display: grid; place-items: center; width: 26px; height: 26px; color: var(--or); transition: color .2s ease, filter .2s ease; }
+.barre-entree:last-child { border-bottom: 1px solid rgba(200,168,106,.14); }
+.barre-ico { position: relative; flex: none; display: grid; place-items: center; width: 28px; height: 28px; color: var(--ivoire); }
 .barre-ico svg { width: 26px; height: 26px; }
-.barre-ico--texte { font-family: "Cinzel","Cinzel Repli", serif; font-size: .75rem; font-weight: 700; }
-.barre-entree:hover, .barre-entree:focus-visible { color: #fff6e2; background: linear-gradient(90deg, rgba(217,164,65,.1), transparent 85%); outline: none; }
-.barre-entree:hover .barre-ico { color: var(--or-vif); filter: drop-shadow(0 0 6px rgba(243,207,124,.5)); }
+.barre-entree:hover, .barre-entree:focus-visible { background: rgba(40,36,32,.6); color: #fff; outline: none; }
 
-/* L'écran en cours : une bannière dorée qui déborde du panneau à droite, pointe en avant */
+/* L'écran en cours : une plaque rouge sang bordée d'or vieilli, pointe hors du panneau,
+   un losange d'or à gauche */
 .barre-entree.est-actif {
-  margin: 4px -26px 4px -6px;
-  padding-left: 20px;
-  color: #fff3d0;
-  font-family: "Cinzel","Cinzel Repli", serif; font-weight: 700; font-size: 1rem; letter-spacing: .06em;
-  background: linear-gradient(90deg, #3b2a0c, #8a6420 30%, #b98b32 55%, #6e4e16 85%, #3b2a0c);
-  clip-path: polygon(10px 0, calc(100% - 18px) 0, 100% 50%, calc(100% - 18px) 100%, 10px 100%, 0 50%);
-  filter: drop-shadow(0 0 12px rgba(243,207,124,.35));
+  z-index: 1;
+  margin: 3px -40px 3px -10px; padding-left: 24px;
+  border: 0;
+  color: #fff4e6;
+  background:
+    linear-gradient(160deg, rgba(255,255,255,.07) 0 42%, transparent 42.1%),
+    linear-gradient(90deg, var(--sang-sombre), var(--sang) 35%, #82202a 75%, var(--sang-sombre));
+  clip-path: polygon(0 0, calc(100% - 22px) 0, 100% 50%, calc(100% - 22px) 100%, 0 100%);
   text-shadow: 0 1px 3px rgba(0,0,0,.7);
 }
-/* son filet doré, au bord de la bannière */
+/* son liseré d'or (un calque au même contour, creusé) */
 .barre-entree.est-actif::before {
   content: ""; position: absolute; inset: 0; pointer-events: none;
-  background: linear-gradient(90deg, transparent, rgba(255,236,190,.9) 20%, rgba(255,236,190,.9) 80%, transparent) top / 100% 1px no-repeat,
-              linear-gradient(90deg, transparent, rgba(255,236,190,.7) 20%, rgba(255,236,190,.7) 80%, transparent) bottom / 100% 1px no-repeat;
+  background: linear-gradient(180deg, var(--or-pale), var(--or) 50%, #7a6236);
+  clip-path: polygon(0 0, calc(100% - 22px) 0, 100% 50%, calc(100% - 22px) 100%, 0 100%, 0 0, 1px 1px, 1px calc(100% - 1px), calc(100% - 22.5px) calc(100% - 1px), calc(100% - 1.5px) 50%, calc(100% - 22.5px) 1px, 1px 1px);
 }
-.barre-entree.est-actif .barre-ico { color: #fff3d0; filter: drop-shadow(0 0 6px rgba(255,236,190,.8)); }
-
-/* Le filet doré à losange, entre deux familles d'écrans */
-.barre__sep {
-  position: relative; flex: none; height: 9px; margin: 4px 22px;
-  background: linear-gradient(90deg, transparent, rgba(217,164,65,.6) 30%, rgba(217,164,65,.6) 70%, transparent) center / 100% 1px no-repeat;
+/* le petit losange près de la pointe */
+.barre-entree.est-actif::after {
+  content: ""; position: absolute; right: 34px; top: 50%; width: 6px; height: 6px; translate: 0 -50%; rotate: 45deg;
+  background: var(--or-pale); opacity: .8;
 }
-.barre__sep i {
-  position: absolute; left: 50%; top: 50%; width: 7px; height: 7px; translate: -50% -50%; rotate: 45deg;
-  background: #0b0f18; border: 1px solid var(--or);
+.barre-entree.est-actif .barre-ico { color: #fff4e6; filter: drop-shadow(0 0 4px rgba(0,0,0,.6)); }
+/* le losange d'or, sur le bord gauche de la plaque */
+.barre-entree.est-actif .barre-ico::before {
+  content: ""; position: absolute; left: -17px; top: 50%; width: 9px; height: 9px; translate: 0 -50%; rotate: 45deg;
+  background: linear-gradient(135deg, #fff4d6, var(--or));
 }
-
-/* En bas : site, MJ, déconnexion */
-.barre__pied { display: flex; gap: 14px; margin: 10px 0 2px; }
-/* un losange : le contour doré est un dégradé (une bordure serait coupée par la découpe) */
-.barre__petit {
-  display: grid; place-items: center; width: 40px; height: 40px; padding: 0; border: 0;
-  clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
-  background:
-    linear-gradient(#0d121c, #0d121c) padding-box,
-    linear-gradient(135deg, #f3cf7c, #8a6420);
-  background-clip: content-box, border-box;
-  padding: 1.5px;
-  color: var(--or); font-family: "Cinzel","Cinzel Repli", serif; font-size: .66rem; font-weight: 700; text-decoration: none;
-  cursor: pointer;
-  transition: color .2s ease, filter .2s ease;
-}
-.barre__petit > * { grid-area: 1 / 1; }
-.barre__petit .barre-ico, .barre__petit .barre-ico svg { width: 18px; height: 18px; }
-.barre__petit:hover, .barre__petit:focus-visible { color: #fff3d0; filter: drop-shadow(0 0 8px rgba(243,207,124,.6)); outline: none; }
-.barre__petit--sortie:hover { color: #ff9ca1; }
 
 /* Le bouton « Plus » et son menu : téléphone seulement */
 .barre-plus, .barre-menu, .barre-menu-fond { display: none; }
 
 /* Place réservée à gauche pour que la barre ne couvre pas l'écran */
 @media (min-width: 701px) {
-  body.has-rail { padding-left: calc(var(--largeur-barre, 212px) + 30px); }
+  body.has-rail { padding-left: calc(var(--largeur-barre, 260px) + 34px); }
 }
 
 /* ---------- Écrans moyens : icônes seules ---------- */
 @media (min-width: 701px) and (max-width: 1100px) {
-  .barre { --largeur: 78px; }
-  body.has-rail { --largeur-barre: 78px; }
-  .barre__ornement--haut { width: 60px; height: 20px; }
-  .barre__ornement--bas { width: 60px; height: 36px; }
-  .barre__portrait { width: 52px; height: 52px; }
-  .barre__portrait .barre-ico, .barre__portrait .barre-ico svg { width: 30px; height: 30px; }
+  .barre { --largeur: 92px; }
+  body.has-rail { --largeur-barre: 92px; }
+  .barre__fond { top: 62px; border-width: 40px 13px 70px 13px; border-image-width: 40px 13px 70px 13px; }
+  .barre__medaillon { width: 78px; height: 86px; }
+  .barre__portrait { width: 60px; height: 69px; }
+  .barre__portrait .barre-ico, .barre__portrait .barre-ico svg { width: 32px; height: 32px; }
   .barre__connexion { display: none; }
-  .barre__entrees { padding: 0 8px; }
+  .barre__entrees { padding: 4px 12px 0 14px; }
   .barre-entree { justify-content: center; padding: 0; }
   .barre-entree__nom { display: none; }
-  .barre-entree.est-actif { margin: 4px -18px 4px -4px; padding-left: 0; padding-right: 10px; }
-  .barre__pied { flex-direction: column; gap: 8px; }
-  .barre__sep { margin: 4px 10px; }
-  .barre__medaillon::before { width: 100px; height: 100px; top: 28px; }
+  .barre-entree.est-actif { margin: 3px -18px 3px -4px; padding: 0 14px 0 0; }
+  .barre-entree.est-actif::after, .barre-entree.est-actif .barre-ico::before { display: none; }
 }
 
 /* ---------- Téléphones : une barre en bas, 5 boutons ---------- */
 @media (max-width: 700px) {
   .barre {
-    top: auto; bottom: 10px; left: 10px; right: 10px; width: auto;
+    top: auto; bottom: 8px; left: 8px; right: 8px; width: auto;
     flex-direction: row; justify-content: space-around; align-items: center;
     padding: 6px 10px;
-    border-radius: 0;
-    /* (pas de découpe en biseau ni de flou ici : ils couperaient ou déplaceraient le menu « Plus », qui sort de la barre) */
-    -webkit-backdrop-filter: none; backdrop-filter: none;
-    background: linear-gradient(180deg, #131a28, #0b0f18);
-    box-shadow: inset 0 0 0 3px var(--nuit), inset 0 0 0 4px rgba(217,164,65,.35);
+    background: linear-gradient(160deg, #24221f, #121110);
+    box-shadow: inset 0 0 0 1px rgba(200,168,106,.45), 0 10px 30px rgba(0,0,0,.6);
   }
-  .barre__ornement, .barre__chevron, .barre__connexion, .barre__sep, .barre [data-place="menu"], .barre [data-place="profil"] { display: none; }
-  .barre::before, .barre::after, .barre__medaillon::before { display: none; }
+  .barre__fond, .barre__connexion, .barre [data-place="menu"], .barre [data-place="profil"] { display: none; }
   /* tous les boutons deviennent voisins dans la barre, rangés par data-place */
   .barre__entrees { display: contents; }
   .barre [data-place="1"] { order: 1; }
@@ -207,204 +162,192 @@
   .barre [data-place="3"] { order: 3; }
   .barre [data-place="4"] { order: 4; }
   .barre [data-place="5"] { order: 5; }
-  .barre__medaillon { margin: 0; }
-  .barre__portrait { width: 46px; height: 46px; box-shadow: 0 0 0 2px #0b0f18, 0 0 0 3px var(--or), 0 4px 10px rgba(0,0,0,.6); }
-  .barre__portrait .barre-ico, .barre__portrait .barre-ico svg { width: 26px; height: 26px; }
-  .barre__discord .btn-discord__logo { width: 24px; height: 18px; }
-  .barre-entree { min-height: 44px; width: 48px; padding: 0; justify-content: center; }
+  .barre__medaillon { width: 50px; height: 56px; margin: 0; }
+  .barre__cadre-pointe { display: none; }
+  .barre__portrait { width: 40px; height: 46px; }
+  .barre__portrait .barre-ico, .barre__portrait .barre-ico svg { width: 24px; height: 24px; }
+  .barre__discord .btn-discord__logo { width: 22px; height: 17px; }
+  .barre-entree { width: 50px; height: 46px; padding: 0; justify-content: center; border: 0; background: none; }
+  .barre-entree:last-child { border: 0; }
   .barre-entree__nom { display: none; }
-  .barre-entree.est-actif { margin: 0; padding: 0; clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%); width: 50px; height: 50px; min-height: 0; }
+  .barre-entree.est-actif { margin: 0; padding: 0; width: 50px; clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%); }
   .barre-entree.est-actif::before { display: none; }
+  .barre-entree.est-actif::after, .barre-entree.est-actif .barre-ico::before { display: none; }
   .barre-plus { display: flex; }
 
   /* Le menu « Plus », au-dessus de la barre */
-  .barre-menu-fond { display: block; position: fixed; inset: 0; z-index: -1; background: rgba(0,0,0,.4); }
+  .barre-menu-fond { display: block; position: fixed; inset: 0; z-index: -1; background: rgba(0,0,0,.45); }
   .barre-menu {
     display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px;
-    position: fixed; left: 10px; right: 10px; bottom: 82px;
+    position: fixed; left: 8px; right: 8px; bottom: 82px;
     padding: 12px;
-    background: linear-gradient(180deg, #131a28, #0b0f18);
-    border: 1px solid rgba(217,164,65,.7);
-    box-shadow: inset 0 0 0 4px var(--nuit), inset 0 0 0 5px rgba(217,164,65,.35), 0 14px 44px rgba(0,0,0,.6);
+    background: linear-gradient(160deg, #24221f, #121110);
+    box-shadow: inset 0 0 0 1px rgba(200,168,106,.5), 0 14px 44px rgba(0,0,0,.6);
   }
   .barre-menu__item {
     display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
     min-height: 74px; padding: 8px 4px;
-    border: 0; background: none;
-    color: var(--texte);
-    font-family: "EB Garamond","EB Garamond Repli", serif; font-size: .82rem; text-align: center; line-height: 1.2;
+    border: 0; background: rgba(8,7,7,.4);
+    color: var(--ivoire-doux);
+    font-family: "Cinzel","Cinzel Repli", serif; font-size: .64rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; text-align: center; line-height: 1.2;
     text-decoration: none; cursor: pointer;
   }
-  .barre-menu__item:hover, .barre-menu__item:focus-visible { background: rgba(217,164,65,.1); outline: none; }
-  .barre-menu__item.est-actif { background: linear-gradient(180deg, #8a6420, #5a3f12); color: #fff3d0; }
-  .barre-menu__item.est-actif .barre-ico { color: #fff3d0; }
+  .barre-menu__item:hover, .barre-menu__item:focus-visible { background: rgba(40,36,32,.7); color: #fff; outline: none; }
+  .barre-menu__item.est-actif { background: linear-gradient(160deg, rgba(255,255,255,.07) 0 42%, transparent 42.1%), var(--sang); color: #fff4e6; }
   .barre-menu__item--sortie, .barre-menu__item--sortie .barre-ico { color: #e2868c; }
 
   body.has-rail { padding-bottom: 80px; }
 }
 
+/* La barre du haut de l'ancien site (Page.jsx) reste cachée : la barre du jeu la remplace */
+.has-rail .topbar { display: none; }
 /* Pendant un duel, la barre s'efface (le style du duel gère lui-même la place du plateau) */
 .en-duel .barre { display: none !important; }
 
-/* La barre du haut de l'ancien site (Page.jsx) reste cachée : la barre du jeu la remplace */
-.has-rail .topbar { display: none; }
-
-/* =====================================================================
-   ESSAI — le style « classe » (.barre--classe) : obsidienne et or
-   Un noir profond comme un laque, un seul filet d'or très fin et des équerres aux coins ;
-   l'écran en cours : son nom en or, un losange lumineux, un voile de lumière qui s'estompe.
-   ===================================================================== */
-.barre--classe {
-  --or: #c9a55c;
-  --or-vif: #f0d79a;
-  --texte: #cfc6b4;
-  background:
-    radial-gradient(ellipse 140% 30% at 50% 0%, rgba(201,165,92,.08), transparent 70%),
-    linear-gradient(180deg, rgba(14,13,12,.9), rgba(6,6,6,.86) 50%, rgba(12,11,10,.92));
-  border: 0;
-  box-shadow: inset 0 0 0 1px rgba(201,165,92,.4), 0 24px 60px rgba(0,0,0,.7);
+/* ---------- En haut à droite : Paramètres, panneau MJ, retour au site (des hexagones) ---------- */
+.coin-hud {
+  position: fixed; top: 14px; right: 18px; z-index: 40;
+  display: flex; gap: 10px;
 }
-/* les équerres d'or aux quatre coins (à la place des losanges de flanc) */
-.barre--classe::before {
-  inset: 6px; width: auto; height: auto; top: 6px; translate: none; rotate: none; left: 6px; right: 6px;
-  background:
-    linear-gradient(var(--or), var(--or)) top left / 18px 1px no-repeat,
-    linear-gradient(var(--or), var(--or)) top left / 1px 18px no-repeat,
-    linear-gradient(var(--or), var(--or)) top right / 18px 1px no-repeat,
-    linear-gradient(var(--or), var(--or)) top right / 1px 18px no-repeat,
-    linear-gradient(var(--or), var(--or)) bottom left / 18px 1px no-repeat,
-    linear-gradient(var(--or), var(--or)) bottom left / 1px 18px no-repeat,
-    linear-gradient(var(--or), var(--or)) bottom right / 18px 1px no-repeat,
-    linear-gradient(var(--or), var(--or)) bottom right / 1px 18px no-repeat;
-  box-shadow: none;
-}
-.barre--classe::after { display: none; }
-.barre--classe .barre__ornement { stroke-width: 1; opacity: .8; filter: none; }
-
-/* le portrait : un anneau d'or fin, un reflet qui passe au survol */
-.barre--classe .barre__portrait {
+.coin-hud__bouton {
   position: relative;
-  box-shadow: 0 0 0 1px rgba(201,165,92,.9), 0 0 0 5px rgba(8,8,8,.9), 0 0 0 6px rgba(201,165,92,.35), 0 10px 26px rgba(0,0,0,.7);
+  display: grid; place-items: center;
+  width: 48px; height: 54px;
+  color: var(--ivoire);
+  text-decoration: none;
+  /* l'hexagone : un liseré d'or vieilli (calque du dessous), un fond charbon (calque du dessus) */
+  clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+  background: linear-gradient(160deg, var(--or-pale), var(--or) 45%, #6b5530);
+  filter: drop-shadow(0 4px 8px rgba(0,0,0,.6));
+  transition: filter .2s ease, transform .15s ease;
 }
-.barre--classe .barre__portrait::after {
-  content: ""; position: absolute; inset: 0; border-radius: 50%; pointer-events: none;
-  background: linear-gradient(115deg, transparent 35%, rgba(255,240,205,.35) 50%, transparent 65%);
-  translate: -110% 0; transition: translate .8s ease;
+.coin-hud__bouton::before {
+  content: ""; position: absolute; inset: 1.5px;
+  clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+  background: linear-gradient(160deg, rgba(255,255,255,.06) 0 45%, transparent 45.1%), radial-gradient(circle at 50% 35%, #2a2725, #121110);
 }
-.barre--classe .barre__portrait:hover::after, .barre--classe .barre__portrait:focus-visible::after { translate: 110% 0; }
-.barre--classe .barre__portrait:hover, .barre--classe .barre__portrait.est-actif {
-  box-shadow: 0 0 0 1px var(--or-vif), 0 0 0 5px rgba(8,8,8,.9), 0 0 0 6px rgba(240,215,154,.6), 0 0 30px rgba(240,215,154,.25);
-}
-.barre--classe .barre__medaillon::before { background: radial-gradient(circle, rgba(201,165,92,.14), transparent 65%); }
-.barre--classe .barre__chevron { border-color: rgba(201,165,92,.6); }
+.coin-hud__bouton .barre-ico { z-index: 1; width: 24px; height: 24px; }
+.coin-hud__bouton .barre-ico svg { width: 22px; height: 22px; }
+.coin-hud__bouton:hover, .coin-hud__bouton:focus-visible { transform: translateY(-1px); filter: drop-shadow(0 0 10px rgba(200,168,106,.45)); outline: none; }
+.coin-hud__bouton.est-actif::before { background: linear-gradient(160deg, rgba(255,255,255,.08) 0 45%, transparent 45.1%), radial-gradient(circle at 50% 35%, #a83440, #5e1419); }
+/* téléphone (le menu « Plus » les contient) et pendant un duel : cachés */
+@media (max-width: 700px) { .coin-hud { display: none; } }
+.en-duel .coin-hud { display: none; }
 
-/* les écrans : petites capitales espacées, icônes fines */
-.barre--classe .barre-entree {
-  gap: 14px; padding: 0 16px;
-  font-family: "Cinzel","Cinzel Repli", serif; font-size: .7rem; font-weight: 500; letter-spacing: .13em; text-transform: uppercase;
-  color: var(--texte);
+/* ---------- Retouches : la barre a 8 écrans (Paramètres, MJ et retour sont en haut à droite) ---------- */
+/* le portrait entier, un peu détaché du haut de l'écran */
+.barre { padding-top: 10px; }
+.barre__fond { top: 106px; }
+/* les rangées remplissent la hauteur du panneau, centrées, sous la pointe du portrait */
+.barre__entrees { justify-content: center; padding-top: 0; padding-bottom: 40px; }
+.barre-entree {
+  height: clamp(42px, calc((100vh - 330px) / 8.4), 74px);
+  font-size: .76rem;
 }
-.barre--classe .barre-ico { width: 22px; height: 22px; color: rgba(201,165,92,.85); }
-.barre--classe .barre-ico svg { width: 22px; height: 22px; stroke-width: 1.2; }
-.barre--classe .barre-entree:hover, .barre--classe .barre-entree:focus-visible { background: none; color: #f3ead6; }
-.barre--classe .barre-entree:hover .barre-ico { color: var(--or-vif); filter: none; }
-/* l'écran en cours : nom en or, losange lumineux à gauche, voile de lumière qui s'estompe vers la droite */
-.barre--classe .barre-entree.est-actif {
-  margin: 0; padding-left: 18px;
-  clip-path: none; filter: none;
-  background: linear-gradient(90deg, rgba(201,165,92,.22), rgba(201,165,92,.06) 55%, transparent);
-  color: var(--or-vif);
-  font-weight: 700; font-size: .7rem; letter-spacing: .15em;
-  text-shadow: 0 0 14px rgba(240,215,154,.35);
-}
-.barre--classe .barre-entree.est-actif::before {
-  inset: auto; left: -4px; top: 50%; width: 8px; height: 8px; translate: 0 -50%; rotate: 45deg;
-  background: var(--or-vif);
-  box-shadow: 0 0 10px rgba(240,215,154,.9), 0 0 22px rgba(240,215,154,.5);
-}
-.barre--classe .barre-entree.est-actif::after {
-  content: ""; position: absolute; left: 18px; right: 18px; bottom: 0; height: 1px; pointer-events: none;
-  background: linear-gradient(90deg, rgba(240,215,154,.7), transparent);
-}
-.barre--classe .barre-entree.est-actif .barre-ico { color: var(--or-vif); filter: drop-shadow(0 0 6px rgba(240,215,154,.6)); }
-
-.barre--classe .barre__sep { margin: 6px 28px; background-image: linear-gradient(90deg, transparent, rgba(201,165,92,.45) 50%, transparent); }
-.barre--classe .barre__sep i { width: 5px; height: 5px; background: var(--or); border: 0; }
-.barre--classe .barre__petit { background: linear-gradient(#090909, #090909), linear-gradient(135deg, #f0d79a, #7a5f2a); background-clip: content-box, border-box; }
-
-/* écrans moyens : icônes seules, le losange de l'écran en cours reste */
+.barre-ico, .barre-ico svg { width: 28px; height: 28px; }
 @media (min-width: 701px) and (max-width: 1100px) {
-  .barre--classe .barre-entree { padding: 0; }
-  .barre--classe .barre-entree.est-actif { margin: 0; padding: 0; }
-  .barre--classe .barre-entree.est-actif::after { left: 10px; right: 10px; }
-}
-/* téléphone : barre noire et or, l'écran en cours en or sur un fond doux */
-@media (max-width: 700px) {
-  .barre--classe { background: linear-gradient(180deg, #0e0d0c, #060606); box-shadow: inset 0 0 0 1px rgba(201,165,92,.45); }
-  .barre--classe::before { display: none; }
-  .barre--classe .barre-entree.est-actif { width: 48px; height: 44px; min-height: 44px; clip-path: none; background: radial-gradient(circle, rgba(201,165,92,.25), transparent 70%); }
-  .barre--classe .barre-entree.est-actif::before { display: block; left: 50%; top: auto; bottom: 0; translate: -50% 50%; width: 6px; height: 6px; }
-  .barre--classe .barre-entree.est-actif::after { display: none; }
-  .barre--classe .barre__portrait { box-shadow: 0 0 0 1px var(--or), 0 0 0 4px #080808, 0 0 0 5px rgba(201,165,92,.35); }
+  .barre__fond { top: 70px; }
 }
 
 /* =====================================================================
-   La silhouette du panneau (style « jeu ») : un étendard suspendu à une tringle dorée,
-   terminé en queue d'aronde avec une gemme et un pompon. Le panneau lui-même devient
-   transparent : c'est la silhouette (.barre__fond, derrière le contenu) qui fait le fond.
+   Le panneau dessiné (public/img/HUD/panneau-barre-v2.webp, 788 × 1995 px) : il contient le cadre
+   hexagonal du portrait et les emplacements des boutons (lignes d'or aux y = 523, 640, 755, 870, 985,
+   1109, 1229, 1350, 1471 px). Tout est placé en « unités d'image » : --u = largeur affichée / 788.
+   On montre le haut de l'image jusqu'au 8e emplacement (y = 1471), puis son pied (y ≥ 1715) :
+   hauteur affichée = 1471 + 280 = 1751 unités.
    ===================================================================== */
-.barre:not(.barre--classe) {
-  background: none; border: 0; box-shadow: none;
-  -webkit-backdrop-filter: none; backdrop-filter: none;
-  top: 4px; bottom: 4px;
-  padding-top: 40px; padding-bottom: 74px;
-}
-.barre__fond {
-  position: absolute; inset: 0; z-index: -1; pointer-events: none;
-  display: flex; flex-direction: column;
-  filter: drop-shadow(0 18px 30px rgba(0,0,0,.6));
-}
-.barre--classe .barre__fond { display: none; }
-.barre__fond-haut { flex: none; width: calc(100% + 24px); height: 64px; margin-left: -12px; overflow: visible; }
-.barre__fond-bas { flex: none; width: 100%; height: 130px; overflow: visible; }
-.barre__fond-milieu {
-  flex: 1; margin-top: -3px; margin-bottom: -3px;   /* recouvre les bords des morceaux : aucune ligne à la jonction */
-  background:
-    linear-gradient(rgba(217,164,65,.85), rgba(217,164,65,.85)) left top / 1.4px 100% no-repeat,
-    linear-gradient(rgba(217,164,65,.85), rgba(217,164,65,.85)) right top / 1.4px 100% no-repeat,
-    linear-gradient(rgba(217,164,65,.38), rgba(217,164,65,.38)) 5px top / 1px 100% no-repeat,
-    linear-gradient(rgba(217,164,65,.38), rgba(217,164,65,.38)) calc(100% - 5px) top / 1px 100% no-repeat,
-    /* les plis du tissu : de longues ombres verticales très douces */
-    linear-gradient(90deg, rgba(0,0,0,.28), transparent 18%, rgba(255,255,255,.025) 32%, transparent 46%, rgba(0,0,0,.14) 62%, transparent 76%, rgba(255,255,255,.02) 86%, rgba(0,0,0,.3)),
-    linear-gradient(180deg, #111827, #0b101a);
-}
-/* (couleurs pleines : des morceaux transparents laisseraient une ligne plus sombre à leur jonction) */
-.barre__fond-plein { fill: #111827; }
-.barre__fond-bas .barre__fond-plein { fill: #0b101a; }
-.barre__fond-trait { fill: none; stroke: rgba(217,164,65,.85); stroke-width: 1.4; stroke-linejoin: round; }
-.barre__fond-trait--fin { stroke: rgba(217,164,65,.38); stroke-width: 1; }
-.barre__passant { fill: #182033; stroke: rgba(217,164,65,.75); stroke-width: 1; }
-.barre__gemme { fill: #c33a42; stroke: #f3cf7c; stroke-width: 1; filter: drop-shadow(0 0 4px rgba(255,90,100,.7)); }
-.barre__pompon-fil { fill: none; stroke: #d9a441; stroke-width: 1.4; }
-.barre__pompon { fill: url(#barre-or); }
-
-/* l'ornement du haut laisse la place à la tringle ; celui du bas, à la queue d'aronde */
-.barre:not(.barre--classe) .barre__ornement { display: none; }
-.barre:not(.barre--classe) .barre__medaillon { margin-top: 0; }
-.barre:not(.barre--classe)::before, .barre:not(.barre--classe)::after { display: none; }
-
-@media (min-width: 701px) and (max-width: 1100px) {
-  .barre:not(.barre--classe) { padding-top: 34px; padding-bottom: 56px; }
-  .barre__fond-haut { width: calc(100% + 16px); margin-left: -8px; }
-  .barre__fond-bas { height: 96px; }
-}
-@media (max-width: 700px) {
-  .barre__fond { display: none; }
-  .barre:not(.barre--classe) {
-    top: auto; bottom: 10px;
-    padding: 6px 10px;
-    background: linear-gradient(180deg, #131a28, #0b0f18);
-    border: 1px solid rgba(217,164,65,.7);
-    box-shadow: inset 0 0 0 3px var(--nuit), inset 0 0 0 4px rgba(217,164,65,.35);
+.barre__cadre-mobile { display: none; }
+@media (min-width: 701px) {
+  .barre {
+    --w: min(330px, calc((100vh - 16px) * 788 / 1751));
+    --u: calc(var(--w) / 788);
+    top: 8px; bottom: auto; left: 8px;
+    width: var(--w); height: calc(var(--u) * 1751);
+    padding: 0;
+    display: block;
   }
+  body.has-rail { padding-left: calc(min(330px, calc((100vh - 16px) * 788 / 1751)) + 30px); }
+  .barre__fond {
+    position: absolute; inset: 0; z-index: -1;
+    border: 0; border-image: none;
+    filter: drop-shadow(0 18px 30px rgba(0,0,0,.6));
+  }
+  .barre__fond-haut, .barre__fond-pied {
+    position: absolute; left: 0; width: 100%;
+    background: url("/img/HUD/panneau-barre-v2.webp") no-repeat;
+    background-size: var(--w) calc(var(--u) * 1995);
+  }
+  .barre__fond-haut { top: 0; height: calc(var(--u) * 1471); background-position: 0 0; }
+  .barre__fond-pied { bottom: 0; height: calc(var(--u) * 280); background-position: 0 100%; }
+
+  /* le portrait, dans l'hexagone de l'image (intérieur : x 162 → 612, y 70 → 490) */
+  .barre__medaillon {
+    position: absolute; left: calc(var(--u) * 162); top: calc(var(--u) * 70);
+    width: calc(var(--u) * 450); height: calc(var(--u) * 420); margin: 0;
+  }
+  .barre__cadre { display: none; }
+  .barre__portrait {
+    width: 100%; height: 100%;
+    clip-path: polygon(50% 0, 100% 21%, 100% 79%, 50% 100%, 0 79%, 0 21%);
+    background: transparent;
+  }
+  .barre__portrait .barre-ico, .barre__portrait .barre-ico svg { width: 45%; height: 45%; }
+  .barre__connexion { position: absolute; left: 50%; top: calc(var(--u) * 455); translate: -50% 0; margin: 0; }
+
+  /* les écrans, un par emplacement (de y = 523 à 1471 : 8 emplacements d'environ 118,5 unités) */
+  .barre__entrees {
+    position: absolute; left: calc(var(--u) * 118); top: calc(var(--u) * 524);
+    width: calc(var(--u) * 488); height: calc(var(--u) * 947);
+    padding: 0;
+    display: grid; grid-template-rows: repeat(8, 1fr);
+  }
+  .barre-entree {
+    height: auto; min-height: 0;
+    padding: 0 0 0 calc(var(--u) * 40);
+    gap: calc(var(--u) * 34);
+    border: 0; background: none;
+    font-size: calc(var(--u) * 30); letter-spacing: .1em;
+  }
+  .barre-entree:last-child { border: 0; }
+  .barre-ico, .barre-ico svg { width: calc(var(--u) * 62); height: calc(var(--u) * 62); }
+  .barre-entree:hover, .barre-entree:focus-visible { background: linear-gradient(90deg, rgba(200,168,106,.12), transparent 80%); }
+  /* l'écran en cours : la plaque rouge sang dans l'emplacement, pointe vers la droite */
+  .barre-entree.est-actif {
+    margin: calc(var(--u) * 6) calc(var(--u) * -66) calc(var(--u) * 6) calc(var(--u) * -8);
+    padding-left: calc(var(--u) * 48);
+    font-size: calc(var(--u) * 30);
+  }
+  .barre-entree.est-actif .barre-ico::before { left: calc(var(--u) * -42); width: calc(var(--u) * 20); height: calc(var(--u) * 20); }
+  .barre-entree.est-actif::after { right: calc(var(--u) * 80); width: calc(var(--u) * 13); height: calc(var(--u) * 13); }
+}
+
+/* écrans moyens : le panneau dessiné, plus étroit, avec les noms (ils tiennent dans les emplacements) */
+@media (min-width: 701px) and (max-width: 1100px) {
+  .barre { --w: min(230px, calc((100vh - 16px) * 788 / 1751)); }
+  body.has-rail { padding-left: calc(min(230px, calc((100vh - 16px) * 788 / 1751)) + 24px); }
+  .barre-entree { justify-content: flex-start; padding: 0 0 0 calc(var(--u) * 40); }
+  .barre-entree__nom { display: inline; }
+  .barre-entree.est-actif { padding: 0 0 0 calc(var(--u) * 48); margin: calc(var(--u) * 6) calc(var(--u) * -66) calc(var(--u) * 6) calc(var(--u) * -8); }
+  .barre-entree.est-actif::after, .barre-entree.est-actif .barre-ico::before { display: block; }
+}
+
+/* téléphone : le portrait garde son petit cadre hexagonal (le panneau dessiné n'y est pas) */
+@media (max-width: 700px) { .barre__cadre-mobile { display: contents; } }
+
+/* L'image entière : 10 emplacements (les 8 écrans, Paramètres, Retour), de y = 524 à 1715 */
+@media (min-width: 701px) {
+  .barre { --w: min(330px, calc((100vh - 16px) * 788 / 1995)); height: calc(var(--u) * 1995); }
+  body.has-rail { padding-left: calc(min(330px, calc((100vh - 16px) * 788 / 1995)) + 30px); }
+  .barre__fond-haut { height: 100%; }
+  .barre__fond-pied { display: none; }
+  .barre__entrees { height: calc(var(--u) * 1191); grid-template-rows: repeat(10, 1fr); }
+}
+@media (min-width: 701px) and (max-width: 1100px) {
+  .barre { --w: min(230px, calc((100vh - 16px) * 788 / 1995)); }
+  body.has-rail { padding-left: calc(min(230px, calc((100vh - 16px) * 788 / 1995)) + 24px); }
+}
+/* le portrait reste à l'intérieur du cadre doré de l'image (sans le recouvrir) */
+@media (min-width: 701px) {
+  .barre__medaillon { left: calc(var(--u) * 174); top: calc(var(--u) * 84); width: calc(var(--u) * 428); height: calc(var(--u) * 396); }
+  .barre__portrait { clip-path: polygon(50% 0, 100% 20%, 100% 80%, 50% 100%, 0 80%, 0 20%); }
 }

@@ -1,0 +1,567 @@
+/* =====================================================================
+   L'accueil du Duel (components/duel/Menu.jsx), dans la direction artistique de Nocthémar :
+   trois grandes cartes illustrées pour les modes de jeu, puis un bandeau (le Grimoire,
+   la difficulté en hexagones, « Engager le duel » en plaque rouge sang).
+   Charbon, ivoire et or vieilli, un accent rouge sang. Chargée après jeu-cartes.css.
+   ===================================================================== */
+.hall {
+  --or: #c8a86a;
+  --or-pale: #e3cf9f;
+  --ivoire: #e9e2d2;
+  --ivoire-doux: #b9b1a1;
+  --sang: #9b2730;
+  --sang-sombre: #5e1419;
+  --charbon: #141312;
+  /* une découpe à coins taillés */
+  --taille: polygon(12px 0, calc(100% - 12px) 0, 100% 12px, 100% calc(100% - 12px), calc(100% - 12px) 100%, 12px 100%, 0 calc(100% - 12px), 0 12px);
+  min-height: 0;
+  padding-top: 22px;
+}
+.hall .menu { gap: 26px; max-width: 1220px; }
+/* le titre reste pour les lecteurs d'écran ; la page n'affiche que les cartes, comme un menu de jeu */
+.hall__titre-cache { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+/* ---------- Les trois modes : des cartes illustrées ---------- */
+.hall-modes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; }
+.hall-mode {
+  --forme: polygon(16px 0, calc(100% - 16px) 0, 100% 16px, 100% calc(100% - 34px), 50% 100%, 0 calc(100% - 34px), 0 16px);
+  position: relative; isolation: isolate;
+  display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
+  min-height: clamp(250px, 34vh, 330px);
+  padding: 0 20px 52px;
+  border: 0; text-decoration: none; cursor: pointer;
+  color: var(--ivoire);
+  /* le liseré d'or vieilli : le fond de la carte, recouvert par l'intérieur (::before) sauf sur 1,5 px */
+  background: linear-gradient(170deg, rgba(227,207,159,.75), rgba(122,98,54,.6) 45%, rgba(227,207,159,.55));
+  clip-path: var(--forme);
+  filter: drop-shadow(0 16px 26px rgba(0,0,0,.65));
+  transition: transform .3s cubic-bezier(.2,.8,.3,1), filter .3s ease;
+}
+.hall-mode::before {
+  content: ""; position: absolute; inset: 1.5px; z-index: -2;
+  clip-path: var(--forme);
+  background: var(--charbon);
+}
+/* l'illustration : en haut, fondue vers le charbon en bas */
+.hall-mode__image {
+  position: absolute; inset: 1.5px; z-index: -1;
+  clip-path: var(--forme);
+  background-size: cover; background-position: center;
+  transition: transform .6s cubic-bezier(.2,.8,.3,1), filter .3s ease;
+  filter: saturate(.85) brightness(.82);
+}
+.hall-mode__image::after {
+  content: ""; position: absolute; inset: 0;
+  background:
+    linear-gradient(180deg, transparent 30%, rgba(20,19,18,.65) 60%, rgba(14,13,12,.97) 80%),
+    radial-gradient(ellipse 120% 70% at 50% 0%, transparent 50%, rgba(10,9,8,.5));
+}
+/* Les illustrations du jeu (des images de public/img, en attendant des illustrations dédiées) */
+.hall-mode--ombre .hall-mode__image { background-image: url("/img/Fond/Duel.png?v=3"); background-position: 30% 40%; }
+.hall-mode--ligne .hall-mode__image { background-image: url("/img/Fond/font plateux jeux.jpg"); background-position: 50% 30%; filter: saturate(.75) brightness(.7) hue-rotate(-8deg); }
+.hall-mode--histoire .hall-mode__image { background-image: url("/img/Fond/profiljoueur.jpg"); background-position: 70% 40%; filter: saturate(.6) brightness(.62) sepia(.25); }
+
+/* l'emblème : un losange d'or vieilli, au bas de l'illustration */
+.hall-mode__embleme {
+  display: grid; place-items: center;
+  width: 58px; height: 58px; margin-bottom: 14px;
+  rotate: 45deg;
+  background: linear-gradient(135deg, #2a2725, #121110);
+  box-shadow: 0 0 0 1.5px var(--or), 0 0 0 5px rgba(20,19,18,.85), 0 0 0 6px rgba(200,168,106,.45), 0 8px 18px rgba(0,0,0,.7);
+}
+.hall-mode__embleme svg { width: 30px; height: 30px; rotate: -45deg; stroke: var(--or-pale); stroke-width: 1.6; fill: none; }
+.hall-mode__titre {
+  font-family: "Cinzel","Cinzel Repli", serif; font-size: clamp(1.05rem, 1.6vw, 1.35rem); font-weight: 700; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--ivoire); text-shadow: 0 2px 10px rgba(0,0,0,.9);
+}
+.hall-mode__texte { margin-top: 6px; max-width: 30ch; font-family: "EB Garamond","EB Garamond Repli", serif; font-style: italic; font-size: 1rem; line-height: 1.35; color: var(--ivoire-doux); text-align: center; }
+
+.hall-mode:hover, .hall-mode:focus-visible { transform: translateY(-4px); outline: none; }
+.hall-mode:hover .hall-mode__image { transform: scale(1.04); filter: saturate(.95) brightness(.9); }
+/* le mode choisi : un liseré d'or plein, lumineux, et un éclat chaud sur l'illustration */
+.hall-mode.est-actif {
+  background: linear-gradient(170deg, #fff1cf, var(--or) 40%, #8a6a32 70%, var(--or-pale));
+  filter: drop-shadow(0 0 18px rgba(200,168,106,.4)) drop-shadow(0 16px 26px rgba(0,0,0,.65));
+  transform: translateY(-6px);
+}
+.hall-mode.est-actif::before { inset: 2.5px; }
+.hall-mode.est-actif .hall-mode__image { inset: 2.5px; filter: saturate(1) brightness(.95); }
+.hall-mode.est-actif .hall-mode__titre { color: #f3e3bd; }
+.hall-mode.est-actif .hall-mode__embleme { background: linear-gradient(135deg, #b9343f, var(--sang-sombre)); box-shadow: 0 0 0 1.5px var(--or-pale), 0 0 0 5px rgba(20,19,18,.85), 0 0 0 6px rgba(227,207,159,.7), 0 0 20px rgba(155,39,48,.6); }
+.hall-mode.est-actif .hall-mode__embleme svg { stroke: #fff2dc; }
+
+/* ---------- Le bandeau : Grimoire | Difficulté | Lancement ---------- */
+.hall-bandeau {
+  position: relative; isolation: isolate;
+  display: grid; grid-template-columns: minmax(0, 1.35fr) auto minmax(260px, auto); align-items: center;
+  gap: 0;
+  padding: 18px 22px;
+  background: linear-gradient(170deg, rgba(227,207,159,.6), rgba(122,98,54,.45) 50%, rgba(227,207,159,.5));
+  clip-path: var(--taille);
+  filter: drop-shadow(0 16px 30px rgba(0,0,0,.6));
+  text-align: left;
+}
+.hall-bandeau::before {
+  content: ""; position: absolute; inset: 1.5px; z-index: -1;
+  clip-path: var(--taille);
+  background:
+    linear-gradient(160deg, rgba(255,255,255,.03) 0 35%, transparent 35.1%),
+    linear-gradient(180deg, rgba(24,22,21,.97), rgba(13,12,11,.97));
+}
+.hall-bandeau > * { padding: 0 22px; min-width: 0; }
+/* séparateurs verticaux entre les zones : un filet d'or qui s'efface aux extrémités */
+.hall-bandeau > * + *:not([hidden]) { border-left: 1px solid; border-image: linear-gradient(180deg, transparent, rgba(200,168,106,.55), transparent) 1; }
+.hall-bandeau--ligne { grid-template-columns: minmax(0, 1fr) auto; }
+
+.hall-zone__tete { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+.hall-zone__ico svg { width: 30px; height: 30px; stroke: var(--or-pale); stroke-width: 1.4; fill: none; }
+.hall-zone__textes { display: flex; flex-direction: column; }
+.hall-zone__titre { font-family: "Cinzel","Cinzel Repli", serif; font-size: .82rem; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; color: var(--ivoire); }
+.hall-zone__sous { font-family: "EB Garamond","EB Garamond Repli", serif; font-size: .88rem; color: var(--ivoire-doux); }
+
+/* le Grimoire : les cartes en rangée, qui se chevauchent un peu */
+.hall-grimoire { display: flex; flex-direction: column; align-items: flex-start; }
+.hall .hall-grimoire__cartes {
+  display: flex; align-items: flex-end; justify-content: flex-start; gap: 0;
+  min-height: 0; margin: 0 0 12px; padding: 4px 0 4px 6px;
+  overflow: visible;
+}
+.hall .hall-grimoire__cartes > .deck-place { --carte-l: 62px; margin-left: -10px; transform: none; rotate: 0deg; translate: 0 0; transition: translate .2s ease; }
+.hall .hall-grimoire__cartes > .deck-place:first-child { margin-left: 0; }
+.hall .hall-grimoire__cartes > .deck-place:hover { translate: 0 -6px; z-index: 2; }
+.hall .hall-grimoire__cartes .dc-carte { --carte-l: 62px; width: 62px; }
+
+/* les plaques (Choisir mes cartes, Règles du duel) : charbon, liseré d'or, pointes */
+.hall-plaque {
+  --forme: polygon(14px 0, calc(100% - 14px) 0, 100% 50%, calc(100% - 14px) 100%, 14px 100%, 0 50%);
+  position: relative; isolation: isolate;
+  display: inline-flex; align-items: center; justify-content: center; gap: 12px;
+  min-height: 42px; padding: 0 30px;
+  border: 0; cursor: pointer;
+  clip-path: var(--forme);
+  background: linear-gradient(180deg, var(--or-pale), var(--or) 50%, #6b5530);
+  color: var(--ivoire);
+  font-family: "Cinzel","Cinzel Repli", serif; font-size: .74rem; font-weight: 700; letter-spacing: .14em; text-transform: uppercase;
+  transition: filter .2s ease, transform .15s ease;
+}
+.hall-plaque::before { content: ""; position: absolute; inset: 1.2px; z-index: -1; clip-path: var(--forme); background: linear-gradient(180deg, #211f1d, #121110); }
+.hall-plaque svg { width: 20px; height: 20px; stroke: var(--or-pale); stroke-width: 1.5; fill: none; }
+.hall-plaque:hover, .hall-plaque:focus-visible { filter: brightness(1.15) drop-shadow(0 0 8px rgba(200,168,106,.35)); outline: none; }
+.hall-plaque--petite { min-height: 38px; padding: 0 26px; font-size: .7rem; }
+.hall-plaque.est-actif::before { background: linear-gradient(180deg, #a83440, var(--sang-sombre)); }
+
+/* la difficulté : des hexagones, le choisi en rouge sang */
+.hall-difficulte { display: flex; flex-direction: column; align-items: center; gap: 10px; margin: 0; }
+.hall-difficulte .hall-zone__titre { align-self: flex-start; }
+.hall-difficulte__choix { display: flex; gap: 14px; }
+.hall .hall-hex {
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  min-height: 0; padding: 0; border: 0; background: none; box-shadow: none;
+  color: var(--ivoire-doux);
+  font-family: "EB Garamond","EB Garamond Repli", serif; font-size: .9rem; letter-spacing: 0; text-transform: none;
+  cursor: pointer;
+}
+.hall .hall-hex:hover { background: none; color: var(--ivoire); }
+.hall-hex__forme {
+  position: relative; isolation: isolate;
+  display: grid; place-items: center;
+  width: 54px; height: 62px;
+  clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+  background: linear-gradient(160deg, #8f877a, #4a453f 50%, #7a7266);
+  transition: filter .2s ease, transform .15s ease;
+}
+.hall-hex__forme::before {
+  content: ""; position: absolute; inset: 1.5px; z-index: -1;
+  clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+  background: linear-gradient(160deg, rgba(255,255,255,.07) 0 45%, transparent 45.1%), radial-gradient(circle at 50% 35%, #2b2926, #121110);
+}
+.hall-hex__forme svg { width: 28px; height: 28px; stroke: #b9b1a1; stroke-width: 1.4; fill: none; }
+.hall .hall-hex:hover .hall-hex__forme { transform: translateY(-2px); filter: brightness(1.2); }
+.hall .hall-hex[aria-checked="true"] { background: none; color: #f3e3bd; font-weight: 600; }
+.hall .hall-hex[aria-checked="true"] .hall-hex__forme { background: linear-gradient(160deg, #f0c1c4, #c73d48 45%, #6e161c); filter: drop-shadow(0 0 10px rgba(199,61,72,.65)); }
+.hall .hall-hex[aria-checked="true"] .hall-hex__forme::before { background: linear-gradient(160deg, rgba(255,255,255,.08) 0 45%, transparent 45.1%), radial-gradient(circle at 50% 40%, #8a1f28, #3a0a0e); }
+.hall .hall-hex[aria-checked="true"] .hall-hex__forme svg { stroke: #ffe3df; }
+.hall .hall-difficulte .difficulte__texte { min-height: 0; max-width: 34ch; margin: 0; font-size: .85rem; text-align: center; color: var(--ivoire-doux); }
+
+/* le lancement : « Engager le duel », une grande plaque rouge sang bordée d'or */
+.hall-actions { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+.hall .hall-actions { margin: 0; }
+.hall-engager {
+  --forme: polygon(16px 0, calc(100% - 30px) 0, 100% 50%, calc(100% - 30px) 100%, 16px 100%, 0 50%);
+  position: relative; isolation: isolate;
+  display: flex; align-items: center; justify-content: center; gap: 16px;
+  width: 100%; min-width: 260px; min-height: 66px; padding: 0 40px 0 26px;
+  border: 0; cursor: pointer;
+  clip-path: var(--forme);
+  background: linear-gradient(180deg, #fff1cf, var(--or) 45%, #6b5530);
+  color: #fff3e2;
+  font-family: "Cinzel","Cinzel Repli", serif; font-size: .95rem; font-weight: 700; letter-spacing: .16em; text-transform: uppercase;
+  text-shadow: 0 2px 4px rgba(0,0,0,.6);
+  filter: drop-shadow(0 10px 20px rgba(0,0,0,.55));
+  transition: filter .2s ease, transform .15s ease;
+}
+.hall-engager::before {
+  content: ""; position: absolute; inset: 1.5px; z-index: -1; clip-path: var(--forme);
+  background:
+    linear-gradient(160deg, rgba(255,255,255,.1) 0 40%, transparent 40.1%),
+    linear-gradient(90deg, var(--sang-sombre), #a62d37 40%, #8a222b 75%, var(--sang-sombre));
+}
+.hall-engager svg { width: 30px; height: 30px; stroke: #fff1cf; stroke-width: 1.6; fill: none; }
+.hall-engager:hover:not(:disabled), .hall-engager:focus-visible { transform: translateY(-2px); filter: brightness(1.12) drop-shadow(0 0 16px rgba(199,61,72,.5)); outline: none; }
+.hall-engager:disabled { cursor: not-allowed; filter: grayscale(.6) brightness(.7); }
+.hall-engager[hidden] { display: none; }
+
+/* ---------- Écrans moyens et téléphones ---------- */
+@media (max-width: 1250px) {
+  .hall-bandeau { grid-template-columns: minmax(0, 1fr) auto; row-gap: 18px; }
+  .hall-actions { grid-column: 1 / -1; flex-direction: row; justify-content: center; border-left: 0 !important; }
+  .hall-engager { width: auto; }
+}
+@media (max-width: 860px) {
+  .hall-modes { grid-template-columns: 1fr; gap: 14px; }
+  .hall-mode { min-height: 170px; padding-bottom: 44px; }
+  .hall-mode__embleme { width: 46px; height: 46px; margin-bottom: 10px; }
+  .hall-bandeau { grid-template-columns: 1fr; padding: 16px 12px; }
+  .hall-bandeau > * { padding: 0 8px; border-left: 0 !important; }
+  .hall-difficulte .hall-zone__titre { align-self: center; }
+  .hall-actions { flex-direction: column; }
+  .hall-engager { width: 100%; min-width: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hall-mode, .hall-mode__image, .hall-engager, .hall-hex__forme { transition: none; }
+}
+
+/* ---------- Retouches ---------- */
+/* laisse la place aux boutons du coin (Paramètres, MJ, retour), en haut à droite */
+.hall { padding-top: 66px; }
+@media (max-width: 700px) { .hall { padding-top: 14px; } }
+/* le petit texte d'aide sous le Grimoire */
+.hall .hall-grimoire .accueil__note { margin: 8px 0 0; max-width: 52ch; font-size: .86rem; line-height: 1.4; text-align: left; color: var(--ivoire-doux); }
+/* le Grimoire : une seule rangée, qui se resserre si la place manque */
+.hall .hall-grimoire__cartes { flex-wrap: nowrap; max-width: 100%; }
+@media (max-width: 860px) {
+  .hall .hall-grimoire__cartes > .deck-place { margin-left: -22px; }
+  .hall .hall-grimoire__cartes > .deck-place:nth-child(n+6) { display: none; }
+}
+
+/* =====================================================================
+   Le bandeau, en plus beau : proportions, éventail du Grimoire, titres à losange
+   ===================================================================== */
+.hall-bandeau {
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr) minmax(0, .95fr);
+  padding: 24px 10px 22px;
+}
+.hall-bandeau > * { padding: 0 30px; align-self: stretch; display: flex; flex-direction: column; justify-content: center; }
+/* les séparateurs : un filet d'or vertical, avec un losange en son milieu */
+.hall-bandeau > * + *:not([hidden]) { position: relative; border-left: 0; }
+.hall-bandeau > * + *:not([hidden])::before {
+  content: ""; position: absolute; left: 0; top: 8%; bottom: 8%; width: 1px;
+  background: linear-gradient(180deg, transparent, rgba(200,168,106,.6) 20%, rgba(200,168,106,.6) 80%, transparent);
+}
+.hall-bandeau > * + *:not([hidden])::after {
+  content: ""; position: absolute; left: -4px; top: 50%; width: 9px; height: 9px; translate: 0 -50%; rotate: 45deg;
+  background: #141312; border: 1px solid var(--or);
+}
+/* deux losanges sur le bord haut du panneau, au droit des séparateurs */
+.hall-bandeau::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none; z-index: 1;
+  background:
+    linear-gradient(var(--or-pale), var(--or-pale)) 50% 0 / 0 0 no-repeat;
+}
+
+/* les titres de zone : petites capitales, un losange devant */
+.hall-zone__titre { display: inline-flex; align-items: center; gap: 10px; font-size: .8rem; letter-spacing: .2em; }
+.hall-difficulte > .hall-zone__titre::before, .hall-grimoire .hall-zone__titre::before {
+  content: ""; width: 7px; height: 7px; rotate: 45deg; background: var(--or); box-shadow: 0 0 6px rgba(200,168,106,.6);
+}
+.hall-zone__tete { margin-bottom: 14px; }
+.hall-zone__ico { display: none; }
+.hall-zone__sous { margin-top: 2px; padding-left: 17px; font-style: italic; }
+
+/* le Grimoire : un éventail de cartes, sans les chiffres (ils sont dans « Choisir mes cartes ») */
+.hall-grimoire { align-items: stretch; }
+.hall .hall-grimoire__cartes {
+  position: relative; justify-content: center; align-items: flex-end;
+  height: 128px; margin: 0 0 16px; padding: 0;
+}
+.hall .hall-grimoire__cartes > .deck-place {
+  --carte-l: 74px; margin-left: -18px;
+  --m: calc(var(--k) - 3);
+  rotate: calc(var(--m) * 5deg);
+  translate: 0 calc(var(--m) * var(--m) * 2.2px);
+  transform-origin: 50% 120%;
+  filter: drop-shadow(0 8px 10px rgba(0,0,0,.6));
+  transition: translate .25s ease, rotate .25s ease;
+}
+.hall .hall-grimoire__cartes > .deck-place:first-child { margin-left: 0; }
+.hall .hall-grimoire__cartes > .deck-place:hover { translate: 0 calc(var(--m) * var(--m) * 2.2px - 12px); z-index: 5; }
+.hall .hall-grimoire__cartes .dc-carte { --carte-l: 74px; width: 74px; }
+.hall .hall-grimoire__cartes .dc-stat, .hall .hall-grimoire__cartes .dc-caps, .hall .hall-grimoire__cartes .deck-place__nb { display: none; }
+/* une lueur dorée sous l'éventail, comme posé sur une table */
+.hall .hall-grimoire__cartes::after {
+  content: ""; position: absolute; left: 15%; right: 15%; bottom: -10px; height: 22px; z-index: -1;
+  background: radial-gradient(ellipse at center, rgba(200,168,106,.22), transparent 70%);
+}
+.hall-grimoire > .hall-plaque { align-self: center; }
+.hall .hall-grimoire .accueil__note { align-self: center; text-align: center; font-size: .8rem; }
+
+/* la difficulté : des hexagones plus grands, la description sur une ligne */
+.hall-difficulte { align-items: center; gap: 14px; }
+.hall-difficulte > .hall-zone__titre { align-self: center; }
+.hall-difficulte__choix { gap: 22px; }
+.hall-hex__forme { width: 62px; height: 70px; }
+.hall-hex__forme svg { width: 32px; height: 32px; }
+.hall .hall-hex { font-family: "Cinzel","Cinzel Repli", serif; font-size: .7rem; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; }
+.hall .hall-difficulte .difficulte__texte { max-width: 30ch; font-size: .82rem; line-height: 1.35; font-style: italic; }
+
+/* le lancement : centré dans sa zone */
+.hall-actions { align-items: center; gap: 14px; }
+.hall-engager { min-width: 0; width: 100%; max-width: 330px; }
+.hall-plaque.menu__regles { width: 78%; max-width: 260px; }
+
+@media (max-width: 1250px) {
+  .hall-bandeau { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .hall-actions { grid-column: 1 / -1; flex-direction: row; padding-top: 18px; }
+  .hall-actions::before, .hall-actions::after { display: none; }
+  .hall-plaque.menu__regles { width: auto; }
+}
+@media (max-width: 860px) {
+  .hall-bandeau { grid-template-columns: 1fr; row-gap: 22px; }
+  .hall-bandeau > * { padding: 0 6px; }
+  .hall-bandeau > * + *:not([hidden])::before, .hall-bandeau > * + *:not([hidden])::after { display: none; }
+  .hall .hall-grimoire__cartes > .deck-place { --carte-l: 60px; margin-left: -20px; }
+  .hall .hall-grimoire__cartes .dc-carte { --carte-l: 60px; width: 60px; }
+  .hall-actions { flex-direction: column; }
+}
+/* (plus de classe accueil__deck : l'éventail est entièrement réglé ici) */
+.hall .hall-grimoire__cartes { display: flex; height: 120px; margin-top: 4px; }
+.hall-grimoire { justify-content: flex-start; }
+.hall-grimoire .hall-zone__tete { position: relative; z-index: 6; }
+/* « Engager le duel » sur une seule ligne */
+.hall-actions { min-width: 0; }
+.hall-engager { white-space: nowrap; font-size: .9rem; letter-spacing: .12em; padding: 0 38px 0 22px; gap: 12px; }
+/* l'éventail garde sa hauteur (sinon la colonne le comprime) et ses cartes leur taille */
+.hall .hall-grimoire__cartes { flex: none; height: 132px; }
+#accueil-deck .dc-carte, #accueil-deck .deck-place { --carte-l: 74px; }
+#accueil-deck .dc-carte { width: 74px; height: auto; }
+@media (max-width: 860px) {
+  #accueil-deck .dc-carte, #accueil-deck .deck-place { --carte-l: 60px; }
+  #accueil-deck .dc-carte { width: 60px; }
+  .hall .hall-grimoire__cartes { height: 110px; }
+}
+
+/* « Règles du duel » sur une seule ligne */
+.hall-plaque { white-space: nowrap; }
+.hall-plaque.menu__regles { width: auto; max-width: none; padding: 0 28px; }
+
+/* =====================================================================
+   Le Grimoire en carrousel : la carte du centre en grand, les voisines s'écartent, plus petites,
+   inclinées et assombries ; flèches d'or vieilli de chaque côté, petits losanges dessous.
+   (--d : place par rapport au centre, --a : sa valeur absolue ; posées par Menu.jsx)
+   ===================================================================== */
+.carrousel { position: relative; display: grid; grid-template-columns: 34px minmax(0, 1fr) 34px; align-items: center; gap: 4px; margin: 2px 0 6px; }
+.hall .carrousel__piste {
+  position: relative; display: block;
+  height: 160px; margin: 0; padding: 0;
+  perspective: 900px;
+  overflow: hidden;
+  /* les cartes du bord s'effacent */
+  -webkit-mask: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
+          mask: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
+}
+.hall .carrousel__piste::after { display: none; }
+.hall .carrousel__piste > .carrousel__carte {
+  position: absolute; left: 50%; top: 50%;
+  margin: 0; rotate: none; translate: none; filter: none;
+  transform:
+    translate(-50%, -50%)
+    translateX(calc(var(--d) * 64px))
+    translateZ(calc(var(--a) * -60px))
+    rotateY(calc(var(--d) * -14deg))
+    scale(calc(1 - var(--a) * .1));
+  opacity: calc(1 - var(--a) * .22);
+  cursor: pointer;
+  transition: transform .45s cubic-bezier(.2,.8,.3,1), opacity .45s ease, filter .45s ease;
+}
+.hall .carrousel__piste > .carrousel__carte:not(.est-centre) { filter: brightness(.6) saturate(.8); }
+.hall .carrousel__piste > .carrousel__carte:not(.est-centre):hover { filter: brightness(.85); translate: none; }
+.hall .carrousel__piste > .carrousel__carte.est-centre { filter: drop-shadow(0 0 14px rgba(200,168,106,.35)) drop-shadow(0 10px 14px rgba(0,0,0,.7)); }
+.hall .carrousel__piste > .carrousel__carte.est-centre:hover { translate: none; }
+#accueil-deck .carrousel__carte, #accueil-deck .carrousel__carte .dc-carte { --carte-l: 96px; }
+#accueil-deck .carrousel__carte .dc-carte { width: 96px; }
+/* le nombre d'exemplaires : un petit losange d'or sous la carte du centre */
+.carrousel__nb {
+  position: absolute; left: 50%; bottom: -6px; translate: -50% 0; z-index: 3;
+  padding: 1px 9px;
+  background: linear-gradient(180deg, #f1dca7, #b08a48); color: #1b1408;
+  clip-path: polygon(8px 0, calc(100% - 8px) 0, 100% 50%, calc(100% - 8px) 100%, 8px 100%, 0 50%);
+  font-family: "Cinzel","Cinzel Repli", serif; font-size: .7rem; font-weight: 800;
+}
+.carrousel__carte:not(.est-centre) .carrousel__nb { display: none; }
+/* les flèches : un chevron d'or vieilli dans un losange */
+.carrousel__fleche {
+  position: relative; width: 30px; height: 30px; padding: 0; border: 0; cursor: pointer;
+  rotate: 45deg;
+  background: linear-gradient(135deg, #2a2725, #121110);
+  box-shadow: 0 0 0 1px rgba(200,168,106,.7), 0 4px 10px rgba(0,0,0,.6);
+  transition: box-shadow .2s ease, background .2s ease;
+}
+.carrousel__fleche::before {
+  content: ""; position: absolute; left: 50%; top: 50%; width: 8px; height: 8px;
+  border-left: 2px solid var(--or-pale); border-bottom: 2px solid var(--or-pale);
+  translate: -35% -65%;
+}
+.carrousel__fleche--d::before { border: 0; border-top: 2px solid var(--or-pale); border-right: 2px solid var(--or-pale); translate: -65% -35%; }
+.carrousel__fleche:hover:not(:disabled) { background: linear-gradient(135deg, #a83440, #5e1419); box-shadow: 0 0 0 1px var(--or-pale), 0 0 12px rgba(199,61,72,.5); }
+.carrousel__fleche:disabled { opacity: .3; cursor: default; }
+/* les petits losanges : où l'on est dans le Grimoire */
+.carrousel__points { grid-column: 1 / -1; display: flex; justify-content: center; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.carrousel__points i { width: 6px; height: 6px; rotate: 45deg; background: rgba(200,168,106,.3); transition: background .2s ease, scale .2s ease; }
+.carrousel__points i.est-actif { background: var(--or-pale); scale: 1.4; box-shadow: 0 0 6px rgba(227,207,159,.7); }
+
+@media (max-width: 860px) {
+  .hall .carrousel__piste { height: 130px; }
+  #accueil-deck .carrousel__carte, #accueil-deck .carrousel__carte .dc-carte { --carte-l: 78px; }
+  #accueil-deck .carrousel__carte .dc-carte { width: 78px; }
+  .hall .carrousel__piste > .carrousel__carte { transform: translate(-50%, -50%) translateX(calc(var(--d) * 46px)) translateZ(calc(var(--a) * -60px)) rotateY(calc(var(--d) * -14deg)) scale(calc(1 - var(--a) * .1)); }
+}
+@media (prefers-reduced-motion: reduce) { .hall .carrousel__piste > .carrousel__carte { transition: none; } }
+
+/* La difficulté choisie prend sa propre couleur (tons sourds de Nocthémar) :
+   Facile = vert mousse, Normal = or vieilli, Difficile = rouge sang */
+.hall .hall-hex--facile[aria-checked="true"] .hall-hex__forme { background: linear-gradient(160deg, #d3e6c4, #5f8f4a 45%, #26401c); filter: drop-shadow(0 0 10px rgba(110,160,85,.55)); }
+.hall .hall-hex--facile[aria-checked="true"] .hall-hex__forme::before { background: linear-gradient(160deg, rgba(255,255,255,.08) 0 45%, transparent 45.1%), radial-gradient(circle at 50% 40%, #3f6630, #142010); }
+.hall .hall-hex--facile[aria-checked="true"] .hall-hex__forme svg { stroke: #eaf6dd; }
+.hall .hall-hex--facile[aria-checked="true"] { color: #cfe5bd; }
+
+.hall .hall-hex--normal[aria-checked="true"] .hall-hex__forme { background: linear-gradient(160deg, #fff1cf, #c8a86a 45%, #6b5530); filter: drop-shadow(0 0 10px rgba(200,168,106,.55)); }
+.hall .hall-hex--normal[aria-checked="true"] .hall-hex__forme::before { background: linear-gradient(160deg, rgba(255,255,255,.08) 0 45%, transparent 45.1%), radial-gradient(circle at 50% 40%, #7a6236, #2a2010); }
+.hall .hall-hex--normal[aria-checked="true"] .hall-hex__forme svg { stroke: #fff4d6; }
+.hall .hall-hex--normal[aria-checked="true"] { color: #f3e3bd; }
+
+.hall .hall-hex--difficile[aria-checked="true"] { color: #f0b3b6; }
+
+/* =====================================================================
+   En ligne : partie privée et partie classée, côte à côte, dans le style du bandeau
+   ===================================================================== */
+.hall .ligne { margin: 0; }
+.hall .ligne__accueil {
+  grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: auto 1fr; grid-auto-flow: column;
+  column-gap: 22px; row-gap: 0;
+}
+/* les titres de section : losange d'or devant */
+.hall .ligne__sous-titre {
+  display: flex; align-items: center; gap: 10px; margin: 0 0 10px 6px;
+  font-family: "Cinzel","Cinzel Repli", serif; font-size: .78rem; font-weight: 700; letter-spacing: .22em; text-transform: uppercase;
+  color: var(--ivoire);
+}
+.hall .ligne__sous-titre::before { content: ""; width: 7px; height: 7px; rotate: 45deg; background: var(--or); box-shadow: 0 0 6px rgba(200,168,106,.6); }
+.hall .ligne__sous-titre::after { content: ""; flex: 1; height: 1px; background: linear-gradient(90deg, rgba(200,168,106,.5), transparent); }
+/* les blocs : un panneau charbon à coins taillés, liseré d'or vieilli */
+.hall .ligne__bloc, .hall .salon {
+  position: relative; isolation: isolate;
+  display: flex; flex-direction: column; gap: 14px;
+  padding: 22px 24px;
+  border: 0; box-shadow: none;
+  background: linear-gradient(170deg, rgba(227,207,159,.55), rgba(122,98,54,.4) 50%, rgba(227,207,159,.45));
+  clip-path: var(--taille);
+  filter: drop-shadow(0 14px 26px rgba(0,0,0,.55));
+}
+.hall .ligne__bloc::before, .hall .salon::before {
+  content: ""; position: absolute; inset: 1.5px; z-index: -1; clip-path: var(--taille);
+  background: linear-gradient(160deg, rgba(255,255,255,.03) 0 35%, transparent 35.1%), linear-gradient(180deg, rgba(24,22,21,.97), rgba(13,12,11,.97));
+}
+.hall .ligne__bloc h3 { font-size: 1.02rem; letter-spacing: .1em; color: #f3e3bd; }
+.hall .ligne__bloc p { flex: none; color: var(--ivoire-doux); font-size: .95rem; line-height: 1.45; }
+
+/* les boutons : l'action principale en plaque rouge sang, les autres en plaque charbon */
+.hall .ligne .btn-dc, .hall .salon .btn-dc {
+  --forme: polygon(14px 0, calc(100% - 14px) 0, 100% 50%, calc(100% - 14px) 100%, 14px 100%, 0 50%);
+  position: relative; isolation: isolate;
+  min-height: 46px; padding: 0 28px;
+  clip-path: var(--forme);
+  background: linear-gradient(180deg, var(--or-pale), var(--or) 50%, #6b5530);
+  box-shadow: none;
+  color: var(--ivoire);
+  font-family: "Cinzel","Cinzel Repli", serif; font-size: .74rem; font-weight: 700; letter-spacing: .14em; text-transform: uppercase;
+}
+.hall .ligne .btn-dc::before, .hall .salon .btn-dc::before {
+  content: ""; position: absolute; inset: 1.2px; z-index: -1; clip-path: var(--forme);
+  background: linear-gradient(180deg, #211f1d, #121110);
+}
+.hall .ligne .btn-dc--ambre::before, .hall .salon .btn-dc--ambre::before {
+  background: linear-gradient(160deg, rgba(255,255,255,.1) 0 40%, transparent 40.1%), linear-gradient(90deg, var(--sang-sombre), #a62d37 40%, #8a222b 75%, var(--sang-sombre));
+}
+.hall .ligne .btn-dc--ambre, .hall .salon .btn-dc--ambre { color: #fff3e2; text-shadow: 0 1px 3px rgba(0,0,0,.6); }
+.hall .ligne .btn-dc:hover:not(:disabled), .hall .salon .btn-dc:hover:not(:disabled) { filter: brightness(1.15); transform: translateY(-1px); }
+/* « Rejoindre un salon » : la plaque secondaire (charbon) */
+.hall #btn-ouvrir-code::before { background: linear-gradient(180deg, #211f1d, #121110); }
+.hall #btn-ouvrir-code { color: var(--ivoire); text-shadow: none; }
+.hall .prive__boutons { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.hall .ligne__rejoindre input { background: #0f0e0d; border: 1px solid rgba(200,168,106,.45); color: var(--ivoire); }
+
+/* le classé : rang, choix 1v1 / 2v2 en deux plaques, recherche */
+.hall .classe__modes { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; clip-path: none; background: none; box-shadow: none; }
+.hall .classe__mode {
+  --forme: polygon(12px 0, calc(100% - 12px) 0, 100% 50%, calc(100% - 12px) 100%, 12px 100%, 0 50%);
+  position: relative; isolation: isolate;
+  min-height: 42px; border: 0; cursor: pointer;
+  clip-path: var(--forme);
+  background: linear-gradient(180deg, #8f877a, #4a453f 50%, #7a7266);
+  color: var(--ivoire-doux);
+  font-family: "Cinzel","Cinzel Repli", serif; font-size: .72rem; font-weight: 700; letter-spacing: .14em; text-transform: uppercase;
+}
+.hall .classe__mode::before { content: ""; position: absolute; inset: 1.2px; z-index: -1; clip-path: var(--forme); background: linear-gradient(180deg, #211f1d, #121110); }
+.hall .classe__mode[aria-checked="true"] { background: linear-gradient(180deg, #fff1cf, var(--or) 45%, #6b5530); color: #fff4d6; }
+.hall .classe__mode[aria-checked="true"]::before { background: linear-gradient(160deg, rgba(255,255,255,.08) 0 40%, transparent 40.1%), linear-gradient(180deg, #7a6236, #2a2010); }
+.hall .classe__chercher { width: 100%; }
+.hall .classe__rang { color: var(--ivoire-doux); }
+
+/* en ligne, le bandeau n'a que le Grimoire et les Règles : deux zones */
+.hall-bandeau.hall-bandeau--ligne { grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); }
+
+@media (max-width: 860px) {
+  .hall .ligne__accueil { grid-template-columns: 1fr; grid-template-rows: none; grid-auto-flow: row; }
+  .hall .ligne__bloc { margin-bottom: 16px; }
+  .hall .prive__boutons { grid-template-columns: 1fr; }
+  .hall-bandeau.hall-bandeau--ligne { grid-template-columns: 1fr; }
+}
+/* partie privée et partie classée côte à côte (la règle .prive de jeu-cartes.css la mettait sur toute la largeur) */
+@media (min-width: 861px) {
+  .hall .ligne__accueil > .prive { grid-column: auto; }
+  .hall .ligne__bloc { height: 100%; justify-content: space-between; }
+}
+.hall .classe__modes { width: 100%; }
+.hall .classe__mode { width: 100%; }
+/* placement explicite : [titre privée | titre classée] puis [bloc privé | bloc classé] */
+@media (min-width: 861px) {
+  .hall .ligne__accueil { grid-auto-flow: row; grid-template-rows: auto auto; align-items: stretch; }
+  .hall .ligne__accueil > :nth-child(1) { grid-column: 1; grid-row: 1; }
+  .hall .ligne__accueil > :nth-child(2) { grid-column: 1; grid-row: 2; }
+  .hall .ligne__accueil > :nth-child(3) { grid-column: 2; grid-row: 1; }
+  .hall .ligne__accueil > :nth-child(4) { grid-column: 2; grid-row: 2; }
+}
+
+/* =====================================================================
+   Couleurs : bleu nuit profond (comme l'exemple), liseré d'or, accent rouge sang
+   ===================================================================== */
+.hall { --nuit-1: #121b2e; --nuit-2: #0a101d; --nuit-3: #1a2540; }
+.hall-bandeau::before, .hall .ligne__bloc::before, .hall .salon::before {
+  background:
+    radial-gradient(ellipse 80% 60% at 50% 0%, rgba(90,120,190,.10), transparent 70%),
+    linear-gradient(180deg, rgba(18,27,46,.97), rgba(10,16,29,.97));
+}
+.hall-mode::before { background: var(--nuit-2); }
+.hall-mode__image::after {
+  background:
+    linear-gradient(180deg, transparent 30%, rgba(12,18,32,.65) 60%, rgba(10,16,29,.97) 80%),
+    radial-gradient(ellipse 120% 70% at 50% 0%, transparent 50%, rgba(8,12,22,.5));
+}
+.hall-mode__embleme { background: linear-gradient(135deg, var(--nuit-3), var(--nuit-2)); box-shadow: 0 0 0 1.5px var(--or), 0 0 0 5px rgba(10,16,29,.85), 0 0 0 6px rgba(200,168,106,.45), 0 8px 18px rgba(0,0,0,.7); }
+.hall-plaque::before, .hall .ligne .btn-dc::before, .hall .salon .btn-dc::before, .hall #btn-ouvrir-code::before, .hall .classe__mode::before { background: linear-gradient(180deg, #17223a, #0b1120); }
+.hall-hex__forme { background: linear-gradient(160deg, #7f8aa3, #3b4560 50%, #6a7590); }
+.hall-hex__forme::before { background: linear-gradient(160deg, rgba(255,255,255,.07) 0 45%, transparent 45.1%), radial-gradient(circle at 50% 35%, #1f2a44, #0b1120); }
+.hall .hall-hex__forme svg { stroke: #c3cad8; }
+.carrousel__fleche { background: linear-gradient(135deg, var(--nuit-3), var(--nuit-2)); }
+.hall-bandeau > * + *:not([hidden])::after { background: var(--nuit-2); }
+.hall .ligne__rejoindre input { background: #0b1120; }

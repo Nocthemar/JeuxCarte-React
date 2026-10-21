@@ -27,6 +27,12 @@ const lireDifficulte = () => { try { const d = localStorage.getItem(CLE_DIFFICUL
 
 
 const ICONE_EPEE = <><path d="M14.5 17.5L3 6V3h3l11.5 11.5" /><path d="M13 19l6-6" /><path d="M16 16l4 4" /><path d="M19 21l2-2" /></>;
+// Les masques de la difficulté : un heaume simple, un heaume à cornes, un masque démoniaque
+const MASQUES = {
+  facile: <><path d="M6 11a6 6 0 0 1 12 0v6l-2 3H8l-2-3z" /><path d="M9 12h2M13 12h2M12 9v8" /></>,
+  normal: <><path d="M6 12a6 6 0 0 1 12 0v5l-2 3H8l-2-3z" /><path d="M6 9L3 4l5 3M18 9l3-5-5 3" /><path d="M9 13h2M13 13h2" /></>,
+  difficile: <><path d="M6 12a6 6 0 0 1 12 0c0 4-2 8-6 9-4-1-6-5-6-9z" /><path d="M6.5 9L2 3l6 3.5M17.5 9L22 3l-6 3.5" /><path d="M8.5 12.5l2.5 1M15.5 12.5l-2.5 1" /><path d="M10 17l1 1 1-1 1 1 1-1" /></>,
+};
 const Svg = ({ children }) => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{children}</svg>
 );
@@ -271,6 +277,7 @@ export default function Menu({ joueur, donnees, ligne, surRegles, surJouer }) {
   const [mode, setMode] = useState(params.get('mode') === 'ligne' || params.has('salon') ? 'ligne' : 'solo');
   // Lien « Choisir mes cartes » du profil (?deck=choisir) : le constructeur s'ouvre tout de suite
   const [edition, setEdition] = useState(params.get('deck') === 'choisir');
+  const [carrousel, setCarrousel] = useState(3);
   const [difficulte, setDifficulte] = useState(lireDifficulte);
   const [choix, setChoix] = useState(lireChoix);   // clés des cartes choisies (null : rien d'enregistré)
   const zoneChoix = useRef(null);
@@ -343,103 +350,113 @@ export default function Menu({ joueur, donnees, ligne, surRegles, surJouer }) {
     choisirDifficulte(ids[(ids.indexOf(difficulte) + pas + ids.length) % ids.length], true);
   }
 
-  return (
-    <section className="accueil" id="ecran-accueil">
-      <div className="menu">
-        <header className="menu__tete">
-          <span className="accueil__sur">Jeu de cartes de Nocthémar</span>
-          <h1 className="accueil__titre">Duel des <span>Couronnes</span></h1>
-          <p className="accueil__texte">Fais tomber les 20 PV de ton adversaire avant qu&apos;il ne fasse tomber les tiens. Pose tes troupes, sers-toi de tes objets de pouvoir, et que chaque coup se joue au d20.</p>
-        </header>
+  // Le Grimoire en bandeau : les cartes, sans doublon
+  const vitrine = pret ? [...new Set(complet)] : [];
+  // Le carrousel : la carte au centre (les autres s'écartent de chaque côté)
+  const centre = Math.min(Math.max(0, carrousel), Math.max(0, vitrine.length - 1));
+  const tourner = (pas) => setCarrousel(Math.min(Math.max(0, centre + pas), vitrine.length - 1));
 
-        {/* Mode de jeu : trois bannières */}
-        <div className="modes" role="tablist" aria-label="Mode de jeu">
-          <button type="button" className={`mode${mode === 'solo' ? ' est-actif' : ''}`} role="tab" aria-selected={mode === 'solo'} onClick={choisirSolo}>
-            <span className="mode__ico"><Svg>{ICONE_EPEE}</Svg></span>
-            <span className="mode__corps">
-              <span className="mode__titre">Contre l&apos;Ombre</span>
-              <span className="mode__texte">Seul, face à l&apos;IA du Codex</span>
-            </span>
-            <span className="mode__fleche" aria-hidden="true">›</span>
+  return (
+    <section className="accueil hall" id="ecran-accueil">
+      <h1 className="hall__titre-cache">Duel des Couronnes</h1>
+      <div className="menu">
+        {/* Mode de jeu : trois grandes cartes illustrées (styles/duel-accueil.css) */}
+        <div className="hall-modes" role="tablist" aria-label="Mode de jeu">
+          <button type="button" className={`hall-mode hall-mode--ombre${mode === 'solo' ? ' est-actif' : ''}`} role="tab" aria-selected={mode === 'solo'} onClick={choisirSolo}>
+            <span className="hall-mode__image" aria-hidden="true" />
+            <span className="hall-mode__embleme"><Svg>{ICONE_EPEE}<path d="M9.5 17.5L21 6V3h-3L6.5 14.5" /><path d="M11 19l-6-6" /><path d="M8 16l-4 4" /><path d="M5 21l-2-2" /></Svg></span>
+            <span className="hall-mode__titre">Contre l&apos;Ombre</span>
+            <span className="hall-mode__texte">Seul, face à l&apos;IA du Codex</span>
           </button>
-          <button type="button" className={`mode${mode === 'ligne' ? ' est-actif' : ''}`} role="tab" aria-selected={mode === 'ligne'} onClick={() => setMode('ligne')}>
-            <span className="mode__ico"><Svg>{ICONE_EPEE}<path d="M9.5 17.5L21 6V3h-3L6.5 14.5" /><path d="M11 19l-6-6" /><path d="M8 16l-4 4" /><path d="M5 21l-2-2" /></Svg></span>
-            <span className="mode__corps">
-              <span className="mode__titre">En ligne</span>
-              <span className="mode__texte">Classé 1v1 ou 2v2, ou partie privée entre amis</span>
-            </span>
-            <span className="mode__fleche" aria-hidden="true">›</span>
+          <button type="button" className={`hall-mode hall-mode--ligne${mode === 'ligne' ? ' est-actif' : ''}`} role="tab" aria-selected={mode === 'ligne'} onClick={() => setMode('ligne')}>
+            <span className="hall-mode__image" aria-hidden="true" />
+            <span className="hall-mode__embleme"><Svg>{ICONE_EPEE}<path d="M9.5 17.5L21 6V3h-3L6.5 14.5" /><path d="M11 19l-6-6" /><path d="M8 16l-4 4" /><path d="M5 21l-2-2" /></Svg></span>
+            <span className="hall-mode__titre">En ligne</span>
+            <span className="hall-mode__texte">Classé 1v1 ou 2v2, ou partie privée entre amis</span>
           </button>
           {/* Mode Histoire : un autre écran, la carte des chapitres */}
-          <Link className="mode mode--lien" to="/histoire" viewTransition>
-            <span className="mode__ico"><Svg><path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3z" /><path d="M9 3v15M15 6v15" /></Svg></span>
-            <span className="mode__corps">
-              <span className="mode__titre">Histoire</span>
-              <span className="mode__texte">La campagne, pays après pays</span>
-            </span>
-            <span className="mode__fleche" aria-hidden="true">›</span>
+          <Link className="hall-mode hall-mode--histoire" to="/histoire" viewTransition>
+            <span className="hall-mode__image" aria-hidden="true" />
+            <span className="hall-mode__embleme"><Svg><path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3z" /><path d="M9 3v15M15 6v15" /></Svg></span>
+            <span className="hall-mode__titre">Histoire</span>
+            <span className="hall-mode__texte">La campagne, pays après pays</span>
           </Link>
         </div>
 
-        {/* La salle : réglages et lancement à gauche, le Grimoire en éventail à droite */}
-        <div className="menu__salle">
-          <div className="menu__gauche">
-            <div className="difficulte" id="choix-difficulte" hidden={mode !== 'solo'} onKeyDown={clavierDifficulte}>
-              <span className="difficulte__titre" id="difficulte-titre">Difficulté</span>
-              <div className="difficulte__choix" role="radiogroup" aria-labelledby="difficulte-titre">
-                {[['facile', 'Facile'], ['normal', 'Normal'], ['difficile', 'Difficile']].map(([d, t]) => (
-                  <button key={d} type="button" className="difficulte__btn" role="radio" aria-checked={d === difficulte}
-                    tabIndex={d === difficulte ? 0 : -1} ref={(el) => { boutonsDifficulte.current[d] = el; }}
-                    onClick={() => choisirDifficulte(d)}>{t}</button>
-                ))}
+        {/* En ligne : le salon (créer, rejoindre, classé) */}
+        <PanneauLigne joueur={joueur} ligne={ligne} cache={mode !== 'ligne'} />
+
+        {/* Le bandeau : le Grimoire, la difficulté, le lancement */}
+        <div className={`hall-bandeau${mode === 'solo' ? '' : ' hall-bandeau--ligne'}`}>
+          <div className="hall-grimoire" ref={zoneDeck}>
+            <div className="hall-zone__tete">
+              <span className="hall-zone__ico"><Svg><rect x="3" y="6" width="11" height="15" rx="1.5" transform="rotate(-8 8.5 13.5)" /><rect x="10" y="3" width="11" height="15" rx="1.5" transform="rotate(8 15.5 10.5)" /></Svg></span>
+              <span className="hall-zone__textes">
+                <span className="hall-zone__titre">Mon Grimoire</span>
+                <span className="hall-zone__sous">{pret ? `${complet.length}/${TAILLE_DECK} cartes · ${parties.join(', ')}` : 'Les cartes sortent du grimoire…'}</span>
+              </span>
+            </div>
+            {/* Le Grimoire en carrousel : flèches, clavier, ou un clic sur une carte pour l'amener au centre */}
+            <div className="carrousel" role="group" aria-roledescription="carrousel" aria-label="Cartes de ton Grimoire"
+              onKeyDown={(e) => { if (e.key === 'ArrowLeft') { e.preventDefault(); tourner(-1); } if (e.key === 'ArrowRight') { e.preventDefault(); tourner(1); } }}>
+              <button type="button" className="carrousel__fleche carrousel__fleche--g" aria-label="Carte précédente" disabled={centre <= 0} onClick={() => tourner(-1)} />
+              <div className="hall-grimoire__cartes carrousel__piste" id="accueil-deck">
+                {vitrine.map((c, k) => {
+                  const d = k - centre;
+                  const n = exemplaires(complet, c);
+                  return (
+                    <span key={cleCarte(c)} className={`deck-place carrousel__carte${d === 0 ? ' est-centre' : ''}`}
+                      style={{ '--d': d, '--a': Math.abs(d), zIndex: 20 - Math.abs(d) }} aria-hidden={Math.abs(d) > 3 ? true : undefined}
+                      onClick={() => setCarrousel(k)}>
+                      <CarteDuel c={c} tabIndex={d === 0 ? 0 : -1} />
+                      {n > 1 && <span className="carrousel__nb">×{n}</span>}
+                    </span>
+                  );
+                })}
               </div>
-              <p className="difficulte__texte">{DIFFICULTES[difficulte].texte}</p>
+              <button type="button" className="carrousel__fleche carrousel__fleche--d" aria-label="Carte suivante" disabled={centre >= vitrine.length - 1} onClick={() => tourner(1)} />
+              {vitrine.length > 0 && (
+                <div className="carrousel__points" aria-hidden="true">
+                  {vitrine.map((c, k) => <i key={cleCarte(c)} className={k === centre ? 'est-actif' : undefined} />)}
+                </div>
+              )}
             </div>
-
-            <PanneauLigne joueur={joueur} ligne={ligne} cache={mode !== 'ligne'} />
-
-            <div className="accueil__actions">
-              <button type="button" className="btn-dc btn-dc--ambre menu__jouer" id="btn-jouer" hidden={mode !== 'solo'} disabled={!pret}
-                onClick={() => surJouer(cartes, difficulte)}>Engager le duel</button>
-              <button type="button" className="btn-dc menu__regles" onClick={surRegles}>
-                <span className="menu__regles-ico"><Svg><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5z" /><path d="M4 20.5A2.5 2.5 0 0 0 6.5 23H20v-5" /></Svg></span> Règles du duel
+            {pret && (
+              <button type="button" className={`hall-plaque hall-plaque--petite${edition ? ' est-actif' : ''}`} onClick={basculerEdition}>
+                {edition ? 'Valider mon Grimoire' : 'Choisir mes cartes'}
               </button>
-            </div>
+            )}
+            {pret && !joueur && <p className="accueil__note">Connecte-toi avec Discord pour jouer avec ta collection : sans compte, ton Grimoire est fait de cartes de base.</p>}
+            {pret && joueur && !(donnees.collection ?? []).length && <p className="accueil__note">Ta collection est vide : ton Grimoire est complété avec des cartes de base. Les cartes s&apos;obtiennent à la <Link to="/boutique">boutique</Link>.</p>}
           </div>
 
-          {/* Le Grimoire en éventail sur un autel */}
-          <div className="menu__droite">
-            <div className="menu__autel">
-              <h2 className="accueil__deck-titre">{pret ? `Ton Grimoire (${complet.length} cartes) : ${parties.join(', ')}` : 'Ton deck'}</h2>
-              <div className={`accueil__deck${edition ? ' est-en-edition' : ''}`} id="accueil-deck" ref={zoneDeck}>
-                {!pret ? <p className="vide">Les cartes sortent du grimoire…</p> : (
-                  <>
-                    {[...new Set(complet)].slice(0, 5).map((c) => (
-                      <span key={cleCarte(c)} className="deck-place">
-                        <CarteDuel c={c} />
-                        {exemplaires(complet, c) > 1 && <span className="deck-place__nb">×{exemplaires(complet, c)}</span>}
-                      </span>
-                    ))}
-                    <button type="button" className={`btn-dc deck-modifier${edition ? ' btn-dc--ambre' : ''}`} onClick={basculerEdition}>
-                      {edition ? 'Valider mon Grimoire' : 'Choisir mes cartes'}
-                    </button>
-                    {!joueur ? <p className="accueil__note">Connecte-toi avec Discord pour jouer avec ta collection : sans compte, ton Grimoire est fait de cartes de base.</p>
-                      : !(donnees.collection ?? []).length ? <p className="accueil__note">Ta collection est vide : ton Grimoire est complété avec des cartes de base. Les cartes s&apos;obtiennent à la <Link to="/boutique">boutique</Link>.</p>
-                        : null}
-                  </>
-                )}
-              </div>
+          <div className="hall-difficulte difficulte" id="choix-difficulte" hidden={mode !== 'solo'} onKeyDown={clavierDifficulte}>
+            <span className="hall-zone__titre" id="difficulte-titre">Difficulté</span>
+            <div className="hall-difficulte__choix" role="radiogroup" aria-labelledby="difficulte-titre">
+              {[['facile', 'Facile'], ['normal', 'Normal'], ['difficile', 'Difficile']].map(([d, t]) => (
+                <button key={d} type="button" className={`hall-hex difficulte__btn hall-hex--${d}`} role="radio" aria-checked={d === difficulte}
+                  tabIndex={d === difficulte ? 0 : -1} ref={(el) => { boutonsDifficulte.current[d] = el; }}
+                  onClick={() => choisirDifficulte(d)} title={DIFFICULTES[d].texte}>
+                  <span className="hall-hex__forme"><Svg>{MASQUES[d]}</Svg></span>
+                  <span className="hall-hex__nom">{t}</span>
+                </button>
+              ))}
             </div>
+            <p className="difficulte__texte">{DIFFICULTES[difficulte].texte}</p>
+          </div>
+
+          <div className="hall-actions accueil__actions">
+            <button type="button" className="hall-engager" id="btn-jouer" hidden={mode !== 'solo'} disabled={!pret}
+              onClick={() => surJouer(cartes, difficulte)}>
+              <Svg>{ICONE_EPEE}<path d="M9.5 17.5L21 6V3h-3L6.5 14.5" /><path d="M11 19l-6-6" /><path d="M8 16l-4 4" /><path d="M5 21l-2-2" /></Svg>
+              <span>Engager le duel</span>
+            </button>
+            <button type="button" className="hall-plaque menu__regles" onClick={surRegles}>
+              <Svg><path d="M6 3h9l4 4v14H6z" /><path d="M15 3v4h4" /><path d="M9 11h7M9 14.5h7M9 18h4" /></Svg>
+              <span>Règles du duel</span>
+            </button>
           </div>
         </div>
-
-        {/* Le duel en quatre mots */}
-        <ul className="menu__atouts" aria-label="Le duel en bref">
-          <li><strong>20</strong><span>PV par héros</span></li>
-          <li><strong>10</strong><span>énergie max.</span></li>
-          <li><strong>d20</strong><span>à chaque attaque</span></li>
-          <li><strong>20</strong><span>cartes au Grimoire</span></li>
-        </ul>
       </div>
 
       {/* Choix des cartes du deck (bouton « Choisir mes cartes ») */}
