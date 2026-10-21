@@ -140,7 +140,7 @@ export default function BarreLaterale() {
         ))}
         <Entree {...PARAMETRES} place="menu" actif={pathname === PARAMETRES.chemin} />
         <a className="barre-entree" href={NOCTHEMAR_SITE} data-place="menu" title="Retour au site Nocthémar" aria-label="Retour au site Nocthémar">
-          <Icone nom="retour" /><span className="barre-entree__nom">Retour</span>
+          <Icone nom="retour" /><span className="barre-entree__nom">Site Nocthémar</span>
         </a>
       </div>
 
