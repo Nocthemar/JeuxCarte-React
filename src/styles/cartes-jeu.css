@@ -415,7 +415,7 @@ body.glisser-actif, body.glisser-actif * { cursor: grabbing !important; }
   animation: apercu-entree .25s ease;
 }
 .apercu-carte .carte-jeu { cursor: default; }
-.apercu-carte .carte-jeu:hover { transform: none; }
+.apercu-carte .carte-jeu:hover { translate: none; }
 .apercu-carte__fermer {
   position: absolute;
   top: 16px;
@@ -435,4 +435,396 @@ body.glisser-actif, body.glisser-actif * { cursor: grabbing !important; }
 @keyframes apercu-entree { from { transform: scale(.92); opacity: 0; } }
 @media (prefers-reduced-motion: reduce) {
   .apercu-carte, .apercu-carte__carte { animation: none; }
+}
+
+/* =====================================================================
+   Les chiffres du duel, en petit sur chaque carte (components/Carte.jsx, StatsCarte) :
+   coût d'énergie en haut à gauche (une goutte bleue), PV (un cœur rouge) et bouclier (un écu d'acier)
+   en bas. Leur taille suit celle de la carte (unités cqw : % de la largeur de la carte).
+   ===================================================================== */
+.carte-jeu { container-type: inline-size; }
+.carte-stats { position: absolute; inset: 0; pointer-events: none; z-index: 3; font-family: "Cinzel","Cinzel Repli", serif; font-weight: 800; color: #fff; }
+.carte-stats > span {
+  position: absolute;
+  display: grid; place-items: center;
+  width: 17cqw; height: 17cqw;
+  font-size: 9.5cqw; line-height: 1;
+  text-shadow: 0 1px 2px rgba(0,0,0,.9);
+  filter: drop-shadow(0 1.5cqw 2cqw rgba(0,0,0,.7));
+}
+/* coût : un losange bleu (énergie), en haut à gauche */
+.carte-stats__cout {
+  left: 4cqw; top: 4cqw;
+  clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+  background: radial-gradient(circle at 40% 30%, #cfe6ff, #3f7fd0 55%, #1d3f78);
+}
+/* PV : un cœur rouge, en bas à gauche */
+.carte-stats__pv {
+  left: 4cqw; bottom: 4cqw;
+  clip-path: polygon(50% 100%, 6% 52%, 2% 30%, 10% 12%, 28% 6%, 42% 12%, 50% 24%, 58% 12%, 72% 6%, 90% 12%, 98% 30%, 94% 52%);
+  background: radial-gradient(circle at 35% 30%, #ff9aa0, #c33a42 55%, #6e161c);
+  padding-top: 0; place-items: start center; padding-top: 2.5cqw;
+}
+/* bouclier (Défense) : un écu d'acier, en bas à droite */
+.carte-stats__bouclier {
+  right: 4cqw; bottom: 4cqw;
+  clip-path: polygon(50% 0, 100% 15%, 92% 62%, 50% 100%, 8% 62%, 0 15%);
+  background: linear-gradient(160deg, #eef1f6, #8d97a8 50%, #4a5262);
+  color: #13161d; text-shadow: 0 1px 0 rgba(255,255,255,.5);
+}
+
+/* =====================================================================
+   Brillance des cartes les plus rares : un reflet de lumière qui traverse la carte en biais,
+   de temps en temps (Légendaire : reflet chaud ; Transcendante : reflet doré, plus fréquent,
+   avec un scintillement). Coupé avec les animations réduites.
+   ===================================================================== */
+.carte-jeu--legendaire:not(.carte-jeu--sans-image)::after,
+.carte-jeu--transcendante:not(.carte-jeu--sans-image)::after {
+  content: ""; position: absolute; inset: -20%; z-index: 4; pointer-events: none;
+  background: linear-gradient(115deg, transparent 38%, rgba(255,235,220,.0) 42%, rgba(255,240,225,.38) 48%, rgba(255,255,255,.55) 50%, rgba(255,240,225,.38) 52%, transparent 58%);
+  mix-blend-mode: screen;
+  translate: -80% 0;
+  animation: carte-reflet 5.5s ease-in-out infinite;
+}
+.carte-jeu--transcendante:not(.carte-jeu--sans-image)::after {
+  background: linear-gradient(115deg, transparent 36%, rgba(255,226,150,.0) 41%, rgba(255,226,150,.45) 47%, rgba(255,250,225,.75) 50%, rgba(255,226,150,.45) 53%, transparent 59%);
+  animation-duration: 4s;
+}
+/* les cartes d'une même grille ne brillent pas toutes en même temps */
+.carte-jeu--legendaire:nth-child(3n+1)::after, .carte-jeu--transcendante:nth-child(3n+1)::after { animation-delay: -1.4s; }
+.carte-jeu--legendaire:nth-child(3n+2)::after, .carte-jeu--transcendante:nth-child(3n+2)::after { animation-delay: -2.8s; }
+@keyframes carte-reflet { 0%, 55% { translate: -80% 0; } 85%, 100% { translate: 80% 0; } }
+
+/* Transcendante : un halo doré qui respire autour de la carte */
+.carte-jeu--transcendante:not(.carte-jeu--sans-image) { animation: carte-halo 3.2s ease-in-out infinite; }
+@keyframes carte-halo { 50% { box-shadow: 0 4px 12px rgba(0,0,0,.45), 0 0 22px rgba(246,210,122,.55); } }
+
+/* au survol, le reflet passe tout de suite */
+.carte-jeu--legendaire:hover::after, .carte-jeu--transcendante:hover::after { animation-duration: 1.6s; animation-delay: 0s; }
+
+@media (prefers-reduced-motion: reduce) {
+  .carte-jeu--legendaire::after, .carte-jeu--transcendante::after { display: none; }
+  .carte-jeu--transcendante { animation: none; }
+}
+:root.anim-reduites .carte-jeu--legendaire::after, :root.anim-reduites .carte-jeu--transcendante::after,
+:root.effets-legers .carte-jeu--legendaire::after, :root.effets-legers .carte-jeu--transcendante::after { display: none; }
+:root.anim-reduites .carte-jeu--transcendante, :root.effets-legers .carte-jeu--transcendante { animation: none; }
+/* le reflet ne passe que sur la carte elle-même : masqué par l'image de la carte (--image, Carte.jsx) */
+.carte-jeu--legendaire:not(.carte-jeu--sans-image)::after,
+.carte-jeu--transcendante:not(.carte-jeu--sans-image)::after {
+  inset: 0; translate: none;
+  background-size: 300% 100%; background-repeat: no-repeat;
+  -webkit-mask: var(--image) center / cover no-repeat;
+          mask: var(--image) center / cover no-repeat;
+  animation-name: carte-reflet-masque;
+}
+@keyframes carte-reflet-masque { 0%, 55% { background-position: 100% 0; } 85%, 100% { background-position: 0% 0; } }
+/* (pas de halo en box-shadow : sur une carte en image, il dessinait un rectangle derrière la carte) */
+.carte-jeu--transcendante:not(.carte-jeu--sans-image) { animation: none; }
+
+/* =====================================================================
+   Un autre style : la carte bouge avec la souris, et les plus rares ont un reflet holographique
+   (Carte.jsx : --rx/--ry, l'inclinaison ; --mx/--my, la position du pointeur).
+   - toutes les cartes : inclinaison 3D douce, retour en place quand la souris s'en va ;
+   - Légendaire : un éclat de lumière chaude qui suit le pointeur ;
+   - Transcendante : un film holographique arc-en-ciel qui change avec l'angle, et un éclat doré.
+   (remplace le reflet qui traversait la carte tout seul)
+   ===================================================================== */
+.carte-jeu:not(.carte-jeu--sans-image) {
+  --rx: 0deg; --ry: 0deg; --mx: 50%; --my: 50%;
+  transform: perspective(700px) rotateX(var(--rx)) rotateY(var(--ry));
+  transition: transform .45s cubic-bezier(.2,.8,.3,1), filter .15s ease, opacity .15s ease;
+}
+.carte-jeu.est-penchee { transition: transform .08s linear, filter .15s ease; }
+.carte-jeu.est-penchee:hover { translate: 0 -3px; }
+
+/* l'ancien reflet automatique : retiré */
+.carte-jeu--legendaire:not(.carte-jeu--sans-image)::after,
+.carte-jeu--transcendante:not(.carte-jeu--sans-image)::after {
+  animation: none;
+  background-size: auto;
+  background-position: 0 0;
+  opacity: 0;
+  transition: opacity .35s ease;
+}
+/* Légendaire : un éclat chaud, centré sur le pointeur */
+.carte-jeu--legendaire:not(.carte-jeu--sans-image)::after {
+  background: radial-gradient(circle at var(--mx) var(--my), rgba(255,236,214,.55), rgba(255,170,140,.18) 22%, transparent 48%);
+  mix-blend-mode: soft-light;
+}
+/* Transcendante : un film holographique (bandes arc-en-ciel qui glissent avec le pointeur) + éclat doré */
+.carte-jeu--transcendante:not(.carte-jeu--sans-image)::after {
+  background:
+    radial-gradient(circle at var(--mx) var(--my), rgba(255,250,230,.6), rgba(255,220,140,.2) 20%, transparent 45%),
+    repeating-linear-gradient(115deg,
+      rgba(255,80,120,.35) calc(var(--mx) * .4 + 0%), rgba(255,200,80,.35) calc(var(--mx) * .4 + 6%),
+      rgba(110,255,170,.35) calc(var(--mx) * .4 + 12%), rgba(90,170,255,.35) calc(var(--mx) * .4 + 18%),
+      rgba(200,110,255,.35) calc(var(--mx) * .4 + 24%), rgba(255,80,120,.35) calc(var(--mx) * .4 + 30%));
+  mix-blend-mode: color-dodge;
+}
+.carte-jeu--legendaire.est-penchee::after { opacity: 1; }
+.carte-jeu--transcendante.est-penchee::after { opacity: .8; }
+/* au repos, une Transcendante garde un léger miroitement */
+.carte-jeu--transcendante:not(.carte-jeu--sans-image):not(.est-penchee)::after { opacity: .18; }
+
+/* réglages : arc-en-ciel plus discret, éclat plus visible, inclinaison plus marquée */
+.carte-jeu--transcendante:not(.carte-jeu--sans-image)::after { mix-blend-mode: overlay; }
+.carte-jeu--transcendante.est-penchee::after { opacity: .55; }
+.carte-jeu--transcendante:not(.carte-jeu--sans-image):not(.est-penchee)::after { opacity: 0; }
+.carte-jeu--legendaire:not(.carte-jeu--sans-image)::after {
+  background: radial-gradient(circle at var(--mx) var(--my), rgba(255,240,225,.7), rgba(255,190,160,.25) 22%, transparent 50%);
+  mix-blend-mode: screen;
+}
+.carte-jeu--legendaire.est-penchee::after { opacity: .55; }
+/* plus de voile blanc au survol : les Légendaires s'inclinent seulement ;
+   l'éclat des Transcendantes devient doré (sans blanc) */
+.carte-jeu--legendaire:not(.carte-jeu--sans-image)::after { display: none; }
+.carte-jeu--transcendante:not(.carte-jeu--sans-image)::after {
+  background:
+    radial-gradient(circle at var(--mx) var(--my), rgba(246,200,110,.35), rgba(220,160,70,.12) 22%, transparent 45%),
+    repeating-linear-gradient(115deg,
+      rgba(255,80,120,.35) calc(var(--mx) * .4 + 0%), rgba(255,200,80,.35) calc(var(--mx) * .4 + 6%),
+      rgba(110,255,170,.35) calc(var(--mx) * .4 + 12%), rgba(90,170,255,.35) calc(var(--mx) * .4 + 18%),
+      rgba(200,110,255,.35) calc(var(--mx) * .4 + 24%), rgba(255,80,120,.35) calc(var(--mx) * .4 + 30%));
+}
+
+/* Fluidité de l'inclinaison : le transform est posé par Carte.jsx (une fois par image) ;
+   pendant qu'elle suit la souris, pas de transition (elle suivrait en retard), une seule ombre
+   (trois drop-shadow à recalculer à chaque image, c'est ce qui ralentissait) */
+.carte-jeu:not(.carte-jeu--sans-image) { transform: none; }
+.carte-jeu.est-penchee {
+  transition: none;
+  will-change: transform;
+  filter: drop-shadow(0 10px 14px rgba(0,0,0,.6));
+  z-index: 5;
+}
+.carte-jeu.est-penchee:hover { translate: none; }
+
+/* =====================================================================
+   Effet de rareté, version or (remplace l'arc-en-ciel) :
+   - Transcendante : un reflet d'or qui suit la souris, et des étoiles dorées qui scintillent ;
+   - Légendaire : des étincelles rouge et ambre, plus discrètes.
+   Les étoiles sont sur deux couches qui se décalent avec l'inclinaison (--mx, --my) : effet de relief 3D.
+   Elles ne couvrent que la carte (masque : son image, --image).
+   ===================================================================== */
+.carte-jeu--transcendante:not(.carte-jeu--sans-image)::after {
+  background:
+    radial-gradient(circle at var(--mx, 50%) var(--my, 30%), rgba(255,215,120,.42), rgba(214,160,60,.16) 25%, transparent 50%),
+    linear-gradient(115deg, transparent calc(var(--mx, 50%) - 30%), rgba(255,206,110,.28) calc(var(--mx, 50%) - 6%), rgba(255,236,170,.4) var(--mx, 50%), rgba(255,206,110,.28) calc(var(--mx, 50%) + 6%), transparent calc(var(--mx, 50%) + 30%));
+  mix-blend-mode: overlay;
+}
+.carte-jeu--transcendante.est-penchee::after { opacity: .9; }
+
+.carte-jeu--transcendante:not(.carte-jeu--sans-image)::before,
+.carte-jeu--legendaire:not(.carte-jeu--sans-image)::before {
+  content: ""; position: absolute; inset: 0; z-index: 5; pointer-events: none;
+  -webkit-mask: var(--image) center / cover no-repeat;
+          mask: var(--image) center / cover no-repeat;
+  mix-blend-mode: screen;
+  filter: drop-shadow(0 0 3px rgba(255,214,120,.9));
+  animation: carte-scintille 2.6s ease-in-out infinite;
+}
+.carte-jeu--transcendante:not(.carte-jeu--sans-image)::before {
+  background:
+    url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20width%3D%27200%27%20height%3D%27300%27%3E%3Cpath%20d%3D%27M0%20187.3%20L2.2%20195.10000000000002%20L10%20197.3%20L2.2%20199.5%20L0%20207.3%20L-2.2%20199.5%20L-10%20197.3%20L-2.2%20195.10000000000002%20Z%27%20fill%3D%27%23fff3c4%27%20fill-opacity%3D%270.65%27%2F%3E%3Cpath%20d%3D%27M132.8%2023.299999999999997%20L133.92200000000003%2027.278%20L137.9%2028.4%20L133.92200000000003%2029.522%20L132.8%2033.5%20L131.678%2029.522%20L127.70000000000002%2028.4%20L131.678%2027.278%20Z%27%20fill%3D%27%23fff3c4%27%20fill-opacity%3D%270.7%27%2F%3E%3Cpath%20d%3D%27M79.3%20190.7%20L81.786%20199.514%20L90.6%20202%20L81.786%20204.486%20L79.3%20213.3%20L76.814%20204.486%20L68%20202%20L76.814%20199.514%20Z%27%20fill%3D%27%23fff3c4%27%20fill-opacity%3D%270.8%27%2F%3E%3Cpath%20d%3D%27M31%2046.5%20L32.188%2050.711999999999996%20L36.4%2051.9%20L32.188%2053.088%20L31%2057.3%20L29.812%2053.088%20L25.6%2051.9%20L29.812%2050.711999999999996%20Z%27%20fill%3D%27%23fff3c4%27%20fill-opacity%3D%270.82%27%2F%3E%3Cpath%20d%3D%27M71.1%200.1999999999999993%20L73.586%209.014%20L82.39999999999999%2011.5%20L73.586%2013.986%20L71.1%2022.8%20L68.61399999999999%2013.986%20L59.8%2011.5%20L68.61399999999999%209.014%20Z%27%20fill%3D%27%23fff3c4%27%20fill-opacity%3D%270.67%27%2F%3E%3Cpath%20d%3D%27M17.5%20118.69999999999999%20L20.03%20127.66999999999999%20L29%20130.2%20L20.03%20132.73%20L17.5%20141.7%20L14.97%20132.73%20L6%20130.2%20L14.97%20127.66999999999999%20Z%27%20fill%3D%27%23fff3c4%27%20fill-opacity%3D%270.83%27%2F%3E%3Cpath%20d%3D%27M46.2%20183.3%20L47.762%20188.838%20L53.300000000000004%20190.4%20L47.762%20191.96200000000002%20L46.2%20197.5%20L44.638000000000005%20191.96200000000002%20L39.1%20190.4%20L44.638000000000005%20188.838%20Z%27%20fill%3D%27%23fff3c4%27%20fill-opacity%3D%270.63%27%2F%3E%3Cpath%20d%3D%27M16%20143.8%20L17.76%20150.04000000000002%20L24%20151.8%20L17.76%20153.56%20L16%20159.8%20L14.24%20153.56%20L8%20151.8%20L14.24%20150.04000000000002%20Z%27%20fill%3D%27%23fff3c4%27%20fill-opacity%3D%270.91%27%2F%3E%3Cpath%20d%3D%27M62.5%2062.1%20L64.502%2069.19800000000001%20L71.6%2071.2%20L64.502%2073.202%20L62.5%2080.3%20L60.498%2073.202%20L53.4%2071.2%20L60.498%2069.19800000000001%20Z%27%20fill%3D%27%23fff3c4%27%20fill-opacity%3D%270.82%27%2F%3E%3C%2Fsvg%3E") calc(50% + (var(--mx, 50%) - 50%) * -.35) calc(50% + (var(--my, 50%) - 50%) * -.35) / 55% auto repeat,
+    url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20width%3D%27200%27%20height%3D%27300%27%3E%3Cpath%20d%3D%27M32.6%20223%20L35.152%20232.048%20L44.2%20234.6%20L35.152%20237.152%20L32.6%20246.2%20L30.048000000000002%20237.152%20L21%20234.6%20L30.048000000000002%20232.048%20Z%27%20fill%3D%27%23ffd77a%27%20fill-opacity%3D%270.91%27%2F%3E%3Cpath%20d%3D%27M47%20265.3%20L48.87%20271.93%20L55.5%20273.8%20L48.87%20275.67%20L47%20282.3%20L45.13%20275.67%20L38.5%20273.8%20L45.13%20271.93%20Z%27%20fill%3D%27%23ffd77a%27%20fill-opacity%3D%270.88%27%2F%3E%3Cpath%20d%3D%27M51.5%20104.6%20L52.468%20108.032%20L55.9%20109%20L52.468%20109.968%20L51.5%20113.4%20L50.532%20109.968%20L47.1%20109%20L50.532%20108.032%20Z%27%20fill%3D%27%23ffd77a%27%20fill-opacity%3D%270.71%27%2F%3E%3Cpath%20d%3D%27M72.7%2044.1%20L75.01%2052.29%20L83.2%2054.6%20L75.01%2056.910000000000004%20L72.7%2065.1%20L70.39%2056.910000000000004%20L62.2%2054.6%20L70.39%2052.29%20Z%27%20fill%3D%27%23ffd77a%27%20fill-opacity%3D%270.69%27%2F%3E%3Cpath%20d%3D%27M37.8%20102.2%20L40.044%20110.156%20L48%20112.4%20L40.044%20114.644%20L37.8%20122.60000000000001%20L35.556%20114.644%20L27.599999999999998%20112.4%20L35.556%20110.156%20Z%27%20fill%3D%27%23ffd77a%27%20fill-opacity%3D%270.92%27%2F%3E%3Cpath%20d%3D%27M86.5%20138.6%20L88.238%20144.762%20L94.4%20146.5%20L88.238%20148.238%20L86.5%20154.4%20L84.762%20148.238%20L78.6%20146.5%20L84.762%20144.762%20Z%27%20fill%3D%27%23ffd77a%27%20fill-opacity%3D%270.65%27%2F%3E%3C%2Fsvg%3E") calc(30% + (var(--mx, 50%) - 50%) * .25) calc(40% + (var(--my, 50%) - 50%) * .25) / 80% auto repeat;
+}
+.carte-jeu--legendaire:not(.carte-jeu--sans-image)::before {
+  display: block;
+  background:
+    url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20width%3D%27200%27%20height%3D%27300%27%3E%3Cpath%20d%3D%27M0%20187.3%20L2.2%20195.10000000000002%20L10%20197.3%20L2.2%20199.5%20L0%20207.3%20L-2.2%20199.5%20L-10%20197.3%20L-2.2%20195.10000000000002%20Z%27%20fill%3D%27%23ffc9b0%27%20fill-opacity%3D%270.65%27%2F%3E%3Cpath%20d%3D%27M132.8%2023.299999999999997%20L133.92200000000003%2027.278%20L137.9%2028.4%20L133.92200000000003%2029.522%20L132.8%2033.5%20L131.678%2029.522%20L127.70000000000002%2028.4%20L131.678%2027.278%20Z%27%20fill%3D%27%23ffc9b0%27%20fill-opacity%3D%270.7%27%2F%3E%3Cpath%20d%3D%27M79.3%20190.7%20L81.786%20199.514%20L90.6%20202%20L81.786%20204.486%20L79.3%20213.3%20L76.814%20204.486%20L68%20202%20L76.814%20199.514%20Z%27%20fill%3D%27%23ffc9b0%27%20fill-opacity%3D%270.8%27%2F%3E%3Cpath%20d%3D%27M31%2046.5%20L32.188%2050.711999999999996%20L36.4%2051.9%20L32.188%2053.088%20L31%2057.3%20L29.812%2053.088%20L25.6%2051.9%20L29.812%2050.711999999999996%20Z%27%20fill%3D%27%23ffc9b0%27%20fill-opacity%3D%270.82%27%2F%3E%3Cpath%20d%3D%27M71.1%200.1999999999999993%20L73.586%209.014%20L82.39999999999999%2011.5%20L73.586%2013.986%20L71.1%2022.8%20L68.61399999999999%2013.986%20L59.8%2011.5%20L68.61399999999999%209.014%20Z%27%20fill%3D%27%23ffc9b0%27%20fill-opacity%3D%270.67%27%2F%3E%3Cpath%20d%3D%27M17.5%20118.69999999999999%20L20.03%20127.66999999999999%20L29%20130.2%20L20.03%20132.73%20L17.5%20141.7%20L14.97%20132.73%20L6%20130.2%20L14.97%20127.66999999999999%20Z%27%20fill%3D%27%23ffc9b0%27%20fill-opacity%3D%270.83%27%2F%3E%3Cpath%20d%3D%27M46.2%20183.3%20L47.762%20188.838%20L53.300000000000004%20190.4%20L47.762%20191.96200000000002%20L46.2%20197.5%20L44.638000000000005%20191.96200000000002%20L39.1%20190.4%20L44.638000000000005%20188.838%20Z%27%20fill%3D%27%23ffc9b0%27%20fill-opacity%3D%270.63%27%2F%3E%3Cpath%20d%3D%27M16%20143.8%20L17.76%20150.04000000000002%20L24%20151.8%20L17.76%20153.56%20L16%20159.8%20L14.24%20153.56%20L8%20151.8%20L14.24%20150.04000000000002%20Z%27%20fill%3D%27%23ffc9b0%27%20fill-opacity%3D%270.91%27%2F%3E%3Cpath%20d%3D%27M62.5%2062.1%20L64.502%2069.19800000000001%20L71.6%2071.2%20L64.502%2073.202%20L62.5%2080.3%20L60.498%2073.202%20L53.4%2071.2%20L60.498%2069.19800000000001%20Z%27%20fill%3D%27%23ffc9b0%27%20fill-opacity%3D%270.82%27%2F%3E%3C%2Fsvg%3E") calc(50% + (var(--mx, 50%) - 50%) * -.35) calc(50% + (var(--my, 50%) - 50%) * -.35) / 70% auto repeat;
+  filter: drop-shadow(0 0 3px rgba(255,110,80,.8));
+  opacity: .55;
+  animation-duration: 3.4s;
+}
+@keyframes carte-scintille { 0%, 100% { opacity: .35; } 30% { opacity: .95; } 55% { opacity: .5; } 80% { opacity: .85; } }
+/* sous la souris : elles brillent plus */
+.carte-jeu--transcendante.est-penchee::before { animation-duration: 1.4s; }
+.carte-jeu--legendaire.est-penchee::before { opacity: .85; }
+/* décalées d'une carte à l'autre */
+.carte-jeu:nth-child(3n+1)::before { animation-delay: -.9s; }
+.carte-jeu:nth-child(3n+2)::before { animation-delay: -1.7s; }
+
+@media (prefers-reduced-motion: reduce) { .carte-jeu::before { animation: none; } }
+:root.effets-legers .carte-jeu--transcendante::before, :root.effets-legers .carte-jeu--legendaire::before { display: none; }
+/* étoiles plus visibles : en couleur pleine (pas de fondu), avec une vraie lueur */
+.carte-jeu--transcendante:not(.carte-jeu--sans-image)::before,
+.carte-jeu--legendaire:not(.carte-jeu--sans-image)::before { mix-blend-mode: normal; }
+.carte-jeu--transcendante:not(.carte-jeu--sans-image)::before {
+  filter: drop-shadow(0 0 2px #fff6d8) drop-shadow(0 0 6px rgba(255,200,90,.95));
+  background-size: 42% auto, 62% auto;
+}
+.carte-jeu--legendaire:not(.carte-jeu--sans-image)::before {
+  filter: drop-shadow(0 0 2px #ffe0d0) drop-shadow(0 0 6px rgba(255,90,70,.9));
+  background-size: 55% auto;
+}
+@keyframes carte-scintille { 0%, 100% { opacity: .45; } 30% { opacity: 1; } 55% { opacity: .6; } 80% { opacity: .95; } }
+/* pas d'étoiles sur le texte du bas de la carte (elles s'effacent avant le panneau) */
+.carte-jeu--transcendante:not(.carte-jeu--sans-image)::before,
+.carte-jeu--legendaire:not(.carte-jeu--sans-image)::before {
+  -webkit-mask: var(--image) center / cover no-repeat, linear-gradient(180deg, #000 60%, transparent 68%);
+  -webkit-mask-composite: source-in;
+          mask: var(--image) center / cover no-repeat, linear-gradient(180deg, #000 60%, transparent 68%);
+          mask-composite: intersect;
+}
+
+/* les étoiles deviennent de petits points lumineux (même relief 3D, même scintillement) */
+.carte-jeu--transcendante:not(.carte-jeu--sans-image)::before {
+  background:
+    url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20width%3D%27200%27%20height%3D%27300%27%3E%3Cdefs%3E%3CradialGradient%20id%3D%27g%27%3E%3Cstop%20offset%3D%270%27%20stop-color%3D%27%23fff%27%2F%3E%3Cstop%20offset%3D%27.45%27%20stop-color%3D%27%23ffd77a%27%2F%3E%3Cstop%20offset%3D%271%27%20stop-color%3D%27%23ffd77a%27%20stop-opacity%3D%270%27%2F%3E%3C%2FradialGradient%3E%3C%2Fdefs%3E%3Ccircle%20cx%3D%2736.8%27%20cy%3D%27240.1%27%20r%3D%272.08%27%20fill%3D%27url(%23g)%27%20%2F%3E%3Ccircle%20cx%3D%27159.0%27%20cy%3D%27291.2%27%20r%3D%272.68%27%20fill%3D%27url(%23g)%27%20%2F%3E%3Ccircle%20cx%3D%2722.0%27%20cy%3D%2734.1%27%20r%3D%274.06%27%20fill%3D%27url(%23g)%27%20%2F%3E%3Ccircle%20cx%3D%2790.3%27%20cy%3D%27202.4%27%20r%3D%274.00%27%20fill%3D%27url(%23g)%27%20%2F%3E%3Ccircle%20cx%3D%2762.2%27%20cy%3D%27144.3%27%20r%3D%274.32%27%20fill%3D%27url(%23g)%27%20%2F%3E%3Ccircle%20cx%3D%278.1%27%20cy%3D%2720.8%27%20r%3D%275.67%27%20fill%3D%27url(%23g)%27%20%2F%3E%3Ccircle%20cx%3D%27120.3%27%20cy%3D%27227.2%27%20r%3D%274.19%27%20fill%3D%27url(%23g)%27%20%2F%3E%3Ccircle%20cx%3D%2760.2%27%20cy%3D%27112.2%27%20r%3D%272.94%27%20fill%3D%27url(%23g)%27%20%2F%3E%3Ccircle%20cx%3D%27148.5%27%20cy%3D%27248.3%27%20r%3D%274.97%27%20fill%3D%27url(%23g)%27%20%2F%3E%3Ccircle%20cx%3D%27148.8%27%20cy%3D%2793.2%27%20r%3D%276.21%27%20fill%3D%27url(%23g)%27%20%2F%3E%3Ccircle%20cx%3D%27172.0%27%20cy%3D%27108.6%27%20r%3D%272.99%27%20fill%3D%27url(%23g)%27%20%2F%3E%3Ccircle%20cx%3D%27124.9%27%20cy%3D%27286.2%27%20r%3D%274.08%27%20fill%3D%27url(%23g)%27%20%2F%3E%3Ccircle%20cx%3D%27161.5%27%20cy%3D%27275.8%27%20r%3D%275.33%27%20fill%3D%27url(%23g)%27%20%2F%3E%3Ccircle%20cx%3D%2744.7%27%20cy%3D%27252.9%27%20r%3D%273.43%27%20fill%3D%27url(%23g)%27%20%2F%3E%3Ccircle%20cx%3D%27156.0%27%20cy%3D%27259.1%27%20r%3D%274.45%27%20fill%3D%27url(%23g)%27%20%2F%3E%3Ccircle%20cx%3D%27136.9%27%20cy%3D%27288.7%27%20r%3D%275.15%27%20fill%3D%27url(%23g)%27%20%2F%3E%3Ccircle%20cx%3D%27185.5%27%20cy%3D%27269.5%27%20r%3D%274.21%27%20fill%3D%27url(%23g)%27%20%2F%3E%3Ccircle%20cx%3D%2728.0%27%20cy%3D%27142.2%27%20r%3D%273.48%27%20fill%3D%27url(%23g)%27%20%2F%3E%3Ccircle%20cx%3D%2799.7%27%20cy%3D%27113.6%27%20r%3D%273.17%27%20fill%3D%27url(%23g)%27%20%2F%3E%3Ccircle%20cx%3D%2736.6%27%20cy%3D%27163.5%27%20r%3D%272.44%27%20fill%3D%27url(%23g)%27%20%2F%3E%3Ccircle%20cx%3D%27108.1%27%20cy%3D%27194.0%27%20r%3D%272.76%27%20fill%3D%27url(%23g)%27%20%2F%3E%3Ccircle%20cx%3D%27176.0%27%20cy%3D%27133.7%27%20r%3D%276.16%27%20fill%3D%27url(%23g)%27%20%2F%3E%3C%2Fsvg%3E") calc(50% + (var(--mx, 50%) - 50%) * -.35) calc(50% + (var(--my, 50%) - 50%) * -.35) / 50% auto repeat,
+    url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20width%3D%27200%27%20height%3D%27300%27%3E%3Cdefs%3E%3CradialGradient%20id%3D%27g%27%3E%3Cstop%20offset%3D%270%27%20stop-color%3D%27%23fff%27%2F%3E%3Cstop%20offset%3D%27.45%27%20stop-color%3D%27%23ffe9b0%27%2F%3E%3Cstop%20offset%3D%271%27%20stop-color%3D%27%23ffe9b0%27%20stop-opacity%3D%270%27%2F%3E%3C%2FradialGradient%3E%3C%2Fdefs%3E%3Ccircle%20cx%3D%27163.3%27%20cy%3D%27159.0%27%20r%3D%273.93%27%20fill%3D%27url(%23g)%27%20%2F%3E%3Ccircle%20cx%3D%27101.3%27%20cy%3D%27137.2%27%20r%3D%275.17%27%20fill%3D%27url(%23g)%27%20%2F%3E%3Ccircle%20cx%3D%2744.9%27%20cy%3D%27230.3%27%20r%3D%274.39%27%20fill%3D%27url(%23g)%27%20%2F%3E%3Ccircle%20cx%3D%2793.8%27%20cy%3D%27135.2%27%20r%3D%272.91%27%20fill%3D%27url(%23g)%27%20%2F%3E%3Ccircle%20cx%3D%27186.4%27%20cy%3D%27135.1%27%20r%3D%276.08%27%20fill%3D%27url(%23g)%27%20%2F%3E%3Ccircle%20cx%3D%2728.6%27%20cy%3D%2758.8%27%20r%3D%272.68%27%20fill%3D%27url(%23g)%27%20%2F%3E%3Ccircle%20cx%3D%27133.2%27%20cy%3D%27187.8%27%20r%3D%275.90%27%20fill%3D%27url(%23g)%27%20%2F%3E%3Ccircle%20cx%3D%27199.0%27%20cy%3D%27299.1%27%20r%3D%274.55%27%20fill%3D%27url(%23g)%27%20%2F%3E%3Ccircle%20cx%3D%27151.4%27%20cy%3D%2747.7%27%20r%3D%272.55%27%20fill%3D%27url(%23g)%27%20%2F%3E%3Ccircle%20cx%3D%2764.0%27%20cy%3D%27184.2%27%20r%3D%274.99%27%20fill%3D%27url(%23g)%27%20%2F%3E%3Ccircle%20cx%3D%27114.7%27%20cy%3D%27127.2%27%20r%3D%275.41%27%20fill%3D%27url(%23g)%27%20%2F%3E%3Ccircle%20cx%3D%27167.1%27%20cy%3D%2763.4%27%20r%3D%275.54%27%20fill%3D%27url(%23g)%27%20%2F%3E%3Ccircle%20cx%3D%27121.0%27%20cy%3D%27115.0%27%20r%3D%274.81%27%20fill%3D%27url(%23g)%27%20%2F%3E%3Ccircle%20cx%3D%2744.3%27%20cy%3D%2789.2%27%20r%3D%272.76%27%20fill%3D%27url(%23g)%27%20%2F%3E%3C%2Fsvg%3E") calc(30% + (var(--mx, 50%) - 50%) * .25) calc(40% + (var(--my, 50%) - 50%) * .25) / 70% auto repeat;
+  filter: drop-shadow(0 0 2px rgba(255,220,140,.95)) drop-shadow(0 0 4px rgba(255,190,80,.7));
+}
+.carte-jeu--legendaire:not(.carte-jeu--sans-image)::before {
+  background: url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20width%3D%27200%27%20height%3D%27300%27%3E%3Cdefs%3E%3CradialGradient%20id%3D%27g%27%3E%3Cstop%20offset%3D%270%27%20stop-color%3D%27%23fff%27%2F%3E%3Cstop%20offset%3D%27.45%27%20stop-color%3D%27%23ff8a6a%27%2F%3E%3Cstop%20offset%3D%271%27%20stop-color%3D%27%23ff8a6a%27%20stop-opacity%3D%270%27%2F%3E%3C%2FradialGradient%3E%3C%2Fdefs%3E%3Ccircle%20cx%3D%2797.3%27%20cy%3D%27179.5%27%20r%3D%275.88%27%20fill%3D%27url(%23g)%27%20%2F%3E%3Ccircle%20cx%3D%27198.3%27%20cy%3D%275.0%27%20r%3D%275.51%27%20fill%3D%27url(%23g)%27%20%2F%3E%3Ccircle%20cx%3D%27115.7%27%20cy%3D%27131.4%27%20r%3D%274.99%27%20fill%3D%27url(%23g)%27%20%2F%3E%3Ccircle%20cx%3D%2786.5%27%20cy%3D%2752.2%27%20r%3D%276.37%27%20fill%3D%27url(%23g)%27%20%2F%3E%3Ccircle%20cx%3D%2794.3%27%20cy%3D%278.1%27%20r%3D%275.90%27%20fill%3D%27url(%23g)%27%20%2F%3E%3Ccircle%20cx%3D%2748.4%27%20cy%3D%27116.5%27%20r%3D%275.49%27%20fill%3D%27url(%23g)%27%20%2F%3E%3Ccircle%20cx%3D%2731.8%27%20cy%3D%27188.4%27%20r%3D%274.13%27%20fill%3D%27url(%23g)%27%20%2F%3E%3Ccircle%20cx%3D%27196.6%27%20cy%3D%27260.6%27%20r%3D%276.08%27%20fill%3D%27url(%23g)%27%20%2F%3E%3Ccircle%20cx%3D%2726.4%27%20cy%3D%27141.7%27%20r%3D%273.74%27%20fill%3D%27url(%23g)%27%20%2F%3E%3Ccircle%20cx%3D%2799.5%27%20cy%3D%2798.3%27%20r%3D%274.37%27%20fill%3D%27url(%23g)%27%20%2F%3E%3Ccircle%20cx%3D%27122.0%27%20cy%3D%2793.3%27%20r%3D%273.41%27%20fill%3D%27url(%23g)%27%20%2F%3E%3Ccircle%20cx%3D%271.1%27%20cy%3D%27100.0%27%20r%3D%274.89%27%20fill%3D%27url(%23g)%27%20%2F%3E%3Ccircle%20cx%3D%27135.8%27%20cy%3D%2782.9%27%20r%3D%276.06%27%20fill%3D%27url(%23g)%27%20%2F%3E%3Ccircle%20cx%3D%2753.8%27%20cy%3D%27119.0%27%20r%3D%272.47%27%20fill%3D%27url(%23g)%27%20%2F%3E%3Ccircle%20cx%3D%27130.0%27%20cy%3D%2740.3%27%20r%3D%272.91%27%20fill%3D%27url(%23g)%27%20%2F%3E%3Ccircle%20cx%3D%27174.6%27%20cy%3D%27199.0%27%20r%3D%275.82%27%20fill%3D%27url(%23g)%27%20%2F%3E%3C%2Fsvg%3E") calc(50% + (var(--mx, 50%) - 50%) * -.35) calc(50% + (var(--my, 50%) - 50%) * -.35) / 60% auto repeat;
+  filter: drop-shadow(0 0 2px rgba(255,170,140,.95)) drop-shadow(0 0 4px rgba(255,80,60,.7));
+}
+
+/* =====================================================================
+   Scintillements pétillants (Carte.jsx, Scintilles) : chaque éclat naît, jaillit en croix de lumière
+   (deux rayons fins qui s'étirent et tournent), puis s'éteint ; chacun à son rythme.
+   Deux plans qui se décalent avec l'inclinaison (--mx, --my) : relief 3D.
+   (remplace la couche de points en fond)
+   ===================================================================== */
+.carte-jeu--transcendante:not(.carte-jeu--sans-image)::before,
+.carte-jeu--legendaire:not(.carte-jeu--sans-image)::before { display: none; }
+.scintilles {
+  --c: #ffd77a; --lueur: rgba(255,200,90,.9);
+  position: absolute; inset: 0; z-index: 5; pointer-events: none;
+  -webkit-mask: linear-gradient(180deg, #000 62%, transparent 70%);
+          mask: linear-gradient(180deg, #000 62%, transparent 70%);
+}
+.carte-jeu--legendaire .scintilles { --c: #ff9a7a; --lueur: rgba(255,90,60,.85); }
+.scintilles__plan { position: absolute; inset: 0; transition: translate .12s linear; }
+.scintilles__plan--pres { translate: calc((var(--mx, 50%) - 50%) * -.18) calc((var(--my, 50%) - 50%) * -.18); }
+.scintilles__plan--loin { translate: calc((var(--mx, 50%) - 50%) * .12) calc((var(--my, 50%) - 50%) * .12); }
+.scintilles i {
+  position: absolute; width: calc(5cqw * var(--t)); height: calc(5cqw * var(--t)); translate: -50% -50%;
+  animation: eclat 2.4s ease-in-out infinite;
+  opacity: 0;
+}
+/* le cœur : un point blanc auréolé */
+.scintilles i::before {
+  content: ""; position: absolute; left: 50%; top: 50%; width: 22%; height: 22%; translate: -50% -50%; border-radius: 50%;
+  background: #fff; box-shadow: 0 0 .8cqw .3cqw var(--c), 0 0 2cqw .6cqw var(--lueur);
+}
+/* la croix de lumière : deux rayons fins */
+.scintilles i::after {
+  content: ""; position: absolute; inset: 0;
+  background:
+    linear-gradient(90deg, transparent, var(--c) 35%, #fff 50%, var(--c) 65%, transparent) center / 100% 8% no-repeat,
+    linear-gradient(180deg, transparent, var(--c) 35%, #fff 50%, var(--c) 65%, transparent) center / 8% 100% no-repeat;
+  filter: drop-shadow(0 0 .6cqw var(--lueur));
+}
+@keyframes eclat {
+  0%   { opacity: 0; scale: .1; rotate: 0deg; }
+  18%  { opacity: 1; scale: 1.25; rotate: 30deg; }
+  32%  { opacity: .9; scale: .75; rotate: 45deg; }
+  45%  { opacity: 0; scale: .2; rotate: 70deg; }
+  100% { opacity: 0; scale: .1; rotate: 70deg; }
+}
+.carte-jeu.est-penchee .scintilles i { animation-duration: 1.3s !important; }
+.carte-jeu.est-penchee .scintilles__plan { transition: none; }
+@media (prefers-reduced-motion: reduce) { .scintilles i { animation-duration: 4s !important; } }
+:root.effets-legers .scintilles { display: none; }
+/* éclats un peu plus grands et plus lumineux */
+.scintilles i { width: calc(8cqw * var(--t)); height: calc(8cqw * var(--t)); }
+.scintilles i::before { width: 18%; height: 18%; box-shadow: 0 0 1cqw .4cqw var(--c), 0 0 3cqw 1cqw var(--lueur); }
+/* plus lent : sous la souris, à peine plus vif qu'au repos */
+.carte-jeu.est-penchee .scintilles i { animation-duration: 3.5s !important; }
+/* éclats plus transparents, plus doux */
+.scintilles { opacity: .55; }
+.carte-jeu.est-penchee .scintilles { opacity: .7; }
+/* sous la souris : reflet d'or plus marqué */
+.carte-jeu--transcendante.est-penchee::after { opacity: 1; mix-blend-mode: soft-light; filter: brightness(1.25) saturate(1.2); }
+/* le reflet d'or, bien visible sous la souris : une large tache dorée + une bande d'or qui suit le pointeur */
+.carte-jeu--transcendante:not(.carte-jeu--sans-image)::after {
+  background:
+    radial-gradient(circle at var(--mx, 50%) var(--my, 30%), rgba(255,214,110,.75), rgba(240,180,60,.35) 25%, rgba(200,140,40,.1) 45%, transparent 60%),
+    linear-gradient(115deg, transparent calc(var(--mx, 50%) - 28%), rgba(255,200,90,.45) calc(var(--mx, 50%) - 8%), rgba(255,226,150,.7) var(--mx, 50%), rgba(255,200,90,.45) calc(var(--mx, 50%) + 8%), transparent calc(var(--mx, 50%) + 28%));
+}
+.carte-jeu--transcendante.est-penchee::after { opacity: .85; mix-blend-mode: screen; filter: none; }
+/* dosage intermédiaire : l'or se voit, sans recouvrir l'illustration */
+.carte-jeu--transcendante.est-penchee::after { opacity: .45; }
+/* reflet plus fin : une bande d'or étroite et une lueur plus petite */
+.carte-jeu--transcendante:not(.carte-jeu--sans-image)::after {
+  background:
+    radial-gradient(circle at var(--mx, 50%) var(--my, 30%), rgba(255,214,110,.7), rgba(240,180,60,.25) 14%, transparent 30%),
+    linear-gradient(115deg, transparent calc(var(--mx, 50%) - 10%), rgba(255,200,90,.45) calc(var(--mx, 50%) - 3%), rgba(255,226,150,.75) var(--mx, 50%), rgba(255,200,90,.45) calc(var(--mx, 50%) + 3%), transparent calc(var(--mx, 50%) + 10%));
+}
+.carte-jeu--transcendante.est-penchee::after { opacity: .6; }
+/* un or plus profond (moins pâle, plus doré) */
+.carte-jeu--transcendante:not(.carte-jeu--sans-image)::after {
+  background:
+    radial-gradient(circle at var(--mx, 50%) var(--my, 30%), rgba(245,180,40,.8), rgba(214,140,20,.3) 14%, transparent 30%),
+    linear-gradient(115deg, transparent calc(var(--mx, 50%) - 10%), rgba(230,160,30,.55) calc(var(--mx, 50%) - 3%), rgba(255,200,70,.85) var(--mx, 50%), rgba(230,160,30,.55) calc(var(--mx, 50%) + 3%), transparent calc(var(--mx, 50%) + 10%));
+}
+.carte-jeu--transcendante.est-penchee::after { mix-blend-mode: overlay; opacity: .85; }
+
+/* =====================================================================
+   Le meilleur des idées, réuni :
+   - une lumière par rareté : or (Transcendante), rubis (Légendaire), saphir (Mythique), émeraude
+     (Éveillée) ; rien pour Commune ;
+   - le cadre qui brille du côté de la lumière (.carte-cadre-lumiere, masqué sur le seul cadre) ;
+   - une ombre portée qui se déplace à l'opposé de l'inclinaison (--sx, --sy) ;
+   - un bref éclat à l'arrivée de la souris (.eclat-entree).
+   ===================================================================== */
+.carte-jeu--transcendante { --l1: 245,180,40;  --l2: 255,205,80; }
+.carte-jeu--legendaire    { --l1: 214,40,60;   --l2: 255,110,110; }
+.carte-jeu--mythique      { --l1: 60,120,240;  --l2: 130,180,255; }
+.carte-jeu--eveillee      { --l1: 40,190,110;  --l2: 120,235,170; }
+
+/* le reflet, à la couleur de la rareté (fin : une lueur et une bande étroite) */
+.carte-jeu--transcendante:not(.carte-jeu--sans-image)::after,
+.carte-jeu--legendaire:not(.carte-jeu--sans-image)::after,
+.carte-jeu--mythique:not(.carte-jeu--sans-image)::after,
+.carte-jeu--eveillee:not(.carte-jeu--sans-image)::after {
+  display: block; content: ""; position: absolute; inset: 0; z-index: 4; pointer-events: none;
+  -webkit-mask: var(--image) center / cover no-repeat;
+          mask: var(--image) center / cover no-repeat;
+  background:
+    radial-gradient(circle at var(--mx, 50%) var(--my, 30%), rgba(var(--l1),.8), rgba(var(--l1),.28) 14%, transparent 30%),
+    linear-gradient(115deg, transparent calc(var(--mx, 50%) - 10%), rgba(var(--l1),.55) calc(var(--mx, 50%) - 3%), rgba(var(--l2),.85) var(--mx, 50%), rgba(var(--l1),.55) calc(var(--mx, 50%) + 3%), transparent calc(var(--mx, 50%) + 10%));
+  mix-blend-mode: overlay;
+  opacity: 0; animation: none; translate: none;
+  transition: opacity .3s ease;
+}
+.carte-jeu--transcendante.est-penchee::after { opacity: .85; }
+.carte-jeu--legendaire.est-penchee::after { opacity: .7; }
+.carte-jeu--mythique.est-penchee::after, .carte-jeu--eveillee.est-penchee::after { opacity: .55; }
+
+/* l'éclat d'entrée : la lumière jaillit, puis se pose */
+.carte-jeu.eclat-entree::after { animation: eclat-entree .7s ease-out; }
+@keyframes eclat-entree { 0% { opacity: 0; } 25% { opacity: 1; filter: brightness(1.6); } 100% { filter: none; } }
+
+/* le cadre qui brille : la lumière n'éclaire que le cadre (l'image, moins son intérieur) */
+.carte-cadre-lumiere {
+  position: absolute; inset: 0; z-index: 4; pointer-events: none;
+  padding: 7.5% 8.5% 6.5%;
+  box-sizing: border-box;
+  background: radial-gradient(circle at var(--mx, 50%) var(--my, 30%), rgba(var(--l2),.95), rgba(var(--l1),.45) 22%, transparent 48%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0), var(--image) center / cover no-repeat;
+  -webkit-mask-composite: xor, source-in;
+          mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0), var(--image) center / cover no-repeat;
+          mask-composite: exclude, intersect;
+  mix-blend-mode: screen;
+  opacity: 0; transition: opacity .3s ease;
+}
+.carte-jeu.est-penchee .carte-cadre-lumiere { opacity: .9; }
+
+/* l'ombre portée, à l'opposé de la lumière */
+.carte-jeu.est-penchee { filter: drop-shadow(var(--sx, 0px) var(--sy, 10px) 14px rgba(0,0,0,.6)); }
+
+:root.effets-legers .carte-cadre-lumiere { display: none; }
+/* seulement les Transcendantes ont la lumière (reflet, cadre, éclat) : les autres raretés s'inclinent seulement */
+.carte-jeu--legendaire:not(.carte-jeu--sans-image)::after,
+.carte-jeu--mythique:not(.carte-jeu--sans-image)::after,
+.carte-jeu--eveillee:not(.carte-jeu--sans-image)::after { display: none; }
+.carte-jeu:not(.carte-jeu--transcendante) .carte-cadre-lumiere { display: none; }
+/* le cadre lumineux reste dans la carte : l'image de la carte en dernier masque (intersection) */
+.carte-cadre-lumiere {
+  -webkit-mask: var(--image) center / cover no-repeat border-box, linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0) border-box;
+  -webkit-mask-composite: source-in, xor, source-over;
+          mask: var(--image) center / cover no-repeat border-box, linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0) border-box;
+          mask-composite: intersect, exclude, add;
 }

@@ -256,3 +256,109 @@
   cursor: zoom-out;
 }
 .illustration-grande img { max-width: 100%; max-height: 94vh; object-fit: contain; filter: drop-shadow(0 20px 40px rgba(0,0,0,.7)); }
+
+/* ---------- Les chiffres du duel, sous le nom (remplacent les attaques) ---------- */
+.carte-infos__stats {
+  flex: 1;
+  display: flex; align-items: center; justify-content: center; gap: 3cqw;
+}
+.carte-chiffre {
+  display: inline-flex; align-items: center; gap: 1.2cqw;
+  font-family: "Cinzel","Cinzel Repli", serif; font-size: 4.4cqw; font-weight: 800; color: #f6eedc;
+  text-shadow: 0 .3cqw .6cqw #000;
+}
+.carte-chiffre small { font-size: 2.2cqw; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: #b6ab9c; }
+.carte-chiffre i { width: 4.6cqw; height: 4.6cqw; flex: none; }
+.carte-chiffre--cout i { clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%); background: radial-gradient(circle at 40% 30%, #cfe6ff, #3f7fd0 55%, #1d3f78); }
+.carte-chiffre--pv i { clip-path: polygon(50% 100%, 6% 52%, 2% 30%, 10% 12%, 28% 6%, 42% 12%, 50% 24%, 58% 12%, 72% 6%, 90% 12%, 98% 30%, 94% 52%); background: radial-gradient(circle at 35% 30%, #ff9aa0, #c33a42 55%, #6e161c); }
+.carte-chiffre--bouclier i { clip-path: polygon(50% 0, 100% 15%, 92% 62%, 50% 100%, 8% 62%, 0 15%); background: linear-gradient(160deg, #eef1f6, #8d97a8 50%, #4a5262); }
+/* petite carte : les chiffres seuls, plus gros (sans les mots) */
+@container carte (max-width: 190px) {
+  .carte-infos__stats { flex: none; gap: 4cqw; }
+  .carte-chiffre { font-size: 6.4cqw; gap: 1.4cqw; }
+  .carte-chiffre small { display: none; }
+  .carte-chiffre i { width: 6cqw; height: 6cqw; }
+}
+
+/* =====================================================================
+   La plaque du bas de la carte : une plaque sombre aux bords fins, la rareté en petites capitales,
+   le nom en grand, un sous-titre doré en italique, puis « Coût · Atk · PV · Déf ».
+   ===================================================================== */
+.carte-infos.carte-plaque {
+  top: auto; bottom: 11.5%; left: 10%; right: 10%;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .6cqw;
+  padding: 2.4cqw 3cqw 2.6cqw;
+  border-radius: 1.6cqw;
+  background: linear-gradient(180deg, rgba(22,24,32,.88), rgba(10,11,16,.94));
+  box-shadow: inset 0 0 0 .3cqw rgba(225,215,190,.32), inset 0 .5cqw 1cqw rgba(255,255,255,.05), 0 1cqw 2.4cqw rgba(0,0,0,.6);
+  text-align: center;
+}
+.carte-infos.carte-plaque::before { display: none; }
+.carte-plaque__rarete {
+  font-family: "Cinzel","Cinzel Repli", serif; font-size: 2.3cqw; font-weight: 600; letter-spacing: .3em; text-transform: uppercase;
+  color: color-mix(in srgb, var(--rarete) 55%, #cfc6b2);
+}
+.carte-plaque__nom {
+  max-width: 100%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
+  font-family: "Cinzel","Cinzel Repli", serif; font-size: 6.4cqw; font-weight: 700; line-height: 1.1; letter-spacing: .03em;
+  color: #fbf6ea; text-shadow: 0 .4cqw 1cqw rgba(0,0,0,.9);
+}
+.carte-plaque__sous {
+  max-width: 100%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
+  font-family: "EB Garamond","EB Garamond Repli", serif; font-style: italic; font-size: 3.2cqw;
+  color: #d9b65e;
+}
+.carte-plaque__chiffres {
+  display: flex; justify-content: center; gap: 3cqw; margin-top: .6cqw;
+  font-family: "Cinzel","Cinzel Repli", serif; font-size: 2.6cqw; font-weight: 600; letter-spacing: .12em; text-transform: uppercase;
+  color: #b3ab9b;
+}
+.carte-plaque__chiffres b { font-size: 3.6cqw; font-weight: 800; letter-spacing: 0; color: #f3ecdc; }
+/* petite carte : tout un peu plus gros, sans le sous-titre */
+@container carte (max-width: 190px) {
+  .carte-infos.carte-plaque { top: auto; bottom: 10.5%; left: 8%; right: 8%; padding: 2.4cqw 2cqw; gap: .4cqw; justify-content: center; }
+  .carte-plaque__rarete { font-size: 3.6cqw; letter-spacing: .2em; }
+  .carte-plaque__nom { font-size: 8.4cqw; background: none; -webkit-background-clip: border-box; color: #fbf6ea; filter: none; display: block; }
+  .carte-plaque__sous { display: none; }
+  .carte-plaque__chiffres { gap: 2.4cqw; font-size: 3.6cqw; letter-spacing: .06em; }
+  .carte-plaque__chiffres b { font-size: 5.2cqw; }
+}
+/* le nom en entier : plus petit, et sur deux lignes s'il le faut (jamais coupé par « … ») */
+.carte-plaque__nom {
+  white-space: normal; overflow: visible; text-overflow: clip;
+  font-size: 5.2cqw; line-height: 1.12; text-wrap: balance;
+}
+@container carte (max-width: 190px) {
+  .carte-plaque__nom { font-size: 6.6cqw; white-space: normal; text-wrap: balance; }
+}
+/* sans plaque : les textes se posent directement sur le panneau sombre dessiné sur la carte */
+.carte-infos.carte-plaque {
+  background: none; box-shadow: none; border-radius: 0;
+  top: 67%; bottom: 11.5%; left: 12%; right: 12%;
+  padding: 0;
+}
+.carte-plaque__nom, .carte-plaque__rarete, .carte-plaque__sous, .carte-plaque__chiffres { text-shadow: 0 .3cqw .8cqw rgba(0,0,0,.95), 0 0 2cqw rgba(0,0,0,.6); }
+@container carte (max-width: 190px) {
+  .carte-infos.carte-plaque { top: 69%; bottom: 10.5%; left: 10%; right: 10%; padding: 0; }
+}
+/* les chiffres collés en bas du panneau ; rareté, nom et sous-titre restent en haut */
+.carte-infos.carte-plaque { justify-content: flex-start; padding-top: 2.4cqw; padding-bottom: 2cqw; }
+.carte-plaque__chiffres { margin-top: auto; }
+@container carte (max-width: 190px) {
+  .carte-infos.carte-plaque { justify-content: flex-start; padding-top: 2cqw; padding-bottom: 1.6cqw; }
+}
+.carte-infos.carte-plaque { top: 69%; padding-top: 3.4cqw; }
+@container carte (max-width: 190px) { .carte-infos.carte-plaque { top: 70.5%; padding-top: 2.6cqw; } }
+/* rareté, nom et sous-titre : centrés verticalement dans l'espace au-dessus des chiffres */
+.carte-plaque__rarete { margin-top: auto; }
+/* Transcendante (illustration pleine carte, sans panneau dessiné) : un léger voile gris sous les textes */
+.carte-infos.carte-plaque.carte-infos--transcendante {
+  background: linear-gradient(180deg, rgba(18,18,22,.0), rgba(18,18,22,.62) 18%, rgba(14,14,18,.72) 82%, rgba(14,14,18,.0));
+  border-radius: 1.4cqw;
+}
+/* Transcendante : un vrai fond gris foncé, bien visible, aux bords arrondis et liseré doré discret */
+.carte-infos.carte-plaque.carte-infos--transcendante {
+  background: linear-gradient(180deg, rgba(34,34,40,.88), rgba(20,20,26,.92));
+  box-shadow: inset 0 0 0 .3cqw rgba(246,210,122,.35), 0 1cqw 2.4cqw rgba(0,0,0,.55);
+  border-radius: 1.6cqw;
+}
