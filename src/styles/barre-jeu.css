@@ -29,7 +29,7 @@
   z-index: -1; pointer-events: none;
   border-style: solid;
   border-width: 108px 37px 189px 37px;
-  border-image: url("/img/HUD/panneau-barre-v2.webp") 320 110 560 110 fill / 108px 37px 189px 37px stretch;
+  border-image: none;
   filter: drop-shadow(0 18px 34px rgba(0,0,0,.65));
 }
 
@@ -274,7 +274,7 @@
   }
   .barre__fond-haut, .barre__fond-pied {
     position: absolute; left: 0; width: 100%;
-    background: url("/img/HUD/panneau-barre-v2.webp") no-repeat;
+    background: url("/img/HUD/panneau-hud-v3.webp") no-repeat;
     background-size: var(--w) calc(var(--u) * 1995);
   }
   .barre__fond-haut { top: 0; height: calc(var(--u) * 1471); background-position: 0 0; }
@@ -351,3 +351,325 @@
   .barre__medaillon { left: calc(var(--u) * 174); top: calc(var(--u) * 84); width: calc(var(--u) * 428); height: calc(var(--u) * 396); }
   .barre__portrait { clip-path: polygon(50% 0, 100% 20%, 100% 80%, 50% 100%, 0 80%, 0 20%); }
 }
+
+/* ---------- Toujours la même taille (330 × 836 px), quelle que soit la fenêtre ----------
+   Si la fenêtre est moins haute que la barre, la barre défile avec la page au lieu de rétrécir. */
+@media (min-width: 701px) {
+  .barre, .barre.barre { --w: 330px; }
+  body.has-rail, body.has-rail.has-rail { padding-left: 360px; }
+}
+@media (min-width: 701px) and (max-height: 851px) {
+  .barre { position: absolute; }
+  body.has-rail { min-height: 852px; }
+}
+
+/* =====================================================================
+   Le HUD dessiné en SVG (BarreLaterale.jsx, FOND) : 330 × 900 px, panneau bleu nuit à facettes,
+   cadre d'argent, médaillon rond, gemmes turquoise ; l'écran en cours sur une plaque bleu acier.
+   Remplace le panneau en image sur ordinateur.
+   ===================================================================== */
+.barre__dessin { display: none; }
+@media (min-width: 701px) {
+  .barre.barre { width: 330px; height: 900px; --u: calc(330px / 788); }
+  .barre .barre__dessin { display: block; position: absolute; inset: 0; width: 330px; height: 900px; z-index: -1; border: 0; filter: drop-shadow(0 18px 30px rgba(0,0,0,.6)); }
+  .barre .barre__fond-haut, .barre .barre__fond-pied { display: none; }
+
+  /* le portrait dans le médaillon rond (centre 165,150 ; rayon intérieur 78) */
+  .barre .barre__medaillon { left: 89px; top: 74px; width: 152px; height: 152px; }
+  .barre .barre__portrait { width: 100%; height: 100%; border-radius: 50%; clip-path: none; background: radial-gradient(circle at 50% 35%, #22304c, #0a101d); }
+  .barre .barre__connexion { top: 258px; }
+
+  /* les écrans : 10 rangées de 54 px, de y = 296 à 836 */
+  .barre .barre__entrees { left: 52px; top: 296px; width: 226px; height: 540px; grid-template-rows: repeat(10, 54px); }
+  .barre .barre-entree { padding: 0 0 0 14px; gap: 16px; font-size: .74rem; letter-spacing: .12em; color: #e6e0d2; }
+  .barre .barre-ico, .barre .barre-ico svg { width: 26px; height: 26px; color: #ece6d8; }
+  .barre .barre-entree:not(.est-actif):hover, .barre .barre-entree:not(.est-actif):focus-visible { background: radial-gradient(ellipse 70% 80% at 40% 50%, rgba(120,150,200,.16), transparent 70%); }
+
+  /* l'écran en cours : une plaque bleu acier, pointes des deux côtés, liseré d'argent, losange turquoise */
+  .barre .barre-entree.est-actif {
+    margin: 3px -40px 3px -40px; padding-left: 54px;
+    font-size: .76rem; color: #fff;
+    background:
+      linear-gradient(160deg, rgba(255,255,255,.1) 0 42%, transparent 42.1%),
+      linear-gradient(90deg, #142238, #2c4a6e 30%, #36597f 55%, #2c4a6e 75%, #142238);
+    clip-path: polygon(22px 0, calc(100% - 22px) 0, 100% 50%, calc(100% - 22px) 100%, 22px 100%, 0 50%);
+    filter: drop-shadow(0 0 10px rgba(90,150,210,.35));
+  }
+  .barre .barre-entree.est-actif::before {
+    background: linear-gradient(180deg, #f6f1e6, #a8a092 50%, #ece6d8);
+    clip-path: polygon(22px 0, calc(100% - 22px) 0, 100% 50%, calc(100% - 22px) 100%, 22px 100%, 0 50%, 22px 0, 23px 1.5px, 1.8px 50%, 23px calc(100% - 1.5px), calc(100% - 23px) calc(100% - 1.5px), calc(100% - 1.8px) 50%, calc(100% - 23px) 1.5px, 23px 1.5px);
+  }
+  .barre .barre-entree.est-actif::after {
+    right: 46px; width: 10px; height: 10px;
+    background: radial-gradient(circle at 40% 35%, #d6fbf6, #3fb6b0 50%, #0e4a4c);
+    box-shadow: 0 0 8px rgba(63,182,176,.8); opacity: 1;
+  }
+  .barre .barre-entree.est-actif .barre-ico::before { display: none; }
+  .barre .barre-entree.est-actif .barre-ico { color: #fff; }
+
+  body.has-rail, body.has-rail.has-rail { padding-left: 360px; }
+}
+@media (min-width: 701px) and (max-height: 915px) {
+  .barre { position: absolute; }
+  body.has-rail { min-height: 916px; }
+}
+@media (min-width: 701px) and (min-height: 916px) { .barre { position: fixed; } }
+@media (min-width: 701px) {
+  .barre .barre__entrees { top: 290px; height: 520px; grid-template-rows: repeat(10, 52px); }
+  .barre .barre-entree.est-actif { margin: 4px -40px 4px -40px; }
+  .barre .barre__portrait { overflow: hidden; }
+  .barre .barre__portrait img { border-radius: 50%; }
+}
+@media (min-width: 701px) {
+  /* le liseré de la plaque de l'écran en cours : or pâle, comme le cadre */
+  .barre .barre-entree.est-actif::before { background: linear-gradient(180deg, #f4e6c6, #b39a6c 50%, #e9d7ae); }
+}
+@media (min-width: 701px) {
+  /* l'écran en cours : bleu acier sourd, comme l'image */
+  .barre .barre-entree.est-actif {
+    background:
+      linear-gradient(160deg, rgba(255,255,255,.09) 0 42%, transparent 42.1%),
+      linear-gradient(90deg, #172334, #34506f 30%, #44627f 55%, #34506f 75%, #172334);
+    filter: drop-shadow(0 0 8px rgba(110,150,190,.3));
+  }
+  .barre .barre-entree.est-actif::after { background: radial-gradient(circle at 40% 35%, #e4fffb, #5fcfca 50%, #14585a); }
+  .barre .barre__portrait { background: radial-gradient(circle at 50% 35%, #1c2230, #080a10); }
+  .barre .barre-entree { color: #ece3cf; }
+  .barre .barre-ico, .barre .barre-ico svg { color: #e9dcbd; }
+}
+
+/* ---------- Plus fin, comme l'image : le HUD entier réduit (270 × 736 px), textes un peu grossis ---------- */
+@media (min-width: 701px) {
+  .barre.barre { zoom: .82; }
+  .barre .barre-entree { font-size: .86rem; letter-spacing: .1em; }
+  .barre .barre-entree.est-actif { font-size: .88rem; }
+  .barre .barre-ico, .barre .barre-ico svg { width: 30px; height: 30px; }
+  body.has-rail, body.has-rail.has-rail { padding-left: 300px; }
+}
+@media (min-width: 701px) and (max-height: 915px) and (min-height: 760px) { .barre { position: fixed; } body.has-rail { min-height: 0; } }
+@media (min-width: 701px) and (max-height: 759px) { .barre { position: absolute; } body.has-rail { min-height: 760px; } }
+
+/* Le nouveau haut : un grand médaillon (centre 165,166 ; intérieur rayon 98), les écrans dessous (y 318 → 798) */
+@media (min-width: 701px) {
+  .barre .barre__medaillon { left: 67px; top: 68px; width: 196px; height: 196px; }
+  .barre .barre__connexion { top: 300px; }
+  .barre .barre__entrees { top: 318px; height: 480px; grid-template-rows: repeat(10, 48px); }
+  .barre .barre-entree.est-actif { margin: 3px -40px 3px -40px; }
+}
+
+/* =====================================================================
+   Le HUD en image (panneau-hud-v3.webp, 248 × 985 px), affiché à 220 px de large (échelle 220 / 248).
+   Repères dans l'image : ovale du portrait x 31 → 217, y 94 → 236 ; panneau sombre x 25 → 222,
+   y 322 → 781 (les 10 écrans).
+   ===================================================================== */
+.barre__image { display: none; }
+@media (min-width: 701px) {
+  .barre.barre {
+    --s: calc(220 / 248);
+    zoom: 1;
+    width: 220px; height: calc(985px * var(--s));
+    padding: 0;
+  }
+  .barre .barre__dessin { display: none; }
+  .barre .barre__image {
+    display: block; position: absolute; inset: 0; z-index: -1;
+    border: 0; border-image: none;
+    background: url("/img/HUD/panneau-hud-v3.webp") center / 100% 100% no-repeat;
+    filter: drop-shadow(0 16px 26px rgba(0,0,0,.6));
+  }
+  /* le portrait dans l'ovale */
+  .barre .barre__medaillon {
+    left: calc(31px * var(--s)); top: calc(94px * var(--s));
+    width: calc(186px * var(--s)); height: calc(142px * var(--s));
+  }
+  .barre .barre__portrait { width: 100%; height: 100%; border-radius: 50%; clip-path: none; overflow: hidden; background: radial-gradient(circle at 50% 40%, #1c2230, #080a10); }
+  .barre .barre__portrait img { border-radius: 50%; }
+  .barre .barre__connexion { top: calc(246px * var(--s)); font-size: .6rem; padding: 3px 10px; }
+
+  /* les 10 écrans dans le panneau sombre, séparés par un fin filet d'or */
+  .barre .barre__entrees {
+    left: calc(25px * var(--s)); top: calc(326px * var(--s));
+    width: calc(197px * var(--s)); height: calc(452px * var(--s));
+    grid-template-rows: repeat(10, 1fr);
+  }
+  .barre .barre-entree {
+    padding: 0 0 0 12px; gap: 10px;
+    font-size: .64rem; letter-spacing: .1em; color: #ece3cf;
+    border-top: 1px solid rgba(213,191,146,.18);
+  }
+  .barre .barre-entree:first-child { border-top: 0; }
+  .barre .barre-ico, .barre .barre-ico svg { width: 20px; height: 20px; }
+  /* l'écran en cours : une plaque bleu acier qui déborde du cadre des deux côtés */
+  .barre .barre-entree.est-actif {
+    margin: 2px -16px; padding-left: 28px;
+    font-size: .66rem; border-top: 0;
+    clip-path: polygon(14px 0, calc(100% - 14px) 0, 100% 50%, calc(100% - 14px) 100%, 14px 100%, 0 50%);
+  }
+  .barre .barre-entree.est-actif::before {
+    clip-path: polygon(14px 0, calc(100% - 14px) 0, 100% 50%, calc(100% - 14px) 100%, 14px 100%, 0 50%, 14px 0, 15px 1.5px, 1.8px 50%, 15px calc(100% - 1.5px), calc(100% - 15px) calc(100% - 1.5px), calc(100% - 1.8px) 50%, calc(100% - 15px) 1.5px, 15px 1.5px);
+  }
+  .barre .barre-entree.est-actif::after { right: 26px; width: 8px; height: 8px; }
+  .barre .barre-entree.est-actif + .barre-entree { border-top: 0; }
+
+  body.has-rail, body.has-rail.has-rail { padding-left: 250px; }
+}
+@media (min-width: 701px) and (min-height: 890px) { .barre.barre { position: fixed; } body.has-rail { min-height: 0; } }
+@media (min-width: 701px) and (max-height: 889px) { .barre.barre { position: absolute; } body.has-rail { min-height: 890px; } }
+
+/* ---------- Toujours entière à l'écran : fixe, et réduite si la fenêtre est trop basse ----------
+   --w : la largeur affichée (220 px au plus, sinon ce qui tient dans la hauteur de la fenêtre) ;
+   tout le reste en découle (positions en pixels de l'image × --w / 248). */
+@media (min-width: 701px) {
+  .barre.barre {
+    --w: min(220px, calc((100vh - 16px) * 248 / 985));
+    position: fixed; top: 8px;
+    width: var(--w); height: calc(var(--w) * 985 / 248);
+  }
+  .barre .barre__medaillon { left: calc(var(--w) * 31 / 248); top: calc(var(--w) * 94 / 248); width: calc(var(--w) * 186 / 248); height: calc(var(--w) * 142 / 248); }
+  .barre .barre__connexion { top: calc(var(--w) * 246 / 248); }
+  .barre .barre__entrees { left: calc(var(--w) * 25 / 248); top: calc(var(--w) * 326 / 248); width: calc(var(--w) * 197 / 248); height: calc(var(--w) * 452 / 248); }
+  .barre .barre-entree { font-size: calc(var(--w) * .0465); padding-left: calc(var(--w) * .055); gap: calc(var(--w) * .045); }
+  .barre .barre-entree.est-actif { font-size: calc(var(--w) * .048); margin: 2px calc(var(--w) * -.073); padding-left: calc(var(--w) * .127); }
+  .barre .barre-ico, .barre .barre-ico svg { width: calc(var(--w) * .09); height: calc(var(--w) * .09); }
+  body.has-rail, body.has-rail.has-rail { padding-left: calc(var(--w, 220px) + 30px); min-height: 0; }
+  body.has-rail { --w: min(220px, calc((100vh - 16px) * 248 / 985)); }
+}
+@media (min-width: 701px) {
+  .barre .barre__connexion { white-space: nowrap; font-size: calc(var(--w) * .042); padding: 2px calc(var(--w) * .04); }
+}
+/* le portrait épouse exactement l'ovale du médaillon (mesuré dans l'image : x 31 → 217, y 78 → 253) */
+@media (min-width: 701px) {
+  .barre .barre__medaillon { left: calc(var(--w) * 33 / 248); top: calc(var(--w) * 80 / 248); width: calc(var(--w) * 182 / 248); height: calc(var(--w) * 171 / 248); }
+  .barre .barre__portrait { border-radius: 50%; }
+  .barre .barre__portrait img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 30%; border-radius: 50%; }
+}
+
+/* =====================================================================
+   La barre en rectangle simple (ordinateur) : collée en haut, en bas et au bord gauche ;
+   panneau sombre, filet d'or à droite ; portrait rond en haut, les écrans dessous.
+   (remplace le panneau en image)
+   ===================================================================== */
+@media (min-width: 701px) {
+  .barre.barre {
+    --w: 240px;
+    position: fixed; top: 0; bottom: 0; left: 0;
+    width: 240px; height: auto;
+    display: flex; flex-direction: column; align-items: stretch;
+    padding: 26px 0 18px;
+    background:
+      radial-gradient(ellipse 120% 30% at 50% 0%, rgba(90,120,180,.14), transparent 70%),
+      linear-gradient(180deg, #111725, #0a0e17);
+    border-right: 1px solid rgba(213,191,146,.55);
+    box-shadow: inset -4px 0 0 #0a0e17, inset -5px 0 0 rgba(213,191,146,.2), 8px 0 30px rgba(0,0,0,.5);
+    clip-path: none; filter: none;
+  }
+  .barre .barre__image, .barre .barre__dessin, .barre .barre__fond { display: none; }
+  /* le portrait : un médaillon rond, liseré d'or */
+  .barre .barre__medaillon {
+    position: relative; left: auto; top: auto; align-self: center;
+    width: 128px; height: 128px; margin: 0 0 22px;
+  }
+  .barre .barre__portrait {
+    width: 100%; height: 100%; border-radius: 50%; overflow: hidden;
+    box-shadow: 0 0 0 3px #0a0e17, 0 0 0 5px #d5bf92, 0 0 0 7px #0a0e17, 0 0 0 8px rgba(213,191,146,.4), 0 10px 24px rgba(0,0,0,.6);
+  }
+  .barre .barre__connexion { position: static; translate: none; align-self: center; margin: -10px 0 16px; font-size: .66rem; padding: 4px 12px; }
+  /* les écrans : une liste qui remplit la hauteur */
+  .barre .barre__entrees {
+    position: static; left: auto; top: auto; width: auto; height: auto;
+    flex: 1; min-height: 0;
+    display: flex; flex-direction: column; justify-content: flex-start;
+    padding: 0 14px;
+    border-top: 1px solid rgba(213,191,146,.2);
+  }
+  .barre .barre-entree {
+    flex: 0 1 50px; min-height: 36px; height: auto;
+    padding: 0 0 0 14px; gap: 14px;
+    font-size: .74rem; letter-spacing: .1em;
+    border-top: 0; border-bottom: 1px solid rgba(213,191,146,.14);
+  }
+  .barre .barre-ico, .barre .barre-ico svg { width: 22px; height: 22px; }
+  .barre .barre-entree.est-actif { margin: 3px -14px 3px -14px; padding-left: 28px; font-size: .76rem; border-bottom: 0; }
+  body.has-rail, body.has-rail.has-rail { --w: 240px; padding-left: 270px; min-height: 0; }
+}
+
+/* =====================================================================
+   Le rectangle, habillé : fond low poly discret, double filet d'or orné, pseudo sous le portrait,
+   icônes dans un cercle d'or, trait d'or au survol, signature Nocthémar en bas.
+   ===================================================================== */
+.barre__tete, .barre__pied-signature { display: none; }
+@media (min-width: 701px) {
+  .barre.barre {
+    padding-top: 30px;
+    background:
+      url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20width%3D%27240%27%20height%3D%27300%27%3E%3Cpolygon%20points%3D%270%2C0%20120%2C0%2060%2C70%27%20fill%3D%27%23ffffff%27%20fill-opacity%3D%270.018%27%2F%3E%3Cpolygon%20points%3D%27120%2C0%20240%2C0%20175%2C60%27%20fill%3D%27%23ffffff%27%20fill-opacity%3D%270.03%27%2F%3E%3Cpolygon%20points%3D%270%2C0%2060%2C70%200%2C130%27%20fill%3D%27%23000000%27%20fill-opacity%3D%270.14%27%2F%3E%3Cpolygon%20points%3D%2760%2C70%20120%2C0%20175%2C60%27%20fill%3D%27%23ffffff%27%20fill-opacity%3D%270.012%27%2F%3E%3Cpolygon%20points%3D%27175%2C60%20240%2C0%20240%2C140%27%20fill%3D%27%23000000%27%20fill-opacity%3D%270.1%27%2F%3E%3Cpolygon%20points%3D%2760%2C70%20175%2C60%20110%2C170%27%20fill%3D%27%23ffffff%27%20fill-opacity%3D%270.022%27%2F%3E%3Cpolygon%20points%3D%270%2C130%2060%2C70%20110%2C170%27%20fill%3D%27%23000000%27%20fill-opacity%3D%270.08%27%2F%3E%3Cpolygon%20points%3D%27175%2C60%20240%2C140%20110%2C170%27%20fill%3D%27%23ffffff%27%20fill-opacity%3D%270.016%27%2F%3E%3Cpolygon%20points%3D%270%2C130%20110%2C170%200%2C240%27%20fill%3D%27%23ffffff%27%20fill-opacity%3D%270.02%27%2F%3E%3Cpolygon%20points%3D%27110%2C170%20240%2C140%20240%2C260%27%20fill%3D%27%23000000%27%20fill-opacity%3D%270.12%27%2F%3E%3Cpolygon%20points%3D%270%2C240%20110%2C170%20130%2C300%27%20fill%3D%27%23000000%27%20fill-opacity%3D%270.06%27%2F%3E%3Cpolygon%20points%3D%27110%2C170%20240%2C260%20130%2C300%27%20fill%3D%27%23ffffff%27%20fill-opacity%3D%270.026%27%2F%3E%3Cpolygon%20points%3D%270%2C240%20130%2C300%200%2C300%27%20fill%3D%27%23ffffff%27%20fill-opacity%3D%270.012%27%2F%3E%3Cpolygon%20points%3D%27130%2C300%20240%2C260%20240%2C300%27%20fill%3D%27%23000000%27%20fill-opacity%3D%270.08%27%2F%3E%3C%2Fsvg%3E") 0 0 / 240px 300px repeat,
+      radial-gradient(ellipse 140% 26% at 50% 0%, rgba(110,140,200,.18), transparent 70%),
+      radial-gradient(ellipse 140% 20% at 50% 100%, rgba(213,191,146,.08), transparent 70%),
+      linear-gradient(180deg, #121a2a, #0a0e17 60%, #0c111b);
+    border-right: 0;
+    box-shadow: 10px 0 34px rgba(0,0,0,.55);
+  }
+  /* le double filet d'or du bord droit, et son losange au milieu */
+  .barre.barre::before, .barre.barre::after {
+    display: block; content: ""; position: absolute; pointer-events: none; translate: none; rotate: none; box-shadow: none;
+  }
+  .barre.barre::before {
+    top: 0; bottom: 0; right: 0; left: auto; width: 7px; height: auto;
+    background:
+      linear-gradient(180deg, transparent, #d5bf92 6%, #f1e1b8 50%, #d5bf92 94%, transparent) right / 1.5px 100% no-repeat,
+      linear-gradient(180deg, transparent, rgba(213,191,146,.35) 10%, rgba(213,191,146,.35) 90%, transparent) left / 1px 100% no-repeat;
+  }
+  .barre.barre::after {
+    top: 50%; right: -5px; left: auto; width: 10px; height: 10px; translate: 0 -50%; rotate: 45deg;
+    background: linear-gradient(135deg, #fff1cf, #c8a86a 55%, #7d6643); border: 1px solid #0a0e17;
+  }
+
+  /* le portrait : un double anneau d'or */
+  .barre .barre__medaillon { width: 118px; height: 118px; margin-bottom: 14px; }
+  .barre .barre__portrait {
+    box-shadow: 0 0 0 3px #0a0e17, 0 0 0 5px #d5bf92, 0 0 0 9px #0a0e17, 0 0 0 10px rgba(213,191,146,.45), 0 0 26px rgba(213,191,146,.18), 0 12px 26px rgba(0,0,0,.6);
+  }
+  /* le pseudo, le sous-titre, l'ornement */
+  .barre .barre__tete { display: flex; flex-direction: column; align-items: center; gap: 2px; margin-bottom: 14px; }
+  .barre__pseudo { font-family: "Cinzel","Cinzel Repli", serif; font-size: .95rem; font-weight: 700; letter-spacing: .08em; color: #f3e6c7; text-shadow: 0 2px 8px rgba(0,0,0,.8); }
+  .barre__sous-titre { font-family: "EB Garamond","EB Garamond Repli", serif; font-style: italic; font-size: .82rem; color: #a99f8c; }
+  .barre__ornement-ligne { position: relative; width: 150px; height: 9px; margin-top: 10px; background: linear-gradient(90deg, transparent, rgba(213,191,146,.7) 35%, transparent 47%, transparent 53%, rgba(213,191,146,.7) 65%, transparent) center / 100% 1px no-repeat; }
+  .barre__ornement-ligne i { position: absolute; left: 50%; top: 50%; width: 7px; height: 7px; translate: -50% -50%; rotate: 45deg; background: #d5bf92; }
+  .barre .barre__entrees { border-top: 0; }
+
+  /* les écrans : icône dans un cercle d'or, trait d'or qui glisse au survol */
+  .barre .barre-entree { position: relative; border-bottom-color: rgba(213,191,146,.1); transition: background .25s ease, color .25s ease; }
+  .barre .barre-ico {
+    width: 32px; height: 32px; border-radius: 50%;
+    border: 1px solid rgba(213,191,146,.35);
+    background: radial-gradient(circle at 50% 35%, rgba(255,255,255,.06), transparent 70%);
+    transition: border-color .25s ease, box-shadow .25s ease;
+  }
+  .barre .barre-ico svg { width: 18px; height: 18px; }
+  .barre .barre-entree:not(.est-actif)::before {
+    content: ""; position: absolute; left: 0; top: 20%; bottom: 20%; width: 2px;
+    background: linear-gradient(180deg, transparent, #d5bf92, transparent);
+    scale: 1 0; transition: scale .25s ease;
+  }
+  .barre .barre-entree:not(.est-actif):hover::before, .barre .barre-entree:not(.est-actif):focus-visible::before { scale: 1 1; }
+  .barre .barre-entree:not(.est-actif):hover .barre-ico { border-color: #d5bf92; box-shadow: 0 0 10px rgba(213,191,146,.35); }
+  .barre .barre-entree:not(.est-actif):hover, .barre .barre-entree:not(.est-actif):focus-visible { background: linear-gradient(90deg, rgba(213,191,146,.1), transparent 85%); color: #fff; }
+  .barre .barre-entree.est-actif .barre-ico { border-color: rgba(255,255,255,.55); background: rgba(255,255,255,.08); }
+
+  /* la signature, en bas */
+  .barre .barre__pied-signature {
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    margin-top: 14px; padding: 0 20px;
+    font-family: "Cinzel Decorative","Cinzel","Cinzel Repli", serif; font-size: .72rem; letter-spacing: .3em; text-transform: uppercase; color: rgba(213,191,146,.6);
+  }
+  .barre__pied-signature i { flex: 1; height: 1px; background: linear-gradient(90deg, transparent, rgba(213,191,146,.45)); }
+  .barre__pied-signature i:last-child { background: linear-gradient(90deg, rgba(213,191,146,.45), transparent); }
+}
+@media (min-width: 701px) and (max-height: 760px) {
+  .barre .barre__medaillon { width: 86px; height: 86px; margin-bottom: 10px; }
+  .barre__sous-titre, .barre .barre__pied-signature { display: none; }
+  .barre.barre { padding-top: 18px; }
+}
+
+/* (sans le losange au milieu du bord droit) */
+@media (min-width: 701px) { .barre.barre::after { display: none; } }

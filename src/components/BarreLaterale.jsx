@@ -2,7 +2,7 @@
 //  La barre de navigation du jeu (styles/barre-jeu.css), dans la direction artistique de Nocthémar :
 //  dark medieval fantasy en low poly, charbon et pierre, ivoire et or vieilli, un accent rouge sang.
 //   - en haut, le portrait du joueur dans un hexagone à double filet, pointes en losange ;
-//   - un panneau sombre taillé en facettes, à cadre doré (une image : public/img/HUD/panneau-barre-v2.webp) ;
+//   - un panneau sombre taillé en facettes, à cadre doré (une image : public/img/HUD/panneau-hud-v3.webp) ;
 //   - les écrans en rangées ; celui où l'on est devient une plaque rouge sang bordée d'or,
 //     dont la pointe déborde du panneau.
 //  Grand écran : toujours ouverte ; écran moyen : icônes seules ; téléphone (max-width 700px) :
@@ -54,14 +54,10 @@ function Icone({ nom }) {
 // Le panneau : l'image du panneau taillé à cadre doré (public/img/HUD/panneau-barre-v2.webp), posée
 // derrière le contenu ; elle s'étire seulement en son milieu (styles/barre-jeu.css, border-image) :
 // les coins du haut et la pointe du bas gardent leur forme. La plaque de l'écran en cours peut déborder.
-// L'image (788 × 1995 px) contient aussi le cadre du portrait et 10 emplacements de boutons :
-// les 8 écrans, puis Paramètres et Retour (aussi en haut à droite de l'écran).
-const FOND = (
-  <span className="barre__fond" aria-hidden="true">
-    <span className="barre__fond-haut" />
-    <span className="barre__fond-pied" />
-  </span>
-);
+// Le panneau : une image (public/img/HUD/panneau-hud-v3.webp, 248 × 985 px) — cadre d'or, médaillon ovale,
+// gemmes turquoise, tissu bleu. Le portrait se pose dans l'ovale, les écrans dans le panneau
+// (positions en pixels de l'image, mises à l'échelle : styles/barre-jeu.css).
+const FOND = <span className="barre__fond barre__image" aria-hidden="true" />;
 
 // Le cadre du portrait : un hexagone à double filet, quatre pointes en losange
 const CADRE = (
@@ -133,6 +129,12 @@ export default function BarreLaterale() {
           )}
       </div>
       {!chargement && !joueur && <button type="button" className="barre__connexion" data-place="menu" onClick={connexionDiscord}>Se connecter</button>}
+      {/* (ordinateur) le pseudo sous le portrait, et un ornement à losange */}
+      <div className="barre__tete" data-place="menu" aria-hidden="true">
+        <span className="barre__pseudo">{joueur?.username ?? 'Voyageur'}</span>
+        <span className="barre__sous-titre">Duel des Couronnes</span>
+        <span className="barre__ornement-ligne"><i /></span>
+      </div>
 
       <div className="barre__entrees">
         {PAGES.map((p) => (
@@ -144,6 +146,8 @@ export default function BarreLaterale() {
         </a>
       </div>
 
+      {/* (ordinateur) la signature, en bas */}
+      <div className="barre__pied-signature" data-place="menu" aria-hidden="true"><i />Nocthémar<i /></div>
       <BoutonsCoin joueur={joueur} />
       <MenuPlus />
     </nav>
