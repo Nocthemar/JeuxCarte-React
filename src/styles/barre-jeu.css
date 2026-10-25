@@ -673,3 +673,28 @@
 
 /* (sans le losange au milieu du bord droit) */
 @media (min-width: 701px) { .barre.barre::after { display: none; } }
+
+/* La bourse, sous les écrans : une pièce d'or et le solde, dans un cartouche aux filets d'or */
+.barre__bourse { display: none; }
+@media (min-width: 701px) {
+  .barre .barre__bourse {
+    display: flex; align-items: center; justify-content: center; gap: 12px;
+    margin: 14px 18px 0; padding: 8px 14px;
+    border-top: 1px solid rgba(213,191,146,.35); border-bottom: 1px solid rgba(213,191,146,.35);
+    background: linear-gradient(90deg, transparent, rgba(213,191,146,.08) 30%, rgba(213,191,146,.08) 70%, transparent);
+  }
+  .barre__bourse img { width: 30px; height: 30px; filter: drop-shadow(0 0 6px rgba(240,200,110,.45)); }
+  .barre__bourse-texte { display: flex; flex-direction: column; line-height: 1.05; }
+  .barre__bourse-texte b { font-family: "Cinzel","Cinzel Repli", serif; font-size: 1.15rem; font-weight: 700; color: #f3d58e; text-shadow: 0 2px 6px rgba(0,0,0,.8); font-variant-numeric: tabular-nums; }
+  .barre__bourse-texte small { font-family: "EB Garamond","EB Garamond Repli", serif; font-style: italic; font-size: .78rem; color: #a99f8c; }
+}
+@media (min-width: 701px) and (max-height: 760px) { .barre .barre__bourse { margin-top: 8px; padding: 5px 12px; } }
+
+/* l'or animé de la bourse (le même que le Trésor du profil : pièce qui tourne, tas, étincelles) */
+@media (min-width: 701px) {
+  .barre__bourse-or { position: relative; display: grid; place-items: center; width: 56px; height: 48px; flex: none; }
+  .barre__bourse-or .piece-icone { grid-area: 1 / 1; width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 3px 5px rgba(0,0,0,.6)); }
+  .barre__bourse-or .piece-icone--vide { width: 60%; height: 60%; filter: grayscale(1) brightness(.8); opacity: .7; }
+  .barre__bourse-or .bourse-etincelles { grid-area: 1 / 1; position: absolute; inset: 0; width: auto; height: auto; margin: 0; }
+  .barre__bourse-or .etincelle { --taille: 8px !important; }
+}

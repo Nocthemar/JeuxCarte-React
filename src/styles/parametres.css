@@ -48,6 +48,21 @@
 .reglage--case input, .reglage__case input { width: 18px; height: 18px; margin: 2px 0 0; accent-color: #d9a441; flex: none; }
 .reglage__case { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; }
 .reglage__boutons { display: flex; flex-wrap: wrap; gap: 8px; }
+.reglage--case:has(input:disabled) { cursor: default; opacity: .75; }
+
+/* choix en trois (animations) : trois boutons accolés, celui choisi en or */
+.reglage__options { display: inline-flex; border: 1px solid rgba(216,185,120,.35); border-radius: 4px; overflow: hidden; }
+.reglage__options label { position: relative; cursor: pointer; }
+.reglage__options input { position: absolute; inset: 0; opacity: 0; margin: 0; cursor: pointer; }
+.reglage__options span {
+  display: block; padding: 7px 14px;
+  font-family: "Cinzel","Cinzel Repli", serif; font-size: .78rem; letter-spacing: .08em;
+  color: var(--texte-doux); transition: background .15s ease, color .15s ease;
+}
+.reglage__options label + label span { border-left: 1px solid rgba(216,185,120,.25); }
+.reglage__options label:hover span { color: var(--texte); }
+.reglage__options input:checked + span { background: rgba(217,164,65,.2); color: #f3cf7c; }
+.reglage__options input:focus-visible + span { outline: 2px solid #f3cf7c; outline-offset: -2px; }
 
 /* compte */
 .reglage__compte { display: inline-flex; align-items: center; gap: 10px; }

@@ -1,7 +1,8 @@
 // =====================================================================
 //  Écran « Paramètres » (ancien parametres.html + JS/parametres.js, même HTML)
 //  - Son : volume général, musique, effets (lib/son.js), tout couper, écouter ;
-//  - Affichage : animations réduites, effets légers, conseils du duel (lib/preferences.js), thème clair ;
+//  - Affichage : animations (complètes, réduites, coupées), mode performance, effets réduits,
+//    conseils du duel (lib/preferences.js), thème clair ;
 //  - Appli : installer le jeu sur l'appareil (lib/appli.js) ;
 //  - Compte : déconnexion, suppression du compte (supprimer_mon_compte).
 //  Tout est retenu dans le navigateur, sauf la suppression du compte.
@@ -11,16 +12,21 @@ import Page from '../components/Page.jsx';
 import { supabase } from '../lib/supabase.js';
 import { useAuth, connexionDiscord, deconnexion } from '../lib/auth.js';
 import { useNotifier } from '../lib/notification.js';
-import { CLES, lirePref, ecrirePref } from '../lib/preferences.js';
+import { CLES, lirePref, ecrirePref, niveauAnimationsChoisi, ecrireNiveauAnimations } from '../lib/preferences.js';
 import { estIOS, installer, useAppli } from '../lib/appli.js';
 import {
   jouerSon, lireVolumes, reglerVolume, reglerVolumeEffets, reglerVolumeMusique,
   estMuet, basculerMuet, demarrerMusique, arreterMusique,
 } from '../lib/son.js';
 
+const ANIMATIONS = [
+  ['completes', 'Complètes', 'Toutes les animations du jeu.'],
+  ['reduites', 'Réduites', 'Plus courtes, sans secousses ni voiles, moins de particules.'],
+  ['coupees', 'Coupées', 'Aucun mouvement : le jeu va plus vite.'],
+];
 const CASES = [
-  ['anim-reduites', CLES.animationsReduites, 'Animations réduites', 'Coupe les mouvements, envols de cartes et secousses (le jeu va plus vite).'],
-  ['effets-legers', CLES.effetsLegers, 'Effets légers (performances)', 'Moins de particules et de braises : pour les ordinateurs et téléphones modestes.'],
+  ['mode-perf', CLES.modePerformance, 'Mode performance', 'Pour les ordinateurs et téléphones modestes : effets réduits, animations réduites, pas d’inclinaison des cartes ni d’or animé.'],
+  ['effets-legers', CLES.effetsLegers, 'Effets visuels réduits', 'Moins de particules, de lueurs et de braises.'],
   ['conseils', CLES.conseils, 'Conseils pendant le duel', 'Une ligne discrète indique quoi faire (aussi avec le bouton 💡 du duel).'],
 ];
 const themeClair = () => { try { return localStorage.getItem('nocthemar-theme') === 'jour'; } catch { return false; } };
@@ -109,6 +115,7 @@ export default function Parametres() {
   const [volumes, setVolumes] = useState(lireVolumes);
   const [muet, setMuet] = useState(estMuet);
   const [cases, setCases] = useState(() => Object.fromEntries(CASES.map(([id, cle]) => [id, lirePref(cle)])));
+  const [animations, setAnimations] = useState(niveauAnimationsChoisi);
   const [clair, setClair] = useState(themeClair);
   const [ecoute, setEcoute] = useState(false);
   const [suppression, setSuppression] = useState(false);
@@ -120,6 +127,11 @@ export default function Parametres() {
   const basculerCase = (id, cle, actif) => {
     ecrirePref(cle, actif);
     setCases((c) => ({ ...c, [id]: actif }));
+    notifier('Réglage enregistré.');
+  };
+  const choisirAnimations = (niveau) => {
+    ecrireNiveauAnimations(niveau);
+    setAnimations(niveau);
     notifier('Réglage enregistré.');
   };
   const basculerTheme = (actif) => {
@@ -161,12 +173,32 @@ export default function Parametres() {
         {/* Affichage */}
         <section className="reglages-bloc" aria-labelledby="titre-affichage">
           <h2 id="titre-affichage">Affichage et animations</h2>
-          {CASES.map(([id, cle, titre, aide]) => (
-            <label key={id} className="reglage reglage--case">
-              <input type="checkbox" id={id} checked={cases[id]} onChange={(e) => basculerCase(id, cle, e.target.checked)} />
-              <span><b>{titre}</b><small>{aide}</small></span>
-            </label>
-          ))}
+          <div className="reglage reglage--choix" role="radiogroup" aria-labelledby="titre-animations">
+            <span>
+              <b id="titre-animations">Animations</b>
+              <small>{cases['mode-perf'] && animations === 'completes'
+                ? 'Réduites par le mode performance.'
+                : ANIMATIONS.find(([niveau]) => niveau === animations)[2]}</small>
+            </span>
+            <span className="reglage__options">
+              {ANIMATIONS.map(([niveau, titre]) => (
+                <label key={niveau}>
+                  <input type="radio" name="animations" value={niveau} checked={animations === niveau} onChange={() => choisirAnimations(niveau)} />
+                  <span>{titre}</span>
+                </label>
+              ))}
+            </span>
+          </div>
+          {CASES.map(([id, cle, titre, aide]) => {
+            // le mode performance réduit déjà les effets : la case reste cochée et grisée
+            const compris = id === 'effets-legers' && cases['mode-perf'];
+            return (
+              <label key={id} className="reglage reglage--case">
+                <input type="checkbox" id={id} checked={cases[id] || compris} disabled={compris} onChange={(e) => basculerCase(id, cle, e.target.checked)} />
+                <span><b>{titre}</b><small>{compris ? 'Compris dans le mode performance.' : aide}</small></span>
+              </label>
+            );
+          })}
           <label className="reglage reglage--case">
             <input type="checkbox" id="theme-clair" checked={clair} onChange={(e) => basculerTheme(e.target.checked)} />
             <span><b>Thème clair</b><small>Pages claires, comme le jour sur Nocthémar.</small></span>

@@ -5,11 +5,13 @@
    sous la lune, bannières à pointe, facettes, un seul accent ambre, équerres dorées.
    ===================================================================== */
 
+/* Fond : la devanture de la boutique (img/Fond/Boutique_fond.png), assombrie
+   pour que les portes et les articles restent lisibles par-dessus. */
 body.page-boutique:has(.vitrine--accueil) {
   background:
-    radial-gradient(ellipse 120% 90% at 50% 40%, transparent 40%, rgba(0,0,0,.75) 100%),
-    linear-gradient(180deg, rgba(11,13,18,.35), rgba(11,13,18,.82) 70%),
-    url("/img/Fond/profil-forteresse.svg") center bottom / cover no-repeat fixed,
+    radial-gradient(ellipse 120% 90% at 50% 40%, transparent 35%, rgba(0,0,0,.8) 100%),
+    linear-gradient(180deg, rgba(11,13,18,.5), rgba(11,13,18,.88) 70%),
+    url("/img/Fond/Boutique_fond.png") center / cover no-repeat fixed,
     #0b0d12;
 }
 .page-boutique .vitrine--accueil {

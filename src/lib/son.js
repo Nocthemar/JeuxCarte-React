@@ -1,10 +1,15 @@
 // =====================================================================
-//  Duel des Couronnes — sons, tous créés par le navigateur (Web Audio), sans fichier audio :
-//  chocs, acier, tonnerre, feu, cloche, dé, fanfare, cire… et une ambiance musicale générée.
+//  Duel des Couronnes — sons :
+//  - de vrais enregistrements (public/sons, domaine public CC0 : voir sons/LICENCE.txt) pour les dés,
+//    les cartes, les armes, les boucliers, les cloches, le feu, la magie… plusieurs variantes de chacun ;
+//  - des sons créés par le navigateur (Web Audio) pour le reste (tonnerre, rêve, cœur, cire…), et en
+//    renfort de certains enregistrements (fanfare, couronne, soin) ; une ambiance musicale générée.
 //  Trois volumes (page Paramètres, et le curseur du duel pour le général) :
 //    général (tout), effets (les sons du jeu), musique (l'ambiance). Le bouton « son » coupe tout.
 //  Tous les choix sont retenus dans le navigateur.
 // =====================================================================
+import { urlPublique } from './chemins.js';
+
 const CLE_MUET = 'duel-couronnes-muet';
 const CLE_VOLUME = 'duel-couronnes-volume';
 const CLE_EFFETS = 'duel-couronnes-volume-effets';
@@ -130,11 +135,64 @@ export const SM = {
   ready: 'acier', rage: 'feu', talisman: 'de', coffre: 'pioche', jeton: 'cloche',   // objets
 };
 
+// Les sons enregistrés : nom du jeu -> [fichiers public/sons/<fichier>-1.mp3 … -<n>.mp3, n, volume,
+// garder aussi le son créé (vrai : les deux se superposent)]. Les autres noms restent des sons créés.
+const ENREGISTRES = {
+  de:       ['de', 7, 0.8],
+  pose:     ['pose', 4, 0.75],
+  pioche:   ['pioche', 4, 0.5],
+  elan:     ['elan', 4, 0.45],
+  choc:     ['choc', 5, 0.8],
+  acier:    ['acier', 8, 0.55],
+  forge:    ['forge', 5, 0.6],
+  cloche:   ['cloche', 5, 0.4],
+  echec:    ['echec', 5, 0.65],
+  clic:     ['clic', 5, 0.35],
+  chaine:   ['chaine', 3, 0.55],
+  griffe:   ['griffe', 5, 0.55],
+  feu:      ['feu', 5, 0.55],
+  magie:    ['magie', 2, 0.6],
+  gluant:   ['gluant', 4, 0.55],
+  soin:     ['gemme', 4, 0.45, true],
+  couronne: ['cloche', 5, 0.45, true],
+  fanfare:  ['cloche', 5, 0.35, true],
+};
+const tampons = {};   // fichier -> les variantes décodées
+let chargement = null;
+// Charge tous les enregistrements (environ 300 Ko), une fois, au premier son joué
+function chargerEnregistrements() {
+  if (chargement) return;
+  const fichiers = new Map(Object.values(ENREGISTRES).map(([f, n]) => [f, n]));
+  chargement = Promise.all([...fichiers].flatMap(([f, n]) => Array.from({ length: n }, (_, i) => fetch(urlPublique(`sons/${f}-${i + 1}.mp3`))
+    .then((r) => (r.ok ? r.arrayBuffer() : Promise.reject(new Error(r.status))))
+    .then((octets) => ctx.decodeAudioData(octets))
+    .then((tampon) => { (tampons[f] ??= []).push(tampon); })
+    .catch(() => { /* ce fichier manque : son créé à la place */ }))));
+}
+// Joue une variante au hasard, un peu plus aiguë ou plus grave et plus ou moins forte : jamais deux
+// fois tout à fait le même son. Faux si l'enregistrement n'est pas (encore) chargé.
+function jouerEnregistre(fichier, t, vol) {
+  const variantes = tampons[fichier];
+  if (!variantes?.length) return false;
+  const source = ctx.createBufferSource();
+  source.buffer = variantes[Math.floor(Math.random() * variantes.length)];
+  source.playbackRate.value = 0.94 + Math.random() * 0.12;
+  const g = ctx.createGain();
+  g.gain.value = vol * (0.85 + Math.random() * 0.15);
+  source.connect(g).connect(busEffets);
+  source.start(t);
+  return true;
+}
+
 export function jouerSon(nom, delai = 0) {
-  if (muet || volume === 0 || volEffets === 0 || !SND[nom]) return;
+  if (muet || volume === 0 || volEffets === 0 || !(SND[nom] || ENREGISTRES[nom])) return;
   try {
     if (!audio()) return;
-    SND[nom](ctx.currentTime + delai);
+    chargerEnregistrements();
+    const t = ctx.currentTime + delai;
+    const [fichier, , vol, couche] = ENREGISTRES[nom] ?? [];
+    const enregistre = fichier && jouerEnregistre(fichier, t, vol);
+    if (!enregistre || couche) SND[nom]?.(t);
   } catch { /* son indisponible : le jeu continue */ }
 }
 

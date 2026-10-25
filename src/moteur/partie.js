@@ -16,7 +16,7 @@ import { actionsDuTour, coutDe, actionsDe, aCap, rollInfo, attaqueJouee, destinI
 import { hasard, d20, melanger, auHasard, nouvelleGraine } from './hasard.js';
 import {
   autre, unites, trouver, placeLibre, libre, instancier, piocher, attaqueDe, seuilDe,
-  peutAttaquer, peutDefendre, memeCible, nettoyer, blesser, soignerHeros,
+  peutAttaquer, peutDefendre, memeCible, nettoyer, blesser, soignerHeros, encaisser,
 } from './base.js';
 import { appliquerDestin } from './destin.js';
 import { UNIQUES } from './uniques.js';
@@ -348,14 +348,15 @@ export function defendre(p, qui, uid) {
 }
 
 // ---------------------------------------------------------------------
-//  Capacité active d'une grande carte (1 action, une fois par tour, parfois de l'énergie)
+//  Capacité active d'une grande carte (une fois par tour, de l'énergie ; sans action depuis
+//  octobre 2026 : une action coûtait plus qu'elle ne rapportait, les grandes cartes y perdaient)
 // ---------------------------------------------------------------------
 export const capaciteActive = (u) => UNIQUES[u?.def?.unique]?.actif ?? null;
 export function peutActiver(p, qui, uid) {
   const camp = p.camps[qui];
   const u = trouver(camp, uid);
   const act = capaciteActive(u);
-  if (!act || !libre(p, qui) || camp.actions < 1 || u.capaciteUtilisee || u.bloquee || camp.energie < act.cout) return false;
+  if (!act || !libre(p, qui) || u.capaciteUtilisee || u.bloquee || camp.energie < act.cout) return false;
   return act.cible !== 'ennemi' || unites(p.camps[autre(qui)]).length > 0;
 }
 export function ciblesCapacite(p, qui, uid) {
@@ -371,7 +372,6 @@ export function activer(p, qui, uid, cible = null) {
   const act = capaciteActive(u);
   const cibles = ciblesCapacite(p, qui, uid);
   if (cibles && !cibles.some((c) => cible && memeCible(c, cible))) return null;
-  camp.actions -= 1;
   camp.energie -= act.cout;
   u.capaciteUtilisee = true;
   const ev = { type: 'capacite', qui, uid, cible, nom: act.nom, texte: act.texte, n: u.n, veine: u.def.veine, touches: [] };
@@ -510,7 +510,7 @@ export function attaquer(p, qui, uid, cible) {
       ev.bouclier = true;
       degats = 0;
     } else {
-      t.h -= degats;
+      if (encaisser(t, degats)) ev.tenace = { camp: adv, uid: t.uid };
       camp.stats.degats += degats;
     }
   }
@@ -526,7 +526,10 @@ export function attaquer(p, qui, uid, cible) {
   if (t && t.h > 0 && (aCap(t, 'riposte') || t.defend) && t.a > 0) {
     const coup = attaqueDe(p, adv, t);
     if (u.bouclier) { u.bouclier = false; ev.bouclierAttaquant = true; }
-    else { u.h -= coup; ev.riposte = coup; }
+    else {
+      if (encaisser(u, coup)) ev.tenaceAttaquant = { camp: qui, uid: u.uid };
+      ev.riposte = coup;
+    }
   }
 
   // Esquive : les deux dés sont gardés dans l'historique (le plus bas compte)

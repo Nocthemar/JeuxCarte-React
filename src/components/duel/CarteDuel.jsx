@@ -45,6 +45,8 @@ const ICONES_CAP = {
   inspiration: 'M3 8l4 3 5-6 5 6 4-3-2 11H5z',
   percee: 'M2 11h14l-4-4 2-2 8 7-8 7-2-2 4-4H2z',
   drain: 'M12 21 4 13a5 5 0 0 1 8-6 5 5 0 0 1 8 6zM11 9v3H8v2h3v3h2v-3h3v-2h-3V9z',
+  rapide: 'M3 5l7 7-7 7-1.5-1.5L7 12 1.5 6.5zM12 5l7 7-7 7-1.5-1.5L16 12l-5.5-5.5z',
+  tenace: 'M5 3h14v3h-2v12h2v3H5v-3h2V6H5zm5 3v12h4V6z',
 };
 
 // Fond low poly (grille de triangles) teinté par la Veine, avec une silhouette au centre.

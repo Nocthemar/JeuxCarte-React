@@ -24,7 +24,7 @@ export default function Regles({ ouverte, surFermeture }) {
       <ul>
         <li><strong>But</strong> : faire tomber les <span>{PV_HEROS}</span> PV du héros adverse avant que les tiens ne tombent.</li>
         <li><strong>Énergie</strong> : 1 de plus à chaque tour (10 au plus), rechargée au début de ton tour. Chaque carte coûte de l&apos;énergie (le chiffre en haut à gauche).</li>
-        <li><strong>Actions</strong> : <strong>2 par tour</strong>, puis <strong>3 à partir du tour 5</strong>. Une action sert à jouer une carte, attaquer avec une unité, défendre avec une unité ou activer la capacité d&apos;une grande carte. Les Transcendantes demandent <strong>2 actions</strong> et une de tes unités déjà en jeu.</li>
+        <li><strong>Actions</strong> : <strong>2 par tour</strong>, puis <strong>3 à partir du tour 5</strong>. Une action sert à jouer une carte, attaquer avec une unité ou défendre avec une unité. Les Transcendantes demandent <strong>2 actions</strong> et une de tes unités déjà en jeu.</li>
         <li><strong>Les unités</strong> ont <strong>Attaque</strong> (à gauche), <strong>Défense</strong> (au milieu) et <strong>PV</strong> (à droite). Une unité posée attend le tour suivant pour attaquer (sauf Charge), et chaque unité agit une fois par tour.</li>
         <li><strong>Attaquer</strong> : touche une de tes unités (bord ambre), puis sa cible. Jet : <strong>d20 + Attaque</strong> contre <strong>8 + Défense</strong> de la cible (un héros a 2 de Défense). Touché : la cible perd autant de PV que l&apos;Attaque. Raté avec un dé de 5 ou plus : Éraflure, 1 dégât quand même.
           <ul className="regles__table">
@@ -32,7 +32,7 @@ export default function Regles({ ouverte, surFermeture }) {
           </ul>
         </li>
         <li><strong>Défendre</strong> (1 action) : touche une de tes unités puis « Défendre » (ou G). Jusqu&apos;à ton prochain tour, elle a <strong>+2 Défense</strong> et <strong>riposte</strong> quand on l&apos;attaque ; elle n&apos;attaque pas ce tour.</li>
-        <li><strong>Capacités</strong> : plus une carte est rare, plus elle change le combat. Éveillée : une capacité, Mythique : deux, Légendaire et Transcendante : en plus une <strong>capacité unique</strong> (couronne), à son arrivée ou à activer (1 action). Certaines agissent pendant le tour adverse (réactions).
+        <li><strong>Traits</strong> : chaque carte a <strong>un Trait</strong>, écrit sous son nom. Les rares cartes qui détiennent une <strong>Veine</strong> ont à la place la capacité de leur Veine. Les Légendaires et Transcendantes ont en plus une <strong>capacité unique</strong> (couronne) : un effet à leur arrivée, et parfois une capacité à activer une fois par tour, pour de l&apos;énergie et <strong>sans action</strong>. Dans un Grimoire : un seul exemplaire de chaque Légendaire, et une seule Transcendante. Certains Traits agissent pendant le tour adverse (réactions).
           <ul className="regles__table">
             {Object.entries(CAPACITES).map(([k, c]) => <li key={k}><b>{c.nom}</b> {c.texte}</li>)}
           </ul>
@@ -42,7 +42,7 @@ export default function Regles({ ouverte, surFermeture }) {
             {Object.entries(TERRAINS).map(([k, t]) => <li key={k}><b>{t.nom}</b> {t.texte}</li>)}
           </ul>
         </li>
-        <li><strong>Le Grimoire</strong> : ton deck de 20 cartes, choisies dans ta collection (2 exemplaires au plus d&apos;une carte, 1 seul d&apos;une Transcendante, 2 Transcendantes et 4 objets au plus) et complétées par des cartes de base. Il est mélangé au début de chaque partie.</li>
+        <li><strong>Le Grimoire</strong> : ton deck de 20 cartes, choisies dans ta collection (2 exemplaires au plus d&apos;une carte, 1 seul d&apos;une Légendaire ou d&apos;une Transcendante, une seule Transcendante et 4 objets au plus) et complétées par des cartes de base. Il est mélangé au début de chaque partie.</li>
         <li><strong>Début de partie</strong> : celui qui commence pioche 3 cartes, l&apos;autre 4. Puis, une seule fois, tu peux <strong>renvoyer</strong> les cartes de ta main que tu veux : elles retournent dans ton Grimoire, qui est remélangé, et tu en repioches autant.</li>
         <li><strong>Pioche</strong> : 1 carte au début de chacun de tes tours. 7 cartes en main au plus : une carte piochée main pleine est <strong>brûlée</strong> et va au Tombeau.</li>
         <li><strong>Le Tombeau</strong> : la défausse, visible des deux joueurs (touche-la pour voir son contenu). Y vont les troupes mortes, les sorts joués, les cartes brûlées et défaussées.</li>

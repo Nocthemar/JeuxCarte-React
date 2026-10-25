@@ -10,8 +10,8 @@
 import { animationsReduites } from '../preferences.js';
 import { pause } from '../pause.js';
 
-const reduit = animationsReduites();
-const actif = () => !reduit && !document.hidden;
+const reduit = animationsReduites;
+const actif = () => !reduit() && !document.hidden;
 
 export async function arretSurImage(ms) {
   if (!actif()) return;

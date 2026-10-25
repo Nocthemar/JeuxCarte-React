@@ -309,7 +309,7 @@ export default function Menu({ joueur, donnees, ligne, surRegles, surJouer }) {
     const n = exemplaires(cartes, c);
     if (n >= copiesMax(c)) return enregistrer(cartes.filter((x) => x !== c).map(cleCarte));
     if (cartes.length >= TAILLE_DECK) return notifier(`Ton Grimoire est plein (${TAILLE_DECK} cartes) : retire d'abord une carte.`, 'erreur');
-    if (estTranscendante(c) && cartes.filter(estTranscendante).length >= TRANSCENDANTES_MAX) return notifier(`${TRANSCENDANTES_MAX} Transcendantes au plus dans le Grimoire.`, 'erreur');
+    if (estTranscendante(c) && cartes.filter(estTranscendante).length >= TRANSCENDANTES_MAX) return notifier(`Une seule Transcendante dans le Grimoire : retire d’abord l’autre.`, 'erreur');
     if (estObjet(c) && cartes.filter(estObjet).length >= OBJETS_MAX) {
       if (!n) return notifier(`${OBJETS_MAX} objets au plus dans le Grimoire.`, 'erreur');
       return enregistrer(cartes.filter((x) => x !== c).map(cleCarte));

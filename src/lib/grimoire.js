@@ -1,7 +1,7 @@
 // =====================================================================
 //  Le Grimoire du joueur (le deck de 20 cartes du duel), côté menu (ancien JS/jeu-cartes.js)
 //  20 cartes choisies dans la réserve : sa collection, les troupes et les sorts du Codex, ses objets
-//  (2 exemplaires au plus, 1 seul d'une Transcendante, 2 Transcendantes, 4 objets au plus).
+//  (2 exemplaires au plus, 1 seul d'une Légendaire ou d'une Transcendante, une seule Transcendante, 4 objets au plus).
 //  Ce qui manque est complété par des cartes de base (grimoire() du moteur).
 //  Le choix est retenu dans le navigateur, sous la même clé qu'avant (le site Nocthémar la lit aussi).
 // =====================================================================

@@ -97,5 +97,6 @@ self.addEventListener('fetch', (e) => {
     e.respondWith(depuisLaCopie(requete));
     return;
   }
-  if (chemin.startsWith('img/')) e.respondWith(copieRafraichie(CACHE_IMAGES, requete, e));
+  // les images et les sons (public/sons) : gardés pour jouer hors ligne
+  if (chemin.startsWith('img/') || chemin.startsWith('sons/')) e.respondWith(copieRafraichie(CACHE_IMAGES, requete, e));
 });

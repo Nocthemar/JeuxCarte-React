@@ -4,11 +4,12 @@
 //  Tout est créé à la volée dans une couche au-dessus de la page, puis retiré.
 //  Rien ne s'affiche si l'utilisateur réduit les animations ou si l'onglet est caché.
 // =====================================================================
-import { animationsReduites, effetsLegers } from '../preferences.js';
+import { animationsReduites, animationsDouces, effetsLegers, quandPresse } from '../preferences.js';
 
-const reduit = animationsReduites();
-const legers = effetsLegers();   // Paramètres > « effets légers » : deux fois moins de particules
-const actif = () => !reduit && !document.hidden;
+const reduit = animationsReduites;
+// Paramètres > « effets réduits » ou animations réduites : deux fois moins de particules
+const legers = () => effetsLegers() || animationsDouces();
+const actif = () => !reduit() && !document.hidden;
 
 let couche = null;
 function calque() {
@@ -41,7 +42,7 @@ export function particules(el, {
   duree = 700, rond = false, monte = 0, depuis = 'centre',
 } = {}) {
   if (!el || !actif()) return;
-  if (legers) n = Math.ceil(n / 2);
+  if (legers()) n = Math.ceil(n / 2);
   const { x, y, r } = centre(el);
   for (let i = 0; i < n; i++) {
     const p = document.createElement('span');
@@ -89,7 +90,7 @@ export function flash(el, couleur = 'rgba(255,240,200,.95)', taille = 2.4, duree
 
 // Voile coloré sur les bords de l'écran (héros touché, malédiction…)
 export function voile(couleur = 'rgba(183,40,48,.55)', duree = 650) {
-  if (!actif()) return;
+  if (!actif() || animationsDouces()) return;
   const v = document.createElement('span');
   v.className = 'fx-voile';
   v.style.setProperty('--c', couleur);
@@ -99,7 +100,7 @@ export function voile(couleur = 'rgba(183,40,48,.55)', duree = 650) {
 // Secousse du plateau
 export function secousseEcran(force = 8, duree = 420) {
   const cible = document.getElementById('scene-table');
-  if (!cible || !actif()) return;
+  if (!cible || !actif() || animationsDouces()) return;
   const images = Array.from({ length: 7 }, (_, i) => {
     const f = force * (1 - i / 7);
     return { transform: `translate(${((Math.random() - 0.5) * 2 * f).toFixed(1)}px, ${((Math.random() - 0.5) * 2 * f).toFixed(1)}px)` };
@@ -179,7 +180,13 @@ export function briser(el, couleurs = ['#f6d995', '#f0c873', '#ffffff', '#d9a441
 //  Briques des attaques (JS/jeu-cartes-attaques.js) : projectiles, griffures,
 //  rayons, symboles, pointes, recul. Uniquement transform / opacity : léger à afficher.
 // ---------------------------------------------------------------------
-const attendre = (a) => new Promise((r) => { if (!a) r(); else { a.onfinish = () => { a.effect?.target?.remove(); r(); }; a.oncancel = () => r(); } });
+// Attend la fin d'une animation ; si le joueur presse les animations, elle se termine aussitôt
+const attendre = (a) => new Promise((r) => {
+  if (!a) { r(); return; }
+  const oublier = quandPresse(() => a.finish());
+  a.onfinish = () => { oublier(); a.effect?.target?.remove(); r(); };
+  a.oncancel = () => { oublier(); r(); };
+});
 
 // Un symbole (texte ou emoji) ou une boule de lumière qui file d'un élément à l'autre,
 // en arc, avec une traînée. forme : 'orbe' ou un symbole court (ex. '☾', '⛓')

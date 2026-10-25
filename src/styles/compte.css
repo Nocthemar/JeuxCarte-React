@@ -428,3 +428,10 @@ html.anim-reduites *, html.anim-reduites *::before, html.anim-reduites *::after 
 }
 html.effets-legers .fx-couche, html.effets-legers #embers { display: none !important; }
 html.effets-legers * { backdrop-filter: none !important; }
+/* Animations réduites : pas de secousse */
+html.anim-douces .fx-secousse { animation: none !important; }
+/* Mode performance : les fonds ne sont plus « fixes » (redessinés à chaque défilement),
+   pas d'étincelles de la bourse, pas d'ombre portée calculée sur une carte penchée */
+html.mode-perf body { background-attachment: scroll !important; }
+html.mode-perf .etincelle { display: none; }
+html.mode-perf .carte-jeu.est-penchee { filter: none; }

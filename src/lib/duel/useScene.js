@@ -7,13 +7,15 @@
 //    partie   : le même état dans une ref, toujours à jour pour les tâches en cours (tour de l'Ombre…)
 //    actif    : faux quand on quitte le duel (les tâches en cours s'arrêtent)
 //    afficher(e)                  : affiche un état tout de suite
-//    animerEvenements(evs, e)     : anime chaque événement (avant / après l'affichage), puis affiche e
+//    animerEvenements(evs, e)     : anime chaque événement (avant / après l'affichage), puis affiche e ;
+//                                   un clic pendant ce temps presse les animations (lib/preferences.js)
 // =====================================================================
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
 import { terrainDe } from '../../moteur/index.js';
 import { jouerSon } from '../son.js';
 import { animer, banniere, montrerTouches } from './animations.js';
+import { presser } from '../preferences.js';
 
 export function useScene(etatDeDepart) {
   const [etat, setEtat] = useState(etatDeDepart);
@@ -57,7 +59,7 @@ export function useScene(etatDeDepart) {
   }, [afficher]);
 
   // Anime chaque événement, puis affiche l'état final e
-  const animerEvenements = useCallback(async (evs, e) => {
+  const animerSerie = useCallback(async (evs, e) => {
     for (const ev of evs) {
       if (!actif.current) return;
       if (ev.type === 'tour') { await afficherTour(ev, e); continue; }
@@ -77,6 +79,19 @@ export function useScene(etatDeDepart) {
     }
     afficher(e);
   }, [afficher, afficherTour]);
+
+  // Un clic pendant les animations les presse : jusqu'à la fin de cette action, tout va au bout aussitôt
+  const animerEvenements = useCallback(async (evs, e) => {
+    presser(false);
+    const surClic = () => presser(true);
+    document.addEventListener('pointerdown', surClic);
+    try {
+      await animerSerie(evs, e);
+    } finally {
+      document.removeEventListener('pointerdown', surClic);
+      presser(false);
+    }
+  }, [animerSerie]);
 
   return { etat, partie, actif, afficher, animerEvenements };
 }

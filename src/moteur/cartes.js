@@ -3,7 +3,7 @@
 //  (règles reprises de l'ancien JS/jeu-cartes-moteur.js, sans changement)
 // =====================================================================
 import {
-  BASE, CAP_VEINE, UNIQUE_PAR_NOM, COPIES_MAX, TAILLE_DECK, TRANSCENDANTES_MAX, OBJETS_MAX,
+  BASE, CAP_VEINE, TRAIT_PAR_NOM, VEINE_PAR_NOM, UNIQUE_PAR_NOM, COPIES_MAX, TAILLE_DECK, TRANSCENDANTES_MAX, OBJETS_MAX,
   JETS, DESTIN, TERRAINS,
 } from '../data/regles.js';
 import { CARTES_BASE, OBJETS } from '../data/cartes.js';
@@ -30,22 +30,22 @@ export function uniteDepuisCarte(carte) {
   if (moyenne >= 80) { a += 1; h = Math.max(1, h - 1); }
   else if (moyenne <= 35) { a = Math.max(1, a - 1); d += 1; }
 
-  // Capacités : aucune pour une commune, celle de la 1re Veine pour une éveillée,
-  // celles des deux Veines à partir de mythique (une seule si les deux sont pareilles : +1 Défense)
+  // Une seule capacité : celle de sa Veine si la carte en détient une (VEINE_PAR_NOM), sinon son Trait
+  // (TRAIT_PAR_NOM). Les Veines des attaques ne donnent plus de capacité : elles colorent la carte.
   const veines = attaques.map((x) => x.veine).filter(Boolean);
-  const caps = [];
-  if (rarete !== 'commune') {
-    const liste = rarete === 'eveillee' ? veines.slice(0, 1) : veines;
-    for (const v of liste) { const k = CAP_VEINE[v]; if (k && !caps.includes(k)) caps.push(k); }
-    if (rarete !== 'eveillee' && veines.length > 1 && caps.length === 1) d += 1;
-  }
+  const cle = sansAccents(carte.name);
+  const [veineDetenue = null, veineNom = null] = VEINE_PAR_NOM[cle] ?? [];
+  const trait = veineDetenue ? CAP_VEINE[veineDetenue] : TRAIT_PAR_NOM[cle] ?? null;
+  // Les chiffres ne bougent pas encore (étape 3 : la puissance des raretés) : une mythique ou plus
+  // dont les deux attaques donnaient la même capacité gardait +1 Défense, elle le garde
+  if (!['commune', 'eveillee'].includes(rarete) && veines.length > 1 && CAP_VEINE[veines[0]] === CAP_VEINE[veines[1]]) d += 1;
   // Capacité unique : par le nom de la carte, sinon celle de sa rareté (légendaire, transcendante)
-  const unique = UNIQUE_PAR_NOM[sansAccents(carte.name)]
+  const unique = UNIQUE_PAR_NOM[cle]
     ?? (rarete === 'legendaire' ? 'presence' : rarete === 'transcendante' ? 'fracas' : null);
 
   return {
-    id: `c${carte.id}`, n: carte.name, c, t: 'u', a, d, h, caps, veine: veines[0] ?? null,
-    act: b.act ?? 1, condition: b.condition ?? null, unique, carte,
+    id: `c${carte.id}`, n: carte.name, c, t: 'u', a, d, h, caps: trait ? [trait] : [], veine: veines[0] ?? null,
+    act: b.act ?? 1, condition: b.condition ?? null, unique, carte, veineNom,
   };
 }
 
@@ -53,10 +53,12 @@ export function uniteDepuisCarte(carte) {
 const cleObjet = (nom) => String(nom).normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[’']/g, "'").trim().toLowerCase();
 export const objetDepuisNom = (nom) => OBJETS.find((o) => cleObjet(o.n) === cleObjet(nom)) ?? null;
 
-// Limites du Grimoire : 2 exemplaires d'une carte, 1 seul d'une Transcendante, 2 Transcendantes, 4 objets
+// Limites du Grimoire : 2 exemplaires d'une carte, 1 seul d'une Légendaire ou d'une Transcendante,
+// une seule Transcendante, 4 objets
 export const estObjet = (c) => !!c && OBJETS.some((o) => o.id === c.id);
 export const estTranscendante = (c) => c?.carte?.rarity === 'transcendante';
-export const copiesMax = (c) => (estTranscendante(c) ? 1 : COPIES_MAX);
+export const estLegendaire = (c) => c?.carte?.rarity === 'legendaire';
+export const copiesMax = (c) => (estTranscendante(c) || estLegendaire(c) ? 1 : COPIES_MAX);
 // La carte c peut-elle encore entrer dans la liste (sans dépasser les limites) ?
 export function peutAjouter(liste, c) {
   if (!c || liste.length >= TAILLE_DECK) return false;

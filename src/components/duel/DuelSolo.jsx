@@ -103,7 +103,7 @@ export default function DuelSolo({ config, surMenu, surRejouer, outils }) {
   // Le tour de l'Ombre : une action à la fois, jusqu'à ce qu'elle passe la main
   const tourOmbre = async () => {
     for (let i = 0; i < 30; i++) {
-      await pause(650);
+      await pause(380);   // un court temps entre deux actions de l’Ombre, pour suivre ce qu’elle fait
       if (!actif.current) return;
       const e = await jouer({ type: 'ia', qui: 'adverse', difficulte: config.difficulte });
       if (!actif.current) return;

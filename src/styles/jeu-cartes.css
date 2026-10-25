@@ -174,7 +174,19 @@
   background: linear-gradient(160deg, #3a4252, #1a1e27);
   overflow: hidden;
 }
-.dc-heros__portrait img { width: 100%; height: 100%; object-fit: cover; }
+/* L'avatar : le visage, plus petit, entier au centre de l'hexagone (la pointe du haut ne coupe plus
+   la tête, l'étiquette du nom ne cache plus le menton), fondu dans le même avatar flouté en fond */
+.dc-heros__portrait { position: relative; }
+.dc-heros__portrait:has(img)::before {
+  content: ""; position: absolute; inset: -12%;
+  background: var(--portrait) center / cover;
+  filter: blur(5px) brightness(.5) saturate(.8);
+}
+.dc-heros__portrait img {
+  position: relative; width: 80%; height: 80%; margin-top: 10%; object-fit: cover;
+  -webkit-mask: radial-gradient(closest-side, #000 78%, transparent 100%);
+          mask: radial-gradient(closest-side, #000 78%, transparent 100%);
+}
 .dc-heros__portrait svg { width: 60%; height: 60%; fill: var(--ambre); }
 .dc-heros__infos { display: flex; flex-direction: column; gap: 3px; min-width: 120px; }
 .dc-heros__nom { font-family: "Cinzel","Cinzel Repli", serif; font-size: .82rem; font-weight: 700; letter-spacing: .04em; }
@@ -925,7 +937,7 @@
 .page-jeu .dc-heros__portrait svg { width: 52%; height: 52%; fill: var(--ambre); }
 /* PV : goutte de sang en bas à droite du portrait */
 .page-jeu .dc-heros__pv {
-  position: absolute; right: -12px; bottom: 16px;
+  position: absolute; right: -12px; bottom: 30px; z-index: 2;   /* au-dessus de l’étiquette du nom, même long */
   display: grid; place-items: center;
   width: 34px; height: 34px;
   border-radius: 50% 0 50% 50%;
@@ -1130,7 +1142,7 @@
   .tg-haut, .tg-bas { grid-template-columns: auto 1fr auto; gap: 8px; }
   .dc-heros__cadre { width: 60px; height: 68px; }
   .page-jeu .dc-heros__portrait { width: 54px; height: 62px; }
-  .page-jeu .dc-heros__pv { width: 28px; height: 28px; font-size: .85rem; right: -10px; bottom: 12px; }
+  .page-jeu .dc-heros__pv { width: 28px; height: 28px; font-size: .85rem; right: -10px; bottom: 24px; }
   .orbe { width: 58px; height: 58px; padding-top: 13px; }
   .orbe strong { font-size: 1.4rem; }
   .tg-energie .energie { display: none; }
@@ -2849,10 +2861,6 @@ body.avec-conseils.page-jeu .tg-tapis > .centre__consigne {
 body.avec-conseils.page-jeu .tg-tapis > .centre__consigne:empty { display: none; }
 #btn-conseils.est-actif { background: rgba(217,164,65,.25); box-shadow: inset 0 0 0 1px rgba(217,164,65,.6); }
 
-/* Barre d'outils du duel : les cinq boutons sur une seule ligne */
-.en-duel .historique__outils { flex-wrap: nowrap; gap: 5px; }
-.en-duel .historique__outils .btn-outil { flex: 1 1 0; min-width: 0; }
-
 
 /* =====================================================================
    En ligne : le classé (choix du mode, recherche, rang) et la partie privée
@@ -3212,3 +3220,81 @@ body.avec-conseils.page-jeu .tg-tapis > .centre__consigne:empty { display: none;
 }
 @keyframes tourne-telephone { 0%, 25% { rotate: 0deg; } 55%, 85% { rotate: -90deg; } 100% { rotate: 0deg; } }
 @media (prefers-reduced-motion: reduce) { .tourne-telephone__icone { animation: none; rotate: -90deg; } }
+
+/* =====================================================================
+   Le panneau du duel, en haut à droite (refait le 25/10/2026, remplace les réglages plus haut) :
+   le terrain, les derniers jets (seule la liste défile), une rangée de quatre boutons
+   (règles, conseils, plein écran, abandon), puis le son (couper, volume).
+   ===================================================================== */
+.en-duel .historique__boutons { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.en-duel .historique .btn-outil {
+  width: 100%; height: 32px;
+  clip-path: polygon(6px 0, calc(100% - 6px) 0, 100% 6px, 100% calc(100% - 6px), calc(100% - 6px) 100%, 6px 100%, 0 calc(100% - 6px), 0 6px);
+  background: rgba(255,255,255,.05);
+  box-shadow: inset 0 0 0 1px rgba(216,185,120,.2);
+  transition: background .15s ease;
+}
+.en-duel .historique .btn-outil svg { width: 17px; height: 17px; fill: none; stroke: #e8e2d4; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; transition: stroke .15s ease; }
+.en-duel .historique .btn-outil .ico-son { fill: #e8e2d4; }
+.en-duel .historique .btn-outil .ico-son__ondes, .en-duel .historique .btn-outil .ico-son__barre { fill: none; }
+.en-duel .historique .btn-outil:hover { background: rgba(216,185,120,.12); }
+.en-duel .historique .btn-outil:hover svg { stroke: #f3cf7c; }
+.en-duel .historique .btn-outil.est-actif { background: rgba(217,164,65,.24); box-shadow: inset 0 0 0 1px rgba(217,164,65,.6); }
+.en-duel .historique .btn-outil--danger:hover { background: rgba(142,50,56,.3); }
+.en-duel .historique .btn-outil--danger:hover svg { stroke: #f0959b; }
+.en-duel .historique .btn-outil:focus-visible { outline: 2px solid #f3cf7c; outline-offset: -2px; }
+
+@media (min-width: 601px) {
+  .en-duel .historique {
+    display: flex; flex-direction: column;
+    width: 240px; max-height: min(calc(70vh - 90px), 540px);
+    overflow: hidden; padding: 0;
+    clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+    background: linear-gradient(180deg, rgba(22,24,32,.94), rgba(10,11,16,.94));
+    box-shadow: inset 0 0 0 1px rgba(216,185,120,.22), 0 12px 28px rgba(0,0,0,.5);
+  }
+  .en-duel .tg-haut { padding-right: 262px; }
+
+  /* le terrain du duel */
+  .en-duel .terrain-duel {
+    flex: none; gap: 3px; margin: 0; padding: 12px 14px 11px;
+    border: 0; border-bottom: 1px solid rgba(216,185,120,.16);
+    background: linear-gradient(90deg, rgba(217,164,65,.1), transparent 80%);
+  }
+  .en-duel .terrain-duel__etiquette { font-family: "Cinzel","Cinzel Repli", serif; font-size: .58rem; letter-spacing: .22em; text-transform: uppercase; color: var(--gris); }
+  .en-duel .terrain-duel__nom { font-size: .82rem; letter-spacing: .06em; color: #f0d9a0; }
+  .en-duel .terrain-duel__texte { font-size: .76rem; color: #b4bac5; }
+
+  /* les derniers jets : la seule partie qui défile */
+  .en-duel .historique__titre { flex: none; margin: 0; padding: 11px 14px 7px; font-size: .6rem; letter-spacing: .22em; }
+  .en-duel .historique__liste { flex: 1 1 auto; min-height: 0; overflow-y: auto; scrollbar-width: thin; gap: 8px; padding: 0 14px 12px; }
+  .en-duel .jet { gap: 10px; font-size: .76rem; }
+  .en-duel .jet b { width: 26px; height: 26px; font-size: .78rem; background: #262c38; color: #c9ced8; }
+  .en-duel .jet--normal b, .en-duel .jet--solide b { background: #3b4252; color: #f3ecdc; }
+  .en-duel .jet--critique b, .en-duel .jet--grace b { background: var(--ambre); color: #1b1408; }
+  .en-duel .jet--echec b, .en-duel .jet--malediction b { background: #8e3238; color: #f6e3e4; }
+  .en-duel .jet small { margin-top: 1px; font-size: .68rem; }
+
+  /* les outils et le son, collés en bas */
+  .en-duel .historique__outils {
+    position: static; flex: none; display: flex; flex-direction: column; gap: 10px;
+    margin: 0; padding: 10px 12px 12px;
+    border-top: 1px solid rgba(216,185,120,.16); background: rgba(0,0,0,.28);
+  }
+  .en-duel .volume { flex: none; display: grid; grid-template-columns: 32px 1fr 3.2em; gap: 10px; align-items: center; }
+  .en-duel .volume .btn-outil { width: 32px; }
+  .en-duel .volume__valeur { font-family: "Cinzel","Cinzel Repli", serif; font-size: .7rem; }
+}
+@media (min-width: 601px) and (max-width: 1100px) {
+  .en-duel .historique { width: 200px; }
+  .en-duel .tg-haut { padding-right: 222px; }
+  .en-duel .terrain-duel__texte { display: none; }
+}
+/* Téléphone : seulement les boutons, et celui du son (sans le curseur) */
+@media (max-width: 600px) {
+  .en-duel .historique__outils { flex-direction: row; }
+  .en-duel .historique__boutons { display: flex; gap: 4px; }
+  .en-duel .volume { display: block; }
+  .en-duel .volume input, .en-duel .volume__valeur { display: none; }
+  .en-duel .historique .btn-outil { width: 32px; }
+}

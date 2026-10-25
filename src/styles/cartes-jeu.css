@@ -735,6 +735,10 @@ body.glisser-actif, body.glisser-actif * { cursor: grabbing !important; }
 /* éclats plus transparents, plus doux */
 .scintilles { opacity: .55; }
 .carte-jeu.est-penchee .scintilles { opacity: .7; }
+/* Fluidité : les éclats ne s'animent que sur la carte sous la souris. Au repos ils restent figés
+   (chacun à un moment différent de son éclat, donc toujours visibles) : animés sur toutes les cartes
+   rares à la fois, le navigateur les recalculait à chaque image et toute la page ramait. */
+.carte-jeu:not(.est-penchee) .scintilles i { animation-play-state: paused; }
 /* sous la souris : reflet d'or plus marqué */
 .carte-jeu--transcendante.est-penchee::after { opacity: 1; mix-blend-mode: soft-light; filter: brightness(1.25) saturate(1.2); }
 /* le reflet d'or, bien visible sous la souris : une large tache dorée + une bande d'or qui suit le pointeur */

@@ -9,16 +9,17 @@ import { useState } from 'react';
 import { RARETES, VEINES, RANGS, rareteDe, attaquesDe } from '../data/affichage.js';
 import { urlPublique } from '../lib/chemins.js';
 import { uniteDepuisCarte } from '../moteur/index.js';
-import { CLES, lirePref } from '../lib/preferences.js';
+import { CAPACITES } from '../data/regles.js';
+import { modePerformance, niveauAnimationsChoisi } from '../lib/preferences.js';
 
 // La carte suit la souris : elle s'incline en 3D (et, pour une Transcendante, le reflet suit le pointeur).
 // Pour la fluidité : la position de la carte est mesurée une seule fois à l'entrée de la souris (une carte
 // penchée change de contour, la re-mesurer à chaque mouvement la ferait trembler), et la carte n'est
 // mise à jour qu'une fois par image (requestAnimationFrame), directement par son transform.
-// Souris seulement ; seul le réglage du jeu « Animations réduites » la coupe (pas celui de Windows).
+// Souris seulement ; coupée par les Paramètres du jeu (animations coupées, mode performance), pas par ceux de Windows.
 const suivi = new WeakMap();
 function entrer(e) {
-  if (e.pointerType !== 'mouse' || lirePref(CLES.animationsReduites)) return;
+  if (e.pointerType !== 'mouse' || niveauAnimationsChoisi() === 'coupees' || modePerformance()) return;
   const el = e.currentTarget;
   suivi.set(el, { r: el.getBoundingClientRect(), x: 0.5, y: 0.5, image: 0, reflet: !el.classList.contains('carte-jeu--commune') });
   el.classList.add('est-penchee');
@@ -64,6 +65,13 @@ function StatsCarte({ carte }) {
   );
 }
 
+// Le Trait de la carte (« Tenace »), ou sa Veine et la capacité qu'elle donne (« Veine du Sang · Drain »)
+function libelleTrait(u) {
+  const cap = CAPACITES[u.caps[0]];
+  if (!cap) return null;
+  return u.veineNom ? `${u.veineNom} · ${cap.nom}` : cap.nom;
+}
+
 // Le cadre d'informations du bas de la carte, à la manière d'une carte Pokémon. Seulement pour les
 // cartes qui ont un rang ou des attaques, et pour les Transcendantes (illustration pleine carte).
 // Le nom sur la plaque : « Elfe des Neiges dorée » s'affiche « Elfe des Neiges » (la base garde le nom complet)
@@ -73,12 +81,14 @@ export function CarteInfos({ carte, rarete = rareteDe(carte) }) {
   if (!aUnPanneau(carte, rarete)) return null;
   const rang = RANGS[carte.rank];
   const u = uniteDepuisCarte(carte);
-  const sousTitre = attaquesDe(carte)[0]?.nom ?? null;
-  // Une plaque sombre : la rareté en petit, le nom en grand, un sous-titre (la 1re attaque), puis les chiffres
+  const sousTitre = libelleTrait(u);
+  // Une plaque sombre : la rareté en petit, le nom en grand, le Trait (ou la Veine) en sous-titre, puis les chiffres.
+  // Un nom long s'écrit plus petit, sur une ligne, pour laisser la place au Trait.
+  const nom = nomAffiche(carte.name);
   return (
-    <div className={`carte-infos carte-plaque carte-infos--${rarete}`}>
+    <div className={`carte-infos carte-plaque carte-infos--${rarete}${nom.length > 20 ? ' carte-plaque--long' : ''}`}>
       <span className="carte-plaque__rarete">{RARETES[rarete]}{rang && <> · Rang {rang}</>}</span>
-      <span className="carte-plaque__nom">{nomAffiche(carte.name)}</span>
+      <span className="carte-plaque__nom">{nom}</span>
       {sousTitre && <span className="carte-plaque__sous">{sousTitre}</span>}
       <span className="carte-plaque__chiffres">
         <span title="Coût d'énergie">Coût <b>{u.c}</b></span>
@@ -94,6 +104,9 @@ export function CarteInfos({ carte, rarete = rareteDe(carte) }) {
 function infobulleDe(carte, rarete) {
   const rang = RANGS[carte.rank];
   const lignes = [`${carte.name}${rang ? ` — Rang ${rang}` : ''} — ${RARETES[rarete]}`];
+  const u = uniteDepuisCarte(carte);
+  const cap = CAPACITES[u.caps[0]];
+  if (cap) lignes.push(`${libelleTrait(u)} : ${cap.texte}`);
   for (const a of attaquesDe(carte)) {
     const puissance = a.puissance != null ? ` (${a.puissance})` : '';
     lignes.push(`${VEINES[a.veine]?.[1] ?? '✦'} ${a.nom}${puissance}${a.effet ? ` : ${a.effet}` : ''}`);

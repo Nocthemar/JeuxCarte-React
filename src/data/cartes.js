@@ -19,12 +19,12 @@ export const SORTS = [
 
 // Troupes du Codex : soldats, gardes, bêtes… (illustration low poly). Elles complètent le Grimoire
 export const TROUPES = [
-  { id: 't-ecuyer',     n: 'Écuyer de la Couronne', c: 1, t: 'u', a: 1, d: 1, h: 2, caps: [],               veine: 'trone',  icone: 'epee' },
-  { id: 't-garde',      n: 'Garde du Pont',         c: 2, t: 'u', a: 1, d: 3, h: 3, caps: ['garde'],        veine: 'forge',  icone: 'bouclier' },
+  { id: 't-ecuyer',     n: 'Écuyer de la Couronne', c: 1, t: 'u', a: 1, d: 1, h: 2, caps: ['rapide'],       veine: 'trone',  icone: 'epee' },
+  { id: 't-garde',     n: 'Garde du Pont',         c: 2, t: 'u', a: 1, d: 3, h: 3, caps: ['garde'],        veine: 'forge',  icone: 'bouclier' },
   { id: 't-archer',     n: 'Archer des Remparts',   c: 2, t: 'u', a: 2, d: 1, h: 2, caps: ['percee'],       veine: 'regard', icone: 'arc' },
   { id: 't-loup',       n: 'Loup des Cendres',      c: 2, t: 'u', a: 3, d: 1, h: 1, caps: ['charge'],       veine: 'ombre',  icone: 'croc' },
-  { id: 't-chevalier',  n: 'Chevalier errant',      c: 3, t: 'u', a: 3, d: 2, h: 3, caps: [],               veine: 'trone',  icone: 'epee' },
-  { id: 't-cavalier',   n: 'Cavalier de la Marche', c: 3, t: 'u', a: 3, d: 1, h: 2, caps: ['charge'],       veine: 'maree',  icone: 'lance' },
+  { id: 't-chevalier',  n: 'Chevalier errant',      c: 3, t: 'u', a: 3, d: 2, h: 3, caps: ['tenace'],       veine: 'trone',  icone: 'epee' },
+  { id: 't-cavalier',  n: 'Cavalier de la Marche', c: 3, t: 'u', a: 3, d: 1, h: 2, caps: ['charge'],       veine: 'maree',  icone: 'lance' },
   { id: 't-sentinelle', n: 'Sentinelle de pierre',  c: 4, t: 'u', a: 2, d: 4, h: 5, caps: ['provocation'],  veine: 'racine', icone: 'bouclier' },
   { id: 't-lancier',    n: 'Lancier des Ruines',    c: 4, t: 'u', a: 4, d: 2, h: 4, caps: ['riposte'],      veine: 'sang',   icone: 'lance' },
 ];

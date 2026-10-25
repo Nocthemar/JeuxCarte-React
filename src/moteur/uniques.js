@@ -1,16 +1,19 @@
 // =====================================================================
 //  Capacités uniques des grandes cartes (repris de l'ancien JS/jeu-cartes-moteur.js)
-//  Une seule différence voulue : Kaéliss ne se soigne que si elle inflige des dégâts (voir kaeliss).
+//  Différences voulues : Kaéliss ne se soigne que si elle inflige des dégâts (voir kaeliss) ;
+//  octobre 2026, équilibrage d'après des parties simulées : Maître du Flot (Kaéliss) 2 dégâts pour
+//  3 énergie, Marcheur d'Esprit (Dalek) endort au lieu de faire piocher, Plume du Codex 2 énergie,
+//  et Vultoff gagne Sentence du Sans-Tête.
 //
 //  arrivee(p, qui, u, ev) : à la pose ;
 //  actif : { nom, texte, cout (énergie), cible: 'ennemi'|'allie'|null, effet, utile (l'IA ne s'en
-//          sert que si utile() est vrai) }. Une capacité active coûte 1 action, une fois par tour.
+//          sert que si utile() est vrai) }. Une capacité active : de l'énergie, sans action, une fois par tour.
 // =====================================================================
 import { MILICIEN } from '../data/cartes.js';
 import { destinInfo } from './cartes.js';
 import { hasard, d20 } from './hasard.js';
 import {
-  autre, unites, trouver, placeLibre, instancier, piocher, blesser, soignerHeros, peutAttaquer,
+  autre, unites, trouver, placeLibre, instancier, blesser, soignerHeros, peutAttaquer,
 } from './base.js';
 import { appliquerDestin } from './destin.js';
 
@@ -20,12 +23,12 @@ export const UNIQUES = {
     texte: 'À son arrivée, ton héros récupère 4 PV.',
     arrivee(p, qui, u, ev) { soignerHeros(p.camps[qui], 4, qui, ev); },
     actif: {
-      nom: 'Maître du Flot', cout: 2, cible: 'ennemi',
-      texte: '1 action et 2 énergie : inflige 3 dégâts à une unité adverse ; Kaéliss récupère autant de PV.',
+      nom: 'Maître du Flot', cout: 3, cible: 'ennemi',
+      texte: '3 énergie : inflige 2 dégâts à une unité adverse ; Kaéliss récupère autant de PV.',
       effet(p, qui, u, cible, ev) {
         const t = trouver(p.camps[autre(qui)], cible.uid);
         // CORRIGÉ : Kaéliss récupère les PV des dégâts réellement infligés (rien si un Bouclier les absorbe)
-        const inflige = blesser(p, autre(qui), t, 3, ev, qui);
+        const inflige = blesser(p, autre(qui), t, 2, ev, qui);
         if (inflige <= 0) return;
         const avant = u.h;
         u.h = Math.min(u.hMax, u.h + inflige);
@@ -41,10 +44,14 @@ export const UNIQUES = {
       if (t) { t.gele = 1; ev.touches.push({ camp: autre(qui), uid: t.uid, texte: 'Endormie', etat: true }); }
     },
     actif: {
-      nom: 'Marcheur d’Esprit', cout: 2, cible: null,
-      utile: (p, qui) => p.camps[qui].main.length <= 4,
-      texte: '1 action et 2 énergie : pioche 2 cartes.',
-      effet(p, qui, u, cible, ev) { ev.pioche = piocher(p.camps[qui], 2); },
+      nom: 'Marcheur d’Esprit', cout: 2, cible: 'ennemi',
+      // (avant : piocher 2 cartes ; l'Ombre s'en servait jusqu'à vider son Grimoire, et perdait)
+      utile: (p, qui) => unites(p.camps[autre(qui)]).some((t) => !t.gele && t.a >= 3),
+      texte: '2 énergie : endort une unité adverse : elle ne pourra ni attaquer ni défendre à son prochain tour.',
+      effet(p, qui, u, cible, ev) {
+        const t = trouver(p.camps[autre(qui)], cible.uid);
+        if (t) { t.gele = 1; ev.touches.push({ camp: autre(qui), uid: t.uid, texte: 'Endormie', etat: true }); }
+      },
     },
   },
   maitre: {
@@ -57,9 +64,9 @@ export const UNIQUES = {
       appliquerDestin(p, qui, de, ev);
     },
     actif: {
-      nom: 'Plume du Codex', cout: 3, cible: null,
-      utile: (p, qui, u) => p.camps[qui].actions >= 2 && !p.camps[qui].prochainCritique && unites(p.camps[qui]).some((x) => x !== u && peutAttaquer(x) && x.a >= 3),
-      texte: '1 action et 3 énergie : ton prochain jet d’attaque est un 20 naturel.',
+      nom: 'Plume du Codex', cout: 2, cible: null,
+      utile: (p, qui) => !p.camps[qui].prochainCritique && unites(p.camps[qui]).some((x) => peutAttaquer(x) && x.a >= 3),
+      texte: '2 énergie : ton prochain jet d’attaque est un 20 naturel.',
       effet(p, qui, u, cible, ev) {
         p.camps[qui].prochainCritique = true;
         ev.touches.push({ camp: qui, heros: true, texte: 'Prochain jet : 20 !', buff: true });
@@ -135,6 +142,14 @@ export const UNIQUES = {
       p.camps[qui].stats.degats += 3;
       ev.touches.push({ camp: autre(qui), heros: true, valeur: 3 });
       soignerHeros(p.camps[qui], 3, qui, ev);
+    },
+    actif: {
+      nom: 'Sentence du Sans-Tête', cout: 2, cible: 'ennemi',
+      texte: '2 énergie : inflige 2 dégâts à une unité adverse ; si elle tombe, ton héros récupère 2 PV.',
+      effet(p, qui, u, cible, ev) {
+        const t = trouver(p.camps[autre(qui)], cible.uid);
+        if (blesser(p, autre(qui), t, 2, ev, qui) > 0 && t.h <= 0) soignerHeros(p.camps[qui], 2, qui, ev);
+      },
     },
   },
   // Les Veines : les Entités prennent forme et renforcent les tiens

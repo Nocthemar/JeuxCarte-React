@@ -2,13 +2,13 @@
 //  Les règles du duel, une par une (scénarios construits à la main, dés forcés avec etat.tirages)
 // =====================================================================
 import { describe, it, expect } from 'vitest';
-import { creerPartie, appliquerAction, defenseDe, actionsDuTour, uniteDepuisCarte, UNIQUES } from '../../src/moteur/index.js';
+import { creerPartie, appliquerAction, defenseDe, actionsDuTour, uniteDepuisCarte, UNIQUES, grimoire } from '../../src/moteur/index.js';
 import { faceD20 } from '../../src/moteur/hasard.js';
 import { instancier, piocher, nettoyer } from '../../src/moteur/base.js';
 import { TROUPES, OBJETS, SORTS } from '../../src/data/cartes.js';
 import { CATALOGUE } from './catalogue.js';
 
-const ECUYER = TROUPES[0];   // 1 / 1 / 2, sans capacité
+const ECUYER = { ...TROUPES[0], caps: [] };   // 1 / 1 / 2, sans son Trait (Rapide) pour ces tests
 const objet = (fx) => OBJETS.find((o) => o.fx === fx);
 
 // Une partie sur les Lices de Pravorn (seule règle : Charge +1, et aucune unité des tests n'a Charge),
@@ -124,6 +124,154 @@ describe('Défendre', () => {
     expect(e.camps.joueur.terrain.find((x) => x?.uid === uid).defend).toBe(true);    // pendant le tour adverse
     e = appliquerAction(e, { type: 'fin', qui: 'adverse' });
     expect(e.camps.joueur.terrain.find((x) => x?.uid === uid).defend).toBe(false);   // de retour à mon tour
+  });
+});
+
+describe('Les Traits : une seule capacité par carte', () => {
+  const unite = (nom) => uniteDepuisCarte(CATALOGUE.find((c) => c.name === nom));
+
+  it('chaque carte du catalogue a exactement une capacité', () => {
+    for (const c of CATALOGUE) expect(uniteDepuisCarte(c).caps, c.name).toHaveLength(1);
+  });
+  it('les détenteurs d’une Veine ont la capacité de leur Veine, et son nom', () => {
+    expect([unite('Kaéliss').caps, unite('Kaéliss').veineNom]).toEqual([['drain'], 'Veine du Sang']);
+    expect([unite('Dalek').caps, unite('Dalek').veineNom]).toEqual([['interception'], 'Veine du Rêve']);
+  });
+  it('les autres ont leur Trait, même une commune', () => {
+    expect([unite('Vultoff').caps, unite('Vultoff').veineNom]).toEqual([['tenace'], null]);
+    expect(unite('Slime').caps).toEqual(['tenace']);
+    expect(unite("Gardes d'Erynedhal").caps).toEqual(['rapide']);
+    expect(unite('Garde de Pravorn').caps).toEqual(['interception']);
+  });
+});
+
+describe('Rapide', () => {
+  it('après avoir attaqué, elle peut encore se mettre en défense (1 action)', () => {
+    const e = nouvellePartie();
+    const uid = poser(e, 'joueur', { a: 2, d: 1, h: 4, caps: ['rapide'] });
+    const apres = attaque(e, uid, HEROS, 10);
+    const garde = appliquerAction(apres, { type: 'defendre', qui: 'joueur', uid });
+    expect(garde.evenements[0].type).toBe('defense');
+    expect(garde.camps.joueur.actions).toBe(e.camps.joueur.actions - 2);
+  });
+  it('sans Rapide, une unité qui a attaqué ne peut plus défendre', () => {
+    const e = nouvellePartie();
+    const uid = poser(e, 'joueur', { a: 2, d: 1, h: 4 });
+    const apres = attaque(e, uid, HEROS, 10);
+    expect(appliquerAction(apres, { type: 'defendre', qui: 'joueur', uid }).evenements[0].type).toBe('refus');
+  });
+  it('en défense d’abord, elle n’attaque plus ce tour', () => {
+    const e = nouvellePartie();
+    const uid = poser(e, 'joueur', { a: 2, d: 1, h: 4, caps: ['rapide'] });
+    const garde = appliquerAction(e, { type: 'defendre', qui: 'joueur', uid });
+    expect(appliquerAction(garde, { type: 'attaque', qui: 'joueur', uid, cible: HEROS }).evenements[0].type).toBe('refus');
+  });
+});
+
+describe('Tenace', () => {
+  const preparer = () => {
+    const e = nouvellePartie();
+    const uid = poser(e, 'joueur', { a: 5, d: 1, h: 5 });
+    const cible = poser(e, 'adverse', { a: 1, d: 1, h: 3, caps: ['tenace'] });
+    return { e, uid, cible: { camp: 'adverse', uid: cible } };
+  };
+  const pv = (e, camp, uid) => e.camps[camp].terrain.find((x) => x?.uid === uid)?.h ?? null;
+
+  it('un coup qui devrait la tuer la laisse à 1 PV, une seule fois', () => {
+    const { e, uid, cible } = preparer();
+    const apres = attaque(e, uid, cible, 15);   // 5 dégâts sur 3 PV
+    expect(apres.evenements[0].tenace).toEqual(cible);
+    expect(pv(apres, 'adverse', cible.uid)).toBe(1);
+    // le coup suivant la tue
+    const u2 = poser(apres, 'joueur', { a: 5, d: 1, h: 5 });
+    const fin = attaque(apres, u2, cible, 15);
+    expect(pv(fin, 'adverse', cible.uid)).toBeNull();
+  });
+  it('debout à 1 PV, elle riposte si elle en a le Trait (ou si elle défend)', () => {
+    const { e, uid, cible } = preparer();
+    e.camps.adverse.terrain.find((x) => x?.uid === cible.uid).caps.push('riposte');
+    const apres = attaque(e, uid, cible, 15);
+    expect(apres.evenements[0].riposte).toBe(1);
+  });
+  it('aussi contre les dégâts d’un sort', () => {
+    const { e, cible } = preparer();
+    e.camps.joueur.main = [SORTS.find((s) => s.id === 's-sang')];   // Saignée : 5 dégâts
+    e.camps.joueur.energie = 10;
+    const apres = appliquerAction(e, { type: 'jouer', qui: 'joueur', index: 0, cible });
+    expect(pv(apres, 'adverse', cible.uid)).toBe(1);
+    expect(apres.evenements[0].touches.some((t) => t.texte === 'Tenace !')).toBe(true);
+  });
+  it('un attaquant Tenace tué par une riposte reste à 1 PV', () => {
+    const e = nouvellePartie();
+    const uid = poser(e, 'joueur', { a: 1, d: 1, h: 2, caps: ['tenace'] });
+    const cible = poser(e, 'adverse', { a: 4, d: 1, h: 9, caps: ['riposte'] });
+    const apres = attaque(e, uid, { camp: 'adverse', uid: cible }, 10);
+    expect(apres.evenements[0].tenaceAttaquant).toEqual({ camp: 'joueur', uid });
+    expect(pv(apres, 'joueur', uid)).toBe(1);
+  });
+});
+
+describe('La puissance des grandes cartes (octobre 2026)', () => {
+  const unite = (nom) => uniteDepuisCarte(CATALOGUE.find((c) => c.name === nom));
+  // Pose une grande carte du catalogue dans le camp du joueur, prête ; renvoie l'unité
+  const grande = (e, nom) => {
+    const u = instancier(e, unite(nom));
+    u.prete = true;
+    e.camps.joueur.terrain[e.camps.joueur.terrain.indexOf(null)] = u;
+    return u;
+  };
+
+  it('chiffres de base : Légendaire 5 / 4 / 9, Transcendante coût 6 et 6 / 5 / 12', () => {
+    const v = unite('Vultoff');   // ni rang, ni attaques très fortes ou très faibles
+    expect([v.c, v.a, v.d, v.h]).toEqual([5, 5, 4, 9]);
+    const t = unite('Elfe des Neiges dorée');   // attaques puissantes (moyenne 100) : +1 Attaque, -1 PV
+    expect([t.c, t.a, t.d, t.h, t.act]).toEqual([6, 7, 5, 11, 2]);
+  });
+  it('Grimoire : un seul exemplaire d’une Légendaire, une seule Transcendante', () => {
+    const [k, d, elfe, veines] = ['Kaéliss', 'Dalek', 'Elfe des Neiges dorée', 'Les Veines'].map(unite);
+    const liste = grimoire([k, k, d, elfe, veines]);
+    expect(liste.filter((c) => c === k)).toHaveLength(1);
+    expect(liste.filter((c) => c === d)).toHaveLength(1);
+    expect([liste.includes(elfe), liste.includes(veines)]).toEqual([true, false]);
+  });
+  it('une capacité active ne coûte pas d’action (seulement de l’énergie), une fois par tour', () => {
+    const e = nouvellePartie();
+    const vultoff = grande(e, 'Vultoff');
+    const cible = poser(e, 'adverse', { a: 1, d: 1, h: 6 });
+    e.camps.joueur.actions = 0;
+    e.camps.joueur.energie = 4;
+    const apres = appliquerAction(e, { type: 'capacite', qui: 'joueur', uid: vultoff.uid, cible: { camp: 'adverse', uid: cible } });
+    expect(apres.evenements[0].type).toBe('capacite');
+    expect([apres.camps.joueur.actions, apres.camps.joueur.energie]).toEqual([0, 2]);
+    // une seule fois par tour
+    expect(appliquerAction(apres, { type: 'capacite', qui: 'joueur', uid: vultoff.uid, cible: { camp: 'adverse', uid: cible } }).evenements[0].type).toBe('refus');
+  });
+  it('Sentence du Sans-Tête (Vultoff) : 2 dégâts ; si l’unité tombe, ton héros récupère 2 PV', () => {
+    const e = nouvellePartie();
+    const vultoff = grande(e, 'Vultoff');
+    const cible = poser(e, 'adverse', { a: 1, d: 1, h: 2 });
+    e.camps.joueur.energie = 2;
+    e.camps.joueur.pv = 10;
+    const apres = appliquerAction(e, { type: 'capacite', qui: 'joueur', uid: vultoff.uid, cible: { camp: 'adverse', uid: cible } });
+    expect(apres.camps.adverse.terrain.some((x) => x?.uid === cible)).toBe(false);
+    expect(apres.camps.joueur.pv).toBe(12);
+  });
+  it('Marcheur d’Esprit (Dalek) : 2 énergie, endort une unité adverse (avant : piocher 2 cartes)', () => {
+    const e = nouvellePartie();
+    const dalek = grande(e, 'Dalek');
+    const cible = poser(e, 'adverse', { a: 4, d: 1, h: 6 });
+    e.camps.joueur.energie = 2;
+    const main = e.camps.joueur.main.length;
+    const apres = appliquerAction(e, { type: 'capacite', qui: 'joueur', uid: dalek.uid, cible: { camp: 'adverse', uid: cible } });
+    expect(apres.camps.adverse.terrain.find((x) => x?.uid === cible).gele).toBe(1);
+    expect(apres.camps.joueur.main.length).toBe(main);
+  });
+  it('Plume du Codex (Maître du Jeu) : 2 énergie, le prochain jet est un 20 naturel', () => {
+    const e = nouvellePartie();
+    const maitre = grande(e, 'Maître du Jeu');
+    e.camps.joueur.energie = 2;
+    const apres = appliquerAction(e, { type: 'capacite', qui: 'joueur', uid: maitre.uid });
+    expect([apres.camps.joueur.prochainCritique, apres.camps.joueur.energie]).toEqual([true, 0]);
   });
 });
 
@@ -270,16 +418,16 @@ describe('Correction 3 : Kaéliss ne se soigne que si elle inflige des dégâts'
     k.prete = true;
     k.h = 2;   // blessée
     e.camps.joueur.terrain[0] = k;
-    e.camps.joueur.energie = 2;
+    e.camps.joueur.energie = 3;
     const cible = poser(e, 'adverse', { a: 1, d: 1, h: 6 });
     e.camps.adverse.terrain.find((x) => x?.uid === cible).bouclier = bouclier;
     const apres = appliquerAction(e, { type: 'capacite', qui: 'joueur', uid: k.uid, cible: { camp: 'adverse', uid: cible } });
     return { kaeliss: apres.camps.joueur.terrain[0].h, cible: apres.camps.adverse.terrain.find((x) => x?.uid === cible).h };
   }
-  it('sans Bouclier : 3 dégâts, et Kaéliss récupère 3 PV', () => {
-    expect(maitreDuFlot(false)).toEqual({ kaeliss: 5, cible: 3 });
+  it('sans Bouclier : 2 dégâts, et Kaéliss récupère 2 PV', () => {
+    expect(maitreDuFlot(false)).toEqual({ kaeliss: 4, cible: 4 });
   });
-  it('le Bouclier absorbe le coup : pas de dégâts, donc pas de soin (avant : +3 PV quand même)', () => {
+  it('le Bouclier absorbe le coup : pas de dégâts, donc pas de soin (avant : des PV quand même)', () => {
     expect(maitreDuFlot(true)).toEqual({ kaeliss: 2, cible: 6 });
   });
   it('le texte de la capacité est inchangé', () => {

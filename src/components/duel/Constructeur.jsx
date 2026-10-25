@@ -95,7 +95,7 @@ export default function Constructeur({ cartes, toutes, connecte, surBasculer, su
           <Choix id="cf-tri" label="Trier" valeur={filtres.tri} surChoix={filtrer('tri')} options={[['cout', 'Trier par coût'], ['rarete', 'Trier par rareté'], ['nom', 'Trier par nom']]} />
         </div>
         <p className="choix-deck__aide">
-          {liste.length} carte{liste.length > 1 ? 's' : ''}. Un clic ajoute un exemplaire ({COPIES_MAX} au plus, 1 seul d&apos;une Transcendante), un clic de plus au maximum la retire.
+          {liste.length} carte{liste.length > 1 ? 's' : ''}. Un clic ajoute un exemplaire ({COPIES_MAX} au plus, 1 seul d&apos;une Légendaire ou d&apos;une Transcendante), un clic de plus au maximum la retire.
         </p>
         <div className="choix-deck__cartes">
           {liste.length ? liste.map((c) => {

@@ -1,6 +1,7 @@
 // =====================================================================
 //  Le grand d20 (styles/duel-spectacle.css)
-//  À chaque lancer, un grand dé à facettes est jeté au centre de l'écran : il tombe en tournant,
+//  À chaque jet important (un 20, un 1, le Destin, l'attaque d'une grande carte : lib/duel/animations.js),
+//  un grand dé à facettes est jeté au centre de l'écran : il tombe en tournant,
 //  rebondit, se pose, puis montre son résultat en grand. Il rejoint ensuite le petit dé du plateau
 //  (#d20), qui garde le détail du calcul.
 //   - un 20 (critique, ou grâce du Destin) : arrêt sur image, le dé grossit dans un halo de rayons dorés,
@@ -11,9 +12,9 @@
 import { pause } from '../pause.js';
 import { jouerSon } from '../son.js';
 import { onde, particules, secousseEcran } from './effets.js';
-import { effetsLegers } from '../preferences.js';
+import { effetsLegers, quandPresse } from '../preferences.js';
 
-const legers = effetsLegers();
+const legers = effetsLegers;
 
 // Le dé vu de face : un hexagone découpé en facettes (la facette du milieu porte le chiffre)
 const FACETTES = [
@@ -61,9 +62,11 @@ export async function grandDe(de, q, court, destin = false) {
   setTimeout(() => {
     jouerSon('choc', 0.02);
     onde(gd, 'rgba(230,235,245,.55)', 1.5, 420);
-    if (!legers) particules(gd, { n: 12, couleurs: ['#c5cad3', '#9aa1ad', '#ffffff'], vitesse: 110, gravite: 60, taille: [3, 7], rond: true, duree: 600 });
+    if (!legers()) particules(gd, { n: 12, couleurs: ['#c5cad3', '#9aa1ad', '#ffffff'], vitesse: 110, gravite: 60, taille: [3, 7], rond: true, duree: 600 });
   }, 480);
+  const oublier = quandPresse(() => jet.finish());   // un clic du joueur : le dé se pose aussitôt
   await jet.finished;
+  oublier();
   clearInterval(defile);
 
   // 2. Le résultat
@@ -77,7 +80,7 @@ export async function grandDe(de, q, court, destin = false) {
     scene.classList.add('est-eclatant');
     onde(gd, '#f3cf7c', 6, 900);
     onde(gd, '#ffffff', 3.2, 600);
-    particules(gd, { n: legers ? 24 : 48, couleurs: ['#fff1c8', '#f3cf7c', '#d9a441', '#ffffff'], vitesse: 320, gravite: 120, taille: [3, 10], duree: 1100 });
+    particules(gd, { n: legers() ? 24 : 48, couleurs: ['#fff1c8', '#f3cf7c', '#d9a441', '#ffffff'], vitesse: 320, gravite: 120, taille: [3, 10], duree: 1100 });
     secousseEcran(10, 450);
     corps.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.32)', offset: 0.35 }, { transform: 'scale(1.18)' }], { duration: 700, easing: 'cubic-bezier(.2,.9,.3,1.3)', fill: 'forwards' });
     texte.animate([{ transform: 'scale(2.6)', opacity: 0 }, { transform: 'scale(.94)', opacity: 1, offset: 0.55 }, { transform: 'scale(1)', opacity: 1 }], { duration: 420, easing: 'ease-out', fill: 'forwards' });
@@ -87,7 +90,7 @@ export async function grandDe(de, q, court, destin = false) {
     await pause(80);
     scene.classList.add('est-brise');
     corps.animate([0, 1, 2, 3, 4, 5, 6].map((i) => ({ transform: `translate(${i % 2 ? -7 : 7}px, ${i % 3 ? 2 : -2}px) rotate(${i % 2 ? -3 : 3}deg)` })).concat([{ transform: 'none' }]), { duration: 420, easing: 'ease-out' });
-    if (!legers) particules(gd, { n: 16, couleurs: ['#c45b61', '#5d2a30', '#9aa1ad'], vitesse: 130, gravite: 160, taille: [3, 8], duree: 800 });
+    if (!legers()) particules(gd, { n: 16, couleurs: ['#c45b61', '#5d2a30', '#9aa1ad'], vitesse: 130, gravite: 160, taille: [3, 8], duree: 800 });
     texte.animate([{ transform: 'translateY(10px)', opacity: 0 }, { transform: 'none', opacity: 1 }], { duration: 300, easing: 'ease-out', fill: 'forwards' });
     await pause(820);
   } else {

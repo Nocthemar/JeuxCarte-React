@@ -14,13 +14,13 @@ import { particules, onde, flash, voile, secousseEcran, projectile, griffes, ray
 import { jouerSon } from '../son.js';
 import { VEINES } from '../../data/affichage.js';
 import { animationsReduites } from '../preferences.js';
+import { pause } from '../pause.js';
 
-const reduit = animationsReduites();
-const pause = (ms) => new Promise((r) => setTimeout(r, reduit || document.hidden ? 0 : ms));
+const reduit = animationsReduites;
 
 // L'attaquant s'élance vers sa cible (corps à corps) ; renvoie la fonction qui le ramène
 async function elan(att, cib, part = 0.7) {
-  if (!att || !cib || reduit) return () => {};
+  if (!att || !cib || reduit()) return () => {};
   const ra = att.getBoundingClientRect();
   const rc = cib.getBoundingClientRect();
   att.style.setProperty('--dx', `${(rc.left + rc.width / 2 - (ra.left + ra.width / 2)) * part}px`);
@@ -638,7 +638,7 @@ const ATTAQUES = {
       secousseEcran(12, 800);
       // douze traits de lumière, un par Veine, convergent sur la cible
       const couleurs = ['#ff3b4a', '#f6d995', '#bfe3f0', '#c9b2fb', '#8a919c', '#a5876a', '#ff9a3d', '#3f8fc0', '#5d9b48', '#fff3c4', '#6e4a8a', '#c5cad3'];
-      couleurs.forEach((c, i) => setTimeout(() => rayon(att, cib, { couleur: c, epaisseur: 6, duree: 420 }), reduit ? 0 : i * 40));
+      couleurs.forEach((c, i) => setTimeout(() => rayon(att, cib, { couleur: c, epaisseur: 6, duree: 420 }), reduit() ? 0 : i * 40));
       await pause(couleurs.length * 40 + 350);
       symbole(cib, '✦', { couleur: '#f6d995', taille: 96, duree: 1100 });
       flash(cib, 'rgba(255,255,255,.95)', 3.2);

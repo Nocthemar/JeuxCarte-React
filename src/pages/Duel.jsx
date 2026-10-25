@@ -114,28 +114,36 @@ export default function Duel() {
     } catch { notifier("Le plein écran n'est pas disponible sur ce navigateur.", 'erreur'); }
   };
 
-  // Les outils sous l'historique des jets (règles, conseils, son, plein écran, abandon, volume)
+  // Les outils sous l'historique des jets : une rangée de boutons (règles, conseils, plein écran,
+  // abandon), puis le son (couper, volume)
   const outils = (abandonner) => (
     <div className="historique__outils">
-      <button type="button" className="btn-outil" title="Règles du duel" aria-label="Règles du duel" onClick={() => setRegles(true)}>?</button>
-      <button type="button" className={`btn-outil${conseils ? ' est-actif' : ''}`} id="btn-conseils" aria-pressed={conseils}
-        title="Afficher les conseils (que faire maintenant ?)" aria-label="Conseils"
-        onClick={() => { ecrirePref(CLES.conseils, !conseils); setConseils(!conseils); jouerSon('clic'); }}>💡</button>
-      <button type="button" className={`btn-outil${muet ? ' est-muet' : ''}`} id="btn-son" aria-label="Couper le son" aria-pressed={muet}
-        title={muet ? 'Activer le son' : 'Couper le son'} onClick={() => { basculerMuet(); setMuet(estMuet()); jouerSon('clic'); }}>
-        <svg className="ico-son" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z" /><path className="ico-son__ondes" d="M16 9a4 4 0 0 1 0 6M18.5 6.5a7.5 7.5 0 0 1 0 11" /><path className="ico-son__barre" d="M16 9l6 6M22 9l-6 6" /></svg>
-      </button>
-      <button type="button" className={`btn-outil${pleinEcran ? ' est-actif' : ''}`} title={pleinEcran ? 'Quitter le plein écran' : 'Plein écran'} aria-label="Plein écran" onClick={basculerPleinEcran}>
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5" /></svg>
-      </button>
-      <button type="button" className="btn-outil" title="Abandonner" aria-label="Abandonner le duel" onClick={abandonner}>⚑</button>
-      <label className="volume" title="Volume du son">
-        <span className="volume__titre">Volume</span>
-        <input type="range" id="volume" min="0" max="100" step="5" value={volume} aria-label="Volume du son" style={{ '--pct': `${volume}%` }}
+      <div className="historique__boutons">
+        <button type="button" className="btn-outil" title="Règles du duel" aria-label="Règles du duel" onClick={() => setRegles(true)}>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4.5h5.5a2 2 0 0 1 1.5.7 2 2 0 0 1 1.5-.7H19v14h-5.5a1.5 1.5 0 0 0-1.5 1.5 1.5 1.5 0 0 0-1.5-1.5H5z" /><path d="M12 5.2V20" /></svg>
+        </button>
+        <button type="button" className={`btn-outil${conseils ? ' est-actif' : ''}`} id="btn-conseils" aria-pressed={conseils}
+          title="Afficher les conseils (que faire maintenant ?)" aria-label="Conseils"
+          onClick={() => { ecrirePref(CLES.conseils, !conseils); setConseils(!conseils); jouerSon('clic'); }}>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18h6M10 21h4" /><path d="M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z" /></svg>
+        </button>
+        <button type="button" className={`btn-outil${pleinEcran ? ' est-actif' : ''}`} title={pleinEcran ? 'Quitter le plein écran' : 'Plein écran'} aria-label="Plein écran" onClick={basculerPleinEcran}>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5" /></svg>
+        </button>
+        <button type="button" className="btn-outil btn-outil--danger" title="Abandonner" aria-label="Abandonner le duel" onClick={abandonner}>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 21V4" /><path d="M6 4h11l-2.5 4L17 12H6" /></svg>
+        </button>
+      </div>
+      <div className="volume">
+        <button type="button" className={`btn-outil${muet ? ' est-muet' : ''}`} id="btn-son" aria-label="Couper le son" aria-pressed={muet}
+          title={muet ? 'Activer le son' : 'Couper le son'} onClick={() => { basculerMuet(); setMuet(estMuet()); jouerSon('clic'); }}>
+          <svg className="ico-son" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z" /><path className="ico-son__ondes" d="M16 9a4 4 0 0 1 0 6M18.5 6.5a7.5 7.5 0 0 1 0 11" /><path className="ico-son__barre" d="M16 9l6 6M22 9l-6 6" /></svg>
+        </button>
+        <input type="range" id="volume" min="0" max="100" step="5" value={volume} aria-label="Volume du son" title="Volume du son" style={{ '--pct': `${volume}%` }}
           onChange={(e) => { reglerVolume(e.target.value / 100); setVolume(Number(e.target.value)); setMuet(estMuet()); }}
           onPointerUp={() => jouerSon('clic')} onKeyUp={() => jouerSon('clic')} />
         <span className="volume__valeur" id="volume-valeur">{volume} %</span>
-      </label>
+      </div>
     </div>
   );
 

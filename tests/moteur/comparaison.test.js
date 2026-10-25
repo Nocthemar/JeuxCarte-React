@@ -13,6 +13,16 @@
 //    3. Kaéliss utilise « Maître du Flot » sur une unité protégée par un Bouclier
 //    4. les deux héros sont tombés en même temps (égalité)
 //  Chaque correction a ses propres tests dans regles.test.js.
+//
+//  Les Traits (octobre 2026) changent volontairement les capacités des cartes : une seule par carte,
+//  et deux nouvelles (Rapide, Tenace). Pour comparer tout le reste du combat, les deux moteurs jouent
+//  ici avec les MÊMES cartes, celles de l'ancien (Rapide et Tenace n'y apparaissent donc pas).
+//  Les Traits ont leurs propres tests dans regles.test.js.
+//
+//  La puissance des grandes cartes (octobre 2026) : les chiffres et les limites du Grimoire viennent
+//  aussi de l'ancien moteur ici (mêmes cartes). Mais les capacités actives ont changé (sans action,
+//  Kaéliss, Dalek, Maître du Jeu, Vultoff) : une partie est arrêtée, sans échec, dès qu'une carte qui
+//  en a une est en jeu. Ces capacités ont leurs tests dans regles.test.js.
 // =====================================================================
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { existsSync } from 'node:fs';
@@ -72,6 +82,9 @@ function correctionAvant(A, p, qui, a) {
   return null;
 }
 const egalite = (p) => p.camps.joueur.pv <= 0 && p.camps.adverse.pv <= 0;
+// Une carte dont la capacité active a changé en octobre 2026 est-elle en jeu ?
+const ACTIVES_CHANGEES = ['kaeliss', 'dalek', 'maitre', 'sanstete'];
+const activeEnJeu = (p) => Object.values(p.camps).some((c) => c.terrain.some((u) => ACTIVES_CHANGEES.includes(u?.def?.unique)));
 
 // Une partie complète ; renvoie { fin, actions, compteurs }
 async function jouerPartie(graine, { equipes = false } = {}) {
@@ -81,15 +94,14 @@ async function jouerPartie(graine, { equipes = false } = {}) {
   const tirer = (n) => Math.floor(choix() * n);
 
   // Les Grimoires : quelques cartes du catalogue et objets, les mêmes dans les deux moteurs
-  const catA = CATALOGUE.map(A.uniteDepuisCarte);
-  const catN = CATALOGUE.map(N.uniteDepuisCarte);
+  // (celles de l'ancien moteur, avec leurs anciennes capacités, sans les cartes dont la capacité
+  // active a changé : voir l'en-tête)
+  const catA = CATALOGUE.map(A.uniteDepuisCarte).filter((c) => !ACTIVES_CHANGEES.includes(c.unique));
   const deck = () => {
     const ids = Array.from({ length: tirer(14) }, () => tirer(catA.length));
     const objets = Array.from({ length: tirer(5) }, () => tirer(OBJETS.length));
-    return {
-      A: A.grimoire([...ids.map((i) => catA[i]), ...objets.map((i) => A.OBJETS[i])]),
-      N: N.grimoire([...ids.map((i) => catN[i]), ...objets.map((i) => OBJETS[i])]),
-    };
+    const liste = A.grimoire([...ids.map((i) => catA[i]), ...objets.map((i) => A.OBJETS[i])]);
+    return { A: liste, N: structuredClone(liste) };
   };
   const premier = choix() < 0.5 ? 'joueur' : 'adverse';
   const options = { ...(choix() < 0.3 ? { pvAdverse: 26 } : {}), ...(choix() < 0.2 ? { energieBonusAdverse: 1 } : {}) };
@@ -152,6 +164,7 @@ async function jouerPartie(graine, { equipes = false } = {}) {
     const qui = pA.actif;
     let i = 0;
     for (; i < 30; i++) {
+      if (activeEnJeu(pA)) return { fin: 'arrêtée (capacité active changée)', compteurs };
       const a = A.ai(pA, qui, difficulte[qui]);
       if (!a) {
         const evT = finDeTour();
@@ -199,10 +212,15 @@ function bilan(titre, resultats) {
 // est construit, cette comparaison est sautée ; elle tourne sur l'ordinateur qui a l'ancien code
 describe.skipIf(!CHEMIN_ANCIEN)("Comparaison avec l'ancien moteur", () => {
 
-  it('transforme les cartes du catalogue en unités exactement de la même façon', async () => {
+  it('transforme les cartes du catalogue en unités de la même façon, sauf leurs capacités (les Traits) et leurs chiffres', async () => {
     const A = await ancienMoteur();
-    expect(CATALOGUE.map(N.uniteDepuisCarte)).toEqual(CATALOGUE.map(A.uniteDepuisCarte));
-    expect(N.grimoire([])).toEqual(A.grimoire([]));
+    const commun = ({ caps, veineNom, c, a, d, h, ...reste }) => reste;   // eslint-disable-line no-unused-vars
+    expect(CATALOGUE.map(N.uniteDepuisCarte).map(commun)).toEqual(CATALOGUE.map(A.uniteDepuisCarte).map(commun));
+    // les communes et les éveillées gardent leurs chiffres
+    const petites = CATALOGUE.filter((c) => ['commune', 'eveillee'].includes(c.rarity));
+    const chiffres = ({ c, a, d, h }) => ({ c, a, d, h });
+    expect(petites.map(N.uniteDepuisCarte).map(chiffres)).toEqual(petites.map(A.uniteDepuisCarte).map(chiffres));
+    expect(N.grimoire([]).map(commun)).toEqual(A.grimoire([]).map(commun));
   });
 
   it('1 contre 1 : 400 parties identiques action par action', async () => {
@@ -212,9 +230,9 @@ describe.skipIf(!CHEMIN_ANCIEN)("Comparaison avec l'ancien moteur", () => {
     expect(fins['trop longue']).toBeUndefined();
     expect(fins.finie).toBeGreaterThan(150);   // la plupart des parties vont jusqu'au bout
     // Toutes les sortes d'actions ont été comparées
-    for (const k of ['attaque', 'defendre', 'destin', 'mediter', 'placer', 'defausser', 'capacite', 'fin',
+    for (const k of ['attaque', 'defendre', 'destin', 'mediter', 'placer', 'defausser', 'fin',
       'jouer:unite', 'jouer:heal', 'jouer:coffre', 'jouer:talisman', 'jouer:rage', 'jouer:jeton', 'jouer:ready',
-      'jouer:unit', 'jouer:face', 'jouer:buff', 'jouer:draw', 'jouer:aoe', 'jouer:maitre', 'jouer:reine']) {
+      'jouer:unit', 'jouer:face', 'jouer:buff', 'jouer:draw', 'jouer:aoe', 'jouer:reine']) {
       expect(total[k] ?? 0, `aucune action « ${k} » comparée`).toBeGreaterThan(0);
     }
   }, 300_000);

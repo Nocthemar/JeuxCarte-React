@@ -73,7 +73,18 @@ export function chanceDeToucher(p, qui, u, cible) {
 }
 
 export const peutAttaquer = (u) => !!u && u.prete && !u.aAttaque && !u.bloquee && u.a > 0;
-export const peutDefendre = (u) => !!u && u.prete && !u.aAttaque && !u.bloquee && !u.defend;
+// Rapide : elle peut se mettre en défense même après avoir attaqué
+export const peutDefendre = (u) => !!u && u.prete && (!u.aAttaque || aCap(u, 'rapide')) && !u.bloquee && !u.defend;
+
+// Une unité perd des PV. Tenace : la première fois qu'elle devrait tomber, elle reste à 1 PV
+// (u.tenaceUtilisee n'existe qu'une fois le Trait déclenché). Renvoie vrai si Tenace a joué.
+export function encaisser(u, degats) {
+  u.h -= degats;
+  if (u.h > 0 || !aCap(u, 'tenace') || u.tenaceUtilisee) return false;
+  u.h = 1;
+  u.tenaceUtilisee = true;
+  return true;
+}
 export const memeCible = (x, y) => x.camp === y.camp && (x.heros ? y.heros : x.uid === y.uid);
 
 // Retire les unités détruites (elles vont au Tombeau, sauf le Milicien du Destin qui n'est pas
@@ -115,9 +126,10 @@ export function blesser(p, campCible, t, degats, ev, source) {
     ev.touches.push({ camp: campCible, uid: t.uid, texte: 'Bouclier !', etat: true });
     return 0;
   }
-  t.h -= degats;
+  const tenace = encaisser(t, degats);
   if (source) p.camps[source].stats.degats += degats;
   ev.touches.push({ camp: campCible, uid: t.uid, valeur: degats });
+  if (tenace) ev.touches.push({ camp: campCible, uid: t.uid, texte: 'Tenace !', etat: true });
   return degats;
 }
 

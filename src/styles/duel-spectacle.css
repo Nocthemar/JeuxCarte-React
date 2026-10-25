@@ -193,3 +193,22 @@
 @keyframes coeur { 0% { opacity: .25; } 10% { opacity: .9; } 22% { opacity: .35; } 32% { opacity: .75; } 55%, 100% { opacity: .25; } }
 :root.anim-reduites .coeur-danger, :root.effets-legers .coeur-danger { animation: none; opacity: .45; }
 @media (prefers-reduced-motion: reduce) { .coeur-danger { animation: none; opacity: .45; } }
+
+/* =====================================================================
+   L'entrée d'une Transcendante (lib/duel/animations.js, entreeTranscendante) : la carte en grand au
+   centre, dans un halo et des rayons dorés qui tournent lentement ; elle plonge ensuite vers sa place.
+   ===================================================================== */
+.apercu.apercu--entree { z-index: 41; transition: opacity .25s, scale .45s cubic-bezier(.2,.9,.3,1.2); }
+.apercu.apercu--entree .dc-carte { --carte-l: min(240px, 30vh); filter: drop-shadow(0 0 22px rgba(243,207,124,.65)) drop-shadow(0 18px 30px rgba(0,0,0,.8)); }
+.apercu.apercu--entree::before {
+  content: ""; position: absolute; left: 50%; top: 50%; z-index: -1;
+  width: 640px; height: 640px; translate: -50% -50%;
+  background:
+    radial-gradient(circle, rgba(255,236,180,.55) 0, rgba(243,207,124,.22) 22%, transparent 58%),
+    repeating-conic-gradient(from 0deg, rgba(243,207,124,.22) 0deg 6deg, transparent 6deg 22deg);
+  -webkit-mask: radial-gradient(circle, #000 30%, transparent 68%);
+          mask: radial-gradient(circle, #000 30%, transparent 68%);
+  animation: entree-rayons 1.6s linear;
+}
+@keyframes entree-rayons { from { rotate: 0deg; } to { rotate: 40deg; } }
+:root.effets-legers .apercu.apercu--entree::before { animation: none; }

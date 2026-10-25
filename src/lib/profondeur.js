@@ -4,11 +4,11 @@
 //  souris (--mx, --my). Rien sur un écran tactile, ni avec les animations réduites.
 // =====================================================================
 import { useEffect } from 'react';
-import { animationsReduites } from './preferences.js';
+import { animationsReduites, modePerformance } from './preferences.js';
 
 export function useProfondeur() {
   useEffect(() => {
-    if (animationsReduites() || !matchMedia('(hover: hover)').matches) return undefined;
+    if (animationsReduites() || modePerformance() || !matchMedia('(hover: hover)').matches) return undefined;
     const bouger = (e) => {
       const carte = e.target.closest?.('.dc-carte');
       document.querySelectorAll('.dc-carte.incline').forEach((c) => {

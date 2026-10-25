@@ -11,10 +11,43 @@
 //  data-place : la place du bouton dans la barre du téléphone ; « menu » : dans le menu Plus.
 //  En haut à droite de l'écran (ordinateur) : le panneau MJ, pour les MJ.
 // =====================================================================
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { NOCTHEMAR_SITE, lienSite } from '../lib/lienSite.js';
 import { useAuth, connexionDiscord, deconnexion } from '../lib/auth.js';
+import { supabase } from '../lib/supabase.js';
+import OrAnime from './OrAnime.jsx';
+
+// La bourse du joueur, sous les écrans (ordinateur). Relue à chaque changement d'écran (après un achat,
+// une récompense…), au retour sur l'onglet, et toutes les minutes.
+function Bourse({ discordId }) {
+  const { pathname } = useLocation();
+  const [bourse, setBourse] = useState({ pour: null, solde: null });
+  const [relire, setRelire] = useState(0);
+  useEffect(() => {
+    const t = setInterval(() => setRelire((n) => n + 1), 60000);
+    const vu = () => { if (document.visibilityState === 'visible') setRelire((n) => n + 1); };
+    document.addEventListener('visibilitychange', vu);
+    return () => { clearInterval(t); document.removeEventListener('visibilitychange', vu); };
+  }, []);
+  useEffect(() => {
+    if (!discordId) return undefined;
+    let actif = true;
+    supabase.from('wallets').select('balance').eq('discord_id', discordId).maybeSingle()
+      .then(({ data }) => { if (actif) setBourse({ pour: discordId, solde: data?.balance ?? 0 }); });
+    return () => { actif = false; };
+  }, [discordId, pathname, relire]);
+  if (!discordId || bourse.pour !== discordId || bourse.solde === null) return null;
+  return (
+    <div className="barre__bourse" data-place="menu" title="Ta bourse">
+      <span className="barre__bourse-or"><OrAnime solde={bourse.solde} /></span>
+      <span className="barre__bourse-texte">
+        <b>{bourse.solde.toLocaleString('fr-FR')}</b>
+        <small>pièces d’or</small>
+      </span>
+    </div>
+  );
+}
 
 const ICONES = {
   // deux épées croisées
@@ -147,6 +180,7 @@ export default function BarreLaterale() {
       </div>
 
       {/* (ordinateur) la signature, en bas */}
+      <Bourse discordId={joueur?.discord_id ?? null} />
       <div className="barre__pied-signature" data-place="menu" aria-hidden="true"><i />Nocthémar<i /></div>
       <BoutonsCoin joueur={joueur} />
       <MenuPlus />

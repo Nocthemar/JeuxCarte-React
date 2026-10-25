@@ -109,6 +109,7 @@ function FicheLoupe({ etat, info, nomAdverse }) {
     if (u.bloquee || u.gele) etats.push('Gelée : ne peut ni attaquer ni défendre ce tour');
     if (u.expose) etats.push('Exposée : -2 Défense jusqu’à son prochain tour');
     if (u.bouclier) etats.push('Bouclier prêt : les premiers dégâts seront annulés');
+    if (u.tenaceUtilisee) etats.push('Tenace déjà utilisée');
     if (u.h < u.hMax) etats.push(`Blessée (${u.hMax - u.h} PV perdus)`);
   }
   const caps = unite ? capsDe(def).filter((k) => CAPACITES[k]) : [];
@@ -137,7 +138,7 @@ function FicheLoupe({ etat, info, nomAdverse }) {
       </div>
       {etats.length > 0 && <p className="loupe__etat">{etats.join(' · ')}</p>}
       {caps.length > 0 && <>
-        <h3 className="loupe__titre">Capacité{caps.length > 1 ? 's' : ''}</h3>
+        <h3 className="loupe__titre">{def.veineNom ?? 'Trait'}</h3>
         {caps.map((k) => <p key={k} className="loupe__texte"><b>{CAPACITES[k].nom}</b> : {CAPACITES[k].texte}</p>)}
       </>}
       {unique && <>

@@ -99,7 +99,8 @@ function Heros({ camp, qui, avatar, sel, onClick }) {
   return (
     <button type="button" className={`dc-heros${cible ? ' est-ciblable' : ''}${camp.pv <= 5 ? ' est-en-danger' : ''}`} data-heros={qui}
       aria-label={`${camp.nom}, ${camp.pv} PV sur ${camp.pvMax}`} style={{ '--pv': `${pct.toFixed(0)}%` }} onClick={onClick}>
-      <span className="dc-heros__cadre"><span className="dc-heros__portrait">{avatar ? <img src={avatar} alt="" /> : COURONNE}</span></span>
+      {/* --portrait : le même avatar, flouté en fond de l'hexagone (styles/jeu-cartes.css) */}
+      <span className="dc-heros__cadre"><span className="dc-heros__portrait" style={avatar ? { '--portrait': `url("${avatar}")` } : undefined}>{avatar ? <img src={avatar} alt="" /> : COURONNE}</span></span>
       <span className="dc-heros__pv"><span>{Math.max(0, camp.pv)}</span></span>
       <span className="dc-heros__nom">{camp.nom}</span>
       {/* La barre de PV (--pv) : le rouge descend tout de suite, la traînée claire le rattrape (styles/duel-spectacle.css) */}
@@ -249,7 +250,7 @@ export default function Plateau({
               </button>
               <button type="button" className={`btn-action btn-action--capacite${sel.capacite ? ' est-actif' : ''}`} id="btn-capacite" hidden={!act}
                 disabled={!act || !sel.monTour || !peutActiver(etat, 'joueur', choisie.uid)} title={act?.texte} onClick={surCapacite}>
-                {act && <>{act.nom} <small>1 action{act.cout ? ` · ${act.cout} énergie` : ''}</small></>}
+                {act && <>{act.nom} <small>{act.cout ? `${act.cout} énergie` : 'gratuit'} · sans action</small></>}
               </button>
             </div>
             <div className="tg-cote__petits">
@@ -297,7 +298,7 @@ export default function Plateau({
 
       <aside className="historique">
         <div className="terrain-duel" id="terrain-duel">
-          {terrain && <><span className="terrain-duel__nom">{terrain.nom}</span><span className="terrain-duel__texte">{terrain.texte}</span></>}
+          {terrain && <><span className="terrain-duel__etiquette">Terrain</span><span className="terrain-duel__nom">{terrain.nom}</span><span className="terrain-duel__texte">{terrain.texte}</span></>}
         </div>
         <h2 className="historique__titre">Derniers jets</h2>
         <ol className="historique__liste" id="historique">

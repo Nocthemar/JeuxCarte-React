@@ -14,8 +14,8 @@ export const COUT_DESTIN = 2;
 export const COUT_DEFAUSSE = 1;     // défausser une carte de sa main (une fois par tour)
 export const COUT_MEDITER = 1;      // regarder les 3 premières cartes du Grimoire (une fois par tour)
 export const TAILLE_DECK = 20;      // le Grimoire
-export const COPIES_MAX = 2;        // exemplaires au plus d'une même carte
-export const TRANSCENDANTES_MAX = 2;   // Transcendantes au plus dans le Grimoire (1 exemplaire de chacune)
+export const COPIES_MAX = 2;        // exemplaires au plus d'une même carte (1 seul d'une Légendaire ou d'une Transcendante)
+export const TRANSCENDANTES_MAX = 1;   // une seule Transcendante dans le Grimoire
 export const OBJETS_MAX = 4;        // objets de pouvoir au plus dans le Grimoire
 export const BONUS_DEFENSE = 2;     // posture défensive
 export const MALUS_EXPOSE = 2;      // après un échec critique
@@ -34,9 +34,39 @@ export const CAPACITES = {
   inspiration:  { nom: 'Inspiration',  texte: 'Tes autres unités ont +1 Attaque.' },
   percee:       { nom: 'Percée',       texte: 'Ignore Garde et Provocation : peut viser qui elle veut.' },
   drain:        { nom: 'Drain',        texte: 'Les dégâts qu’elle inflige soignent ton héros d’autant.' },
+  rapide:       { nom: 'Rapide',       texte: 'Attaquer ne l’empêche pas de se mettre en défense ensuite, dans le même tour.' },
+  tenace:       { nom: 'Tenace',       texte: 'La première fois qu’elle devrait tomber, elle reste debout avec 1 PV (une seule fois).' },
 };
 
-// La capacité donnée par chaque Veine (attaques des cartes du catalogue)
+// Chaque carte a UNE capacité : son Trait, ou, pour les rares cartes qui détiennent une Veine,
+// la capacité de cette Veine (CAP_VEINE). Par le nom de la carte (sans accents, en minuscules).
+// Une carte absente des deux listes n'a pas de capacité.
+export const TRAIT_PAR_NOM = {
+  'vultoff': 'tenace',
+  'elfe des neiges doree': 'esquive',
+  'elfe des neiges': 'esquive',
+  'astris, reine de pravorn': 'inspiration',
+  'gardes de pravorn': 'garde',
+  "gardes d'aelkor": 'provocation',
+  "gardes d'erynedhal": 'rapide',
+  'garde des elfes': 'rapide',   // ancien nom des Gardes d'Erynedhal
+  'mange-cœur': 'drain',   // le « œ » reste tel quel une fois les accents enlevés
+  'garde de pravorn': 'interception',
+  "garde d'aelkor": 'riposte',
+  "garde d'erynedhal": 'percee',
+  'slime': 'tenace',
+  'veilleuse ecarlate': 'drain',
+};
+// Les détenteurs d'une Veine : [la Veine (qui donne la capacité), le nom affiché sur la carte]
+export const VEINE_PAR_NOM = {
+  'kaeliss': ['sang', 'Veine du Sang'],
+  'dalek': ['reve', 'Veine du Rêve'],
+  'seigneur des marais': ['racine', 'Veine inconnue'],
+  'maitre du jeu': ['destin', 'Pouvoir du Destin'],
+  'les veines': ['trone', 'Les Douze Veines'],
+};
+
+// La capacité donnée par chaque Veine
 export const CAP_VEINE = {
   trone: 'inspiration', chaine: 'provocation', forge: 'bouclier', racine: 'soin', esprit: 'soin',
   bete: 'charge', sang: 'drain', maree: 'riposte', tombeau: 'riposte', ombre: 'esquive',
@@ -45,12 +75,14 @@ export const CAP_VEINE = {
 
 // Coût / Attaque / Défense / PV de base d'une carte du catalogue selon sa rareté
 //   act : actions pour la jouer ; condition 'allie' : il faut déjà une de tes unités en jeu
+// (octobre 2026 : grandes cartes renforcées après des milliers de parties simulées ;
+//  avant : mythique 5 PV, légendaire 4/4/7, transcendante coût 7 et 5/4/8)
 export const BASE = {
   commune:       { c: 2, a: 2, d: 1, h: 3 },
   eveillee:      { c: 3, a: 3, d: 2, h: 4 },
-  mythique:      { c: 4, a: 3, d: 3, h: 5 },
-  legendaire:    { c: 5, a: 4, d: 4, h: 7 },
-  transcendante: { c: 7, a: 5, d: 4, h: 8, act: 2, condition: 'allie' },
+  mythique:      { c: 4, a: 3, d: 3, h: 6 },
+  legendaire:    { c: 5, a: 5, d: 4, h: 9 },
+  transcendante: { c: 6, a: 6, d: 5, h: 12, act: 2, condition: 'allie' },
 };
 
 // Capacité unique des grandes cartes, par le nom de la carte (sans accents, en minuscules)
