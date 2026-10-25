@@ -57,7 +57,7 @@
     radial-gradient(ellipse 120% 70% at 50% 0%, transparent 50%, rgba(10,9,8,.5));
 }
 /* Les illustrations des modes (public/img/Fond) */
-.hall-mode--ombre .hall-mode__image { background-image: url("/img/Fond/contrelombre_fond.png"); background-position: 55% 30%; }
+.hall-mode--ombre .hall-mode__image { background-image: url("/img/Fond/contrelombre_fond.png?v=2"); background-position: 55% 30%; }
 .hall-mode--ligne .hall-mode__image { background-image: url("/img/Fond/multijoueur_fond.png"); background-position: 50% 40%; }
 .hall-mode--histoire .hall-mode__image { background-image: url("/img/Fond/campagne_fond.png"); background-position: 30% 40%; filter: saturate(.75) brightness(.78); }
 
