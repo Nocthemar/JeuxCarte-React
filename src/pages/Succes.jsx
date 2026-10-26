@@ -138,7 +138,7 @@ export default function PageSucces() {
         {!chargement && !joueur && (
           <section className="succes-page__connexion" id="non-connecte">
             <p>Connecte-toi avec Discord pour voir tes succès et réclamer leurs récompenses.</p>
-            <button id="btn-connexion" type="button" className="btn-discord" onClick={connexionDiscord}>
+            <button id="btn-connexion" type="button" className="btn-discord" onClick={() => connexionDiscord()}>
               <span className="btn-discord__logo" aria-hidden="true" />
               Connecter Discord
             </button>

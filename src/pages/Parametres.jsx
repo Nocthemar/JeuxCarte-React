@@ -4,13 +4,15 @@
 //  - Affichage : animations (complètes, réduites, coupées), mode performance, effets réduits,
 //    conseils du duel (lib/preferences.js), thème clair ;
 //  - Appli : installer le jeu sur l'appareil (lib/appli.js) ;
-//  - Compte : déconnexion, suppression du compte (supprimer_mon_compte).
-//  Tout est retenu dans le navigateur, sauf la suppression du compte.
+//  - Compte : déconnexion (cet appareil ou tous), mot de passe (comptes e-mail), double authentification (MJ),
+//    suppression du compte (supprimer_mon_compte, seulement juste après s'être reconnecté).
+//  Tout est retenu dans le navigateur, sauf ce qui touche au compte.
 // =====================================================================
 import { useEffect, useRef, useState } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
 import Page from '../components/Page.jsx';
 import { supabase } from '../lib/supabase.js';
-import { useAuth, connexionDiscord, deconnexion } from '../lib/auth.js';
+import { useAuth, connexionDiscord, connexionEmail, deconnexion } from '../lib/auth.js';
 import { useNotifier } from '../lib/notification.js';
 import { CLES, lirePref, ecrirePref, niveauAnimationsChoisi, ecrireNiveauAnimations } from '../lib/preferences.js';
 import { estIOS, installer, useAppli } from '../lib/appli.js';
@@ -69,12 +71,82 @@ function Appli() {
   );
 }
 
-// La confirmation de la suppression du compte : il faut taper SUPPRIMER
-function Suppression({ surFermeture }) {
+// La double authentification (MJ) : une application d'authentification (codes à 6 chiffres) en plus de
+// Discord ou du mot de passe. Supabase la demande ensuite à chaque connexion (pages/Connexion.jsx) ; le serveur
+// peut l'exiger pour les actions de MJ (réglage mfa_mj, supabase/securite.sql).
+const lireDoubleAuth = () => supabase.auth.mfa.listFactors().then(({ data }) => {
+  const facteur = data?.totp?.find((f) => f.status === 'verified');
+  return facteur ? { etape: 'active', facteur } : { etape: 'inactive' };
+}, () => ({ etape: 'inactive' }));
+
+function DoubleAuth() {
+  const notifier = useNotifier();
+  const [etat, setEtat] = useState({ etape: 'chargement' });   // chargement | active | inactive | inscription
+  const [code, setCode] = useState('');
+  const [envoi, setEnvoi] = useState(false);
+
+  const relire = () => lireDoubleAuth().then(setEtat);
+  useEffect(() => { lireDoubleAuth().then(setEtat); }, []);
+
+  const commencer = async () => {
+    setEnvoi(true);
+    // Une inscription commencée puis abandonnée bloquerait la suivante : on l'efface
+    const { data: liste } = await supabase.auth.mfa.listFactors();
+    for (const f of liste?.all ?? []) if (f.status !== 'verified') await supabase.auth.mfa.unenroll({ factorId: f.id });
+    const { data, error } = await supabase.auth.mfa.enroll({ factorType: 'totp', friendlyName: 'Nocthémar' });
+    setEnvoi(false);
+    if (error) { notifier(error.message, 'erreur'); return; }
+    setEtat({ etape: 'inscription', id: data.id, qr: data.totp.qr_code, secret: data.totp.secret });
+  };
+  const valider = async (e) => {
+    e.preventDefault();
+    setEnvoi(true);
+    const { error } = await supabase.auth.mfa.challengeAndVerify({ factorId: etat.id, code: code.replace(/\s/g, '') });
+    setEnvoi(false);
+    if (error) { notifier('Code incorrect ou expiré.', 'erreur'); setCode(''); return; }
+    setCode('');
+    notifier('Double authentification activée.');
+    relire();
+  };
+  const retirer = async () => {
+    if (!confirm('Retirer la double authentification ?')) return;
+    const { error } = await supabase.auth.mfa.unenroll({ factorId: etat.facteur.id });
+    if (error) { notifier(error.message, 'erreur'); return; }
+    notifier('Double authentification retirée.');
+    relire();
+  };
+
+  if (etat.etape === 'chargement') return null;
+  return (
+    <div className="reglage reglage--double-auth">
+      <span><b>Double authentification</b><small>{etat.etape === 'active'
+        ? 'Activée : un code de ton application d’authentification est demandé à chaque connexion.'
+        : 'Recommandée pour les MJ : un code de ton application d’authentification (Google Authenticator, Aegis…) en plus de ta connexion.'}</small></span>
+      {etat.etape === 'active' && <button type="button" className="btn-sobre" onClick={retirer}>Retirer</button>}
+      {etat.etape === 'inactive' && <button type="button" className="btn-sobre" disabled={envoi} onClick={commencer}>Activer</button>}
+      {etat.etape === 'inscription' && (
+        <form className="double-auth" onSubmit={valider}>
+          <img src={etat.qr} alt="QR code à scanner avec ton application d’authentification" width="180" height="180" />
+          <small>Ou saisis cette clé : <code>{etat.secret}</code></small>
+          <label htmlFor="code-double-auth">Code à 6 chiffres</label>
+          <input id="code-double-auth" inputMode="numeric" autoComplete="one-time-code" maxLength={7} value={code} onChange={(e) => setCode(e.target.value)} required />
+          <button type="submit" className="btn-sobre" disabled={envoi}>Valider</button>
+        </form>
+      )}
+    </div>
+  );
+}
+
+// La confirmation de la suppression du compte : il faut taper SUPPRIMER, et s'être connecté il y a moins de
+// 10 minutes (vérifié par le serveur) : compte e-mail, le mot de passe ; compte Discord, un passage par Discord
+function Suppression({ joueur, surFermeture }) {
   const notifier = useNotifier();
   const fenetre = useRef(null);
   const [texte, setTexte] = useState('');
+  const [mdp, setMdp] = useState('');
+  const [reconnexion, setReconnexion] = useState(false);
   const [envoi, setEnvoi] = useState(false);
+  const parEmail = joueur.fournisseur === 'email';
   useEffect(() => {
     const d = fenetre.current;
     d.showModal();
@@ -82,7 +154,13 @@ function Suppression({ surFermeture }) {
   }, []);
   const supprimer = async () => {
     setEnvoi(true);
+    if (parEmail) {
+      const { data: { user } } = await supabase.auth.getUser();
+      const erreur = await connexionEmail(user?.email ?? '', mdp);
+      if (erreur) { notifier(erreur, 'erreur'); setEnvoi(false); return; }
+    }
     const { error } = await supabase.rpc('supprimer_mon_compte', { p_confirmation: texte.trim() });
+    if (error && /^REAUTH/.test(error.message)) { setReconnexion(true); setEnvoi(false); return; }
     if (error) {
       notifier(/PGRST202|schema cache/.test(`${error.code} ${error.message}`)
         ? 'La suppression de compte n’est pas encore installée (SQL/compte.sql).' : (error.message || 'Suppression impossible.'), 'erreur');
@@ -101,9 +179,20 @@ function Suppression({ surFermeture }) {
       <p>C’est <b>définitif</b> : tes cartes, ton grimoire, ton or, tes objets, ta progression (Pass, Histoire, rang) et ton profil seront effacés. Personne ne pourra les récupérer.</p>
       <label htmlFor="confirmation">Pour confirmer, tape <b>SUPPRIMER</b> :</label>
       <input type="text" id="confirmation" autoComplete="off" spellCheck="false" autoFocus value={texte} onChange={(e) => setTexte(e.target.value)} />
+      {parEmail && (
+        <>
+          <label htmlFor="confirmation-mdp">Par sécurité, ton mot de passe :</label>
+          <input type="password" id="confirmation-mdp" autoComplete="current-password" value={mdp} onChange={(e) => setMdp(e.target.value)} />
+        </>
+      )}
+      {reconnexion && (
+        <p className="reglages-dialogue__reconnexion" role="alert">Par sécurité, reconnecte-toi avec Discord juste avant de supprimer ton compte.
+          {' '}<button type="button" className="btn-sobre" onClick={() => connexionDiscord('#/parametres?supprimer=1')}>Me reconnecter</button>
+        </p>
+      )}
       <div className="reglages-dialogue__boutons">
         <button type="button" className="btn-sobre" id="suppression-annuler" onClick={surFermeture}>Annuler</button>
-        <button type="button" className="btn-danger" id="suppression-ok" disabled={texte.trim() !== 'SUPPRIMER' || envoi} onClick={supprimer}>Supprimer définitivement</button>
+        <button type="button" className="btn-danger" id="suppression-ok" disabled={texte.trim() !== 'SUPPRIMER' || (parEmail && !mdp) || envoi} onClick={supprimer}>Supprimer définitivement</button>
       </div>
     </dialog>
   );
@@ -118,7 +207,10 @@ export default function Parametres() {
   const [animations, setAnimations] = useState(niveauAnimationsChoisi);
   const [clair, setClair] = useState(themeClair);
   const [ecoute, setEcoute] = useState(false);
-  const [suppression, setSuppression] = useState(false);
+  const [params, setParams] = useSearchParams();
+  // ?supprimer=1 : retour de la reconnexion Discord demandée par la suppression du compte
+  const [suppression, setSuppression] = useState(() => params.get('supprimer') === '1');
+  useEffect(() => { if (params.has('supprimer')) setParams({}, { replace: true }); }, [params, setParams]);
 
   const majSon = () => { setVolumes(lireVolumes()); setMuet(estMuet()); };
   // La musique d'essai s'arrête en quittant l'écran
@@ -213,7 +305,7 @@ export default function Parametres() {
           {!chargement && !joueur && (
             <div className="reglage" id="compte-deconnecte">
               <span>Tu n’es pas connecté.</span>
-              <button type="button" className="btn-or" id="btn-connecter" onClick={connexionDiscord}>Connecter Discord</button>
+              <button type="button" className="btn-or" id="btn-connecter" onClick={() => connexionDiscord()}>Connecter Discord</button>
             </div>
           )}
           {joueur && (
@@ -221,9 +313,21 @@ export default function Parametres() {
               <div className="reglage">
                 <span className="reglage__compte">
                   <img id="compte-avatar" alt="" src={joueur.avatar_url ?? undefined} hidden={!joueur.avatar_url} /><b id="compte-nom">{joueur.username ?? 'Aventurier'}</b>
+                  <small>{joueur.fournisseur === 'email' ? 'Compte e-mail' : 'Compte Discord'}</small>
                 </span>
-                <button type="button" className="btn-sobre" id="btn-deconnexion" onClick={deconnexion}>Se déconnecter</button>
+                <span className="reglage__boutons">
+                  <button type="button" className="btn-sobre" id="btn-deconnexion" onClick={() => deconnexion('local')}>Se déconnecter</button>
+                  <button type="button" className="btn-sobre" id="btn-deconnexion-partout" title="Ferme aussi la session sur tes autres appareils"
+                    onClick={() => deconnexion('global')}>Partout</button>
+                </span>
               </div>
+              {joueur.fournisseur === 'email' && (
+                <div className="reglage">
+                  <span><b>Mot de passe</b><small>Choisis un nouveau mot de passe pour ton compte.</small></span>
+                  <Link className="btn-sobre" to="/mot-de-passe">Changer</Link>
+                </div>
+              )}
+              {joueur.is_mj && <DoubleAuth />}
               <div className="reglage reglage--danger">
                 <span><b>Supprimer mon compte</b><small>Efface définitivement tes cartes, ton or, ta progression et ton profil.</small></span>
                 <button type="button" className="btn-danger" id="btn-supprimer" onClick={() => setSuppression(true)}>Supprimer…</button>
@@ -233,7 +337,7 @@ export default function Parametres() {
         </section>
       </main>
 
-      {suppression && <Suppression surFermeture={() => setSuppression(false)} />}
+      {suppression && joueur && <Suppression joueur={joueur} surFermeture={() => setSuppression(false)} />}
     </Page>
   );
 }

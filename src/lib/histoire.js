@@ -1,47 +1,24 @@
 // =====================================================================
 //  Le mode Histoire côté duel (ancien JS/jeu-cartes.js)
-//  - le Grimoire de l'adversaire d'un niveau (src/data/histoire.js) ;
-//  - au début du duel, le serveur note le niveau commencé (histoire_commencer) ;
-//  - après une victoire, il la valide et donne les récompenses (valider_niveau_histoire) ;
+//  - le Grimoire de l'adversaire d'un niveau (src/data/histoire.js ; moteur/solo.js) ;
+//  - la victoire est validée par l'arbitre du serveur, qui rejoue la partie et donne les récompenses
+//    (lib/duelServeur.js) ;
 //  - le résultat est laissé dans le navigateur pour l'écran Histoire (même clé qu'avant).
 // =====================================================================
-import { supabase } from './supabase.js';
-import { TROUPES } from '../data/cartes.js';
-import { construireDeck, objetDepuisNom } from '../moteur/index.js';
+export { deckHistoire } from '../moteur/index.js';
 
 export const CLE_RESULTAT_HISTOIRE = 'histoire-resultat';
 
-const cleNom = (s) => String(s).normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[’']/g, "'").trim().toLowerCase();
-
-// Le Grimoire de l'adversaire : chaque carte du niveau en 2 exemplaires (cartes du catalogue, troupes
-// du Codex ou objets, par leur nom ; un nom inconnu est ignoré), le reste en cartes de base
-export function deckHistoire(noms, catalogue, h) {
-  const unites = [];
-  const objets = [];
-  for (const nom of noms ?? []) {
-    const k = cleNom(nom);
-    const u = catalogue.find((x) => cleNom(x.n) === k) ?? TROUPES.find((x) => cleNom(x.n) === k);
-    if (u) { unites.push(u); continue; }
-    const o = objetDepuisNom(nom);
-    if (o) objets.push(o);
-  }
-  return construireDeck([...unites, ...objets].flatMap((c) => [c, c]), h);
-}
-
-// Début du duel d'un niveau (une victoire sans partie jouée est refusée par le serveur)
-export const commencerNiveau = (idNiveau) => supabase.rpc('histoire_commencer', { p_niveau_id: idNiveau }).then(() => null, () => null);
-
-// Fin d'un niveau : la victoire est validée par le serveur (première victoire = récompenses),
-// et le résultat est gardé pour le message affiché sur la carte
-export async function finirNiveau(idNiveau, gagne, debut) {
+// Fin d'un niveau : la réponse de l'arbitre (lib/duelServeur.js, terminerDuel) devient le résultat affiché
+// sur l'écran de fin et sur la carte. reponse : null pour un duel d'entraînement (serveur injoignable au début)
+export function garderResultatHistoire(idNiveau, gagne, reponse) {
   const resultat = { niveau: idNiveau, gagne, recompenses: null, erreur: null };
   if (gagne) {
-    await debut;   // le début du niveau doit être enregistré avant la validation
-    const { data, error } = await supabase.rpc('valider_niveau_histoire', { p_niveau_id: idNiveau });
-    if (error) resultat.erreur = /schema cache|PGRST20[25]/.test(`${error.code} ${error.message}`)
-      ? 'le mode Histoire n’est pas encore installé dans Supabase (SQL/mode_histoire.sql).'
-      : error.message;
-    else resultat.recompenses = data;
+    if (!reponse) resultat.erreur = 'le serveur était injoignable au début du duel (duel d’entraînement).';
+    else if (reponse.erreur) resultat.erreur = reponse.erreur;
+    else if (!reponse.victoire) resultat.erreur = reponse.raison === 'court' ? 'duel trop court.'
+      : reponse.raison === 'ticket' ? 'duel déjà clos ou remplacé par un autre.' :'l’arbitre n’a pas reconnu cette victoire.';
+    else resultat.recompenses = reponse.recompenses;
   }
   try { sessionStorage.setItem(CLE_RESULTAT_HISTOIRE, JSON.stringify(resultat)); } catch { /* stockage indisponible */ }
   return resultat;

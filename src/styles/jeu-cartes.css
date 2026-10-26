@@ -3298,3 +3298,11 @@ body.avec-conseils.page-jeu .tg-tapis > .centre__consigne:empty { display: none;
   .en-duel .volume input, .en-duel .volume__valeur { display: none; }
   .en-duel .historique .btn-outil { width: 32px; }
 }
+
+/* Le temps que le serveur tire la graine du duel (DuelSolo) : une ligne discrète au centre */
+.duel-preparation {
+  margin: 30vh auto 0; text-align: center;
+  font-family: "Cinzel","Cinzel Repli", serif; letter-spacing: .08em; color: var(--ambre);
+  animation: duel-preparation 1.6s ease-in-out infinite alternate;
+}
+@keyframes duel-preparation { from { opacity: .45; } to { opacity: 1; } }

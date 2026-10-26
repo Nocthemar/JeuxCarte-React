@@ -1,23 +1,15 @@
 // =====================================================================
-//  L'XP du Pass de saison gagnée en duel (ancien JS/jeu-cartes.js ; serveur : supabase/schema.sql, partie 9)
+//  L'XP du Pass de saison gagnée en duel EN LIGNE (ancien JS/jeu-cartes.js ; serveur : supabase/schema.sql, partie 9)
 //  Au début du duel, un ticket est demandé au serveur ; à la fin, il est échangé contre l'XP
 //  (le serveur vérifie la durée, le plafond du jour, l'adversaire).
+//  Contre l'Ombre et en mode Histoire, c'est l'arbitre du serveur qui donne l'XP (lib/duelServeur.js).
 // =====================================================================
 import { supabase } from './supabase.js';
 
-// Le ticket d'un duel : une promesse d'uuid (ou null : pas de saison, pas connecté…)
-//   { mode: 'ia', difficulte } contre l'Ombre ; { mode: 'ami', salon } en ligne
-export function demanderTicketPass({ mode, difficulte = null, salon = null }) {
-  const params = mode === 'ami' ? { p_mode: 'ami', p_salon: salon } : { p_mode: 'ia', p_difficulte: difficulte };
-  return supabase.rpc('pass_commencer_partie', params)
-    .then(({ data, error }) => {
-      if (!error) return data;
-      // Base pas encore à jour : la fonction ne connaît pas la difficulté, on la redemande sans (comme l'ancien jeu)
-      if (error.code === 'PGRST202' && params.p_difficulte) {
-        return supabase.rpc('pass_commencer_partie', { p_mode: 'ia' }).then((r) => (r.error ? null : r.data));
-      }
-      return null;
-    })
+// Le ticket d'un duel en ligne : une promesse d'uuid (ou null : pas de saison, pas connecté…)
+export function demanderTicketPass({ salon }) {
+  return supabase.rpc('pass_commencer_partie', { p_mode: 'ami', p_salon: salon })
+    .then(({ data, error }) => (error ? null : data))
     .catch(() => null);
 }
 
@@ -32,4 +24,7 @@ export async function finirPartiePass(ticket, victoire) {
 export const RAISONS_PASS = {
   plafond: 'Plafond d\'XP de pass du jour atteint',
   court: 'Duel trop court pour rapporter de l’XP de pass',
+  invalide: 'Victoire non reconnue par l’arbitre : pas de récompense',
+  abandon: 'Un abandon ne rapporte rien',
+  ticket: 'Duel déjà clos ou remplacé par un autre : pas de récompense',
 };

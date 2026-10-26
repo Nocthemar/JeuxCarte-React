@@ -93,7 +93,7 @@ export default function ToutesLesCartes() {
             <div className="catalogue__jauge" aria-hidden="true"><span style={{ width: `${total ? (nb / total) * 100 : 0}%` }} /></div>
           </div>
           <p className="catalogue__connexion" hidden={!pret || connecte}>
-            <button type="button" className="catalogue__btn-discord" onClick={connexionDiscord}>Connecte-toi avec Discord</button>
+            <button type="button" className="catalogue__btn-discord" onClick={() => connexionDiscord()}>Connecte-toi avec Discord</button>
             {' '}pour voir les cartes que tu possèdes.
           </p>
         </header>

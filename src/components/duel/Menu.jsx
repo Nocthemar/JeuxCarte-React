@@ -221,7 +221,7 @@ function PanneauLigne({ joueur, ligne, cache }) {
     <section className="ligne" id="panneau-ligne" hidden={cache}>
       <div className="ligne__bloc ligne__bloc--centre" hidden={!!joueur}>
         <p>Le duel en ligne se joue avec les cartes de ton grimoire : connecte-toi avec Discord pour jouer en classé ou défier un ami.</p>
-        <button type="button" className="btn-discord" onClick={connexionDiscord}>
+        <button type="button" className="btn-discord" onClick={() => connexionDiscord()}>
           <span className="btn-discord__logo" aria-hidden="true" />
           Connecter Discord
         </button>

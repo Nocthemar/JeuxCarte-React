@@ -1,0 +1,419 @@
+/* =====================================================================
+   Profil — « écran de personnage » (pages/Profil.jsx), tout sur un écran d'ordinateur :
+     en haut, la bannière du joueur en grand, immersive : son médaillon, son nom et son titre en bas à
+     gauche, son rang (la jauge de tous les paliers du classé) en haut à droite ;
+     dessous, deux rangées : trésor | hauts faits | registre des duels, puis cartes favorites | collection
+     (avec le Duel des Couronnes). Sur le profil d’un autre joueur, les panneaux privés manquent.
+   Panneaux sombres taillés en facettes sur le ciel de Nocthémar ; une seule couleur vive, celle du
+   thème équipé (--vif, posée par Profil.jsx ; bleu nuit par défaut).
+   Remplace profil.css (style « affiches sur papier », gardé dans le projet, plus chargé).
+   ===================================================================== */
+
+.page-fiche {
+  --vif: #7a93e6;
+  --vif2: var(--vif);
+  --ivoire: #ece6da;
+  --pierre: #a7adb8;
+  --trait-h: rgba(205,214,230,.14);
+  --facettes: polygon(12px 0, calc(100% - 12px) 0, 100% 12px, 100% calc(100% - 12px), calc(100% - 12px) 100%, 12px 100%, 0 calc(100% - 12px), 0 12px);
+}
+
+/* Le ciel de Nocthémar (img/Fond/Profil_fond.png, déjà sombre : voile léger), fixe derrière l'écran.
+   Calque fixe plutôt que background-attachment: fixed (qui redessine tout le fond à chaque défilement). */
+body.page-fiche::before,
+:root[data-theme="jour"] body.page-fiche::before {
+  z-index: -1;
+  background:
+    linear-gradient(rgba(8,12,20,.25), rgba(8,12,20,.25)),
+    radial-gradient(ellipse 110% 90% at 50% 40%, transparent 55%, rgba(8,12,20,.5) 100%),
+    url("/img/Fond/Profil_fond.png") center / cover no-repeat,
+    #0b1024;
+}
+
+.page-fiche .profil-wrap { max-width: 1500px; padding: 18px 24px 8px; color: var(--ivoire); }
+.page-fiche .vide { color: var(--pierre); font-style: italic; text-align: center; }
+/* (non connecté : la carte de connexion, au centre) */
+.page-fiche #non-connecte { max-width: 560px; margin: 60px auto 0; }
+
+/* (les <section> ont des marges automatiques et une largeur maximale dans index.css : dans la grille,
+   elles rétréciraient à leur contenu) */
+.ecran-heros section { max-width: none; margin: 0; border-bottom: 0; }
+
+/* ---------- Un panneau : pierre sombre taillée, filet de la couleur du thème en haut ---------- */
+.heros-panneau {
+  position: relative;
+  padding: 16px 18px 18px;
+  clip-path: var(--facettes);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.04), transparent 35%),
+    linear-gradient(180deg, rgba(22,25,34,.9), rgba(10,11,17,.92));
+  box-shadow: inset 0 0 0 1px var(--trait-h);
+}
+.heros-panneau::before {
+  content: ""; position: absolute; left: 14px; right: 14px; top: 0; height: 2px;
+  background: linear-gradient(90deg, transparent, var(--vif), transparent);
+  opacity: .8;
+}
+.heros-titre, .heros-sur {
+  display: block; margin: 0 0 12px;
+  font-family: "Cinzel","Cinzel Repli", serif; font-size: .66rem; font-weight: 700; letter-spacing: .22em; text-transform: uppercase;
+  color: var(--pierre);
+}
+.heros-titre span { float: right; letter-spacing: .08em; color: var(--ivoire); }
+.heros-sur { margin-bottom: 4px; font-size: .6rem; }
+.heros-lien {
+  display: inline-block; margin-top: 12px;
+  font-family: "Cinzel","Cinzel Repli", serif; font-size: .7rem; letter-spacing: .12em; text-transform: uppercase;
+  color: color-mix(in srgb, var(--vif) 70%, #fff); text-decoration: none;
+  border-bottom: 1px solid color-mix(in srgb, var(--vif) 45%, transparent);
+}
+.heros-lien:hover, .heros-lien:focus-visible { color: #fff; border-color: var(--vif); outline: none; }
+
+/* Les boutons : jouer, proposer un échange */
+.heros-jouer {
+  display: block; margin-top: 14px; padding: 11px 14px;
+  clip-path: polygon(10px 0, calc(100% - 10px) 0, 100% 50%, calc(100% - 10px) 100%, 10px 100%, 0 50%);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--vif) 85%, #fff), color-mix(in srgb, var(--vif) 70%, #000));
+  color: #0b0d13; text-align: center; text-decoration: none;
+  font-family: "Cinzel","Cinzel Repli", serif; font-size: .82rem; font-weight: 700; letter-spacing: .14em; text-transform: uppercase;
+  transition: filter .15s ease;
+}
+.heros-jouer:hover, .heros-jouer:focus-visible { filter: brightness(1.12); outline: none; }
+.heros-jouer--sobre { display: inline-block; margin-top: 10px; padding: 8px 22px; background: rgba(10,12,18,.7); color: var(--ivoire); box-shadow: inset 0 0 0 1px var(--trait-h); }
+
+/* =====================================================================
+   Le bandeau : la bannière en grand, le héros et son rang posés dessus
+   ===================================================================== */
+.heros-bandeau {
+  position: relative;
+  height: clamp(220px, 30vh, 330px);
+  margin-bottom: 16px;
+  clip-path: polygon(16px 0, calc(100% - 16px) 0, 100% 16px, 100% 100%, 0 100%, 0 16px);
+  background: #0b0d13;
+  box-shadow: inset 0 0 0 1px var(--trait-h);
+}
+/* la bannière (sans bannière équipée : un dégradé de la couleur du thème) */
+.heros-bandeau__image {
+  position: absolute; inset: 0;
+  background: linear-gradient(120deg, color-mix(in srgb, var(--vif) 40%, #10131b), #0b0d13 70%) center 30% / cover no-repeat;
+}
+/* le bas et la gauche s'assombrissent pour que le nom se lise ; filet du thème tout en bas */
+.heros-bandeau::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background:
+    linear-gradient(180deg, transparent 45%, rgba(8,10,16,.5) 72%, rgba(8,10,16,.92)),
+    linear-gradient(90deg, rgba(8,10,16,.6), transparent 45%),
+    linear-gradient(90deg, transparent, var(--vif), transparent) bottom / 100% 2px no-repeat;
+}
+/* le rang, en haut à droite de la bannière ; dessous, sur mon profil, le lien vers l'armoire des apparences */
+.heros-bandeau__rang {
+  position: absolute; top: 16px; right: 16px; z-index: 1;
+  display: flex; flex-direction: column; align-items: flex-end; gap: 8px;
+  width: min(430px, 46%);
+}
+.heros-bandeau__rang .heros-rang { width: 100%; box-sizing: border-box; }
+.heros-bandeau__armoire {
+  padding: 6px 14px;
+  clip-path: polygon(8px 0, 100% 0, calc(100% - 8px) 100%, 0 100%);
+  background: rgba(8,10,16,.72); box-shadow: inset 0 0 0 1px var(--trait-h);
+  font-family: "Cinzel","Cinzel Repli", serif; font-size: .64rem; letter-spacing: .16em; text-transform: uppercase;
+  color: var(--ivoire); text-decoration: none;
+}
+.heros-bandeau__armoire:hover, .heros-bandeau__armoire:focus-visible { background: color-mix(in srgb, var(--vif) 35%, #0b0d13); outline: none; }
+.heros-bandeau__contenu {
+  position: absolute; inset: auto 0 0; z-index: 1;
+  display: flex; align-items: flex-end; gap: 18px;
+  padding: 0 26px 16px;
+}
+.heros-bandeau__medaillon {
+  flex: none;
+  width: 112px; height: 124px;
+  padding: 3px;
+  clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+  background: linear-gradient(160deg, var(--ivoire), color-mix(in srgb, var(--vif) 60%, #222) 45%, #6b6f78 70%, var(--ivoire));
+  filter: drop-shadow(0 8px 14px rgba(0,0,0,.7));
+}
+.heros-bandeau__medaillon img {
+  display: block; width: 100%; height: 100%; object-fit: cover;
+  clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+}
+.heros-bandeau__medaillon:has(img[hidden]) { display: none; }
+.heros-bandeau__identite { flex: 1 1 auto; min-width: 0; padding-bottom: 4px; }
+.heros-bandeau__nom {
+  margin: 0;
+  font-family: "Cinzel","Cinzel Repli", serif; font-size: clamp(2rem, 3.6vw, 3.4rem); font-weight: 700; letter-spacing: .04em; line-height: 1.05;
+  color: var(--ivoire); text-shadow: 0 3px 14px rgba(0,0,0,.9);
+  overflow-wrap: anywhere;
+}
+.heros-bandeau__titre {
+  margin: 4px 0 0;
+  font-style: italic; font-size: 1.12rem;
+  color: color-mix(in srgb, var(--vif2) 65%, #fff); text-shadow: 0 2px 8px rgba(0,0,0,.9);
+}
+.heros-bandeau__titre:empty { display: none; }
+
+/* ---------- Le rang classé, à droite du bandeau ---------- */
+.heros-rang {
+  padding: 12px 16px 10px;
+  clip-path: var(--facettes);
+  background: rgba(8,10,16,.72);
+  box-shadow: inset 0 0 0 1px var(--trait-h);
+}
+.heros-rang__haut { display: flex; align-items: center; gap: 12px; }
+.heros-rang__embleme {
+  --metal: #a8794f;
+  display: grid; place-items: center; flex: none;
+  width: 46px; height: 52px;
+  clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+  background: linear-gradient(150deg, color-mix(in srgb, var(--metal) 40%, #fff), var(--metal) 45%, color-mix(in srgb, var(--metal) 45%, #000));
+}
+.heros-rang__embleme b { font-family: "Cinzel","Cinzel Repli", serif; font-size: 1.25rem; color: #10121a; text-shadow: 0 1px 0 rgba(255,255,255,.35); }
+.heros-rang__nom { font-family: "Cinzel","Cinzel Repli", serif; font-size: 1.15rem; line-height: 1.1; color: var(--ivoire); }
+.heros-rang__cote { margin-left: 8px; font-size: .9rem; color: var(--pierre); font-variant-numeric: tabular-nums; }
+.heros-rang__pied { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 2px 12px; margin: 6px 0 0; font-size: .82rem; color: var(--pierre); }
+.heros-rang__pied b { color: var(--ivoire); }
+
+/* les métaux des paliers (emblème et cases de la jauge) */
+.heros-rang--bronze, .heros-paliers__case--bronze { --metal: #a8794f; }
+.heros-rang--argent, .heros-paliers__case--argent { --metal: #b9c0cc; }
+.heros-rang--or, .heros-paliers__case--or { --metal: #d4a648; }
+.heros-rang--platine, .heros-paliers__case--platine { --metal: #8fd0cf; }
+.heros-rang--diamant, .heros-paliers__case--diamant { --metal: #8fb4ff; }
+.heros-rang--couronne, .heros-paliers__case--couronne { --metal: #c79bff; }
+
+/* la jauge de tous les paliers : une case par palier, franchies pleines, un repère à la position */
+.heros-paliers { position: relative; display: grid; grid-template-columns: repeat(6, 1fr); gap: 3px; margin-top: 10px; }
+.heros-paliers__case {
+  padding: 4px 0 3px;
+  clip-path: polygon(5px 0, 100% 0, calc(100% - 5px) 100%, 0 100%);
+  background: rgba(255,255,255,.06);
+  font-family: "Cinzel","Cinzel Repli", serif; font-size: .5rem; letter-spacing: .06em; text-align: center; text-transform: uppercase;
+  color: rgba(236,230,218,.45);
+}
+.heros-paliers__case.est-franchi { background: color-mix(in srgb, var(--metal) 55%, #1a1d26); color: #fff; }
+.heros-paliers__case.est-actuel { background: linear-gradient(90deg, color-mix(in srgb, var(--metal) 60%, #1a1d26), rgba(255,255,255,.08)); color: #fff; }
+/* le repère : un petit losange lumineux juste sous les cases, sans cacher leurs noms */
+.heros-paliers { margin-bottom: 8px; }
+.heros-paliers__repere {
+  position: absolute; bottom: -8px; left: var(--position); width: 8px; height: 8px; translate: -50% 0; rotate: 45deg;
+  background: #fff; box-shadow: 0 0 8px var(--vif), 0 0 2px #fff;
+}
+
+/* =====================================================================
+   Sous le bandeau : deux rangées de panneaux
+     1. trésor | hauts faits | registre des duels ;
+     2. cartes favorites | collection (et Duel des Couronnes).
+   Sur le profil d'un autre joueur, les panneaux privés manquent : les autres prennent la place.
+   ===================================================================== */
+.heros-rangee { display: flex; gap: 16px; align-items: stretch; margin-bottom: 16px; }
+.heros-rangee:last-child { margin-bottom: 0; }
+.heros-rangee > * { min-width: 0; box-sizing: border-box; }
+.heros-rangee--infos > .heros-rangee__tresor { flex: 1 1 0; }
+.heros-rangee--infos > .heros-badges { flex: 1.15 1 0; }
+.heros-rangee--infos > .heros-rangee__registre { flex: 1.5 1 0; }
+.heros-rangee--cartes > .heros-deck { flex: 1.9 1 0; }
+.heros-rangee--cartes > .heros-collection { flex: 1 1 0; display: flex; flex-direction: column; }
+
+/* ---------- Le trésor ---------- */
+.tresor { display: flex; flex-direction: column; gap: 6px; }
+/* une monnaie : son image à gauche, son montant à droite (l'or, puis les cristaux, à égalité) */
+.tresor__monnaie { display: grid; grid-template-columns: 70px 1fr; gap: 12px; align-items: center; }
+.tresor__or { position: relative; display: grid; place-items: center; height: 64px; }
+.tresor__or .piece-icone { width: 70px; height: 70px; margin: 0; object-fit: contain; filter: drop-shadow(0 4px 6px rgba(0,0,0,.6)); }
+.tresor__or .piece-icone--vide { width: 46px; height: 46px; filter: grayscale(1) brightness(.8); opacity: .7; }
+.tresor__or .bourse-etincelles { position: absolute; inset: 0; width: auto; height: auto; margin: 0; }
+.tresor__solde { margin: 0; font-family: "Cinzel","Cinzel Repli", serif; font-size: 1.5rem; font-weight: 700; line-height: 1.1; color: #f1d58f; font-variant-numeric: tabular-nums; }
+.tresor__solde small { font-family: "EB Garamond","EB Garamond Repli", serif; font-size: .85rem; font-weight: 400; font-style: italic; color: var(--pierre); }
+/* les cristaux : le même rang que l'or, en bleu ; le cristal luit, sa lueur respire doucement
+   (un halo derrière lui dont seule l'opacité s'anime : rien à recalculer pour le navigateur) */
+.tresor__cristal { position: relative; display: grid; place-items: center; height: 64px; }
+.tresor__cristal::before {
+  content: ""; position: absolute; inset: -4px 6px; border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(90,130,255,.55), rgba(60,90,220,.18) 60%, transparent);
+  animation: cristal-lueur 3.2s ease-in-out infinite;
+}
+.tresor__cristal img { position: relative; height: 60px; width: auto; filter: drop-shadow(0 4px 6px rgba(0,0,0,.6)) drop-shadow(0 0 6px rgba(90,130,255,.6)); }
+@keyframes cristal-lueur { 0%, 100% { opacity: .45; } 50% { opacity: 1; } }
+:root.anim-reduites .tresor__cristal::before, :root.mode-perf .tresor__cristal::before { animation: none; opacity: .7; }
+.tresor__solde--cristaux { color: #b9caff; text-shadow: 0 0 12px rgba(90,130,255,.45); }
+.tresor__liens { display: flex; flex-wrap: wrap; gap: 4px 12px; margin-top: 6px; }
+.tresor__liens a { font-size: .86rem; color: color-mix(in srgb, var(--vif) 70%, #fff); text-decoration: none; }
+.tresor__liens a:hover, .tresor__liens a:focus-visible { color: #fff; text-decoration: underline; outline: none; }
+.tresor__gains { margin-top: 2px; font-size: .88rem; color: var(--pierre); }
+.tresor__gains summary { cursor: pointer; font-family: "Cinzel","Cinzel Repli", serif; font-size: .64rem; letter-spacing: .18em; text-transform: uppercase; }
+.tresor__gains summary:hover { color: var(--ivoire); }
+.tresor__gains ul { margin: 6px 0 0; padding-left: 18px; }
+.tresor__gains b { color: #f1d58f; }
+
+/* ---------- Les hauts faits : les badges épinglés, côte à côte ---------- */
+.heros-badges__liste { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.heros-badge { display: flex; flex-direction: column; align-items: center; gap: 6px; min-width: 0; text-align: center; }
+.heros-badge > span:last-child { display: flex; flex-direction: column; align-items: center; gap: 3px; min-width: 0; }
+.heros-badge .badge-succes { --taille: 58px; }
+.heros-badge strong { font-family: "Cinzel","Cinzel Repli", serif; font-size: .64rem; letter-spacing: 0; line-height: 1.15; color: var(--ivoire); }
+.heros-badge .rarete-succes { font-size: .52rem; }
+.heros-badge small { font-size: .72rem; color: var(--pierre); }
+.heros-badges .vide { grid-column: 1 / -1; }
+
+/* ---------- Les cartes favorites (components/Deck.jsx ; base dans cartes-jeu.css) ---------- */
+.heros-deck { padding: 14px 22px 14px; }
+.heros-deck .deck-tete { margin: 0 0 2px; }
+.heros-deck .deck-nom { margin: 0; font-family: "Cinzel","Cinzel Repli", serif; font-size: 1.3rem; color: var(--ivoire); overflow-wrap: anywhere; }
+.heros-deck .deck-renommer input { background: rgba(0,0,0,.35); border: 1px solid var(--trait-h); color: var(--ivoire); }
+.heros-deck .btn-petit { color: var(--pierre); }
+/* une main de cartes en éventail : légèrement superposées et inclinées ; au survol, la carte
+   se redresse et se lève au-dessus des autres.
+   (la largeur d'une carte suit celle du panneau : cinq cartes un peu superposées y tiennent toujours) */
+.heros-deck { container-type: inline-size; }
+.heros-deck .deck-emplacements { --l: min(152px, 19cqw); display: flex; justify-content: center; gap: 0; padding: 6px 0 4px; }
+.heros-deck .deck-emplacement {
+  --r: 0deg; --y: 0px;
+  flex: none; width: var(--l); margin: 0 calc(var(--l) * -.13);
+  rotate: var(--r); translate: 0 var(--y); transform-origin: 50% 110%;
+  border-color: rgba(205,214,230,.2); background: rgba(0,0,0,.28);
+  transition: rotate .25s ease, translate .25s ease, scale .25s ease;
+}
+.heros-deck .deck-emplacement:nth-child(1) { --r: -5deg; --y: 10px; }
+.heros-deck .deck-emplacement:nth-child(2) { --r: -2deg; --y: 3px; }
+.heros-deck .deck-emplacement:nth-child(4) { --r: 2deg; --y: 3px; }
+.heros-deck .deck-emplacement:nth-child(5) { --r: 5deg; --y: 10px; }
+.heros-deck .deck-emplacement--plein:hover,
+.heros-deck .deck-emplacement--plein:focus-within { z-index: 5; rotate: 0deg; translate: 0 -14px; scale: 1.06; }
+.heros-deck .deck-emplacement__ajout { color: var(--pierre); }
+
+/* ---------- La collection par rareté : un anneau par rareté ---------- */
+.heros-collection__liste { list-style: none; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; margin: 0; padding: 0; }
+.heros-anneau { display: flex; flex-direction: column; align-items: center; gap: 6px; min-width: 0; }
+.heros-anneau--commune { --c: var(--rarete-commune, #8f8a84); }
+.heros-anneau--eveillee { --c: var(--rarete-eveillee, #2f8a55); }
+.heros-anneau--mythique { --c: var(--rarete-mythique, #2c5fb8); }
+.heros-anneau--legendaire { --c: var(--rarete-legendaire, #a8141f); }
+.heros-anneau--transcendante { --c: var(--rarete-transcendante, #c9a24a); }
+.heros-anneau__cercle {
+  position: relative; display: grid; place-items: center; align-content: center;
+  width: 62px; height: 62px; border-radius: 50%;
+  background: conic-gradient(color-mix(in srgb, var(--c) 80%, #fff) var(--pct), rgba(255,255,255,.08) 0);
+}
+.heros-anneau__cercle::before { content: ""; position: absolute; inset: 5px; border-radius: 50%; background: #10131b; box-shadow: inset 0 0 10px rgba(0,0,0,.6); }
+.heros-anneau__cercle b, .heros-anneau__cercle small { position: relative; line-height: 1; }
+.heros-anneau__cercle b { font-family: "Cinzel","Cinzel Repli", serif; font-size: 1.05rem; color: var(--ivoire); }
+.heros-anneau__cercle small { font-size: .68rem; color: var(--pierre); }
+.heros-anneau__nom { font-family: "Cinzel","Cinzel Repli", serif; font-size: .5rem; letter-spacing: .02em; text-transform: uppercase; color: color-mix(in srgb, var(--c) 55%, #ddd); text-align: center; }
+
+/* ---------- Le registre des duels ---------- */
+.registre__chiffres { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; margin: 0; }
+.registre__chiffre { padding: 7px 6px; text-align: center; background: rgba(255,255,255,.035); box-shadow: inset 0 0 0 1px var(--trait-h); }
+.registre__chiffre dt { font-family: "Cinzel","Cinzel Repli", serif; font-size: .5rem; letter-spacing: .12em; text-transform: uppercase; color: var(--pierre); }
+.registre__chiffre dd { margin: 2px 0 0; font-family: "Cinzel","Cinzel Repli", serif; font-size: 1.2rem; font-weight: 700; color: var(--ivoire); font-variant-numeric: tabular-nums; }
+.registre__chiffre--v dd { color: #9fdcb5; }
+.registre__chiffre--d dd { color: #e8a0a5; }
+/* une jauge : rail sombre, remplissage */
+.heros-jauge { height: 8px; margin-top: 12px; background: rgba(255,255,255,.08); clip-path: polygon(4px 0, 100% 0, calc(100% - 4px) 100%, 0 100%); }
+.heros-jauge > span { display: block; height: 100%; background: linear-gradient(90deg, color-mix(in srgb, var(--vif) 60%, #000), var(--vif)); transition: width .6s ease; }
+.heros-jauge--ratio > span { background: linear-gradient(90deg, #4f8f6a, #8fd0a6); }
+.heros-jauge--vide > span { width: 0 !important; }
+.registre__legende { margin: 6px 0 0; font-size: .84rem; color: var(--pierre); }
+.registre__detail { list-style: none; margin: 12px 0 0; padding: 0; }
+.registre__detail li { display: grid; grid-template-columns: 1fr auto auto; gap: 10px; align-items: baseline; padding: 7px 0; border-top: 1px solid var(--trait-h); font-size: .92rem; }
+.registre__detail b { font-weight: 600; color: var(--ivoire); font-variant-numeric: tabular-nums; }
+.registre__detail small { min-width: 3.2em; text-align: right; color: var(--pierre); }
+.registre__note { margin: 10px 0 0; font-size: .78rem; font-style: italic; line-height: 1.35; color: color-mix(in srgb, var(--pierre) 80%, transparent); }
+
+/* ---------- La collection : le Grimoire du Duel et les boutons, en bas du panneau ---------- */
+.heros-collection__grimoire { margin: 12px 0 0; font-size: .86rem; line-height: 1.35; color: var(--pierre); }
+.heros-collection__boutons { display: flex; flex-wrap: wrap; gap: 8px; margin-top: auto; padding-top: 12px; }
+.heros-collection__boutons .heros-jouer { flex: 1 1 140px; margin: 0; }
+.heros-collection__boutons .heros-jouer--sobre { display: block; padding: 11px 14px; }
+
+/* la note du registre (comment le rang et les statistiques sont comptés) reste en infobulle, au survol
+   du registre : le profil tient ainsi sur un écran */
+.registre__note { display: none; }
+
+/* ---------- Portables (la barre du jeu prend 240 px à gauche) : tout plus serré ---------- */
+@media (max-width: 1440px) {
+  .page-fiche .profil-wrap { padding: 12px 16px 12px; }
+  .heros-bandeau { height: clamp(170px, 25vh, 250px); margin-bottom: 14px; }
+  .heros-bandeau__medaillon { width: 92px; height: 102px; }
+  .heros-bandeau__contenu { gap: 14px; padding: 0 18px 12px; }
+  .heros-bandeau__rang { top: 12px; right: 12px; width: min(380px, 46%); }
+  .heros-rangee { gap: 14px; margin-bottom: 14px; }
+  .heros-panneau { padding: 13px 14px 15px; }
+  .heros-deck .deck-emplacements { --l: min(140px, 17cqw); padding-top: 4px; }
+  .registre__chiffre dd { font-size: 1.05rem; }
+  .heros-paliers__case { font-size: .44rem; letter-spacing: 0; }
+  .registre__detail li { font-size: .84rem; padding: 5px 0; }
+  .heros-jouer { padding: 9px 12px; }
+  .heros-collection__boutons .heros-jouer, .heros-collection__boutons .heros-jouer--sobre { flex-basis: 120px; padding: 8px 10px; font-size: .64rem; letter-spacing: .08em; }
+  .heros-collection__grimoire { margin-top: 8px; font-size: .8rem; }
+  .heros-collection__boutons { padding-top: 8px; }
+  .heros-anneau__cercle { width: 44px; height: 44px; }
+  .heros-anneau__nom { font-size: .42rem; letter-spacing: 0; }
+}
+/* ---------- Tablettes : les panneaux deux par deux, le rang sous le nom ---------- */
+@media (max-width: 1000px) {
+  .heros-bandeau { height: auto; min-height: 240px; display: flex; flex-direction: column; justify-content: flex-end; }
+  .heros-bandeau__rang { position: relative; inset: auto; width: auto; margin: 14px 14px 0; align-items: stretch; }
+  .heros-bandeau__contenu { position: relative; inset: auto; padding-top: 60px; }
+  .heros-rangee { flex-wrap: wrap; }
+  .heros-rangee > * { flex: 1 1 280px !important; }
+}
+/* ---------- Téléphones : une seule colonne, le héros d'abord ---------- */
+@media (max-width: 760px) {
+  .page-fiche .profil-wrap { padding: 12px 12px 32px; }
+  .heros-bandeau__contenu { padding: 50px 14px 12px; gap: 12px; }
+  .heros-bandeau__medaillon { width: 76px; height: 84px; }
+  .heros-rangee { flex-direction: column; }
+  .heros-rangee > * { flex: none !important; }
+  .heros-collection__liste { grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px 4px; }
+  /* les anneaux sur deux lignes, 3 puis 2 (centrés) : les noms des raretés tiennent */
+  .heros-anneau { grid-column: span 2; }
+  .heros-anneau:nth-child(4) { grid-column: 2 / span 2; }
+  .heros-anneau__cercle { width: 48px; height: 48px; }
+  .heros-deck { padding: 14px 12px 16px; }
+  .heros-deck .deck-emplacements { --l: 24cqw; }
+}
+@media (prefers-reduced-motion: reduce) { .heros-deck .deck-emplacement, .heros-jauge > span { transition: none; } }
+
+/* =====================================================================
+   Ordinateurs : tout le profil tient dans la fenêtre, quelle que soit sa hauteur, sans que la page défile.
+   L'écran prend exactement la hauteur de la fenêtre ; le bandeau et la rangée du milieu gardent leur taille,
+   la rangée du bas prend le reste, et les cartes du deck s'agrandissent ou rétrécissent pour y tenir
+   (leur largeur suit la largeur ET la hauteur du panneau : container-type: size).
+   ===================================================================== */
+@media (min-width: 1001px) and (min-height: 560px) {
+  body.page-fiche { overflow: hidden; }
+  .page-fiche .profil-wrap { height: 100dvh; box-sizing: border-box; display: flex; flex-direction: column; padding-top: 14px; padding-bottom: 12px; }
+  .ecran-heros { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+  .heros-bandeau { flex: 0 0 auto; height: clamp(150px, 29vh, 330px); }
+  .heros-rangee--infos { flex: 0 0 auto; }
+  .heros-rangee--cartes { flex: 1 1 auto; min-height: 0; margin-bottom: 0; }
+  .heros-rangee--cartes > * { min-height: 0; overflow: hidden; }
+  .heros-deck { container-type: size; display: flex; flex-direction: column; }
+  .heros-deck #deck { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+  .heros-deck .deck-emplacements {
+    flex: 1 1 auto; min-height: 0; align-items: center;
+    --l: max(70px, min(190px, 19cqw, calc((100cqh - 84px) / 1.62)));
+  }
+}
+/* fenêtres basses (portable, navigateur avec beaucoup de barres) : le bandeau et la rangée du milieu se serrent */
+@media (min-width: 1001px) and (min-height: 560px) and (max-height: 760px) {
+  .heros-bandeau { height: clamp(140px, 25vh, 200px); margin-bottom: 12px; }
+  .heros-bandeau__medaillon { width: 80px; height: 88px; }
+  /* le bouton « Apparence » à gauche du rang (dessous, il sortirait de la bannière) */
+  .heros-bandeau__rang { flex-direction: row-reverse; align-items: flex-start; width: auto; top: 10px; right: 10px; }
+  .heros-bandeau__rang .heros-rang { width: min(400px, 42vw); }
+  .heros-bandeau__nom { font-size: clamp(1.7rem, 3vw, 2.4rem); }
+  .heros-rangee { gap: 12px; margin-bottom: 12px; }
+  .heros-panneau { padding: 11px 13px 12px; }
+  .heros-titre { margin-bottom: 8px; }
+  .heros-badge .badge-succes { --taille: 46px; }
+  .registre__chiffre { padding: 5px 4px; }
+  .registre__detail li { padding: 4px 0; }
+  .registre__legende { display: none; }
+  .tresor__or { height: 56px; }
+  .tresor__or .piece-icone { width: 56px; height: 56px; }
+  .tresor__cristal { height: 50px; }
+  .tresor__cristal img { height: 46px; }
+  .tresor__monnaie { grid-template-columns: 58px 1fr; }
+  .tresor__solde { font-size: 1.25rem; }
+}

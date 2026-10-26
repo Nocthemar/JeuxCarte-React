@@ -1,7 +1,7 @@
 // =====================================================================
 //  Le niveau caché de l'Ombre (duel contre l'IA, hors mode Histoire)
-//  (repris de l'ancien JS/jeu-cartes-ombre.js ; l'élan, lui, est rangé dans le navigateur par
-//  src/lib/elan.js : le moteur ne touche jamais au stockage)
+//  (repris de l'ancien JS/jeu-cartes-ombre.js ; l'élan, lui, est gardé par le serveur, table player_elan,
+//  et mis à jour par l'arbitre : le moteur ne touche jamais au stockage)
 //
 //  L'Ombre joue un Grimoire « en miroir » du tien. Pour chaque carte de ton Grimoire, elle prend
 //  une carte de même rang :

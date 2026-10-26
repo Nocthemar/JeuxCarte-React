@@ -98,3 +98,12 @@
   .reglage--curseur label { grid-column: 1 / -1; }
 }
 .reglage--curseur label small { display: block; margin-left: 0; }
+
+/* Compte : le type de compte sous le pseudo ; la reconnexion avant suppression ; la double authentification (MJ) */
+.reglage__compte small { display: block; color: var(--texte-doux); font-size: .85rem; }
+.reglages-dialogue__reconnexion { padding: 8px 10px; border-left: 2px solid #b7444b; background: rgba(183,68,75,.12); }
+.reglage--double-auth { flex-wrap: wrap; }
+.double-auth { display: grid; gap: 8px; justify-items: start; width: 100%; margin-top: 10px; }
+.double-auth img { background: #fff; padding: 8px; border-radius: 4px; }
+.double-auth code { user-select: all; word-break: break-all; }
+.double-auth input { width: 10ch; padding: 6px 8px; border: 1px solid rgba(240,236,227,.25); border-radius: 4px; background: rgba(0,0,0,.4); color: var(--texte); font: inherit; letter-spacing: .2em; }

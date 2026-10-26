@@ -1,6 +1,7 @@
 // =====================================================================
-//  Écran « Profil » (ancien profil.html + JS/profil.js, même HTML), consacré au Duel des Couronnes
-//  #/profil           -> mon profil (badges, rang, deck, trésor, Duel des Couronnes)
+//  Écran « Profil » (ancien profil.html + JS/profil.js, refait en écran de personnage en octobre 2026), consacré au Duel des Couronnes
+//  #/profil           -> mon profil, en « écran de personnage » (styles/profil-heros.css) : une grande bannière avec
+//                        le héros et son rang, puis trésor, hauts faits, registre, puis cartes favorites et collection
 //  #/profil?id=12345  -> le profil public d'un autre joueur (ID Discord) : badges, rang, deck en lecture seule,
 //                        et « Proposer un échange »
 //  Le thème équipé par le joueur colore toute la page (accents --accent, --vif).
@@ -8,11 +9,11 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import Page from '../components/Page.jsx';
-import Carte from '../components/Carte.jsx';
 import Deck from '../components/Deck.jsx';
 import Badge from '../components/Badge.jsx';
 import ApercuCarte from '../components/ApercuCarte.jsx';
-import Rang from '../components/profil/Rang.jsx';
+import { PlaqueRang, Registre } from '../components/profil/Rang.jsx';
+import { useRang } from '../lib/rang.js';
 import Tresor from '../components/profil/Tresor.jsx';
 import { supabase } from '../lib/supabase.js';
 import { useAuth, connexionDiscord } from '../lib/auth.js';
@@ -23,6 +24,7 @@ import { lienSite } from '../lib/lienSite.js';
 import { RARETES_SUCCES, pourcentageTexte } from '../lib/succes.js';
 import { TAILLE_DECK } from '../data/regles.js';
 import { OBJETS } from '../data/cartes.js';
+import { RARETES, rareteDe } from '../data/affichage.js';
 import { objetDepuisNom } from '../moteur/index.js';
 
 // Le joueur + ses cosmétiques équipés, en une seule requête
@@ -35,72 +37,81 @@ const SELECT_JOUEUR = `
 const couleur = (c) => (/^#[0-9a-f]{3,8}$/i.test(c ?? '') ? c : null);
 
 // Badges : les succès épinglés par le joueur (jusqu'à 3), visibles par tous.
-// Sur son propre profil sans badge : un lien pour les choisir. Ailleurs sans badge : section cachée.
+// Sur son propre profil sans badge : un lien pour les choisir. Ailleurs sans badge : rien.
 function Badges({ badges, estMoi }) {
   if (!badges || (!badges.length && !estMoi)) return null;
   return (
-    <section id="badges-profil" className="carte badges-profil">
-      <span className="vitrine__sur">Hauts faits</span>
-      <h2>Badges</h2>
-      <div id="badges" className="badges-profil__liste">
+    <section id="badges-profil" className="heros-panneau heros-badges" aria-labelledby="titre-badges">
+      <h2 className="heros-titre" id="titre-badges">Hauts faits</h2>
+      <div id="badges" className="heros-badges__liste">
         {badges.length ? badges.map((s) => (
-          <div key={s.id} className="badge-profil" title={s.description}>
+          <div key={s.id} className="heros-badge" title={s.description}>
             <Badge s={s} taille="grand" />
-            <strong className="badge-profil__nom">{s.nom}</strong>
-            <span className={`rarete-succes rarete-succes--${s.rarete}`}>{RARETES_SUCCES[s.rarete]?.nom ?? 'Commun'}</span>
-            <small className="badge-profil__pct">{pourcentageTexte(s.pourcentage)} des joueurs</small>
+            <span>
+              <strong>{s.nom}</strong>
+              <span className={`rarete-succes rarete-succes--${s.rarete}`}>{RARETES_SUCCES[s.rarete]?.nom ?? 'Commun'}</span>
+              <small>{pourcentageTexte(s.pourcentage)} des joueurs</small>
+            </span>
           </div>
         )) : <p className="vide">Aucun badge épinglé pour le moment.</p>}
       </div>
-      {estMoi && <Link id="lien-succes" className="btn-collection badges-profil__lien" to="/succes">{badges.length ? 'Changer mes badges' : 'Choisir mes badges'}</Link>}
+      {estMoi && <Link id="lien-succes" className="heros-lien" to="/succes">{badges.length ? 'Changer mes badges' : 'Choisir mes badges'}</Link>}
     </section>
   );
 }
 
-// Encart du Duel des Couronnes : le Grimoire (20 cartes) choisi dans le jeu (retenu dans ce navigateur),
-// le nombre de cartes et d'objets de pouvoir possédés, et les 3 premières cartes du deck en éventail
-function Duel({ duel, deck }) {
-  const cles = (() => { const c = lireChoix(); return Array.isArray(c) ? c.slice(0, TAILLE_DECK) : null; })();
-  const choisies = cles ? cles.length : null;
-  const nbObjets = cles ? cles.filter((k) => String(k).startsWith('o-')).length : 0;
-  const main = deck ? deck.ids.filter((id) => id != null).map((id) => deck.cartes.get(id)).filter(Boolean).slice(0, 3) : [];
-  return (
-    <section id="duel" className="carte duel">
-      <div className="duel__texte">
-        <span className="duel__sur">Jeu de cartes de Nocthémar</span>
-        <h2 className="duel__titre">Duel des Couronnes</h2>
-        <p className="duel__accroche" id="duel-accroche">
-          {choisies == null
-            ? `Ton Grimoire de ${TAILLE_DECK} cartes se construit avec ta collection. Choisis tes cartes dans le jeu et affronte l'Ombre du Codex : chaque coup se joue au d20.`
-            : `Ton Grimoire est prêt : ${choisies} carte${choisies > 1 ? 's' : ''} choisie${choisies > 1 ? 's' : ''}${nbObjets ? `, dont ${nbObjets} objet${nbObjets > 1 ? 's' : ''} de pouvoir` : ''}${choisies < TAILLE_DECK ? `, complété par ${TAILLE_DECK - choisies} cartes de base` : ''}. Pose tes unités, sers-toi de tes objets, et que chaque coup se joue au d20.`}
-        </p>
-        <dl className="duel__stats" id="duel-stats">
-          {[['Grimoire', `${TAILLE_DECK} cartes`], ['Cartes', `${duel.nbCartes ?? 0}${duel.nbCatalogue ? ` / ${duel.nbCatalogue}` : ''}`], ['Objets', `${duel.objets} / ${OBJETS.length}`]]
-            .map(([k, v]) => <div key={k}><dt>{k}</dt><dd>{v}</dd></div>)}
-        </dl>
-        <div className="duel__boutons">
-          <Link className="duel__btn duel__btn--plein" to="/duel"><span className="duel__btn-titre">Aller au plateau</span></Link>
-        </div>
-      </div>
-      {/* (dos de carte pour les places vides) */}
-      <Link className="duel__eventail" to="/duel" aria-label="Jouer au Duel des Couronnes" id="duel-eventail">
-        {[0, 1, 2].map((i) => (main[i] ? <Carte key={i} carte={main[i]} /> : <div key={i} className="carte-jeu carte-jeu--sans-image" />))}
-      </Link>
-    </section>
-  );
-}
-
-// Ce qui est privé (mon propre profil) : la bourse, et de quoi remplir l'encart du Duel
+// Ce qui est privé (mon propre profil) : la bourse, de quoi remplir l'encart du Duel, et la collection
+// par rareté (mes cartes ne sont lisibles que par moi)
 async function chargerPrive(discordId) {
-  const [{ data: bourse }, { data: inventaire }, { count: nbCartes }, { count: nbCatalogue }] = await Promise.all([
-    supabase.from('wallets').select('balance').eq('discord_id', discordId).maybeSingle(),
+  const [{ data: bourse }, { data: inventaire }, { data: mesCartes }, { data: catalogue }] = await Promise.all([
+    supabase.from('wallets').select('*').eq('discord_id', discordId).maybeSingle(),
     supabase.from('inventory').select('item:items(name)').eq('discord_id', discordId),
-    supabase.from('player_cards').select('card_id', { count: 'exact', head: true }).eq('discord_id', discordId),
-    supabase.from('cards').select('id', { count: 'exact', head: true }).eq('is_available', true),
+    supabase.from('player_cards').select('card:cards(rarity)').eq('discord_id', discordId),
+    supabase.from('cards').select('rarity').eq('is_available', true),
   ]);
   // Objets de pouvoir possédés, un exemplaire de chacun
   const objets = new Set((inventaire ?? []).map(({ item }) => item && objetDepuisNom(item.name)?.id).filter(Boolean));
-  return { solde: bourse?.balance ?? 0, duel: { nbCartes, nbCatalogue, objets: objets.size } };
+  // La collection : par rareté, [cartes possédées, cartes du catalogue]
+  const collection = Object.fromEntries(Object.keys(RARETES).map((r) => [r, [0, 0]]));
+  (catalogue ?? []).forEach((c) => { collection[rareteDe(c)][1] += 1; });
+  (mesCartes ?? []).forEach(({ card }) => { if (card) collection[rareteDe(card)][0] += 1; });
+  const nbCartes = mesCartes?.length ?? 0;
+  const nbCatalogue = catalogue?.length ?? 0;
+  return { solde: bourse?.balance ?? 0, cristaux: bourse?.cristaux ?? 0, duel: { nbCartes, nbCatalogue, objets: objets.size }, collection };
+}
+
+// Ma collection, rareté par rareté (un anneau qui se remplit, « possédées / existantes »), et le
+// Duel des Couronnes : le Grimoire (20 cartes) choisi dans le jeu (retenu dans ce navigateur), les objets
+// de pouvoir possédés, et les boutons pour ouvrir la collection et aller jouer
+function Collection({ collection, duel }) {
+  const [possedees, total] = Object.values(collection).reduce(([a, b], [x, y]) => [a + x, b + y], [0, 0]);
+  const cles = (() => { const c = lireChoix(); return Array.isArray(c) ? c.slice(0, TAILLE_DECK) : null; })();
+  const choisies = cles ? cles.length : null;
+  const nbObjets = cles ? cles.filter((k) => String(k).startsWith('o-')).length : 0;
+  const grimoire = choisies == null
+    ? `Ton Grimoire de ${TAILLE_DECK} cartes se construit avec ta collection.`
+    : `Grimoire prêt : ${choisies} carte${choisies > 1 ? 's' : ''} choisie${choisies > 1 ? 's' : ''}${nbObjets ? `, dont ${nbObjets} objet${nbObjets > 1 ? 's' : ''} de pouvoir` : ''}${choisies < TAILLE_DECK ? `, complété par ${TAILLE_DECK - choisies} cartes de base` : ''}.`;
+  return (
+    <section id="duel" className="heros-panneau heros-collection" aria-labelledby="titre-collection">
+      <h2 className="heros-titre" id="titre-collection">Collection <span>{possedees} / {total}</span></h2>
+      <ul className="heros-collection__liste">
+        {Object.entries(collection).map(([r, [x, y]]) => (
+          <li key={r} className={`heros-anneau heros-anneau--${r}`} style={{ '--pct': `${y ? (x / y) * 100 : 0}%` }}
+            title={`${RARETES[r]} : ${x} sur ${y}`}>
+            <span className="heros-anneau__cercle"><b>{x}</b><small>/ {y}</small></span>
+            <span className="heros-anneau__nom">{RARETES[r]}</span>
+          </li>
+        ))}
+      </ul>
+      <p className="heros-collection__grimoire" id="duel-accroche">
+        {grimoire} <span id="duel-stats">Objets de pouvoir : {duel.objets} / {OBJETS.length}.</span>
+      </p>
+      <div className="heros-collection__boutons">
+        <Link id="lien-collection" className="heros-jouer" to="/collection">Ouvrir ma collection</Link>
+        <Link className="heros-jouer heros-jouer--sobre" to="/duel">Aller au plateau</Link>
+      </div>
+    </section>
+  );
 }
 
 export default function Profil() {
@@ -112,6 +123,7 @@ export default function Profil() {
   const [d, setD] = useState({ pour: null });   // { pour, joueur, badges, prive } ou { pour, introuvable }
   const [ouverte, setOuverte] = useState(null);
   const deck = useDeck(discordId);
+  const rang = useRang(discordId);
   const zoneDeck = useRef(null);
 
   useEffect(() => {
@@ -158,9 +170,6 @@ export default function Profil() {
     });
   }, [estMoi, deckPret]);
 
-  // Les proportions de la bannière (payload.ratio, ex : « 2172 / 724 ») : le cadre prend la forme de l'image
-  const ratio = j?.banner?.payload?.ratio;
-  const ratioValide = /^\d+(\.\d+)?\s*\/\s*\d+(\.\d+)?$/.test(ratio ?? '') ? ratio : undefined;
   const pret = !!p && !p.introuvable && !!deck.deck;
 
   return (
@@ -174,46 +183,58 @@ export default function Profil() {
           <section id="non-connecte" className="carte centre">
             <h2>Ton profil de joueur</h2>
             <p>Connecte-toi avec Discord pour voir ton deck, tes cartes et tes pièces.</p>
-            <button id="btn-connexion" type="button" className="btn-discord" onClick={connexionDiscord}>
+            <button id="btn-connexion" type="button" className="btn-discord" onClick={() => connexionDiscord()}>
               <span className="btn-discord__logo" aria-hidden="true" />
               Connecter Discord
             </button>
           </section>
         )}
 
+        {/* L'écran du personnage (styles/profil-heros.css) : en haut, la bannière en grand, immersive, avec le
+            héros (médaillon, nom, titre) en bas à gauche et son rang en haut à droite ; dessous, une rangée trésor,
+            hauts faits, registre des duels ; enfin les cartes favorites et la collection (avec le Duel des Couronnes) */}
         {pret && (
-          <div id="profil">
-            {/* Bandeau du registre (décor) */}
-            <p className="fiche-sur" aria-hidden="true"><span />Registre des aventuriers de Nocthémar<span /></p>
-            <section className="entete" style={ratioValide ? { aspectRatio: ratioValide } : undefined}>
-              <div id="banniere" className="entete__banniere"
+          <div id="profil" className="ecran-heros">
+            <header className="heros-bandeau">
+              <div id="banniere" className="heros-bandeau__image"
                 style={j.banner?.payload?.image ? { backgroundImage: `url("${lienSite(j.banner.payload.image)}")` } : undefined} />
-              <div className="entete__infos">
-                {/* (sans avatar, l'image reste mais cachée : le CSS cache alors le cadre, .entete__medaillon:has(img[hidden])) */}
-                <div className="entete__medaillon"><img id="avatar" className="entete__avatar" alt="" src={j.avatar_url ?? undefined} hidden={!j.avatar_url} /></div>
-                <div>
-                  <h1 id="pseudo">{j.username ?? 'Joueur inconnu'}</h1>
-                  <p id="titre" className="entete__titre">{j.title?.payload?.text ?? ''}</p>
+              <div className="heros-bandeau__rang">
+                <PlaqueRang rang={rang?.rang} />
+                {/* Mon profil : changer de bannière, de titre ou de thème (l'armoire de la Boutique) */}
+                {estMoi && <Link className="heros-bandeau__armoire" to="/boutique?echoppe=apparences" title="Changer de bannière, de titre ou de thème">Apparence</Link>}
+              </div>
+              <div className="heros-bandeau__contenu">
+                {/* (sans avatar, l'image reste mais cachée : le CSS cache alors le médaillon) */}
+                <div className="heros-bandeau__medaillon"><img id="avatar" alt="" src={j.avatar_url ?? undefined} hidden={!j.avatar_url} /></div>
+                <div className="heros-bandeau__identite">
+                  <h1 id="pseudo" className="heros-bandeau__nom">{j.username ?? 'Joueur inconnu'}</h1>
+                  <p id="titre" className="heros-bandeau__titre">{j.title?.payload?.text ?? ''}</p>
                   {/* Profil d'un autre joueur, quand on est connecté : lui proposer un échange de cartes */}
-                  {moi && !estMoi && <Link id="lien-echange" className="btn-echange" to={`/marche?avec=${encodeURIComponent(discordId)}`}>⇄ Proposer un échange</Link>}
+                  {moi && !estMoi && <Link id="lien-echange" className="heros-jouer heros-jouer--sobre" to={`/marche?avec=${encodeURIComponent(discordId)}`}>⇄ Proposer un échange</Link>}
                 </div>
               </div>
-            </section>
+            </header>
 
-            <Badges badges={p.badges} estMoi={estMoi} />
-            <Rang discordId={discordId} estMoi={estMoi} />
+            <div className="heros-rangee heros-rangee--infos">
+              {/* La bourse : seulement sur mon propre profil */}
+              {estMoi && p.prive && <section className="heros-panneau heros-rangee__tresor" aria-label="Le trésor"><Tresor solde={p.prive.solde} cristaux={p.prive.cristaux} /></section>}
+              <Badges badges={p.badges} estMoi={estMoi} />
+              {rang && ((!rang.stats.error && rang.stats.data) || estMoi) && (
+                <section className="heros-panneau heros-rangee__registre" aria-labelledby="titre-registre">
+                  <h2 className="heros-titre" id="titre-registre">Registre des duels</h2>
+                  <Registre d={rang} estMoi={estMoi} />
+                </section>
+              )}
+            </div>
 
-            {/* Vitrine des cartes favorites (le deck du profil) : visible par tous, modifiable seulement sur son propre profil */}
-            <section className="carte deck vitrine" ref={zoneDeck}>
-              <span className="vitrine__sur">Cartes favorites</span>
-              <Deck deck={deck.deck} editable={estMoi} lienAjout="/collection?vue=grimoire"
-                surRetirer={deck.retirer} surRenommer={deck.renommer} surLoupe={setOuverte} />
-              {estMoi && <Link id="lien-collection" className="btn-collection" to="/collection">Ouvrir ma collection</Link>}
-            </section>
-
-            {/* La partie privée : seulement sur mon propre profil */}
-            {estMoi && p.prive && <Tresor solde={p.prive.solde} />}
-            {estMoi && p.prive && <Duel duel={p.prive.duel} deck={deck.deck} />}
+            <div className="heros-rangee heros-rangee--cartes">
+              {/* Les cartes favorites (le deck du profil) : visibles par tous, modifiables seulement sur son propre profil */}
+              <section className="heros-panneau heros-deck" ref={zoneDeck} aria-label="Cartes favorites">
+                <Deck deck={deck.deck} editable={estMoi} lienAjout="/collection?vue=grimoire"
+                  surRetirer={deck.retirer} surRenommer={deck.renommer} surLoupe={setOuverte} />
+              </section>
+              {estMoi && p.prive && <Collection collection={p.prive.collection} duel={p.prive.duel} />}
+            </div>
           </div>
         )}
       </main>

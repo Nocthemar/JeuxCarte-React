@@ -5,7 +5,10 @@
 --  morceau par morceau : tables, fonctions, règles RLS, triggers, droits, et les règles Realtime des
 --  salons privés du duel en ligne.
 --
---  À lancer UNE fois dans Supabase > SQL Editor d'un projet VIDE (puis supabase/donnees.sql).
+--  À lancer UNE fois dans Supabase > SQL Editor d'un projet VIDE (puis supabase/securite.sql et supabase/donnees.sql).
+--  ⚠️ securite.sql REMPLACE plusieurs fonctions d'ici (création des profils, Offrande, recyclage, échanges,
+--  salons, MJ, suppression de compte) : ne jamais relancer schema.sql seul sur un projet où securite.sql a tourné
+--  sans relancer securite.sql juste après.
 --  Relançable sans casse (create … if not exists, create or replace, drop policy if exists).
 --
 --  ⚠️ PARTIE 1 (tables du site Nocthémar et du bot Discord : players, wallets, transactions, items,
@@ -66,6 +69,8 @@ create table if not exists public.wallets (
   discord_id text primary key references public.players(discord_id) on delete cascade,
   balance    int not null default 0 check (balance >= 0)
 );
+-- Les cristaux : la seconde monnaie (affichée, aucun moyen d'en gagner ni d'en dépenser pour l'instant)
+alter table public.wallets add column if not exists cristaux int not null default 0 check (cristaux >= 0);
 
 -- L'historique des pièces
 create table if not exists public.transactions (

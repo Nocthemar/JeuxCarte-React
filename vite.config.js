@@ -4,14 +4,17 @@ import react from '@vitejs/plugin-react'
 import { defineConfig, loadEnv } from 'vite'
 
 // La politique de sécurité de l'ancien jeu (Content-Security-Policy, la même sur chaque page) :
-// seuls les scripts du jeu s'exécutent ; le jeu ne parle qu'à son projet Supabase.
+// seuls les scripts du jeu s'exécutent ; le jeu ne parle qu'à son projet Supabase ; aucun cadre (iframe).
+// Avec la vérification anti-robot (VITE_TURNSTILE_SITE_KEY) : son script et son cadre, chez Cloudflare.
 // Ajoutée seulement à la version finale (npm run build) : en développement, Vite a besoin de scripts
 // écrits dans la page, que cette politique interdit.
 // (l'adresse de Supabase n'est lue qu'à la construction : les tests chargent aussi ce fichier, sans elle)
-function politiqueDeSecurite(supabase) {
+function politiqueDeSecurite(supabase, captcha) {
+  const turnstile = captcha ? ' https://challenges.cloudflare.com' : ''
   const regles = (hote) => [
     "default-src 'self'",
-    "script-src 'self'",
+    `script-src 'self'${turnstile}`,
+    captcha ? `frame-src${turnstile}` : "frame-src 'none'",
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "font-src 'self' data: https://fonts.gstatic.com",
     "img-src 'self' data: blob: https:",
@@ -64,7 +67,7 @@ export default defineConfig(({ command, mode }) => {
     // Adresses relatives : le jeu fonctionne à la racine d'un site comme dans un sous-dossier
     // (GitHub Pages : …github.io/CarteJeuxNocthemar/)
     base: './',
-    plugins: [react(), politiqueDeSecurite(env.VITE_SUPABASE_URL), appliHorsLigne()],
+    plugins: [react(), politiqueDeSecurite(env.VITE_SUPABASE_URL, env.VITE_TURNSTILE_SITE_KEY), appliHorsLigne()],
     // En développement (npm run dev) : Vite prépare les écrans et leurs styles dès le démarrage, au lieu
     // d'attendre la première visite de chaque écran (sinon plusieurs secondes d'attente la première fois)
     server: { warmup: { clientFiles: ['./src/pages/*.jsx', './src/styles/*.css'] } },

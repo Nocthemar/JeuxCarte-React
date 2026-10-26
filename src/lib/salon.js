@@ -10,7 +10,8 @@
 //  (supabase/schema.sql, partie 13) : l'hôte y envoie la partie vue de sa place, avec sa main (envoyerPrive).
 //  L'hôte (celui qui crée le salon) fait tourner les règles et lance les dés.
 //
-//  Sécurité : le canal est PRIVÉ (seuls les joueurs connectés y entrent, supabase/schema.sql partie 13), et tout
+//  Sécurité : le canal est PRIVÉ (seuls les membres du salon, inscrits par le serveur avec salon_entrer, y entrent :
+//  supabase/securite.sql partie 5), et tout
 //  ce qui vient des autres joueurs passe par nettoyer() avant d'être lu : un joueur malveillant ne peut
 //  pas glisser de code dans la page de son adversaire (noms, coûts, états de partie…).
 // =====================================================================
@@ -75,8 +76,13 @@ export function ouvrirSalon(code, profil, { surPresence, surMessage, surErreur }
     .map((brut) => { const p = { ...brut }; delete p.presence_ref; return p.cle === cle ? p : nettoyer(p); })   // presence_ref : interne à Supabase
     .sort((a, b) => a.rejoint - b.rejoint);
 
-  const ouvert = (fermetures.get(code) ?? Promise.resolve()).then(() => {
+  const ouvert = (fermetures.get(code) ?? Promise.resolve()).then(async () => {
     if (ferme) return;
+    // D'abord, le serveur m'inscrit dans le salon (supabase/securite.sql, partie 5) : seuls ses membres
+    // l'écoutent, et seul son hôte écrit dans les canaux privés
+    const { error } = await supabase.rpc('salon_entrer', { p_code: code, p_hote: profil.role === 'hote' });
+    if (ferme) return;
+    if (error) { surErreur(error.message || 'Impossible d’entrer dans ce salon.'); return; }
     canal = supabase.channel(`duel-${code}`, {
       config: { private: true, broadcast: { self: false }, presence: { key: cle } },
     });

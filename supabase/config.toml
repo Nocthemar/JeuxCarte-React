@@ -1,0 +1,9 @@
+# Réglages lus par la commande Supabase (npx supabase functions deploy arbitre --project-ref <projet>)
+# Seulement pour les Edge Functions : la base se règle avec les fichiers .sql (voir LISEZ-MOI.md).
+
+[functions.arbitre]
+# Le fichier construit par « npm run arbitre » (moteur du jeu compris)
+entrypoint = "./functions/arbitre/index.js"
+# L'arbitre vérifie lui-même la session auprès de Supabase Auth (et répond aux requêtes CORS « OPTIONS »,
+# qui n'ont pas de jeton) : la vérification automatique du jeton est donc coupée
+verify_jwt = false

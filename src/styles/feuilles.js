@@ -35,8 +35,10 @@ export const FEUILLES = {
   boutique: liste(['cartes-jeu', 'carte-infos', 'booster', 'boutique-vitrine', 'boutique-accueil']),
   marche: liste(['cartes-jeu', 'carte-infos', 'marche', 'marche-echanges']),
   pass: liste(['cartes-jeu', 'carte-infos', 'pass']),
-  profil: liste(['cartes-jeu', 'carte-infos', 'succes-badges', 'profil']),
+  profil: liste(['cartes-jeu', 'carte-infos', 'succes-badges', 'profil-heros']),
   parametres: liste(['parametres']),
+  // L'écran de connexion : sans la barre latérale
+  connexion: [...DEBUT, 'connexion', ...FIN],
 };
 
 // Les feuilles d'un écran, dans l'ordre : [nom, texte][] (une promesse, gardée : chaque écran ne les

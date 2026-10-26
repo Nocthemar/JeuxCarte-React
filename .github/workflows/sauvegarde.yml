@@ -1,0 +1,62 @@
+# =====================================================================
+#  Sauvegarde CHIFFRÉE des données du jeu (schémas public et securite), chaque lundi et à la main
+#  (onglet « Actions » > « Sauvegarde » > Run workflow).
+#
+#  Le dépôt est public : la sauvegarde n'est JAMAIS publiée en clair. Elle est chiffrée (AES-256) avec une
+#  phrase secrète avant d'être rangée dans les « artifacts » de l'exécution (gardés 14 jours).
+#  À mettre dans Settings > Secrets and variables > Actions > onglet Secrets (pas Variables) :
+#    SUPABASE_DB_URL       Supabase > Connect > « Session pooler » (postgresql://postgres.xxx:MOT_DE_PASSE@…:5432/postgres)
+#    SAUVEGARDE_PHRASE     une longue phrase secrète, gardée aussi ailleurs (sans elle, la sauvegarde est illisible)
+#  Sans ces deux secrets, la sauvegarde ne fait rien.
+#
+#  Relire une sauvegarde (la phrase est demandée) :
+#    openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 -in sauvegarde.sql.gz.enc | gunzip > sauvegarde.sql
+#  (Supabase garde aussi ses propres sauvegardes quotidiennes sur les offres payantes.)
+# =====================================================================
+name: Sauvegarde
+
+on:
+  schedule:
+    - cron: '17 3 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  sauvegarder:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Secrets présents ?
+        id: secrets
+        env:
+          URL: ${{ secrets.SUPABASE_DB_URL }}
+          PHRASE: ${{ secrets.SAUVEGARDE_PHRASE }}
+        run: |
+          if [ -z "$URL" ] || [ -z "$PHRASE" ]; then
+            echo "::notice::SUPABASE_DB_URL ou SAUVEGARDE_PHRASE manquent : pas de sauvegarde."
+            echo "ok=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ok=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Exporter et chiffrer
+        if: steps.secrets.outputs.ok == 'true'
+        env:
+          URL: ${{ secrets.SUPABASE_DB_URL }}
+          PHRASE: ${{ secrets.SAUVEGARDE_PHRASE }}
+        run: |
+          set -euo pipefail
+          umask 077
+          docker run --rm -e URL postgres:17 sh -c 'pg_dump "$URL" --schema=public --schema=securite --no-owner --no-privileges' \
+            | gzip -9 \
+            | openssl enc -aes-256-cbc -pbkdf2 -iter 200000 -salt -pass env:PHRASE -out sauvegarde.sql.gz.enc
+          ls -l sauvegarde.sql.gz.enc
+
+      - uses: actions/upload-artifact@v4
+        if: steps.secrets.outputs.ok == 'true'
+        with:
+          name: sauvegarde-${{ github.run_id }}
+          path: sauvegarde.sql.gz.enc
+          retention-days: 14
+          if-no-files-found: error

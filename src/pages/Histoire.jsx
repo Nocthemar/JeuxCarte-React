@@ -233,7 +233,7 @@ export default function Histoire() {
         {pret && !joueur && (
           <section className="histoire-connexion">
             <p>Le mode Histoire garde ta progression et tes récompenses : connecte-toi avec Discord pour partir en campagne.</p>
-            <button type="button" className="btn-discord" onClick={connexionDiscord}>
+            <button type="button" className="btn-discord" onClick={() => connexionDiscord()}>
               <span className="btn-discord__logo" aria-hidden="true" />
               Connecter Discord
             </button>

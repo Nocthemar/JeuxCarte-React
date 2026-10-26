@@ -134,7 +134,7 @@ export default function Collection() {
           <section id="non-connecte" className="carte centre">
             <h2>Ton grimoire de cartes</h2>
             <p>Connecte-toi avec Discord pour ouvrir ta collection de cartes.</p>
-            <button id="btn-connexion" type="button" className="btn-discord" onClick={connexionDiscord}>
+            <button id="btn-connexion" type="button" className="btn-discord" onClick={() => connexionDiscord()}>
               <span className="btn-discord__logo" aria-hidden="true" />
               Connecter Discord
             </button>

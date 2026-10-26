@@ -687,6 +687,20 @@
   .barre__bourse-texte { display: flex; flex-direction: column; line-height: 1.05; }
   .barre__bourse-texte b { font-family: "Cinzel","Cinzel Repli", serif; font-size: 1.15rem; font-weight: 700; color: #f3d58e; text-shadow: 0 2px 6px rgba(0,0,0,.8); font-variant-numeric: tabular-nums; }
   .barre__bourse-texte small { font-family: "EB Garamond","EB Garamond Repli", serif; font-style: italic; font-size: .78rem; color: #a99f8c; }
+  /* deux lignes de même taille, l'or puis les cristaux, alignées en deux colonnes (image | montant) */
+  .barre .barre__bourse { display: grid; grid-template-columns: 56px auto; justify-content: center; align-items: center; gap: 4px 12px; }
+  .barre__bourse-ligne { display: contents; }
+  /* le cristal luit : un halo bleu derrière lui, dont seule l'opacité respire */
+  .barre__bourse-cristal { position: relative; display: grid; place-items: center; width: 56px; height: 48px; }
+  .barre__bourse-cristal::before {
+    content: ""; position: absolute; inset: 2px 10px; border-radius: 50%;
+    background: radial-gradient(closest-side, rgba(90,130,255,.55), rgba(60,90,220,.15) 60%, transparent);
+    animation: barre-cristal-lueur 3.2s ease-in-out infinite;
+  }
+  .barre__bourse .barre__bourse-cristal img { position: relative; width: auto; height: 42px; filter: drop-shadow(0 3px 5px rgba(0,0,0,.6)) drop-shadow(0 0 5px rgba(90,130,255,.6)); }
+  .barre__bourse-ligne--cristaux .barre__bourse-texte b { color: #b9caff; text-shadow: 0 2px 6px rgba(0,0,0,.8), 0 0 10px rgba(90,130,255,.45); }
+  @keyframes barre-cristal-lueur { 0%, 100% { opacity: .45; } 50% { opacity: 1; } }
+  :root.anim-reduites .barre__bourse-cristal::before, :root.mode-perf .barre__bourse-cristal::before { animation: none; opacity: .7; }
 }
 @media (min-width: 701px) and (max-height: 760px) { .barre .barre__bourse { margin-top: 8px; padding: 5px 12px; } }
 

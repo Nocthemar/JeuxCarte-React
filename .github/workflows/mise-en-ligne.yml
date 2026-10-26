@@ -6,6 +6,7 @@
 #  L'adresse et la clé PUBLIQUE de Supabase viennent des « Variables » du dépôt
 #  (Settings > Secrets and variables > Actions > onglet Variables) :
 #    VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY   (jamais la clé secrète)
+#    VITE_TURNSTILE_SITE_KEY                     (facultative : la vérification anti-robot de la connexion)
 # =====================================================================
 name: Mise en ligne
 
@@ -40,6 +41,7 @@ jobs:
         env:
           VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ vars.VITE_SUPABASE_ANON_KEY }}
+          VITE_TURNSTILE_SITE_KEY: ${{ vars.VITE_TURNSTILE_SITE_KEY }}
           VITE_VERSION: ${{ github.sha }}
       - uses: actions/upload-pages-artifact@v3
         with:

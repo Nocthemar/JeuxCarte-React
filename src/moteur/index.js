@@ -25,3 +25,4 @@ export { choixRenvoiIA } from './ia.js';
 export { grimoireOmbre, pvElan, elanApres, ELAN_MAX } from './ombre.js';
 export { alleger, miroir, vueEquipe, vueEvEquipe } from './vues.js';
 export { nouvelleGraine, generateur, melanger, faceD20 } from './hasard.js';
+export { preparerSolo, tourOmbre, rejouerSolo, actionJournal, deckHistoire, ombreAFini, ACTIONS_JOUEUR, NOM_OMBRE } from './solo.js';

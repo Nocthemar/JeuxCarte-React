@@ -278,7 +278,7 @@ export default function Pass() {
         {/* Pas connecté */}
         <section className="pass-connexion" id="bloc-connexion" hidden={chargement || !!joueur}>
           <p>Connecte-toi avec Discord pour gagner de l&apos;XP de pass, réclamer tes récompenses et débloquer la piste premium.</p>
-          <button type="button" className="btn-discord" id="btn-connexion" onClick={connexionDiscord}>
+          <button type="button" className="btn-discord" id="btn-connexion" onClick={() => connexionDiscord()}>
             <span className="btn-discord__logo" aria-hidden="true" />
             <span className="btn-discord__texte">Connecter Discord</span>
           </button>

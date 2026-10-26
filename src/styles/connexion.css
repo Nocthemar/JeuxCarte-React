@@ -1,0 +1,144 @@
+/* =====================================================================
+   Écran « Connexion » (pages/Connexion.jsx) : la porte du jeu
+   Nuit low poly, pierre et ivoire, un seul accent rouge sang. Toujours sombre, même en thème clair :
+   comme le plateau du duel, c'est un décor du jeu.
+   ===================================================================== */
+.page-connexion {
+  --c-fond: #0c0b0c;
+  --c-pierre: #171415;
+  --c-pierre-2: #211d1d;
+  --c-trait: rgba(236, 230, 217, .14);
+  --c-trait-fort: rgba(236, 230, 217, .3);
+  --c-ivoire: #ece6d9;
+  --c-ivoire-doux: #b9b0a2;
+  --c-ivoire-pale: #8a8174;
+  --c-sang: #a3262e;
+  --c-sang-vif: #c22f38;
+  background: var(--c-fond);
+  color: var(--c-ivoire);
+  color-scheme: dark;
+}
+
+/* Le décor : la nuit low poly, assombrie vers les bords */
+.connexion__decor {
+  position: fixed; inset: 0; z-index: 0;
+  background:
+    radial-gradient(ellipse 70% 60% at 50% 45%, rgba(12, 11, 12, .25) 0%, rgba(12, 11, 12, .85) 70%, #0c0b0c 100%),
+    url("/img/Fond/profil-lowpoly.svg") center / cover no-repeat;
+}
+
+.connexion {
+  position: relative; z-index: 1;
+  min-height: 100vh; min-height: 100dvh;
+  display: grid; place-items: center;
+  padding: 32px 16px;
+}
+
+/* La carte : une dalle de pierre aux coins taillés */
+.connexion__carte {
+  width: 100%; max-width: 420px;
+  padding: 34px 32px 26px;
+  background: linear-gradient(165deg, var(--c-pierre-2), var(--c-pierre) 55%, #121011);
+  border: 1px solid var(--c-trait);
+  clip-path: polygon(18px 0, calc(100% - 18px) 0, 100% 18px, 100% calc(100% - 18px), calc(100% - 18px) 100%, 18px 100%, 0 calc(100% - 18px), 0 18px);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, .6);
+  text-align: center;
+  position: relative;
+}
+/* Le filet rouge sang, en haut */
+.connexion__carte::before {
+  content: ""; position: absolute; top: 0; left: 50%; translate: -50% 0;
+  width: 96px; height: 2px; background: var(--c-sang-vif);
+}
+
+.connexion__marque {
+  margin: 0 auto 14px; max-width: none;
+  font-family: "Cinzel Decorative", "Cinzel", "Cinzel Repli", serif; font-weight: 700;
+  font-size: .78rem; letter-spacing: .38em; text-transform: uppercase; color: var(--c-ivoire-pale);
+}
+.connexion__carte h1 {
+  font-family: "Cinzel", "Cinzel Repli", serif; font-weight: 600;
+  font-size: clamp(1.35rem, 5vw, 1.7rem); line-height: 1.25; letter-spacing: .02em; color: var(--c-ivoire);
+}
+.connexion__sous-titre {
+  margin: 6px auto 26px; max-width: none;
+  font-style: italic; font-size: 1rem; color: var(--c-ivoire-doux);
+}
+
+.connexion__etape {
+  font-family: "Cinzel", "Cinzel Repli", serif; font-size: 1.05rem; font-weight: 600;
+  color: var(--c-ivoire); margin: 0 0 4px;
+}
+.connexion__texte { margin: 0 auto; font-size: .98rem; line-height: 1.5; color: var(--c-ivoire-doux); }
+
+/* Les boutons */
+.connexion__bouton {
+  display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+  width: 100%; min-height: 46px; padding: 10px 16px;
+  border: 1px solid var(--c-trait-fort); border-radius: 2px;
+  background: #1d1919; color: var(--c-ivoire);
+  font-family: "Cinzel", "Cinzel Repli", serif; font-size: .9rem; font-weight: 600; letter-spacing: .06em;
+  cursor: pointer; transition: background .15s ease, border-color .15s ease, filter .15s ease;
+}
+.connexion__bouton:hover:not(:disabled) { background: #262121; border-color: rgba(236, 230, 217, .45); }
+.connexion__bouton:focus-visible, .connexion__liens button:focus-visible, .connexion__lien:focus-visible {
+  outline: 2px solid var(--c-ivoire); outline-offset: 2px;
+}
+.connexion__bouton:disabled { opacity: .55; cursor: default; }
+.connexion__bouton--principal { background: var(--c-sang); border-color: var(--c-sang-vif); color: #fff6ef; }
+.connexion__bouton--principal:hover:not(:disabled) { background: var(--c-sang-vif); border-color: #d9434b; }
+.connexion__bouton--discord .btn-discord__logo { width: 20px; height: 15px; }
+
+/* ──────── ou ──────── */
+.connexion__ou {
+  display: flex; align-items: center; gap: 14px; margin: 20px 0; max-width: none;
+  font-style: italic; font-size: .92rem; color: var(--c-ivoire-pale);
+}
+.connexion__ou::before, .connexion__ou::after { content: ""; flex: 1; height: 1px; background: var(--c-trait); }
+
+/* Le formulaire */
+.connexion__formulaire { display: flex; flex-direction: column; gap: 14px; text-align: left; }
+.connexion__formulaire .connexion__etape, .connexion__formulaire .connexion__texte { text-align: center; }
+.connexion__champ { display: flex; flex-direction: column; gap: 5px; }
+.connexion__champ > span {
+  font-family: "Cinzel", "Cinzel Repli", serif; font-size: .74rem; font-weight: 600;
+  letter-spacing: .1em; text-transform: uppercase; color: var(--c-ivoire-doux);
+}
+.connexion__champ input {
+  width: 100%; min-height: 44px; padding: 9px 12px;
+  background: #0f0d0e; color: var(--c-ivoire);
+  border: 1px solid var(--c-trait-fort); border-radius: 2px;
+  font-family: "EB Garamond", "EB Garamond Repli", serif; font-size: 1.05rem;
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+.connexion__champ input:focus { outline: none; border-color: var(--c-ivoire-doux); box-shadow: 0 0 0 3px rgba(194, 47, 56, .28); }
+.connexion__champ small { font-size: .85rem; line-height: 1.35; color: var(--c-ivoire-pale); }
+
+.connexion__captcha { display: flex; justify-content: center; min-height: 65px; }
+
+.connexion__erreur, .connexion__info {
+  margin: 0; max-width: none; padding: 9px 12px; font-size: .95rem; line-height: 1.45;
+  border-left: 2px solid;
+}
+.connexion__erreur { border-color: var(--c-sang-vif); background: rgba(163, 38, 46, .14); color: #f1c9c9; }
+.connexion__info { border-color: var(--c-ivoire-doux); background: rgba(236, 230, 217, .06); color: var(--c-ivoire); }
+
+/* Créer un compte · Mot de passe oublié */
+.connexion__liens {
+  display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 22px; margin-top: 20px;
+}
+.connexion__liens button, .connexion__lien {
+  padding: 4px 2px; border: 0; background: none; cursor: pointer;
+  font-size: .98rem; color: var(--c-ivoire-doux);
+  text-decoration: underline; text-decoration-color: var(--c-trait-fort); text-underline-offset: 4px;
+}
+.connexion__liens button:hover, .connexion__lien:hover { color: var(--c-ivoire); text-decoration-color: var(--c-sang-vif); }
+.connexion__lien { align-self: center; }
+
+@media (max-width: 480px) {
+  .connexion { padding: 20px 16px; align-items: start; }
+  .connexion__carte { padding: 28px 20px 22px; margin-top: 4vh; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .connexion__bouton, .connexion__champ input { transition: none; }
+}

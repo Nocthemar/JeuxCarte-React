@@ -17,12 +17,13 @@ import { NOCTHEMAR_SITE, lienSite } from '../lib/lienSite.js';
 import { useAuth, connexionDiscord, deconnexion } from '../lib/auth.js';
 import { supabase } from '../lib/supabase.js';
 import OrAnime from './OrAnime.jsx';
+import { urlPublique } from '../lib/chemins.js';
 
-// La bourse du joueur, sous les écrans (ordinateur). Relue à chaque changement d'écran (après un achat,
+// La bourse du joueur, sous les écrans (ordinateur) : l’or et les cristaux, à égalité. Relue à chaque changement d'écran (après un achat,
 // une récompense…), au retour sur l'onglet, et toutes les minutes.
 function Bourse({ discordId }) {
   const { pathname } = useLocation();
-  const [bourse, setBourse] = useState({ pour: null, solde: null });
+  const [bourse, setBourse] = useState({ pour: null, solde: null, cristaux: 0 });
   const [relire, setRelire] = useState(0);
   useEffect(() => {
     const t = setInterval(() => setRelire((n) => n + 1), 60000);
@@ -33,17 +34,27 @@ function Bourse({ discordId }) {
   useEffect(() => {
     if (!discordId) return undefined;
     let actif = true;
-    supabase.from('wallets').select('balance').eq('discord_id', discordId).maybeSingle()
-      .then(({ data }) => { if (actif) setBourse({ pour: discordId, solde: data?.balance ?? 0 }); });
+    supabase.from('wallets').select('*').eq('discord_id', discordId).maybeSingle()
+      .then(({ data }) => { if (actif) setBourse({ pour: discordId, solde: data?.balance ?? 0, cristaux: data?.cristaux ?? 0 }); });
     return () => { actif = false; };
   }, [discordId, pathname, relire]);
   if (!discordId || bourse.pour !== discordId || bourse.solde === null) return null;
   return (
     <div className="barre__bourse" data-place="menu" title="Ta bourse">
-      <span className="barre__bourse-or"><OrAnime solde={bourse.solde} /></span>
-      <span className="barre__bourse-texte">
-        <b>{bourse.solde.toLocaleString('fr-FR')}</b>
-        <small>pièces d’or</small>
+      {/* deux lignes de même taille : l'or (qui scintille), puis les cristaux (qui luisent) */}
+      <span className="barre__bourse-ligne">
+        <span className="barre__bourse-or"><OrAnime solde={bourse.solde} /></span>
+        <span className="barre__bourse-texte">
+          <b>{bourse.solde.toLocaleString('fr-FR')}</b>
+          <small>pièces d’or</small>
+        </span>
+      </span>
+      <span className="barre__bourse-ligne barre__bourse-ligne--cristaux">
+        <span className="barre__bourse-cristal"><img src={urlPublique('img/OR/cristal.webp')} alt="" /></span>
+        <span className="barre__bourse-texte">
+          <b>{bourse.cristaux.toLocaleString('fr-FR')}</b>
+          <small>cristaux</small>
+        </span>
       </span>
     </div>
   );
@@ -156,12 +167,12 @@ export default function BarreLaterale() {
               {joueur.avatar_url ? <img src={joueur.avatar_url} alt="" /> : <Icone nom="silhouette" />}
             </Link>
           ) : (
-            <button type="button" className="barre__portrait barre__discord" onClick={connexionDiscord} aria-label="Connecter Discord" title="Connecter Discord">
+            <button type="button" className="barre__portrait barre__discord" onClick={() => connexionDiscord()} aria-label="Connecter Discord" title="Connecter Discord">
               <span className="btn-discord__logo" aria-hidden="true" />
             </button>
           )}
       </div>
-      {!chargement && !joueur && <button type="button" className="barre__connexion" data-place="menu" onClick={connexionDiscord}>Se connecter</button>}
+      {!chargement && !joueur && <button type="button" className="barre__connexion" data-place="menu" onClick={() => connexionDiscord()}>Se connecter</button>}
       {/* (ordinateur) le pseudo sous le portrait, et un ornement à losange */}
       <div className="barre__tete" data-place="menu" aria-hidden="true">
         <span className="barre__pseudo">{joueur?.username ?? 'Voyageur'}</span>
