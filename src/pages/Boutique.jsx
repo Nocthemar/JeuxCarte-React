@@ -172,10 +172,8 @@ export default function Boutique() {
       <main className="profil-wrap vitrine vitrine--accueil">
         <header className="vitrine-entete">
           <div className="vitrine-entete__titre">
-            {ici ? <Link className="vitrine-retour" to="/boutique"><span aria-hidden="true">←</span> Le hall</Link>
-              : <span className="vitrine-entete__sur">Nocthémar</span>}
+            {ici && <Link className="vitrine-retour" to="/boutique"><span aria-hidden="true">←</span> Le hall</Link>}
             <h1>Le Marché de <span>Nocthémar</span></h1>
-            {!ici && <p>Tout ce qui se vend ici est cosmétique ou narratif. Les pièces se gagnent en jouant, jamais en payant.</p>}
           </div>
           {/* Solde du joueur connecté */}
           <div id="bourse" className="bourse" hidden={!joueur}>
@@ -188,15 +186,7 @@ export default function Boutique() {
         </header>
 
         {!ici ? (
-          <>
-            <Hall moi={joueur} version={version} />
-            {/* Sous le hall : l'escalier vers la Caverne aux Trésors (pages/Caverne.jsx) */}
-            <Link className="caverne-entree" to="/caverne">
-              <img src={img('Caverne/tas-3.png')} alt="" />
-              <span><b>La Caverne aux Trésors</b><small>Mise ton or ou tes cristaux : le dragon, les bourses, le pont maudit.</small></span>
-              <span>Descendre <span aria-hidden="true">→</span></span>
-            </Link>
-          </>
+          <Hall moi={joueur} version={version} />
         ) : (
           <>
             {/* Passer d'une échoppe à l'autre sans revenir au hall */}

@@ -565,3 +565,6 @@
 .carrousel__fleche { background: linear-gradient(135deg, var(--nuit-3), var(--nuit-2)); }
 .hall-bandeau > * + *:not([hidden])::after { background: var(--nuit-2); }
 .hall .ligne__rejoindre input { background: #0b1120; }
+/* les lueurs derrière le menu (.accueil::before, 1100 px de haut) s'arrêtent au bas du menu : sinon elles
+   dépassent, et la page défile dans le vide alors que tout tient à l'écran */
+.hall.accueil::before { height: auto; bottom: 0; }

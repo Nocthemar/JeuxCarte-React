@@ -45,16 +45,6 @@ body.page-boutique:has(.vitrine--accueil) {
   gap: 14px; padding-bottom: 0; border-bottom: 0; margin-bottom: 34px;
 }
 .page-boutique .vitrine--accueil .vitrine-entete__titre { display: flex; flex-direction: column; align-items: center; }
-.page-boutique .vitrine--accueil .vitrine-entete__sur {
-  display: flex; align-items: center; gap: 16px;
-  font-size: .75rem; letter-spacing: .42em; color: #c6ccd6;
-}
-.page-boutique .vitrine--accueil .vitrine-entete__sur::before,
-.page-boutique .vitrine--accueil .vitrine-entete__sur::after {
-  content: ""; width: clamp(30px, 6vw, 70px); height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(217,164,65,.7));
-}
-.page-boutique .vitrine--accueil .vitrine-entete__sur::after { background: linear-gradient(90deg, rgba(217,164,65,.7), transparent); }
 .page-boutique .vitrine--accueil .vitrine-retour {
   clip-path: polygon(8px 0, calc(100% - 8px) 0, 100% 50%, calc(100% - 8px) 100%, 8px 100%, 0 50%);
   border: 0; padding: 7px 22px;
@@ -74,14 +64,6 @@ body.page-boutique:has(.vitrine--accueil) {
   background: linear-gradient(180deg, #fff1c8 5%, #ecc061 50%, #a8741f 95%);
   -webkit-background-clip: text; background-clip: text; color: transparent;
   filter: drop-shadow(0 4px 22px rgba(217,164,65,.4));
-}
-.page-boutique .vitrine--accueil .vitrine-entete p { margin: 0 auto; color: #d2d6de; font-style: normal; font-size: 1.05rem; text-shadow: 0 2px 12px rgba(0,0,0,.9); }
-.page-boutique .vitrine--accueil .vitrine-entete p::before {
-  content: ""; display: block; width: 280px; max-width: 70%; height: 11px; margin: 16px auto 14px;
-  background:
-    linear-gradient(90deg, transparent, var(--or)) 0 5px / calc(50% - 12px) 1px no-repeat,
-    linear-gradient(90deg, var(--or), transparent) 100% 5px / calc(50% - 12px) 1px no-repeat,
-    linear-gradient(45deg, transparent 30%, #f3cf7c 31% 69%, transparent 70%) 50% 0 / 11px 11px no-repeat;
 }
 /* Bourse : une plaque à facettes */
 .page-boutique .vitrine--accueil .bourse {
@@ -214,6 +196,27 @@ body.page-boutique:has(.vitrine--accueil) {
    Trop étroit (moins de 820 px de large) : les portes d'avant, en colonne ou côte à côte. */
 .page-boutique .vitrine--accueil { container: vitrine / inline-size; }
 .page-boutique .vitrine--accueil:has(.hall) { max-width: 1700px; }
+/* Ordinateur : le hall remplit tout l'écran, de la barre (--hud, son bord droit, mesuré par BarreLaterale.jsx)
+   au bord droit et du titre au bas de la fenêtre, et la page ne défile plus. L'image est étirée à cette taille
+   (les portes y sont posées en pourcentages, elles suivent). Le titre reste centré au-dessus, sans la plaque
+   « Ta bourse » (la bourse de la barre la montre déjà) ; les portes d'avant (hall étroit) gardent une marge. */
+@media (min-width: 701px) {
+  html:has(body.page-boutique .vitrine--accueil > .hall) { overflow: hidden; }
+  body.page-boutique.has-rail:has(.vitrine--accueil > .hall) {
+    padding-left: var(--hud, 260px); padding-bottom: 0;
+    height: 100dvh; min-height: 0; overflow: hidden;
+  }
+  .page-boutique .vitrine--accueil:has(> .hall) .bourse { display: none; }
+  .page-boutique .vitrine--accueil:has(> .hall) {
+    display: flex; flex-direction: column;
+    height: 100dvh; max-width: none; margin: 0; padding-left: 0; padding-right: 0; padding-bottom: 0;
+  }
+  .page-boutique .vitrine--accueil:has(> .hall) > .vitrine-entete { flex: none; }
+  @container vitrine (min-width: 820px) {
+    .page-boutique .vitrine--accueil:has(> .hall) > .hall { flex: 1 1 0; min-height: 0; aspect-ratio: auto; box-shadow: none; }
+  }
+  @container vitrine (max-width: 819px) { .page-boutique .vitrine--accueil .hall { padding-left: 16px; } }
+}
 body.page-boutique:has(.vitrine--accueil .hall) {
   background:
     radial-gradient(ellipse 90% 60% at 50% 30%, rgba(20,48,46,.35), transparent 70%),
@@ -313,7 +316,5 @@ body.page-boutique:has(.vitrine--accueil .hall) {
   .page-boutique .vitrine--accueil .porte:hover { transform: translateX(3px); }
 }
 @media (max-width: 600px) {
-  .page-boutique .vitrine--accueil .vitrine-entete__sur { gap: 10px; letter-spacing: .22em; font-size: .68rem; }
-  .page-boutique .vitrine--accueil .vitrine-entete__sur::before, .page-boutique .vitrine--accueil .vitrine-entete__sur::after { width: 20px; }
   .page-boutique .vitrine--accueil .onglet { flex: none; padding: 0 4px; font-size: .64rem; letter-spacing: .06em; min-height: 40px; }
 }
