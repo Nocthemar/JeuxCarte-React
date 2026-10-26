@@ -13,7 +13,8 @@ var TRAIT_PAR_NOM = {
 	"garde d'aelkor": "riposte",
 	"garde d'erynedhal": "percee",
 	"slime": "tenace",
-	"veilleuse ecarlate": "drain"
+	"veilleuse ecarlate": "drain",
+	"elyan, l'ami des dragons": "charge"
 };
 var VEINE_PAR_NOM = {
 	"kaeliss": ["sang", "Veine du Sang"],

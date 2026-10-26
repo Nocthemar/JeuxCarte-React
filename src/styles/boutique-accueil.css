@@ -5,13 +5,13 @@
    sous la lune, bannières à pointe, facettes, un seul accent ambre, équerres dorées.
    ===================================================================== */
 
-/* Fond : la devanture de la boutique (img/Fond/Boutique_fond.png), assombrie
+/* Fond : la devanture de la boutique (img/Fond/Boutique_fond.webp), assombrie
    pour que les portes et les articles restent lisibles par-dessus. */
 body.page-boutique:has(.vitrine--accueil) {
   background:
     radial-gradient(ellipse 120% 90% at 50% 40%, transparent 35%, rgba(0,0,0,.8) 100%),
     linear-gradient(180deg, rgba(11,13,18,.5), rgba(11,13,18,.88) 70%),
-    url("/img/Fond/Boutique_fond.png") center / cover no-repeat fixed,
+    url("/img/Fond/Boutique_fond.webp") center / cover no-repeat fixed,
     #0b0d12;
 }
 .page-boutique .vitrine--accueil {
@@ -203,6 +203,100 @@ body.page-boutique:has(.vitrine--accueil) {
 }
 .page-boutique .vitrine--accueil .btn-ouvrir::after { content: none; }
 .page-boutique .vitrine--accueil .plateau__possede { clip-path: var(--facette); border: 0; box-shadow: inset 0 0 0 1px var(--trait-fort); }
+
+/* ---------- Le hall dans la devanture : chaque porte dans une case de l'image ----------
+   L'image (img/Fond/Boutique_fond.webp, 1779 × 884) devient la scène du hall, en entier et à ses proportions
+   exactes : les portes y sont posées en pourcentages mesurés sur l'image, donc restent dans leur case à toute
+   largeur. Les cartouches du haut restent vides (le monogramme au milieu) ; chaque porte prend une niche dorée
+   (la scène) et le cartouche du dessous (sa description). Le titre de l'échoppe reste lu par les lecteurs d'écran.
+   Mesures (pixels de l'image) : niches y 220 → 624, cartouches du bas y 676 → 760 ;
+   cases x 93 → 550, 645 → 1137, 1227 → 1685. Les tailles suivent la largeur du hall (unités cqi).
+   Trop étroit (moins de 820 px de large) : les portes d'avant, en colonne ou côte à côte. */
+.page-boutique .vitrine--accueil { container: vitrine / inline-size; }
+.page-boutique .vitrine--accueil:has(.hall) { max-width: 1700px; }
+body.page-boutique:has(.vitrine--accueil .hall) {
+  background:
+    radial-gradient(ellipse 90% 60% at 50% 30%, rgba(20,48,46,.35), transparent 70%),
+    linear-gradient(180deg, #0b0d12, #07080c);
+}
+@container vitrine (min-width: 820px) {
+  .page-boutique .vitrine--accueil .hall {
+    container-type: inline-size;
+    display: block; position: relative;
+    width: 100%; max-width: none; margin: 0 auto;
+    aspect-ratio: 1779 / 884;
+    background: url("/img/Fond/Boutique_fond.webp") center / 100% 100% no-repeat;
+    box-shadow: 0 24px 60px rgba(0,0,0,.6);
+  }
+  /* Une porte : du haut de la niche au bas du cartouche (y 220 → 760 : 24,89 % et 61,09 % de la hauteur) */
+  .page-boutique .vitrine--accueil .porte {
+    position: absolute; top: 24.89%; height: 61.09%; left: var(--x); width: var(--l);
+    display: grid;
+    /* la niche (74,8 %), le mur (9,6 %), le cartouche du bas (15,6 %) */
+    grid-template-rows: 74.8% 9.6% 15.6%;
+    box-sizing: border-box; min-height: 0; padding: 0; overflow: visible;
+    clip-path: none; border: 0; background: none; box-shadow: none;
+    text-align: center; color: var(--gris);
+    transition: none;
+  }
+  .page-boutique .vitrine--accueil .porte--boosters   { --x: 5.23%;  --l: 25.69%; }
+  .page-boutique .vitrine--accueil .porte--apparences { --x: 36.26%; --l: 27.66%; }
+  .page-boutique .vitrine--accueil .porte--plateaux   { --x: 68.97%; --l: 25.75%; }
+  .page-boutique .vitrine--accueil .porte:hover,
+  .page-boutique .vitrine--accueil .porte:focus-visible { transform: none; background: none; box-shadow: none; outline: none; }
+  .page-boutique .vitrine--accueil .porte__texte { display: contents; }
+  /* Le numéro et le titre : invisibles (le logo reste seul), mais lus par les lecteurs d'écran */
+  .page-boutique .vitrine--accueil .porte__num,
+  .page-boutique .vitrine--accueil .porte__titre,
+  .page-boutique .vitrine--accueil .porte__entrer {
+    position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap;
+  }
+  .page-boutique .vitrine--accueil .porte .scene { grid-row: 1; min-height: 0; padding-bottom: 2.2cqi; }
+  /* La description, gravée dans le cartouche du bas */
+  .page-boutique .vitrine--accueil .porte__desc {
+    grid-row: 3; align-self: center; padding: 0 10%;
+    font-size: clamp(.72rem, 1.18cqi, 1.15rem); line-height: 1.3;
+    color: #e6d9b8; text-shadow: 0 1px 6px rgba(0,0,0,.9);
+    transition: color .2s ease, text-shadow .2s ease;
+  }
+  .page-boutique .vitrine--accueil .porte:hover .porte__desc,
+  .page-boutique .vitrine--accueil .porte:focus-visible .porte__desc { color: var(--or-vif); text-shadow: 0 0 14px rgba(243,207,124,.4); }
+  /* La lumière de la niche : douce, plus vive au survol (la niche : les 74,8 % du haut de la porte) */
+  .page-boutique .vitrine--accueil .porte::before {
+    content: ""; display: block; position: absolute; inset: 0 0 25.2%; z-index: -1; pointer-events: none; opacity: 1;
+    background:
+      radial-gradient(ellipse 70% 40% at 50% 100%, rgba(217,164,65,.16), transparent 70%),
+      radial-gradient(ellipse 60% 50% at 50% 0, rgba(190,205,240,.06), transparent 70%);
+    box-shadow: inset 0 0 0 1px transparent;
+    transition: background .3s ease, box-shadow .3s ease;
+  }
+  .page-boutique .vitrine--accueil .porte:hover::before,
+  .page-boutique .vitrine--accueil .porte:focus-visible::before {
+    inset: 0 0 25.2%; opacity: 1;
+    background:
+      radial-gradient(ellipse 80% 50% at 50% 100%, rgba(243,207,124,.32), transparent 70%),
+      radial-gradient(ellipse 70% 60% at 50% 0, rgba(243,207,124,.12), transparent 70%);
+    box-shadow: inset 0 0 0 2px rgba(243,207,124,.55), inset 0 0 40px rgba(217,164,65,.18);
+  }
+  .page-boutique .vitrine--accueil .porte::after { inset: 0 0 25.2%; }
+  .page-boutique .vitrine--accueil .porte__annonce { top: 4%; right: 4%; font-size: clamp(.55rem, .8cqi, .78rem); }
+  /* Les scènes, en grand dans la niche */
+  .page-boutique .vitrine--accueil .scene::after { bottom: 1.4cqi; height: 2.4cqi; }
+  .page-boutique .vitrine--accueil .scene--boosters .scene__booster { height: 88%; max-height: 19cqi; }
+  .page-boutique .vitrine--accueil .scene--boosters .scene__dos {
+    width: 8.4cqi; margin-left: -4.2cqi; bottom: 5.8cqi;
+    transform: translateX(calc(var(--k) * 4.2cqi)) rotate(calc(var(--k) * 12deg)) translateY(calc(var(--k) * var(--k) * .7cqi - 1.6cqi));
+  }
+  .page-boutique .vitrine--accueil .porte:hover .scene__dos {
+    transform: translateX(calc(var(--k) * 5.6cqi)) rotate(calc(var(--k) * 18deg)) translateY(calc(var(--k) * var(--k) * 1cqi - 3cqi));
+  }
+  .page-boutique .vitrine--accueil .scene__blason { width: 80%; height: min(70%, 14cqi); gap: 1.3cqi; margin-bottom: .6cqi; }
+  .page-boutique .vitrine--accueil .scene__titre { font-size: clamp(1rem, 2.5cqi, 2.4rem); }
+  .page-boutique .vitrine--accueil .scene__couleurs { gap: 1cqi; }
+  .page-boutique .vitrine--accueil .scene__couleurs i { width: 1.8cqi; height: 1.8cqi; }
+  .page-boutique .vitrine--accueil .scene__plateau { width: 84%; }
+  .page-boutique .vitrine--accueil .scene__plateau--fond { width: 66%; bottom: 5.4cqi; }
+}
 
 /* ---------- Téléphones ---------- */
 @media (max-width: 760px) {
