@@ -93,7 +93,11 @@ with nouvelles (name, image, rarity, description, rank, attack_1, attack_2) as (
   ('Astris, Reine de Pravorn', 'img/Cartes/Astris-Carte.webp', 'mythique',
    'Héritière de la lignée née du grand tournoi, Astris règne sur le plus vaste royaume du continent. Sur son trône d''émeraude, elle n''élève jamais la voix : à Pravorn, un seul regard de la reine suffit à lever une armée.', null,
    '{"veine": "trone", "nom": "Décret de la Couronne", "effet": "Un ordre de la reine, et le royaume entier s''abat sur la cible.", "puissance": 50}',
-   '{"veine": "chaine", "nom": "Loi du Tournoi", "effet": "La loi ancienne de Pravorn lie la cible : nul ne se dérobe au jugement de la Couronne.", "puissance": 60}')
+   '{"veine": "chaine", "nom": "Loi du Tournoi", "effet": "La loi ancienne de Pravorn lie la cible : nul ne se dérobe au jugement de la Couronne.", "puissance": 60}'),
+  ('Elyan, l''ami des Dragons', 'img/Cartes/Elyan-Carte.webp', 'mythique',
+   'Sur les falaises au bord de la mer, Elyan guette l''horizon sous sa capuche d''écailles. Les dragons ne l''ont jamais chassé : ils le reconnaissent comme l''un des leurs.', null,
+   '{"veine": "bete", "nom": "Morsure d''Écailles", "effet": "La capuche de dragon s''anime et referme ses crocs sur la cible.", "puissance": 50}',
+   '{"veine": "maree", "nom": "Appel des Dragons", "effet": "Un cri porté par le vent du large : au loin, quelque chose de gigantesque lui répond.", "puissance": 60}')
 ),
 maj as (
   update public.cards c

@@ -56,6 +56,7 @@ export const TRAIT_PAR_NOM = {
   "garde d'erynedhal": 'percee',
   'slime': 'tenace',
   'veilleuse ecarlate': 'drain',
+  "elyan, l'ami des dragons": 'charge',
 };
 // Les détenteurs d'une Veine : [la Veine (qui donne la capacité), le nom affiché sur la carte]
 export const VEINE_PAR_NOM = {
