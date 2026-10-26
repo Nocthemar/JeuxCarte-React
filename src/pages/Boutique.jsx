@@ -11,6 +11,7 @@
 //  (L'étal du marchand ambulant a été retiré du jeu le 20/10/2026 ; sa table daily_shop reste en base,
 //  le bot Discord et le site Nocthémar s'en servent.)
 //  La bourse (solde) reste en haut ; après chaque achat, tout est rechargé (le solde est commun).
+//  Sous le hall, l'entrée de la Caverne aux Trésors (pages/Caverne.jsx).
 // =====================================================================
 import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
@@ -186,7 +187,17 @@ export default function Boutique() {
           </div>
         </header>
 
-        {!ici ? <Hall moi={joueur} version={version} /> : (
+        {!ici ? (
+          <>
+            <Hall moi={joueur} version={version} />
+            {/* Sous le hall : l'escalier vers la Caverne aux Trésors (pages/Caverne.jsx) */}
+            <Link className="caverne-entree" to="/caverne">
+              <img src={img('Caverne/tas-3.png')} alt="" />
+              <span><b>La Caverne aux Trésors</b><small>Mise ton or ou tes cristaux : le dragon, les bourses, le pont maudit.</small></span>
+              <span>Descendre <span aria-hidden="true">→</span></span>
+            </Link>
+          </>
+        ) : (
           <>
             {/* Passer d'une échoppe à l'autre sans revenir au hall */}
             <nav className="onglets" aria-label="Échoppes">

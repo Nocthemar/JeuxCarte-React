@@ -1,0 +1,138 @@
+// =====================================================================
+//  Écran « La Caverne aux Trésors » (#/caverne) : trois jeux de hasard, avec l'or ou les cristaux du jeu.
+//   I.   Le Dragon Dormant : voler l'or avant son réveil ;
+//   II.  Les Bourses du Marchand : éviter les cristaux maudits ;
+//   III. Le Pont Maudit : traverser avant que ça cède.
+//  Le serveur (supabase/caverne.sql) prend la mise, tire le hasard et paie ; le dessin et l'animation
+//  sont dans lib/caverne/caverne.js, branché ici une fois la bourse du joueur lue.
+//  On y entre depuis le hall de la Boutique.
+// =====================================================================
+import { useEffect, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
+import Page from '../components/Page.jsx';
+import { supabase } from '../lib/supabase.js';
+import { useAuth } from '../lib/auth.js';
+import { useNotifier } from '../lib/notification.js';
+import { monterCaverne } from '../lib/caverne/caverne.js';
+
+// Une fonction du serveur : sa réponse, ou une erreur avec le message à montrer
+async function rpc(nom, args) {
+  const { data, error } = await supabase.rpc(nom, args);
+  if (error) throw new Error(error.message);
+  return data;
+}
+const SERVEUR = {
+  commencer: (jeu, monnaie, mise, option = null) => rpc('caverne_commencer', { p_jeu: jeu, p_monnaie: monnaie, p_mise: mise, p_option: option }),
+  voir: () => rpc('caverne_dragon_voir'),
+  ouvrir: (i) => rpc('caverne_bourse_ouvrir', { p_case: i }),
+  avancer: (n) => rpc('caverne_pont_avancer', { p_pas: n }),
+  encaisser: () => rpc('caverne_encaisser'),
+};
+
+export default function Caverne() {
+  const { joueur } = useAuth();
+  const discordId = joueur?.discord_id ?? null;
+  const notifier = useNotifier();
+  const racine = useRef(null);
+  const [bourse, setBourse] = useState(null);
+
+  // La bourse du joueur, lue une fois ; ensuite, chaque réponse du serveur la donne
+  useEffect(() => {
+    if (!discordId) return undefined;
+    let actif = true;
+    supabase.from('wallets').select('balance, cristaux').eq('discord_id', discordId).maybeSingle()
+      .then(({ data }) => { if (actif) setBourse({ or: data?.balance ?? 0, cristaux: data?.cristaux ?? 0 }); });
+    return () => { actif = false; };
+  }, [discordId]);
+
+  const pret = bourse !== null;
+  useEffect(() => {
+    if (!pret || !racine.current) return undefined;
+    return monterCaverne(racine.current, { serveur: SERVEUR, notifier, bourse });
+    // une seule fois, quand la bourse est connue : le jeu tient ensuite son propre état
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pret]);
+
+  return (
+    <Page id="caverne" classes="page-caverne" titre="La Caverne aux Trésors">
+      <div className="caverne" ref={racine}>
+        <canvas id="bg" />
+        {!pret ? null : (
+          <>
+            <div className="hdr">
+              <div className="bals">
+                <button type="button" className="panel bal on" data-m="or" title="Miser de l'or"><img data-k="coin" alt="" /><span>0</span><small>PIÈCES</small></button>
+                <button type="button" className="panel bal" data-m="cristaux" title="Miser des cristaux"><img data-k="gem" alt="" /><span>0</span><small>CRISTAUX</small></button>
+              </div>
+              <div className="ttl">LA CAVERNE AUX TRÉSORS</div>
+              <div className="hr">
+                <Link className="panel retour" to="/boutique" title="Retour à la Boutique">← <b>BOUTIQUE</b></Link>
+                <button type="button" className="panel snd" id="snd">SON : OUI</button>
+              </div>
+            </div>
+
+            <nav className="tabs" id="tabs">
+              <button type="button" className="tab on" data-g="0"><img data-k="s3" alt="" /><span><b>Le Dragon Dormant</b><small>Vole l&apos;or avant son réveil</small></span></button>
+              <button type="button" className="tab" data-g="1"><img data-k="bag" alt="" /><span><b>Bourses du Marchand</b><small>Évite les cristaux maudits</small></span></button>
+              <button type="button" className="tab" data-g="2"><img data-k="crystal" alt="" /><span><b>Le Pont Maudit</b><small>Traverse avant que ça cède</small></span></button>
+            </nav>
+
+            <div className="jeux">
+              {/* ===== JEU 1 : DRAGON ===== */}
+              <section className="game on" id="g1">
+                <div className="stage" id="dStage">
+                  <canvas id="dc" />
+                  <div className="chips" id="dHist" />
+                  <div id="dHud"><div id="dm">×1.00</div><div id="ds">Le dragon dort sur son trésor…</div></div>
+                </div>
+                <div className="panel bar">
+                  <div className="lockable" id="dBet" />
+                  <label className="auto lockable" id="dAutoW">ENCAISSE AUTO ×<input id="dAuto" type="number" step="0.1" min="1.1" max="100" placeholder="—" inputMode="decimal" /></label>
+                  <button type="button" className="btn pri" id="dGo"><span id="dGoT">Voler le trésor</span><small id="dGoS">ESPACE</small></button>
+                </div>
+              </section>
+
+              {/* ===== JEU 2 : BOURSES ===== */}
+              <section className="game" id="g2">
+                <div className="stage">
+                  <div className="stats">
+                    <div className="panel stat"><div className="lbl">BOURSES OUVERTES</div><b id="bOpen">0 / 22</b></div>
+                    <div className="panel stat nx"><div className="lbl">PROCHAINE BOURSE</div><b id="bNext">×1.0</b></div>
+                    <div className="panel stat"><div className="lbl">GAIN ACTUEL</div><b id="bCur">0</b></div>
+                  </div>
+                  <div className="grid" id="bGrid" />
+                  <div className="say2" id="bSay">Choisis ta mise, puis pose-la sur la table.</div>
+                </div>
+                <div className="panel bar">
+                  <div className="lockable" id="bBet" />
+                  <div className="grp lockable" id="bMines"><span className="lbl">CRISTAUX MAUDITS</span></div>
+                  <button type="button" className="btn pri" id="bGo"><span id="bGoT">Poser la mise</span><small id="bGoS">ESPACE</small></button>
+                </div>
+              </section>
+
+              {/* ===== JEU 3 : PONT MAUDIT ===== */}
+              <section className="game" id="g3">
+                <div className="stage" id="cStage">
+                  <canvas id="cc" />
+                  <div className="chips" id="cHist" />
+                  <div id="cHud"><div id="cm">×1.00</div><div id="cs">Le pont t&apos;attend, voyageur.</div></div>
+                </div>
+                <div className="panel bar">
+                  <div className="lockable" id="cBet" />
+                  <button type="button" className="btn pri" id="cGo"><span id="cGoT">Traverser le pont</span><small id="cGoS">ESPACE</small></button>
+                  <button type="button" className="btn blue" id="cStep" style={{ display: 'none' }}><span id="cStepT">Avancer</span><small id="cStepS" /></button>
+                  <button type="button" className="btn sec" id="cLeap" style={{ display: 'none' }}><span>Sauter 2 planches</span><small id="cLeapS" /></button>
+                  <button type="button" className="btn out" id="cCash" style={{ display: 'none' }}><span id="cCashT">Encaisser</span><small id="cCashS" /></button>
+                </div>
+              </section>
+            </div>
+
+            <div id="flashv" />
+            <canvas id="fx" />
+            <div id="floats" />
+          </>
+        )}
+      </div>
+    </Page>
+  );
+}

@@ -67,6 +67,8 @@ const ICONES = {
   collection: <><rect x="3" y="6" width="11" height="15" rx="1.5" transform="rotate(-8 8.5 13.5)" /><rect x="10" y="3" width="11" height="15" rx="1.5" transform="rotate(8 15.5 10.5)" /></>,
   // une bourse
   boutique: <><path d="M9 3h6l-1.6 3.2h-2.8z" /><path d="M10.4 6.2C7 8.5 4.5 12.3 4.5 15.6 4.5 18.9 7 21 10 21h4c3 0 5.5-2.1 5.5-5.4 0-3.3-2.5-7.1-5.9-9.4" /><path d="M13.6 12.2c-.4-.6-1-.9-1.7-.9-1 0-1.8.6-1.8 1.4 0 1.9 3.8 1.1 3.8 3 0 .8-.9 1.5-2 1.5-.8 0-1.5-.4-1.9-1M12 10.3v1M12 17.2v1" /></>,
+  // un coffre au trésor (la Caverne aux Trésors)
+  caverne: <><path d="M3.5 10.5a8.5 5.5 0 0 1 17 0V20h-17z" /><path d="M3.5 10.5h17M3.5 14h17" /><path d="M10.5 12.5h3v3.5h-3z" /><path d="M8 6v4.5M16 6v4.5" /></>,
   // une balance
   marche: <><path d="M12 3v18M7 21h10" /><path d="M4 7h16" /><path d="M6 7l-3 7a3 3 0 0 0 6 0zM18 7l-3 7a3 3 0 0 0 6 0z" /></>,
   // un heaume
@@ -120,6 +122,7 @@ const PAGES = [
   { icone: 'jouer', libelle: 'Jouer', chemin: '/duel', actifSur: ['/histoire'], place: 1 },
   { icone: 'collection', libelle: 'Collection', chemin: '/collection', place: 2 },
   { icone: 'boutique', libelle: 'Boutique', chemin: '/boutique', place: 4 },
+  { icone: 'caverne', libelle: 'Caverne', chemin: '/caverne' },
   { icone: 'marche', libelle: 'Marché', chemin: '/marche' },
   { icone: 'pass', libelle: 'Pass de saison', chemin: '/pass' },
   { icone: 'succes', libelle: 'Succès', chemin: '/succes' },

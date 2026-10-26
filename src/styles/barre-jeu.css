@@ -706,7 +706,9 @@
 
 /* l'or animé de la bourse (le même que le Trésor du profil : pièce qui tourne, tas, étincelles) */
 @media (min-width: 701px) {
-  .barre__bourse-or { position: relative; display: grid; place-items: center; width: 56px; height: 48px; flex: none; }
+  /* une seule case de 56 × 48 : sans elle, la case prend la hauteur de l'image, et la pièce de profil (étroite)
+     grandit pendant qu'elle tourne jusqu'à recouvrir le cristal */
+  .barre__bourse-or { position: relative; display: grid; grid-template: 100% / 100%; place-items: center; width: 56px; height: 48px; flex: none; }
   .barre__bourse-or .piece-icone { grid-area: 1 / 1; width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 3px 5px rgba(0,0,0,.6)); }
   .barre__bourse-or .piece-icone--vide { width: 60%; height: 60%; filter: grayscale(1) brightness(.8); opacity: .7; }
   .barre__bourse-or .bourse-etincelles { grid-area: 1 / 1; position: absolute; inset: 0; width: auto; height: auto; margin: 0; }

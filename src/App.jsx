@@ -18,6 +18,7 @@ const Collection = lazy(() => import('./pages/Collection.jsx'));
 const ToutesLesCartes = lazy(() => import('./pages/ToutesLesCartes.jsx'));
 const Succes = lazy(() => import('./pages/Succes.jsx'));
 const Boutique = lazy(() => import('./pages/Boutique.jsx'));
+const Caverne = lazy(() => import('./pages/Caverne.jsx'));
 const Marche = lazy(() => import('./pages/Marche.jsx'));
 const Pass = lazy(() => import('./pages/Pass.jsx'));
 const Profil = lazy(() => import('./pages/Profil.jsx'));
@@ -38,6 +39,7 @@ export default function App() {
             <Route path="/toutes-les-cartes" element={<ToutesLesCartes />} />
             <Route path="/succes" element={<Succes />} />
             <Route path="/boutique" element={<Boutique />} />
+            <Route path="/caverne" element={<Caverne />} />
             <Route path="/marche" element={<Marche />} />
             <Route path="/pass" element={<Pass />} />
             <Route path="/profil" element={<Profil />} />

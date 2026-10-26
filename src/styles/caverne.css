@@ -1,0 +1,172 @@
+/* =====================================================================
+   La Caverne aux Trésors (pages/Caverne.jsx) : le dessin d'origine (casino.txt), rangé sous .caverne
+   pour ne pas toucher au reste du jeu. Tout l'écran à droite de la barre (--hud : son bord droit,
+   mesuré par BarreLaterale.jsx) ; sur téléphone, au-dessus de la barre du bas.
+   ===================================================================== */
+.caverne {
+  --gold: #e2b04a; --gold-l: #ffe29a; --blue: #7fa4ff; --panel: rgba(8,11,20,.78); --line: rgba(226,176,74,.38); --red: #ff6a4a;
+  position: fixed; top: 0; right: 0; bottom: 0; left: var(--hud, 0px); z-index: 1;
+  display: flex; flex-direction: column; overflow: hidden;
+  background: #02030a; color: #e9dfc4;
+  font-family: "Cinzel", "Cinzel Repli", Georgia, serif;
+  user-select: none; -webkit-user-select: none;
+}
+.caverne, .caverne * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+.caverne #bg { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0; }
+.caverne > *:not(#bg):not(#fx):not(#floats):not(#flashv) { position: relative; z-index: 1; }
+.caverne button { font-family: inherit; }
+
+.caverne .panel { background: var(--panel); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 8px 30px rgba(0,0,0,.55), inset 0 0 0 1px rgba(255,255,255,.03); }
+
+/* ----- en-tête : les deux bourses (cliquer pour miser l'une ou l'autre) ----- */
+.caverne .hdr { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 16px 6px; }
+.caverne .bals { display: flex; gap: 8px; }
+.caverne .bal { display: flex; align-items: center; gap: 10px; padding: 6px 18px 6px 10px; font-size: 25px; color: var(--gold-l); font-weight: 700; font-variant-numeric: lining-nums; cursor: pointer; opacity: .5; transition: .18s; }
+.caverne .bal img { width: 34px; height: 34px; object-fit: contain; }
+.caverne .bal small { font-size: 10px; letter-spacing: .14em; opacity: .7; font-weight: 700; }
+.caverne .bal[data-m="cristaux"] { color: #b9caff; }
+.caverne .bal.on { opacity: 1; border-color: var(--gold); box-shadow: 0 0 22px rgba(226,176,74,.22), inset 0 0 0 1px rgba(255,255,255,.03); }
+.caverne .bal[data-m="cristaux"].on { border-color: #6b94ff; box-shadow: 0 0 22px rgba(90,130,255,.3); }
+.caverne .bals.lock .bal:not(.on) { opacity: .25; cursor: not-allowed; }
+.caverne .ttl { font-weight: 900; letter-spacing: .3em; font-size: clamp(11px, 1.8vw, 19px); color: var(--gold); text-shadow: 0 0 18px rgba(226,176,74,.45); text-align: center; white-space: nowrap; }
+.caverne .hr { display: flex; gap: 8px; align-items: center; }
+.caverne .snd, .caverne .retour { padding: 9px 14px; font-size: 12px; letter-spacing: .1em; color: var(--gold-l); cursor: pointer; font-weight: 700; text-decoration: none; }
+
+/* ----- onglets ----- */
+.caverne .tabs { display: flex; gap: 10px; justify-content: center; padding: 6px 14px 8px; }
+.caverne .tab { display: flex; align-items: center; gap: 12px; padding: 8px 18px 8px 10px; min-width: 0; cursor: pointer; text-align: left; color: #d9cfb2; transition: .18s;
+  background: var(--panel); border: 1px solid rgba(255,255,255,.08); border-radius: 12px; flex: 0 1 270px; }
+.caverne .tab img { width: 44px; height: 44px; object-fit: contain; flex: none; filter: drop-shadow(0 3px 4px #000); }
+.caverne .tab b { display: block; font-size: 14px; letter-spacing: .06em; white-space: nowrap; }
+.caverne .tab small { display: block; font-family: "EB Garamond", "EB Garamond Repli", Georgia, serif; font-style: italic; font-size: 12px; opacity: .65; margin-top: 2px; }
+.caverne .tab:hover:not(.on) { border-color: var(--line); }
+.caverne .tab.on { border-color: var(--gold); background: linear-gradient(90deg, rgba(226,176,74,.22), rgba(8,11,20,.8)); color: var(--gold-l); box-shadow: 0 0 22px rgba(226,176,74,.22); }
+.caverne .tabs.lock .tab:not(.on) { opacity: .35; cursor: not-allowed; }
+
+/* ----- jeux ----- */
+.caverne .jeux { flex: 1; min-height: 0; position: relative; }
+.caverne .game { position: absolute; inset: 0; display: none; flex-direction: column; margin: 0; padding: 0; max-width: none; border: 0; }   /* (pas le <section> du site : index.css) */
+.caverne .game.on { display: flex; }
+.caverne .stage { flex: 1; min-height: 0; position: relative; }
+.caverne .stage canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.caverne .bar { margin: 8px auto 12px; width: min(96%, 860px); padding: 10px 12px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; justify-content: center; }
+.caverne .grp { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; justify-content: center; }
+.caverne .lbl { font-size: 10px; letter-spacing: .2em; opacity: .6; }
+.caverne .lockable.lock { opacity: .4; pointer-events: none; }
+
+.caverne .step { display: flex; align-items: center; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: rgba(0,0,0,.25); }
+.caverne .step button { width: 38px; height: 40px; background: none; border: none; color: var(--gold-l); font-size: 22px; cursor: pointer; }
+.caverne .step button:hover { background: rgba(226,176,74,.18); }
+.caverne .step b { min-width: 70px; text-align: center; font-size: 20px; color: var(--gold-l); font-variant-numeric: lining-nums; }
+.caverne .q { padding: 8px 11px; border-radius: 8px; border: 1px solid var(--line); background: transparent; color: var(--gold-l); font-weight: 700; cursor: pointer; font-size: 12px; transition: .12s; }
+.caverne .q:hover { background: rgba(226,176,74,.15); }
+.caverne .q.sel { background: var(--gold); color: #1a1100; border-color: var(--gold); }
+.caverne .q.blue { border-color: rgba(127,164,255,.5); color: #b9ceff; }
+.caverne .q.blue.sel { background: #6b94ff; color: #06112e; border-color: #6b94ff; }
+
+.caverne .btn { font-weight: 900; letter-spacing: .07em; border: none; border-radius: 11px; padding: 13px 24px; cursor: pointer; transition: .12s; font-size: 16px; flex: 1 1 210px; min-width: 0; }
+.caverne .btn small { display: block; font-size: 10px; font-weight: 700; letter-spacing: .14em; opacity: .7; margin-top: 3px; }
+.caverne .btn.pri { background: linear-gradient(#ffe8a8, #e2b04a 55%, #b27a14); color: #1a1100; box-shadow: inset 0 0 0 1px #5a3a05, 0 6px 0 #5a3a05, 0 10px 26px rgba(226,176,74,.3); }
+.caverne .btn.out { background: linear-gradient(#ffb48a, #ff6a2a 55%, #b8300a); color: #1d0600; box-shadow: inset 0 0 0 1px #5a1a05, 0 6px 0 #5a1a05, 0 10px 26px rgba(255,100,40,.38); }
+.caverne .btn.blue { background: linear-gradient(#a9c6ff, #5a86f0 55%, #2c4fb0); color: #06112e; box-shadow: inset 0 0 0 1px #14286e, 0 6px 0 #14286e, 0 10px 26px rgba(80,130,255,.35); }
+.caverne .btn.sec { background: rgba(226,176,74,.1); color: var(--gold-l); box-shadow: inset 0 0 0 1.5px var(--gold); }
+.caverne .btn:hover:not(:disabled) { filter: brightness(1.1); }
+.caverne .btn.pri:active:not(:disabled), .caverne .btn.out:active:not(:disabled), .caverne .btn.blue:active:not(:disabled) { transform: translateY(4px); }
+.caverne .btn:disabled { opacity: .42; cursor: not-allowed; filter: grayscale(.5); }
+.caverne .auto { display: flex; align-items: center; gap: 6px; font-size: 12px; letter-spacing: .1em; color: #cdbf98; }
+.caverne .auto input { width: 68px; background: rgba(0,0,0,.35); border: 1px solid var(--line); border-radius: 8px; color: var(--gold-l); padding: 8px; font: inherit; font-weight: 700; text-align: center; font-size: 14px; }
+
+/* ----- dragon ----- */
+.caverne .chips { position: absolute; left: 12px; top: 10px; display: flex; gap: 6px; flex-wrap: wrap; max-width: 60%; z-index: 2; }
+.caverne .chips span { padding: 4px 9px; border-radius: 7px; font-size: 12px; font-weight: 700; background: rgba(0,0,0,.5); border: 1px solid rgba(255,255,255,.1); color: #d96a5a; }
+.caverne .chips span.m { color: var(--gold-l); border-color: rgba(226,176,74,.4); }
+.caverne .chips span.h { color: #b9ceff; border-color: rgba(127,164,255,.5); }
+.caverne #dHud { position: absolute; left: 0; right: 0; top: 33%; text-align: center; pointer-events: none; z-index: 2; }
+.caverne #dm, .caverne #cm { font-weight: 900; font-size: clamp(46px, 10vw, 104px); line-height: 1; color: var(--gold-l); text-shadow: 0 0 30px rgba(226,176,74,.55), 0 4px 0 rgba(0,0,0,.8); font-variant-numeric: lining-nums; transition: color .2s; }
+.caverne #ds, .caverne #cs { font-family: "EB Garamond", "EB Garamond Repli", Georgia, serif; font-style: italic; font-size: clamp(13px, 2vw, 17px); opacity: .85; margin-top: 4px; min-height: 22px; text-shadow: 0 2px 6px #000; }
+
+/* ----- bourses ----- */
+.caverne #g2 .stage { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 6px 10px; container-type: size; }
+.caverne .stats { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+.caverne .stat { padding: 6px 18px; text-align: center; min-width: 130px; }
+.caverne .stat .lbl { font-size: 9px; }
+.caverne .stat b { display: block; font-size: 20px; color: var(--gold-l); font-variant-numeric: lining-nums; margin-top: 1px; }
+.caverne .stat.nx b { color: #b9ceff; }
+.caverne .say2 { min-height: 20px; font-family: "EB Garamond", "EB Garamond Repli", Georgia, serif; font-style: italic; font-size: 15px; opacity: .85; text-align: center; text-shadow: 0 2px 6px #000; }
+.caverne .grid { --gs: min(92cqw, calc(100cqh - 120px), 500px); width: max(170px, var(--gs)); display: grid; grid-template-columns: repeat(5, 1fr); gap: clamp(5px, 1.2vw, 10px); padding: clamp(8px, 1.6vw, 14px); border-radius: 16px;
+  background: linear-gradient(#120d09, #07090f); border: 2px solid #3a2a14; box-shadow: inset 0 0 34px rgba(0,0,0,.9), 0 0 40px rgba(0,0,0,.8), 0 0 30px rgba(226,176,74,.1); }
+.caverne .grid.shake { animation: caverne-gs .5s; }
+@keyframes caverne-gs { 20% { transform: translate(-9px,4px); } 40% { transform: translate(8px,-5px); } 60% { transform: translate(-6px,3px); } 80% { transform: translate(4px,-2px); } }
+.caverne .tile { aspect-ratio: 1; perspective: 700px; background: none; border: none; padding: 0; cursor: pointer; position: relative; }
+.caverne .tile .in { position: absolute; inset: 0; transform-style: preserve-3d; transition: transform .5s cubic-bezier(.3,1.3,.5,1); }
+.caverne .tile.open .in { transform: rotateY(180deg); }
+.caverne .tile .f { position: absolute; inset: 0; border-radius: 12px; backface-visibility: hidden; -webkit-backface-visibility: hidden; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+.caverne .tile .fr { background: radial-gradient(circle at 50% 35%, #2d2216, #120d08 75%); border: 1.5px solid #4a3516; box-shadow: inset 0 0 14px rgba(0,0,0,.7); transition: .15s; }
+.caverne .tile .fr img { width: 88%; height: 88%; object-fit: contain; filter: drop-shadow(0 4px 4px rgba(0,0,0,.8)); transition: .18s; }
+.caverne .tile .bk { transform: rotateY(180deg); border: 2px solid #b8861f; background: radial-gradient(circle at 50% 50%, #6a4a10, #1c1204 80%); box-shadow: inset 0 0 20px rgba(255,200,80,.35), 0 0 22px rgba(255,190,60,.4); }
+.caverne .tile .bk img { width: 84%; height: 84%; object-fit: contain; filter: drop-shadow(0 0 10px rgba(255,200,80,.8)); }
+.caverne .tile.curse .bk { border-color: #5a86f0; background: radial-gradient(circle at 50% 50%, #142a7a, #04081a 80%); box-shadow: inset 0 0 22px rgba(90,140,255,.6), 0 0 28px rgba(80,130,255,.7); }
+.caverne .tile.curse .bk img { height: 92%; width: auto; filter: drop-shadow(0 0 14px rgba(90,150,255,1)); }
+.caverne .tile.ghost .bk { opacity: .42; box-shadow: none; }
+.caverne .tile.ghost.curse .bk { opacity: .8; }
+.caverne .grid.live .tile:not(.open):hover .fr { border-color: var(--gold); transform: translateY(-3px); box-shadow: inset 0 0 14px rgba(0,0,0,.7), 0 6px 16px rgba(226,176,74,.3); }
+.caverne .grid.attente .tile { cursor: progress; }
+.caverne .grid:not(.live) .tile { cursor: default; }
+.caverne .grid:not(.live):not(.done) .tile .fr img { opacity: .75; }
+
+/* ----- pont ----- */
+.caverne #cHud { position: absolute; left: 0; right: 0; top: 2%; text-align: center; pointer-events: none; z-index: 2; }
+.caverne #cm { font-size: clamp(34px, 6.4vw, 66px) !important; }
+
+.caverne #floats { position: fixed; inset: 0; pointer-events: none; z-index: 60; }
+.caverne .fl { position: absolute; transform: translate(-50%,-50%); font-size: clamp(20px, 3.6vw, 38px); font-weight: 900; text-shadow: 0 0 20px currentColor, 0 3px 0 #000; white-space: nowrap; color: var(--gold-l); animation: caverne-rise 1.5s ease-out forwards; }
+.caverne .fl.blue { color: #9cc0ff; }
+.caverne .fl.bad { color: var(--red); }
+.caverne .fl.big { font-size: clamp(28px, 5.4vw, 56px); }
+@keyframes caverne-rise { 0% { opacity: 0; transform: translate(-50%,-20%) scale(.55); } 15% { opacity: 1; transform: translate(-50%,-50%) scale(1.1); } 100% { opacity: 0; transform: translate(-50%,-180%) scale(1); } }
+.caverne #fx { position: fixed; inset: 0; pointer-events: none; z-index: 50; }
+.caverne #flashv { position: fixed; inset: 0; pointer-events: none; z-index: 40; opacity: 0; transition: opacity .35s; }
+
+/* ----- l'entrée, dans le hall de la Boutique ----- */
+.page-boutique .caverne-entree {
+  display: flex; align-items: center; gap: 18px; margin: 22px auto 0; width: min(100%, 760px); padding: 14px 22px 14px 14px;
+  border: 1px solid rgba(226,176,74,.38); border-radius: 12px; text-decoration: none; color: #e9dfc4;
+  background: linear-gradient(90deg, rgba(8,11,20,.9), rgba(20,14,8,.85)); box-shadow: 0 8px 30px rgba(0,0,0,.55); transition: .18s;
+}
+.page-boutique .caverne-entree:hover, .page-boutique .caverne-entree:focus-visible { border-color: #e2b04a; box-shadow: 0 0 22px rgba(226,176,74,.25); outline: none; }
+.page-boutique .caverne-entree img { width: 64px; height: 64px; object-fit: contain; flex: none; filter: drop-shadow(0 3px 4px #000); }
+.page-boutique .caverne-entree b { display: block; font-family: "Cinzel", "Cinzel Repli", serif; letter-spacing: .14em; text-transform: uppercase; color: #ffe29a; }
+.page-boutique .caverne-entree small { display: block; font-style: italic; opacity: .75; margin-top: 3px; }
+.page-boutique .caverne-entree span:last-child { margin-left: auto; color: #e2b04a; font-family: "Cinzel", "Cinzel Repli", serif; letter-spacing: .1em; white-space: nowrap; }
+
+@media (max-width: 760px) {
+  .caverne .ttl { display: none; }
+  .caverne .hdr { padding: 10px 10px 4px; }
+  .caverne .bal { font-size: 18px; padding: 5px 10px 5px 6px; gap: 6px; }
+  .caverne .bal img { width: 24px; height: 24px; }
+  .caverne .bal small { display: none; }
+  .caverne .snd, .caverne .retour { padding: 8px 10px; font-size: 11px; }
+  .caverne .tabs { gap: 6px; padding: 4px 8px 6px; }
+  .caverne .tab { padding: 6px 8px; gap: 7px; flex: 1; }
+  .caverne .tab img { width: 30px; height: 30px; }
+  .caverne .tab b { font-size: 11px; white-space: normal; line-height: 1.1; }
+  .caverne .tab small { display: none; }
+  .caverne .btn { padding: 11px 12px; font-size: 14px; flex-basis: 150px; }
+  .caverne .bar { padding: 8px; gap: 8px; margin: 6px auto 8px; }
+  .caverne .step button { width: 34px; height: 38px; }
+  .caverne .step b { min-width: 56px; font-size: 17px; }
+  .caverne .grid { --gs: min(96cqw, calc(100cqh - 90px), 500px); }
+  .caverne #g2 .stage { gap: 6px; }
+  .caverne .stats { gap: 6px; flex-wrap: nowrap; }
+  .caverne .stat { min-width: 0; flex: 1; padding: 4px 6px; }
+  .caverne .stat .lbl { font-size: 7.5px; letter-spacing: .08em; }
+  .caverne .stat b { font-size: 15px; }
+  .caverne .say2 { font-size: 13px; min-height: 0; }
+  .caverne .q { padding: 6px 8px; font-size: 11px; }
+  .caverne .grp { gap: 5px; }
+  .caverne .retour b { display: none; }
+}
+/* Téléphone : la barre du jeu est en bas (80 px) ; l'écran s'arrête au-dessus */
+@media (max-width: 700px) {
+  .caverne { left: 0; bottom: 80px; }
+}
