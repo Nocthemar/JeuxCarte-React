@@ -192,35 +192,42 @@ body.page-boutique:has(.vitrine--accueil) {
    case à toute largeur. Le cartouche du haut porte le titre de l'échoppe ; la niche dorée, sa scène, sa
    description et « Entrer ».
    Mesures (pixels de l'image) : cartouches y 39 → 193, niches y 229 → 763 ;
-   cases x 88 → 517, 606 → 1064, 1152 → 1589. Les tailles suivent la largeur du hall (unités cqi).
+   cases x 88 → 517, 606 → 1064, 1152 → 1589. Les tailles suivent --u : un centième de la largeur du hall,
+   ou moins si le hall est étiré en largeur (alors un centième de la largeur qu'il aurait à cette hauteur),
+   pour que les textes restent dans leurs cases.
    Trop étroit (moins de 820 px de large) : les portes d'avant, en colonne ou côte à côte. */
 .page-boutique .vitrine--accueil { container: vitrine / inline-size; }
 .page-boutique .vitrine--accueil:has(.hall) { max-width: 1700px; }
 /* Ordinateur : le hall remplit tout l'écran, de la barre (--hud, son bord droit, mesuré par BarreLaterale.jsx)
    au bord droit et du titre au bas de la fenêtre, et la page ne défile plus. L'image est étirée à cette taille
-   (les portes y sont posées en pourcentages, elles suivent). Le titre reste centré au-dessus, sans la plaque
-   « Ta bourse » (la bourse de la barre la montre déjà) ; les portes d'avant (hall étroit) gardent une marge. */
+   (les portes y sont posées en pourcentages, elles suivent ; leurs textes suivent --u, voir plus bas). Le titre
+   reste centré au-dessus, la bourse est posée au sol du hall ; les portes d'avant (hall étroit) gardent une marge. */
 @media (min-width: 701px) {
   html:has(body.page-boutique .vitrine--accueil > .hall) { overflow: hidden; }
   body.page-boutique.has-rail:has(.vitrine--accueil > .hall) {
     padding-left: var(--hud, 260px); padding-bottom: 0;
     height: 100dvh; min-height: 0; overflow: hidden;
   }
-  .page-boutique .vitrine--accueil:has(> .hall) .bourse { display: none; }
   .page-boutique .vitrine--accueil:has(> .hall) {
     display: flex; flex-direction: column;
     height: 100dvh; max-width: none; margin: 0; padding-left: 0; padding-right: 0; padding-bottom: 0;
   }
-  .page-boutique .vitrine--accueil:has(> .hall) > .vitrine-entete { flex: none; }
+  /* un en-tête bas, pour laisser la hauteur au hall : le titre seul, en plus petit */
+  .page-boutique .vitrine--accueil:has(> .hall) { padding-top: 10px; }
+  .page-boutique .vitrine--accueil:has(> .hall) > .vitrine-entete {
+    flex: none; flex-direction: row; justify-content: center; align-items: center; gap: 28px; margin-bottom: 10px;
+  }
+  .page-boutique .vitrine--accueil:has(> .hall) .vitrine-entete h1 { margin: 0; font-size: clamp(1.4rem, 2.4vw, 2.2rem); }
+  /* la bourse, posée sur les dalles du hall (sous les niches : les 19 % du bas de l'image), au milieu */
   @container vitrine (min-width: 820px) {
-    /* La devanture garde les proportions de l'image (sinon, sur un écran large et peu haut, elle s'écrase :
-       les titres sortent de leur cartouche et les scènes débordent) : la hauteur qui reste, sans dépasser
-       celle que donne la largeur ; la largeur suit (aspect-ratio), centrée */
-    .page-boutique .vitrine--accueil:has(> .hall) > .hall {
-      flex: 1 1 0; min-height: 0; max-height: calc(100cqi * 941 / 1672);
-      width: auto; max-width: 100%; aspect-ratio: 1672 / 941; align-self: center; margin: auto 0;
-      box-shadow: none;
+    .page-boutique .vitrine--accueil:has(> .hall) .bourse {
+      position: absolute; z-index: 2; left: 50%; bottom: calc((100dvh - 70px) * .085);
+      translate: -50% 50%;
+      box-shadow: 0 14px 28px rgba(0,0,0,.7), 0 0 30px rgba(217,164,65,.12);
     }
+  }
+  @container vitrine (min-width: 820px) {
+    .page-boutique .vitrine--accueil:has(> .hall) > .hall { flex: 1 1 0; min-height: 0; aspect-ratio: auto; box-shadow: none; }
   }
   @container vitrine (max-width: 819px) { .page-boutique .vitrine--accueil .hall { padding-left: 16px; } }
 }
@@ -231,7 +238,8 @@ body.page-boutique:has(.vitrine--accueil .hall) {
 }
 @container vitrine (min-width: 820px) {
   .page-boutique .vitrine--accueil .hall {
-    container-type: inline-size;
+    container-type: size;
+    --u: min(1cqi, calc(1cqb * 1672 / 941));   /* évalué dans les portes, donc mesuré sur le hall */
     display: block; position: relative;
     width: 100%; max-width: none; margin: 0 auto;
     aspect-ratio: 1672 / 941;
@@ -257,25 +265,25 @@ body.page-boutique:has(.vitrine--accueil .hall) {
   .page-boutique .vitrine--accueil .porte__texte { display: contents; }
   .page-boutique .vitrine--accueil .porte__num {
     grid-row: 1; align-self: end; padding: 0 8%;
-    font-size: clamp(.5rem, .9cqi, .9rem); letter-spacing: .2em; color: #c9b27a;
+    font-size: clamp(.5rem, calc(.9 * var(--u)), .9rem); letter-spacing: .2em; color: #c9b27a;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
   .page-boutique .vitrine--accueil .porte__titre {
     grid-row: 2; align-self: center; padding: 0 8%;
-    font-size: clamp(.9rem, 1.95cqi, 2rem); line-height: 1.15;
+    font-size: clamp(.9rem, calc(1.95 * var(--u)), 2rem); line-height: 1.15;
     color: #f2ead8; text-shadow: 0 2px 8px rgba(0,0,0,.8);
     transition: color .2s ease, text-shadow .2s ease;
   }
   .page-boutique .vitrine--accueil .porte:hover .porte__titre,
   .page-boutique .vitrine--accueil .porte:focus-visible .porte__titre { color: var(--or-vif); text-shadow: 0 0 18px rgba(243,207,124,.45); }
-  .page-boutique .vitrine--accueil .porte .scene { grid-row: 4; min-height: 0; padding-bottom: 2.4cqi; }
+  .page-boutique .vitrine--accueil .porte .scene { grid-row: 4; min-height: 0; padding-bottom: calc(2.4 * var(--u)); }
   .page-boutique .vitrine--accueil .porte__desc {
     grid-row: 5; padding: 0 9%;
-    font-size: clamp(.75rem, 1.3cqi, 1.25rem); line-height: 1.35; color: var(--texte-doux);
+    font-size: clamp(.75rem, calc(1.3 * var(--u)), 1.25rem); line-height: 1.35; color: var(--texte-doux);
   }
   .page-boutique .vitrine--accueil .porte__entrer {
-    grid-row: 6; justify-self: center; margin-top: .9cqi;
-    font-size: clamp(.6rem, .95cqi, .95rem);
+    grid-row: 6; justify-self: center; margin-top: calc(.9 * var(--u));
+    font-size: clamp(.6rem, calc(.95 * var(--u)), .95rem);
   }
   /* La lumière de la niche (y 229 → 763 : à 26,24 % du haut de la porte) : douce, plus vive au survol */
   .page-boutique .vitrine--accueil .porte::before {
@@ -295,23 +303,23 @@ body.page-boutique:has(.vitrine--accueil .hall) {
     box-shadow: inset 0 0 0 2px rgba(243,207,124,.55), inset 0 0 40px rgba(217,164,65,.18);
   }
   .page-boutique .vitrine--accueil .porte::after { inset: 26.24% 0 0; }
-  .page-boutique .vitrine--accueil .porte__annonce { top: 28.5%; right: 5%; font-size: clamp(.55rem, .85cqi, .8rem); }
+  .page-boutique .vitrine--accueil .porte__annonce { top: 28.5%; right: 5%; font-size: clamp(.55rem, calc(.85 * var(--u)), .8rem); }
   /* Les scènes, en grand dans la niche */
-  .page-boutique .vitrine--accueil .scene::after { bottom: 1.6cqi; height: 2.4cqi; }
-  .page-boutique .vitrine--accueil .scene--boosters .scene__booster { height: 88%; max-height: 18cqi; }
+  .page-boutique .vitrine--accueil .scene::after { bottom: calc(1.6 * var(--u)); height: calc(2.4 * var(--u)); }
+  .page-boutique .vitrine--accueil .scene--boosters .scene__booster { height: 88%; max-height: calc(18 * var(--u)); }
   .page-boutique .vitrine--accueil .scene--boosters .scene__dos {
-    width: 8cqi; margin-left: -4cqi; bottom: 6cqi;
-    transform: translateX(calc(var(--k) * 4cqi)) rotate(calc(var(--k) * 12deg)) translateY(calc(var(--k) * var(--k) * .7cqi - 1.5cqi));
+    width: calc(8 * var(--u)); margin-left: calc(-4 * var(--u)); bottom: calc(6 * var(--u));
+    transform: translateX(calc(var(--k) * calc(4 * var(--u)))) rotate(calc(var(--k) * 12deg)) translateY(calc(var(--k) * var(--k) * calc(.7 * var(--u)) - calc(1.5 * var(--u))));
   }
   .page-boutique .vitrine--accueil .porte:hover .scene__dos {
-    transform: translateX(calc(var(--k) * 5.4cqi)) rotate(calc(var(--k) * 18deg)) translateY(calc(var(--k) * var(--k) * 1cqi - 3cqi));
+    transform: translateX(calc(var(--k) * calc(5.4 * var(--u)))) rotate(calc(var(--k) * 18deg)) translateY(calc(var(--k) * var(--k) * calc(1 * var(--u)) - calc(3 * var(--u))));
   }
-  .page-boutique .vitrine--accueil .scene__blason { width: 82%; height: min(80%, 14cqi); gap: 1.3cqi; margin-bottom: .5cqi; }
-  .page-boutique .vitrine--accueil .scene__titre { font-size: clamp(1rem, 2.4cqi, 2.3rem); }
-  .page-boutique .vitrine--accueil .scene__couleurs { gap: 1cqi; }
-  .page-boutique .vitrine--accueil .scene__couleurs i { width: 1.7cqi; height: 1.7cqi; }
+  .page-boutique .vitrine--accueil .scene__blason { width: 82%; height: min(80%, calc(14 * var(--u))); gap: calc(1.3 * var(--u)); margin-bottom: calc(.5 * var(--u)); }
+  .page-boutique .vitrine--accueil .scene__titre { font-size: clamp(1rem, calc(2.4 * var(--u)), 2.3rem); }
+  .page-boutique .vitrine--accueil .scene__couleurs { gap: calc(1 * var(--u)); }
+  .page-boutique .vitrine--accueil .scene__couleurs i { width: calc(1.7 * var(--u)); height: calc(1.7 * var(--u)); }
   .page-boutique .vitrine--accueil .scene__plateau { width: 84%; }
-  .page-boutique .vitrine--accueil .scene__plateau--fond { width: 66%; bottom: 5.6cqi; }
+  .page-boutique .vitrine--accueil .scene__plateau--fond { width: 66%; bottom: calc(5.6 * var(--u)); }
 }
 
 /* ---------- Téléphones ---------- */
