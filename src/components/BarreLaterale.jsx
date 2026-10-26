@@ -11,7 +11,7 @@
 //  data-place : la place du bouton dans la barre du téléphone ; « menu » : dans le menu Plus.
 //  En haut à droite de l'écran (ordinateur) : le panneau MJ, pour les MJ.
 // =====================================================================
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { NOCTHEMAR_SITE, lienSite } from '../lib/lienSite.js';
 import { useAuth, connexionDiscord, deconnexion } from '../lib/auth.js';
@@ -151,11 +151,32 @@ function Entree({ icone, libelle, chemin, actif, place }) {
   );
 }
 
+// Le bord droit de la barre (--hud, sur <html>) : les fonds des écrans commencent là, au lieu de passer
+// derrière la barre (styles/barre-jeu.css). Suivi en direct : la largeur de la barre change avec l'écran.
+function useBordDeLaBarre(barre) {
+  useEffect(() => {
+    const el = barre.current;
+    if (!el) return undefined;
+    const mesurer = () => document.documentElement.style.setProperty('--hud', `${Math.round(el.getBoundingClientRect().right)}px`);
+    mesurer();
+    const suivi = new ResizeObserver(mesurer);
+    suivi.observe(el);
+    window.addEventListener('resize', mesurer);
+    return () => {
+      suivi.disconnect();
+      window.removeEventListener('resize', mesurer);
+      document.documentElement.style.removeProperty('--hud');
+    };
+  }, [barre]);
+}
+
 export default function BarreLaterale() {
   const { joueur, chargement } = useAuth();
   const { pathname } = useLocation();
+  const barre = useRef(null);
+  useBordDeLaBarre(barre);
   return (
-    <nav className="barre" aria-label="Navigation">
+    <nav className="barre" aria-label="Navigation" ref={barre}>
       {FOND}
 
       {/* Le portrait : vers le profil, ou la connexion Discord */}

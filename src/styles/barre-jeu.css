@@ -712,3 +712,18 @@
   .barre__bourse-or .bourse-etincelles { grid-area: 1 / 1; position: absolute; inset: 0; width: auto; height: auto; margin: 0; }
   .barre__bourse-or .etincelle { --taille: 8px !important; }
 }
+
+/* Les fonds des écrans s'arrêtent à la barre (ordinateur) : inutile de peindre derrière, et l'image n'est plus
+   agrandie pour remplir toute la fenêtre. --hud : le bord droit de la barre, mesuré par BarreLaterale.jsx.
+   - le fond posé sur body est recopié dans body::after (le grain de index.css, invisible), recadré sur la zone
+     à droite de la barre ;
+   - les fonds posés sur body::before (Profil) commencent eux aussi au bord de la barre. */
+@media (min-width: 701px) {
+  body.has-rail::after {
+    left: var(--hud, 0px);
+    z-index: -2; opacity: 1; mix-blend-mode: normal;
+    background: inherit;
+    background-attachment: scroll;
+  }
+  body.has-rail::before { left: var(--hud, 0px); }
+}
