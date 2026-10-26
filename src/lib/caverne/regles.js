@@ -31,3 +31,26 @@ export const NB_PLANCHES = 12;
 export const RISQUES = [0.08, 0.10, 0.12, 0.14, 0.17, 0.20, 0.24, 0.29, 0.35, 0.42, 0.48, 0.55];
 export const MULT_PONT = [1];
 { let s = 1; for (const r of RISQUES) { s *= 1 - r; MULT_PONT.push(auCentieme(0.97 / s)); } }
+
+// IV. Le Lac des Esprits : 5 tirages ; la prise est cachée, seule la tension (par tirage, à 4 près) la trahit
+export const LAC = {
+  tirages: 5,
+  coupe: 0.5,   // couper la ligne : la moitié de la mise revient
+  tensionMax: 150,
+  prises: [
+    null,
+    { nom: 'un poisson des profondeurs', court: 'Poisson', mult: 0.3, tension: 8 },
+    { nom: 'une pièce engloutie', court: 'Pièce', mult: 1.2, tension: 13 },
+    { nom: 'un cristal des esprits', court: 'Cristal', mult: 2.4, tension: 19 },
+    { nom: 'la créature du lac', court: 'Créature', mult: 10, tension: 27 },
+  ],
+};
+
+// V. Le Roi Liche : 5 manches ; le gain selon les manches gagnées (avant la première : la moitié de la mise)
+export const LICHE = {
+  manches: 5,
+  pv: 100,
+  potions: 3,
+  pvLiche: [85, 90, 95, 100, 105],
+  mult: [0.5, 1.2, 2.4, 4.8, 9.6, 19.2],
+};

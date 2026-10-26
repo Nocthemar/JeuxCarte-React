@@ -127,18 +127,6 @@
 .caverne #fx { position: fixed; inset: 0; pointer-events: none; z-index: 50; }
 .caverne #flashv { position: fixed; inset: 0; pointer-events: none; z-index: 40; opacity: 0; transition: opacity .35s; }
 
-/* ----- l'entrée, dans le hall de la Boutique ----- */
-.page-boutique .caverne-entree {
-  display: flex; align-items: center; gap: 18px; margin: 22px auto 0; width: min(100%, 760px); padding: 14px 22px 14px 14px;
-  border: 1px solid rgba(226,176,74,.38); border-radius: 12px; text-decoration: none; color: #e9dfc4;
-  background: linear-gradient(90deg, rgba(8,11,20,.9), rgba(20,14,8,.85)); box-shadow: 0 8px 30px rgba(0,0,0,.55); transition: .18s;
-}
-.page-boutique .caverne-entree:hover, .page-boutique .caverne-entree:focus-visible { border-color: #e2b04a; box-shadow: 0 0 22px rgba(226,176,74,.25); outline: none; }
-.page-boutique .caverne-entree img { width: 64px; height: 64px; object-fit: contain; flex: none; filter: drop-shadow(0 3px 4px #000); }
-.page-boutique .caverne-entree b { display: block; font-family: "Cinzel", "Cinzel Repli", serif; letter-spacing: .14em; text-transform: uppercase; color: #ffe29a; }
-.page-boutique .caverne-entree small { display: block; font-style: italic; opacity: .75; margin-top: 3px; }
-.page-boutique .caverne-entree span:last-child { margin-left: auto; color: #e2b04a; font-family: "Cinzel", "Cinzel Repli", serif; letter-spacing: .1em; white-space: nowrap; }
-
 @media (max-width: 760px) {
   .caverne .ttl { display: none; }
   .caverne .hdr { padding: 10px 10px 4px; }
@@ -184,3 +172,57 @@
 .page-caverne .notif--visible { opacity: 1; transform: translate(-50%, 0); }
 .page-caverne .notif--erreur { border-color: #ff6a4a; color: #ffd2c4; }
 @media (max-width: 700px) { .page-caverne .notif { left: 50%; } }
+
+/* ----- cinq onglets : plus étroits ----- */
+.caverne .tab { flex: 0 1 230px; }
+.caverne .tab__ico { width: 44px; height: 44px; flex: none; filter: drop-shadow(0 3px 4px #000); }
+@media (max-width: 1250px) {
+  .caverne .tab small { display: none; }
+  .caverne .tab b { white-space: normal; line-height: 1.15; font-size: 12px; }
+  .caverne .tab img, .caverne .tab__ico { width: 34px; height: 34px; }
+}
+@media (max-width: 760px) {
+  .caverne .tabs { gap: 4px; padding: 4px 6px 6px; }
+  .caverne .tab { flex-direction: column; gap: 2px; padding: 5px 2px; text-align: center; }
+  .caverne .tab img, .caverne .tab__ico { width: 26px; height: 26px; }
+  .caverne .tab b { font-size: 8.5px; letter-spacing: .02em; }
+}
+
+/* ----- le lac ----- */
+.caverne #lHud { position: absolute; right: 4%; top: 8%; width: min(300px, 40%); text-align: center; pointer-events: none; z-index: 2; }
+.caverne #lHud .lbl { font-size: 10px; letter-spacing: .2em; opacity: .75; }
+.caverne #lHud .lbl b { color: #bff4ee; letter-spacing: .1em; }
+.caverne #lm { font-weight: 900; font-size: clamp(34px, 6vw, 64px); line-height: 1.05; color: #bff4ee; text-shadow: 0 0 24px rgba(80,200,220,.5), 0 4px 0 rgba(0,0,0,.8); font-variant-numeric: lining-nums; transition: color .3s; }
+.caverne .jauge { height: 12px; margin: 6px 0 8px; border-radius: 6px; background: rgba(0,0,0,.55); border: 1px solid rgba(120,220,230,.35); overflow: hidden; box-shadow: inset 0 0 8px rgba(0,0,0,.8); }
+.caverne .jauge i { display: block; height: 100%; width: 0; border-radius: 6px; box-shadow: 0 0 12px rgba(255,140,90,.45); }
+.caverne #ls { font-family: "EB Garamond", "EB Garamond Repli", Georgia, serif; font-style: italic; font-size: clamp(13px, 1.8vw, 16px); opacity: .9; margin-top: 8px; min-height: 22px; text-shadow: 0 2px 6px #000; }
+
+/* ----- le Roi Liche ----- */
+.caverne #kHaut { position: absolute; left: 50%; top: 10px; translate: -50% 0; width: min(520px, 70%); z-index: 2; text-align: center; pointer-events: none; }
+.caverne .vie { display: grid; grid-template-columns: 1fr auto; gap: 3px 10px; align-items: center; }
+.caverne .vie__nom { font-size: 11px; font-weight: 900; letter-spacing: .2em; color: #e6dcf5; text-align: left; }
+.caverne .vie__nom small { margin-left: 8px; font-size: 9px; letter-spacing: .16em; color: #b9a6d8; font-weight: 700; }
+.caverne .vie__pv { font-size: 12px; font-weight: 700; color: #e6dcf5; font-variant-numeric: lining-nums; }
+.caverne .vie__barre { grid-column: 1 / -1; height: 12px; border-radius: 3px; background: rgba(0,0,0,.6); border: 1px solid rgba(200,180,255,.35); overflow: hidden; }
+.caverne .vie__barre i { display: block; height: 100%; width: 100%; transition: width .15s; }
+.caverne .vie--liche .vie__barre i { background: linear-gradient(90deg, #4d2a7a, #9a5cf0); box-shadow: 0 0 10px rgba(160,100,255,.5); }
+.caverne .vie--moi { position: absolute; left: 50%; bottom: 12px; translate: -50% 0; width: min(420px, 70%); z-index: 2; pointer-events: none; }
+.caverne .vie--moi .vie__nom, .caverne .vie--moi .vie__pv { color: #d8f5e2; }
+.caverne .vie--moi .vie__barre { border-color: rgba(140,240,190,.4); }
+.caverne .vie--moi .vie__barre i { background: linear-gradient(90deg, #1f6a4a, #4fd18a); }
+.caverne .vie--moi .vie__barre i.bas { background: linear-gradient(90deg, #7a1f1f, #e0503a); }
+.caverne #kInt { margin-top: 8px; display: inline-block; padding: 4px 12px; border-radius: 6px; font-size: 12px; font-weight: 700; letter-spacing: .08em; background: rgba(0,0,0,.5); border: 1px solid rgba(120,240,230,.3); color: #bff4ee; transition: .2s; }
+.caverne #kInt.sort { color: #f3c6ff; border-color: rgba(220,90,255,.7); box-shadow: 0 0 18px rgba(220,90,255,.45); animation: caverne-pouls .9s ease-in-out infinite; }
+@keyframes caverne-pouls { 50% { transform: scale(1.06); } }
+.caverne #kHud { position: absolute; right: 3%; top: 34%; width: min(260px, 32%); text-align: right; pointer-events: none; z-index: 2; }
+.caverne #km { font-weight: 900; font-size: clamp(32px, 5vw, 58px); line-height: 1; color: var(--gold-l); text-shadow: 0 0 26px rgba(226,176,74,.5), 0 4px 0 rgba(0,0,0,.8); font-variant-numeric: lining-nums; }
+.caverne #kmS { font-size: 9px; letter-spacing: .14em; margin-top: 4px; }
+.caverne #ks { font-family: "EB Garamond", "EB Garamond Repli", Georgia, serif; font-style: italic; font-size: clamp(13px, 1.7vw, 16px); opacity: .9; margin-top: 10px; text-shadow: 0 2px 6px #000; }
+.caverne .btn.fuir { box-shadow: inset 0 0 0 1.5px #c9b37a; }
+@media (max-width: 760px) {
+  .caverne #lHud { right: 3%; top: 6%; width: 46%; }
+  .caverne #kHaut { width: 90%; top: 38px; }
+  .caverne #kHud { top: auto; bottom: 52px; right: 3%; width: 45%; }
+  .caverne #ks { display: none; }
+  .caverne #kHist { display: none; }
+}

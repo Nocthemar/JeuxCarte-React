@@ -213,7 +213,14 @@ body.page-boutique:has(.vitrine--accueil) {
   }
   .page-boutique .vitrine--accueil:has(> .hall) > .vitrine-entete { flex: none; }
   @container vitrine (min-width: 820px) {
-    .page-boutique .vitrine--accueil:has(> .hall) > .hall { flex: 1 1 0; min-height: 0; aspect-ratio: auto; box-shadow: none; }
+    /* La devanture garde les proportions de l'image (sinon, sur un écran large et peu haut, elle s'écrase :
+       les titres sortent de leur cartouche et les scènes débordent) : la hauteur qui reste, sans dépasser
+       celle que donne la largeur ; la largeur suit (aspect-ratio), centrée */
+    .page-boutique .vitrine--accueil:has(> .hall) > .hall {
+      flex: 1 1 0; min-height: 0; max-height: calc(100cqi * 941 / 1672);
+      width: auto; max-width: 100%; aspect-ratio: 1672 / 941; align-self: center; margin: auto 0;
+      box-shadow: none;
+    }
   }
   @container vitrine (max-width: 819px) { .page-boutique .vitrine--accueil .hall { padding-left: 16px; } }
 }

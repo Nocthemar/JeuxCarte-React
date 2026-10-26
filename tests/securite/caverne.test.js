@@ -107,4 +107,68 @@ describe('la Caverne aux Trésors', () => {
     const h = await b.en('authenticated', ALICE, 'select jeu, gain from caverne_historique order by id desc limit 1');
     expect(h[0]).toEqual({ jeu: 'pont', gain: 133 });
   });
+
+  it('le Lac : la prise reste secrète, la tension monte selon elle, 5 tirages la sortent ; couper rend la moitié', async () => {
+    await b.sql(`delete from caverne_parties; update wallets set balance = 1000 where discord_id = '111111'`);
+    const r = await rpc(`caverne_commencer('lac', 'or', 100)`);
+    expect(JSON.stringify(r)).not.toContain('prise');
+    // une créature géante (casse 22 % par tirage) : on rejoue jusqu'à la sortir, pour voir la tension et le gain
+    let fin = null;
+    for (let essai = 0; essai < 60 && !(fin && !fin.casse); essai++) {
+      if (essai) {
+        await b.sql(`update wallets set balance = 1000 where discord_id = '111111'`);
+        await rpc(`caverne_commencer('lac', 'or', 100)`);
+      }
+      await b.sql(`update caverne_parties set etat = '{"prise": 4, "tirages": 0, "tension": 0}'`);
+      let t;
+      for (let k = 0; k < 5; k++) {
+        t = await rpc('caverne_lac_tirer()');
+        if (t.fini !== false) break;
+        expect(t.hausse).toBeGreaterThanOrEqual(23);
+        expect(t.hausse).toBeLessThanOrEqual(31);
+        expect(JSON.stringify(t)).not.toContain('prise');
+      }
+      fin = t;
+    }
+    expect(fin).toMatchObject({ fini: true, casse: false, prise: 4, tirages: 5, gain: 1000 });
+    expect(fin.tension).toBeGreaterThanOrEqual(115);
+
+    await rpc(`caverne_commencer('lac', 'cristaux', 10)`);
+    expect(await rpc('caverne_encaisser()')).toMatchObject({ fini: true, jeu: 'lac', gain: 5 });
+    expect((await b.essai('authenticated', ALICE, 'select caverne_lac_tirer()')).ok).toBe(false);
+  });
+
+  it('le Roi Liche : chaque manche gagnée paie plus, fuir garde le gain, mourir perd tout', async () => {
+    await b.sql(`delete from caverne_parties; update wallets set balance = 1000 where discord_id = '111111'`);
+    const r = await rpc(`caverne_commencer('liche', 'or', 100)`);
+    expect(r.liche).toMatchObject({ manche: 0, pv: 100, pv_liche: 85, potions: 3, pv_liche_max: 85 });
+    expect((await b.essai('authenticated', ALICE, `select caverne_liche_agir('tricher')`)).ok).toBe(false);
+    expect((await b.essai('authenticated', ALICE, `select caverne_liche_agir('soin')`)).ok).toBe(false);   // déjà 100 PV
+
+    // il ne lui reste que 3 PV : une attaque gagne la manche, PV remis à neuf, ×1,2
+    await b.sql(`update caverne_parties set etat = '{"manche": 0, "pv": 40, "pv_liche": 3, "potions": 3, "intention": 1}'`);
+    const a = await rpc(`caverne_liche_agir('attaque')`);
+    expect(a).toMatchObject({ fini: false, manche_gagnee: true, manche: 1, pv: 100, pv_liche: 90, pv_liche_max: 90, recu: 0 });
+    expect(Number(a.multiplicateur)).toBe(1.2);
+
+    // un sort qu'on ne pare pas : 24 à 36 (+2) ×2,2 = au moins 57
+    await b.sql(`update caverne_parties set etat = '{"manche": 1, "pv": 100, "pv_liche": 90, "potions": 3, "intention": 1}'`);
+    const s = await rpc(`caverne_liche_agir('attaque')`);
+    expect(s.recu).toBeGreaterThanOrEqual(57);
+    // le même, paré : un quart
+    await b.sql(`update caverne_parties set etat = '{"manche": 1, "pv": 100, "pv_liche": 90, "potions": 3, "intention": 1}'`);
+    const d = await rpc(`caverne_liche_agir('defense')`);
+    expect(d.recu).toBeLessThanOrEqual(21);
+    expect(d.degats).toBeGreaterThanOrEqual(5);
+
+    expect(await rpc('caverne_encaisser()')).toMatchObject({ fini: true, jeu: 'liche', gain: 120 });
+
+    await rpc(`caverne_commencer('liche', 'or', 100)`);
+    await b.sql(`update caverne_parties set etat = '{"manche": 3, "pv": 1, "pv_liche": 100, "potions": 0, "intention": 0}'`);
+    expect(await rpc(`caverne_liche_agir('attaque')`)).toMatchObject({ fini: true, mort: true, gain: 0 });
+    // la dernière manche : ×19,2
+    await rpc(`caverne_commencer('liche', 'or', 100)`);
+    await b.sql(`update caverne_parties set etat = '{"manche": 4, "pv": 100, "pv_liche": 1, "potions": 0, "intention": 0}'`);
+    expect(await rpc(`caverne_liche_agir('defense')`)).toMatchObject({ fini: true, victoire: true, gain: 1920 });
+  });
 });

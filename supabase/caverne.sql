@@ -1,15 +1,22 @@
 -- =====================================================================
---  La Caverne aux Trésors : trois jeux de hasard, avec l'or ou les cristaux du jeu (écran #/caverne)
+--  La Caverne aux Trésors : cinq jeux de hasard, avec l'or ou les cristaux du jeu (écran #/caverne)
 --  À lancer APRÈS schema.sql et securite.sql, dans les deux projets (dev puis le vrai). Relançable sans casse.
 --
 --  Tout se décide ici, jamais dans le navigateur : le serveur prend la mise, tire le hasard (le réveil du
---  dragon, les cristaux maudits, les planches qui cèdent), le garde secret, et paie le gain.
+--  dragon, les cristaux maudits, les planches qui cèdent, la prise au bout de la ligne, les coups du Roi Liche),
+--  le garde secret, et paie le gain.
 --  Le navigateur ne fait qu'afficher ; il ne voit le secret qu'une fois la partie finie.
 --
 --   I.   Le Dragon Dormant : le butin grossit (×e^(0,12 t)) jusqu'au réveil, tiré au départ ; fuir avant.
 --   II.  Les Bourses du Marchand : 25 bourses, 1 à 12 cristaux maudits ; chaque bourse sûre augmente le gain.
 --   III. Le Pont Maudit : 12 planches, de plus en plus fragiles ; avancer d'une ou deux, ou encaisser.
---  La maison garde 3 % en moyenne ; le gain d'une partie est limité à 100 fois la mise.
+--   IV.  Le Lac des Esprits : une prise cachée (poisson ×0,3, pièce ×1,2, cristal ×2,4, créature géante ×10) ;
+--        5 tirages pour la sortir de l'eau, chacun peut casser la ligne ; seule la tension trahit la prise.
+--        Couper la ligne rend la moitié de la mise.
+--   V.   Le Roi Liche : 5 manches (×1,2 ×2,4 ×4,8 ×9,6 ×19,2) ; attaquer, se défendre ou se soigner (3 potions).
+--        Fuir garde le gain des manches gagnées (la moitié de la mise avant la première) ; mourir perd tout.
+--  La maison garde 3 % en moyenne, même face à un joueur parfait (calculé pour le Lac et le Roi Liche) ;
+--  le gain d'une partie est limité à 100 fois la mise.
 --  Une seule partie à la fois par joueur. Une partie laissée en plan (onglet fermé) est réglée au début
 --  de la suivante, comme si le joueur avait encaissé à ce moment-là (ou perdu, si le dragon s'est réveillé).
 -- =====================================================================
@@ -25,6 +32,9 @@ create table if not exists public.caverne_parties (
 );
 alter table public.caverne_parties enable row level security;
 revoke all on public.caverne_parties from anon, authenticated;
+-- (les jeux ajoutés depuis : le Lac et le Roi Liche)
+alter table public.caverne_parties drop constraint if exists caverne_parties_jeu_check;
+alter table public.caverne_parties add constraint caverne_parties_jeu_check check (jeu in ('dragon', 'bourses', 'pont', 'lac', 'liche'));
 
 -- Les parties finies (le joueur voit les siennes)
 create table if not exists public.caverne_historique (
@@ -82,6 +92,10 @@ begin
     if v_k = 0 then return 1; end if;
     for i in 1 .. v_k loop v_m := v_m * (1 - caverne_pont_risque(i)); end loop;
     v_m := 0.97 / v_m;
+  elsif p_jeu = 'lac' then
+    v_m := 0.5;   -- couper la ligne
+  elsif p_jeu = 'liche' then
+    v_m := (array[.5, 1.2, 2.4, 4.8, 9.6, 19.2]::numeric[])[(p_etat ->> 'manche')::int + 1];
   end if;
   return least(floor(v_m * 100) / 100, 100);
 end;
@@ -185,9 +199,10 @@ declare
   v_etat   jsonb;
   v_maudites int[];
   v_n      int;
+  v_r      double precision;
 begin
   if v_moi is null then raise exception 'Connecte-toi d''abord.'; end if;
-  if p_jeu not in ('dragon', 'bourses', 'pont') then raise exception 'Jeu inconnu.'; end if;
+  if p_jeu not in ('dragon', 'bourses', 'pont', 'lac', 'liche') then raise exception 'Jeu inconnu.'; end if;
   if v_bornes is null then raise exception 'Monnaie inconnue.'; end if;
   if p_mise is null or p_mise < v_bornes[1] or p_mise > v_bornes[2] then
     raise exception 'La mise doit être entre % et %.', v_bornes[1], v_bornes[2];
@@ -207,13 +222,23 @@ begin
     if v_n not in (1, 3, 5, 8, 12) then raise exception 'Choisis 1, 3, 5, 8 ou 12 cristaux maudits.'; end if;
     select array_agg(c) into v_maudites from (select c from generate_series(0, 24) c order by random() limit v_n) x;
     v_etat := jsonb_build_object('maudites_nb', v_n, 'maudites', to_jsonb(v_maudites), 'ouvertes', '[]'::jsonb);
-  else
+  elsif p_jeu = 'pont' then
     v_etat := jsonb_build_object('position', 0);
+  elsif p_jeu = 'lac' then
+    -- la prise (secrète) : 1 poisson (45 %), 2 pièce (30 %), 3 cristal (18 %), 4 créature géante (7 %)
+    v_r := random();
+    v_n := case when v_r < .45 then 1 when v_r < .75 then 2 when v_r < .93 then 3 else 4 end;
+    v_etat := jsonb_build_object('prise', v_n, 'tirages', 0, 'tension', 0);
+  else
+    v_etat := jsonb_build_object('manche', 0, 'pv', 100, 'pv_liche', 85, 'potions', 3,
+                                 'intention', case when random() < .3 then 1 else 0 end);
   end if;
 
   perform caverne_bouger(v_moi, p_monnaie, -p_mise);
   insert into caverne_parties (discord_id, jeu, monnaie, mise, etat) values (v_moi, p_jeu, p_monnaie, p_mise, v_etat);
-  return jsonb_build_object('jeu', p_jeu, 'monnaie', p_monnaie, 'mise', p_mise, 'bourse', caverne_bourse(v_moi), 'reglee', v_reglee);
+  return jsonb_build_object('jeu', p_jeu, 'monnaie', p_monnaie, 'mise', p_mise, 'bourse', caverne_bourse(v_moi), 'reglee', v_reglee,
+    -- le Roi Liche : tout est à la vue du joueur (PV, potions, ce qu'il prépare)
+    'liche', case when p_jeu = 'liche' then v_etat || jsonb_build_object('pv_liche_max', 85) end);
 end;
 $$;
 
@@ -284,7 +309,110 @@ begin
 end;
 $$;
 
--- Encaisser (les trois jeux) : le dragon, au multiplicateur du moment (s'il dort encore) ; les autres, au gain actuel
+-- Le Lac : un tirage de plus. La ligne peut casser (selon la prise) ; sinon la tension monte, d'autant plus
+-- que la prise est lourde (8, 13, 19 ou 27 par tirage, à 4 près). Au 5e tirage, la prise sort de l'eau.
+create or replace function public.caverne_lac_tirer()
+returns jsonb language plpgsql security definer set search_path = public as $$
+declare
+  v_p       caverne_parties;
+  v_prise   int;
+  v_n       int;
+  v_tension int;
+  v_hausse  int;
+begin
+  select * into v_p from caverne_parties where discord_id = my_discord_id() and jeu = 'lac' for update;
+  if not found then raise exception 'Lance d''abord ta ligne.'; end if;
+  v_prise := (v_p.etat ->> 'prise')::int;
+  v_n := (v_p.etat ->> 'tirages')::int + 1;
+  v_tension := (v_p.etat ->> 'tension')::int;
+
+  if random() < (array[.01, .04, .10, .22])[v_prise] then
+    return caverne_clore(v_p, null, jsonb_build_object('casse', true, 'prise', v_prise, 'tirages', v_n, 'tension', v_tension));
+  end if;
+  v_hausse := (array[8, 13, 19, 27])[v_prise] + floor(random() * 9)::int - 4;
+  v_tension := v_tension + v_hausse;
+  v_p.etat := v_p.etat || jsonb_build_object('tirages', v_n, 'tension', v_tension);
+  if v_n >= 5 then   -- la prise sort de l'eau
+    return caverne_clore(v_p, (array[.3, 1.2, 2.4, 10]::numeric[])[v_prise],
+      jsonb_build_object('casse', false, 'prise', v_prise, 'tirages', v_n, 'tension', v_tension, 'hausse', v_hausse));
+  end if;
+  update caverne_parties set etat = v_p.etat where discord_id = v_p.discord_id;
+  return jsonb_build_object('fini', false, 'tirages', v_n, 'tension', v_tension, 'hausse', v_hausse);
+end;
+$$;
+
+-- Le Roi Liche : un échange. p_action : 'attaque' (12 à 24, 1 chance sur 10 de doubler), 'defense' (riposte de 5 à 10,
+-- et ses coups ne font qu'un quart), 'soin' (une potion : +20 à 30 PV). Puis il frappe s'il tient encore debout :
+-- 24 à 36 (+2 par manche), ×2,2 s'il préparait un sort (annoncé d'avance, 3 fois sur 10).
+-- Manche gagnée : ses PV remontent (85, 90, 95, 100, 105), les tiens aussi (100). À 0 PV, tout est perdu.
+create or replace function public.caverne_liche_agir(p_action text)
+returns jsonb language plpgsql security definer set search_path = public as $$
+declare
+  v_p      caverne_parties;
+  v_manche int;
+  v_pv     int;
+  v_pvl    int;
+  v_sort   int;
+  v_pot    int;
+  v_degats int := 0;
+  v_crit   boolean := false;
+  v_soin   int := 0;
+  v_recu   int := 0;
+  v_gagnee boolean := false;
+  v_infos  jsonb;
+begin
+  if p_action is null or p_action not in ('attaque', 'defense', 'soin') then raise exception 'Attaque, défense ou soin.'; end if;
+  select * into v_p from caverne_parties where discord_id = my_discord_id() and jeu = 'liche' for update;
+  if not found then raise exception 'Défie d''abord le Roi Liche.'; end if;
+  v_manche := (v_p.etat ->> 'manche')::int;
+  v_pv := (v_p.etat ->> 'pv')::int;
+  v_pvl := (v_p.etat ->> 'pv_liche')::int;
+  v_sort := (v_p.etat ->> 'intention')::int;
+  v_pot := (v_p.etat ->> 'potions')::int;
+
+  if p_action = 'attaque' then
+    v_degats := 12 + floor(random() * 13)::int;
+    if random() < .1 then v_degats := v_degats * 2; v_crit := true; end if;
+  elsif p_action = 'defense' then
+    v_degats := 5 + floor(random() * 6)::int;
+  else
+    if v_pot <= 0 then raise exception 'Tu n''as plus de potion.'; end if;
+    if v_pv >= 100 then raise exception 'Tu es déjà en pleine forme.'; end if;
+    v_soin := least(100, v_pv + 20 + floor(random() * 11)::int) - v_pv;
+    v_pv := v_pv + v_soin;
+    v_pot := v_pot - 1;
+  end if;
+  v_pvl := v_pvl - v_degats;
+  if v_pvl > 0 then
+    v_recu := round((24 + 2 * v_manche + floor(random() * 13))::numeric
+                    * case when v_sort = 1 then 2.2 else 1 end * case when p_action = 'defense' then .25 else 1 end)::int;
+    v_pv := v_pv - v_recu;
+  end if;
+  v_infos := jsonb_build_object('action', p_action, 'degats', v_degats, 'critique', v_crit, 'soin', v_soin,
+                                'recu', v_recu, 'sort', v_sort = 1);
+
+  if v_pv <= 0 then
+    return caverne_clore(v_p, null, v_infos || jsonb_build_object('mort', true, 'manche', v_manche, 'pv', 0, 'pv_liche', v_pvl, 'potions', v_pot));
+  end if;
+  if v_pvl <= 0 then
+    v_manche := v_manche + 1;
+    v_gagnee := true;
+    if v_manche = 5 then
+      return caverne_clore(v_p, 19.2, v_infos || jsonb_build_object('victoire', true, 'manche', 5, 'pv', v_pv, 'pv_liche', 0, 'potions', v_pot));
+    end if;
+    v_pv := 100;
+    v_pvl := (array[85, 90, 95, 100, 105])[v_manche + 1];
+  end if;
+  v_p.etat := jsonb_build_object('manche', v_manche, 'pv', v_pv, 'pv_liche', v_pvl, 'potions', v_pot,
+                                 'intention', case when random() < .3 then 1 else 0 end);
+  update caverne_parties set etat = v_p.etat where discord_id = v_p.discord_id;
+  return jsonb_build_object('fini', false, 'manche_gagnee', v_gagnee, 'pv_liche_max', (array[85, 90, 95, 100, 105])[v_manche + 1],
+    'multiplicateur', caverne_multiplicateur('liche', v_p.etat)) || v_infos || v_p.etat;
+end;
+$$;
+
+-- Encaisser (tous les jeux) : le dragon, au multiplicateur du moment (s'il dort encore) ; le lac, couper la ligne ;
+-- le Roi Liche, fuir ; les autres, au gain actuel
 create or replace function public.caverne_encaisser()
 returns jsonb language plpgsql security definer set search_path = public as $$
 declare
@@ -302,9 +430,11 @@ end;
 $$;
 
 revoke all on function public.caverne_commencer(text, text, int, numeric), public.caverne_dragon_voir(),
-  public.caverne_bourse_ouvrir(int), public.caverne_pont_avancer(int), public.caverne_encaisser() from public, anon;
+  public.caverne_bourse_ouvrir(int), public.caverne_pont_avancer(int), public.caverne_lac_tirer(),
+  public.caverne_liche_agir(text), public.caverne_encaisser() from public, anon;
 grant execute on function public.caverne_commencer(text, text, int, numeric), public.caverne_dragon_voir(),
-  public.caverne_bourse_ouvrir(int), public.caverne_pont_avancer(int), public.caverne_encaisser() to authenticated;
+  public.caverne_bourse_ouvrir(int), public.caverne_pont_avancer(int), public.caverne_lac_tirer(),
+  public.caverne_liche_agir(text), public.caverne_encaisser() to authenticated;
 
 
 -- ---------------------------------------------------------------------

@@ -6,13 +6,14 @@
 //
 //  const demonter = monterCaverne(racine, { serveur, notifier, bourse: { or, cristaux } });
 //   racine : l'élément .caverne de pages/Caverne.jsx (son HTML y est déjà) ;
-//   serveur : commencer(jeu, monnaie, mise, option), voir(), ouvrir(i), avancer(n), encaisser() -> promesses ;
+//   serveur : commencer(jeu, monnaie, mise, option), voir(), ouvrir(i), avancer(n), tirer(), agir(action),
+//             encaisser() -> promesses ;
 //   demonter() : arrête tout en quittant l'écran.
 // =====================================================================
 import { urlPublique } from '../chemins.js';
 import { estMuet, basculerMuet, lireVolumes } from '../son.js';
 import {
-  MONNAIES, PLAFOND, CROISSANCE, multDragon, NB_BOURSES, MAUDITES, multBourses, NB_PLANCHES, RISQUES, MULT_PONT,
+  MONNAIES, PLAFOND, CROISSANCE, multDragon, NB_BOURSES, MAUDITES, multBourses, NB_PLANCHES, RISQUES, MULT_PONT, LAC, LICHE,
 } from './regles.js';
 
 const IMAGES = {
@@ -175,16 +176,18 @@ export function monterCaverne(racine, { serveur, notifier, bourse }) {
     if (anyBusy() || b.dataset.m === monnaie) return;
     monnaie = b.dataset.m; BET = BETS[monnaie];
     racine.querySelectorAll('.bal').forEach(x => x.classList.toggle('on', x.dataset.m === monnaie));
-    syncBalance(); dButton(); bRender(); cButtons();
+    syncBalance(); toutRafraichir();
   });
 
   // ---- onglets ----
-  const busy = [false, false, false]; const anyBusy = () => busy.some(Boolean);
+  const busy = [false, false, false, false, false]; const anyBusy = () => busy.some(Boolean);
+  // les boutons de chaque jeu (la mise possible dépend de la bourse, commune aux cinq jeux)
+  const toutRafraichir = () => { dButton(); bRender(); cButtons(); lButtons(); kButtons(); };
   function setBusy(i, f) { busy[i] = f; $('tabs').classList.toggle('lock', anyBusy()); racine.querySelector('.bals').classList.toggle('lock', anyBusy()); syncBalance(); }
   racine.querySelectorAll('.tab').forEach(t => t.onclick = () => {
     const g = +t.dataset.g; if (g === active) return; if (anyBusy()) return;
     active = g; racine.querySelectorAll('.tab').forEach(x => x.classList.toggle('on', +x.dataset.g === g));
-    racine.querySelectorAll('.game').forEach((s, i) => s.classList.toggle('on', i === g)); fitAll();
+    racine.querySelectorAll('.game').forEach((s, i) => s.classList.toggle('on', i === g)); fitAll(); toutRafraichir();
   });
 
   // ================= JEU 1 : LE DRAGON DORMANT =================
@@ -627,9 +630,407 @@ export function monterCaverne(racine, { serveur, notifier, bourse }) {
   $('cStep').onclick = () => cAdvance(1); $('cLeap').onclick = () => cAdvance(2); $('cCash').onclick = () => cCash();
   cHud(); cHist(); cButtons();
 
+  // ================= JEU 4 : LE LAC DES ESPRITS =================
+  // La prise est tirée par le serveur et reste secrète : chaque tirage renvoie la hausse de tension,
+  // ou la ligne qui casse. On ne voit la prise qu'à la fin.
+  const lcv = $('lc'), lx = lcv.getContext('2d'); let LW = 0, LH = 0, ldpr = 1, lRock = null;
+  const L = { state:'idle', bet:0, tirages:0, tension:0, aff:0, hausse:0, prise:0, hist:[], lance:0, attente:0, tire:0, casse:0, sortie:0, morsure:0, ondes:[], gouttes:[], shake:0, flash:0 };
+  const lBet = makeBet($('lBet'));
+  const lSay = t => { $('ls').textContent = t; };
+  // les cristaux de la rive : [x, hauteur (fraction), image, opacité]
+  const RIVE = [[.06,.26,'crystal',.85],[.17,.17,'gem',.9],[.29,.1,'crystal',.6],[.74,.13,'gem',.7],[.86,.24,'crystal',.9],[.96,.15,'gem',.75]];
+
+  function lFit() {
+    const r = $('lStage').getBoundingClientRect(); if (r.width < 10) return;
+    LW = r.width; LH = r.height; ldpr = Math.min(2, devicePixelRatio || 1); lcv.width = LW*ldpr; lcv.height = LH*ldpr;
+    lRock = caveTexture(LW, LH, ldpr, ['#020810','#061a2a','#030b14','rgba(90,200,220,.04)','rgba(80,190,220,.22)'], 45);
+  }
+  const lSurface = () => LH*.52;
+  const lPoint = () => [LW*.64, lSurface()];
+  const lRatio = () => clamp(L.aff/LAC.tensionMax, 0, 1);
+  function lGeo() {
+    const k = lRatio(), base = [LW*.08, LH*1.04], tip = [LW*.34 + k*LW*.04, LH*.2 + k*LH*.12];
+    return { base, tip, k };
+  }
+  function lHud() {
+    const k = lRatio(), j = $('lJauge');
+    j.style.width = (k*100).toFixed(1) + '%';
+    j.style.background = `linear-gradient(90deg, #4fd1c5, hsl(${Math.round(170 - 170*k)}, 85%, ${55 - 10*k}%))`;
+    $('lm').textContent = Math.round(k*100) + ' %';
+    $('lm').style.color = k < .35 ? '#bff4ee' : k < .65 ? '#ffd27a' : '#ff7a5a';
+    $('lTirages').textContent = `${L.tirages} / ${LAC.tirages}`;
+  }
+  function lHist() { $('lHist').innerHTML = L.hist.slice(-9).map(h => `<span class="${h.casse ? '' : h.mult >= 2 ? 'h' : 'm'}">${h.texte}</span>`).join(''); }
+  function lButtons() {
+    const idle = L.state === 'idle' || L.state === 'pose';
+    $('lGo').style.display = idle ? '' : 'none'; $('lTirer').style.display = $('lCouper').style.display = idle ? 'none' : '';
+    $('lGo').disabled = L.state === 'pose' || !peutMiser(); $('lGoT').textContent = L.state === 'pose' ? 'La ligne file…' : 'Lancer la ligne'; $('lGoS').textContent = `MISE ${fmt(BET)} ${unite().toUpperCase()} · ESPACE`;
+    if (idle) return;
+    const libre = L.state === 'ferre';
+    $('lTirer').disabled = !libre; $('lTirerS').textContent = `TIRAGE ${Math.min(LAC.tirages, L.tirages + 1)} / ${LAC.tirages} · ESPACE`;
+    $('lCouper').disabled = !libre; $('lCouperS').textContent = `RÉCUPÈRE ${gain(L.bet, LAC.coupe)} · ENTRÉE`;
+  }
+  function lOnde(x, y, n, f) { for (let i = 0; i < n; i++) L.ondes.push({ x, y, r: 4 + i*10, v: 40 + f*30, a: .7 - i*.12 }); }
+  function lEclabousse(x, y, n, f) { for (let i = 0; i < n; i++) L.gouttes.push({ x, y, vx: rnd(-120, 120)*f, vy: -rnd(120, 380)*f, life: 0, max: rnd(.6, 1.1) }); }
+  async function lStart() {
+    if (L.state !== 'idle' || !peutMiser()) return; ac();
+    L.state = 'pose'; setBusy(3, true); lBet.lock(true); lButtons();
+    const r = await appel(serveur.commencer('lac', monnaie, BET));
+    if (!r) { if (!demonte) { L.state = 'idle'; setBusy(3, false); lBet.lock(false); lButtons(); } return; }
+    setBourse(r.bourse); annoncerReglee(r.reglee);
+    L.bet = r.mise; L.tirages = 0; L.tension = 0; L.hausse = 0; L.prise = 0; L.lance = 0; L.casse = 0; L.sortie = 0; L.morsure = 0;
+    L.state = 'lance'; L.attente = rnd(.7, 1.6);
+    noise(.6, 'bandpass', 1400, 300, .1); lSay('La ligne file vers les eaux noires…'); lButtons(); lHud();
+  }
+  function lMord() {
+    L.state = 'ferre'; L.morsure = 1; const [px, py] = lPoint(); lOnde(px, py, 3, 1.5); lEclabousse(px, py, 8, .6);
+    noise(.25, 'lowpass', 600, 120, .3); tone(140, 70, .25, 'sine', .25);
+    lSay('Quelque chose mord ! Remonte… et écoute la ligne.'); lButtons();
+  }
+  async function lTirer() {
+    if (L.state !== 'ferre') return; ac(); L.state = 'tire'; L.tire = 1; lButtons();
+    for (let i = 0; i < 6; i++) tone(900 + i*60, 700, .05, 'square', .025, i*.05);   // le moulinet
+    const r = await appel(serveur.tirer());
+    if (!r) { if (!demonte) { L.state = 'ferre'; lButtons(); } return; }
+    L.tirages = r.tirages;
+    if (r.casse) { lCasse(r); return; }
+    L.tension = r.tension; L.hausse = r.hausse;
+    const k = clamp(r.tension/LAC.tensionMax, 0, 1), [px, py] = lPoint(), rc = lcv.getBoundingClientRect();
+    tone(180 + k*500, 140 + k*400, .5, 'sawtooth', .04 + k*.05); L.shake = 2 + k*8; lOnde(px, py, 2, 1 + k);
+    floatText(rc.left + px, rc.top + py - LH*.18, '+' + r.hausse, k > .6 ? 'bad' : 'blue');
+    if (r.fini) { lSortie(r); return; }
+    L.state = 'ferre';
+    lSay(r.hausse <= 11 ? 'La ligne se tend à peine.' : r.hausse <= 16 ? 'Ça résiste un peu…' : r.hausse <= 22 ? 'La canne plie ! C\'est lourd…' : 'La ligne hurle ! Une force immense tire vers le fond !');
+    lButtons(); lHud();
+  }
+  function lCasse(r) {
+    L.state = 'casse'; L.casse = .0001; L.prise = r.prise; setBourse(r.bourse);
+    noise(.4, 'highpass', 4000, 900, .4); tone(1200, 200, .3, 'triangle', .08); flashScreen('rgba(80,200,220,.45)', 160); L.shake = 16;
+    const rc = lcv.getBoundingClientRect(), [px, py] = lPoint(); floatText(rc.left + px, rc.top + py - LH*.2, '−' + fmt(L.bet), 'bad');
+    lSay(`La ligne casse ! C'était ${LAC.prises[r.prise].nom}…`);
+    L.hist.push({ texte: 'Cassée', casse: true }); lHist(); lButtons(); plusTard(lFin, 2300);
+  }
+  function lSortie(r) {
+    L.state = 'sortie'; L.sortie = .0001; L.prise = r.prise; setBourse(r.bourse);
+    const p = LAC.prises[r.prise], [px, py] = lPoint();
+    lEclabousse(px, py, r.prise === 4 ? 40 : 18, r.prise === 4 ? 1.6 : 1); lOnde(px, py, 4, 2); noise(.6, 'lowpass', 1800, 200, .35);
+    if (r.prise === 4) { L.shake = 30; tone(70, 35, 1.4, 'sawtooth', .2); flashScreen('rgba(60,220,200,.4)', 220); }
+    lSay(`Tu sors ${p.nom} ! ×${String(p.mult).replace('.', ',')}`);
+    plusTard(() => {
+      const rc = lcv.getBoundingClientRect();
+      if (r.gain > 0) { flyCoins(rc.left + px, rc.top + py - LH*.2, Math.min(44, 6 + Math.round(p.mult*4))); sCoins(r.prise === 1 ? 4 : 12); }
+      floatText(rc.left + px, rc.top + py - LH*.3, '+' + fmt(r.gain), p.mult >= 1 ? 'big' : '');
+      if (p.mult >= 2) sPing(r.prise === 4 ? 660 : 520);
+    }, 900);
+    L.hist.push({ texte: p.court, mult: p.mult }); lHist(); lButtons(); plusTard(lFin, 3000);
+  }
+  async function lCouper() {
+    if (L.state !== 'ferre') return; ac(); L.state = 'tire'; lButtons();
+    const r = await appel(serveur.encaisser());
+    if (!r) { if (!demonte) { L.state = 'ferre'; lButtons(); } return; }
+    setBourse(r.bourse); L.state = 'coupe'; L.casse = .0001; noise(.2, 'highpass', 5000, 1500, .2);
+    const rc = lcv.getBoundingClientRect(), [px, py] = lPoint(); floatText(rc.left + px, rc.top + py - LH*.2, '+' + fmt(r.gain), 'blue');
+    lSay('Tu coupes la ligne. La chose retourne au fond du lac…');
+    L.hist.push({ texte: 'Coupée', casse: true }); lHist(); lButtons(); plusTard(lFin, 1500);
+  }
+  function lFin() {
+    L.state = 'idle'; L.tension = 0; L.tirages = 0; L.prise = 0; setBusy(3, false); lBet.lock(false);
+    lSay('Le lac attend ta ligne.'); lButtons(); lHud();
+  }
+  // la prise, qui sort de l'eau (x, y : le bas de l'objet ; s : sa taille)
+  function drawPrise(t, x, y, s) {
+    lx.save();
+    if (t === 1) {   // un poisson pâle, en facettes
+      lx.translate(x, y - s*.4); lx.rotate(Math.sin(tNow*9)*.25);
+      lx.beginPath(); lx.moveTo(-s*.5, 0); lx.lineTo(-s*.15, -s*.22); lx.lineTo(s*.3, -s*.16); lx.lineTo(s*.42, 0); lx.lineTo(s*.3, s*.15); lx.lineTo(-s*.15, s*.2); lx.closePath();
+      const g = lx.createLinearGradient(0, -s*.22, 0, s*.2); g.addColorStop(0, '#cfe4ea'); g.addColorStop(1, '#4e6f80'); lx.fillStyle = g; lx.fill();
+      lx.strokeStyle = 'rgba(20,40,50,.6)'; lx.lineWidth = 1.2; lx.beginPath(); lx.moveTo(-s*.15, -s*.22); lx.lineTo(0, s*.18); lx.moveTo(s*.3, -s*.16); lx.lineTo(s*.12, s*.17); lx.stroke();
+      lx.beginPath(); lx.moveTo(-s*.48, 0); lx.lineTo(-s*.72, -s*.2); lx.lineTo(-s*.66, 0); lx.lineTo(-s*.72, s*.2); lx.closePath(); lx.fillStyle = '#6f8f9e'; lx.fill();
+      lx.fillStyle = '#0a1418'; lx.beginPath(); lx.arc(s*.26, -s*.04, s*.035, 0, TAU); lx.fill();
+    } else if (t === 2) {   // la pièce engloutie
+      if (ready('coin')) for (let i = 0; i < 3; i++) lx.drawImage(imgs.coin, x - s*.35 + i*s*.12, y - s*.75 + Math.sin(tNow*4 + i)*4, s*.6, s*.6);
+    } else if (t === 3) {   // le cristal des esprits
+      lx.globalCompositeOperation = 'lighter'; const g = lx.createRadialGradient(x, y - s*.5, 0, x, y - s*.5, s); g.addColorStop(0, 'rgba(120,170,255,.55)'); g.addColorStop(1, 'rgba(120,170,255,0)'); lx.fillStyle = g; lx.fillRect(x - s, y - s*1.5, s*2, s*2);
+      lx.globalCompositeOperation = 'source-over'; if (ready('gem')) { const im = imgs.gem, ar = im.naturalWidth/im.naturalHeight; lx.drawImage(im, x - s*ar*.45, y - s*.95, s*ar*.9, s*.9); }
+    } else {   // la créature : un serpent des abysses, en facettes ; le cou sort de l'eau, la tête se tourne vers toi
+      lx.translate(x, y); const h = s*1.5, w = s*.3;
+      lx.beginPath(); lx.moveTo(-w, 0); lx.quadraticCurveTo(-w*1.5, -h*.5, -w*.3, -h*.8); lx.lineTo(w*.6, -h*.74); lx.quadraticCurveTo(-w*.2, -h*.45, w, 0); lx.closePath();
+      let g = lx.createLinearGradient(-w, -h, w, 0); g.addColorStop(0, '#2c5a5c'); g.addColorStop(.6, '#0f2c30'); g.addColorStop(1, '#051214'); lx.fillStyle = g; lx.fill();
+      lx.strokeStyle = 'rgba(120,220,210,.3)'; lx.lineWidth = 1.5; lx.stroke();
+      lx.strokeStyle = 'rgba(0,0,0,.4)'; lx.beginPath(); for (let i = 1; i < 6; i++) { const k = i/6; lx.moveTo(-w*(1 - k*.4) - w*.3*Math.sin(k*3), -h*.8*k); lx.lineTo(w*(1 - k*.5), -h*.74*k); } lx.stroke();
+      // la tête : un coin pointé vers la droite, la gueule entrouverte
+      lx.beginPath(); lx.moveTo(-w*.6, -h*.72); lx.lineTo(-w*.4, -h*.97); lx.lineTo(w*.6, -h*1.03); lx.lineTo(w*2.1, -h*.9); lx.lineTo(w*2.05, -h*.84); lx.lineTo(w*.9, -h*.82); lx.lineTo(w*1.8, -h*.74); lx.lineTo(w*1.7, -h*.69); lx.lineTo(w*.4, -h*.66); lx.closePath();
+      g = lx.createLinearGradient(0, -h*1.03, 0, -h*.66); g.addColorStop(0, '#3a6e6c'); g.addColorStop(1, '#0b2226'); lx.fillStyle = g; lx.fill(); lx.strokeStyle = 'rgba(140,230,220,.4)'; lx.stroke();
+      lx.fillStyle = '#020607'; lx.beginPath(); lx.moveTo(w*2.05, -h*.84); lx.lineTo(w*.9, -h*.82); lx.lineTo(w*1.8, -h*.74); lx.closePath(); lx.fill();
+      lx.fillStyle = '#d9d2c0'; for (let i = 0; i < 4; i++) { const tx = w*(1.1 + i*.22); lx.beginPath(); lx.moveTo(tx, -h*.835); lx.lineTo(tx + w*.06, -h*.8); lx.lineTo(tx + w*.12, -h*.83); lx.closePath(); lx.fill(); }
+      // la crête
+      lx.fillStyle = '#163a3c'; lx.beginPath(); lx.moveTo(-w*.4, -h*.97); lx.lineTo(-w*.9, -h*1.12); lx.lineTo(-w*.1, -h*1.0); lx.lineTo(-w*.3, -h*1.18); lx.lineTo(w*.3, -h*1.02); lx.closePath(); lx.fill();
+      lx.globalCompositeOperation = 'lighter';
+      const g2 = lx.createRadialGradient(w*.85, -h*.92, 0, w*.85, -h*.92, w*.5); g2.addColorStop(0, 'rgba(220,255,140,1)'); g2.addColorStop(.3, 'rgba(120,255,140,.6)'); g2.addColorStop(1, 'rgba(60,200,120,0)'); lx.fillStyle = g2; lx.fillRect(w*.35, -h*.92 - w*.5, w, w);
+    }
+    lx.restore();
+  }
+  function lacFrame(dt) {
+    if (LW < 10 || !lRock) return;
+    L.shake = Math.max(0, L.shake - dt*40); L.morsure = Math.max(0, L.morsure - dt*1.5); L.tire = Math.max(0, L.tire - dt*2.5);
+    L.aff += ((L.state === 'idle' ? 0 : L.tension) - L.aff)*Math.min(1, dt*(L.state === 'idle' ? 2 : 5)); lHud();
+    if (L.state === 'lance') { L.lance = Math.min(1, L.lance + dt/.8); if (L.lance >= 1) { if (!L.plouf) { L.plouf = true; const [px, py] = lPoint(); lOnde(px, py, 2, .8); noise(.25, 'lowpass', 900, 200, .15); } L.attente -= dt; if (L.attente <= 0) { L.plouf = false; lMord(); } } }
+    if (L.casse) L.casse = Math.min(1, L.casse + dt/1.6);
+    if (L.sortie) L.sortie = Math.min(1, L.sortie + dt/1.1);
+    L.ondes = L.ondes.filter(o => { o.r += o.v*dt; o.a -= dt*.45; return o.a > 0; });
+    L.gouttes = L.gouttes.filter(g => { g.life += dt; g.x += g.vx*dt; g.y += g.vy*dt; g.vy += 900*dt; return g.life < g.max; });
+
+    const W = LW, H = LH, sy = lSurface(), [px, py] = lPoint(), { base, tip, k } = lGeo();
+    lx.setTransform(ldpr,0,0,ldpr,0,0); lx.clearRect(0,0,W,H); lx.save(); if (L.shake > .1) lx.translate(rnd(-L.shake, L.shake), rnd(-L.shake, L.shake));
+    lx.drawImage(lRock, 0, 0, W, H);
+    // les cristaux de la rive et leur lumière
+    const cristal = (fx_, fh, im, al, refl) => {
+      if (!ready(im)) return; const i = imgs[im], h = H*fh, w = h*i.naturalWidth/i.naturalHeight, x = W*fx_, pl = .8 + .2*Math.sin(tNow*1.3 + fx_*9);
+      lx.save(); lx.globalAlpha = al*pl*(refl ? .28 : 1);
+      if (refl) { lx.translate(x, sy); lx.scale(1, -.7); lx.drawImage(i, -w/2, -h, w, h); }
+      else { lx.shadowColor = 'rgba(90,200,230,.9)'; lx.shadowBlur = 26; lx.drawImage(i, x - w/2, sy - h*.95, w, h); }
+      lx.restore();
+    };
+    lx.save(); lx.globalCompositeOperation = 'lighter';
+    for (const [fx_, fh] of RIVE) { const x = W*fx_, g = lx.createRadialGradient(x, sy - H*fh*.4, 0, x, sy - H*fh*.4, H*fh*1.6); g.addColorStop(0, 'rgba(70,190,220,.18)'); g.addColorStop(1, 'rgba(70,190,220,0)'); lx.fillStyle = g; lx.fillRect(x - H*fh*1.6, sy - H*fh*2, H*fh*3.2, H*fh*3.2); }
+    lx.restore();
+    // la rive
+    lx.fillStyle = '#04080e'; lx.beginPath(); lx.moveTo(0, sy + 2); for (let x = 0; x <= W; x += W/14) lx.lineTo(x, sy - 6 - 10*Math.abs(Math.sin(x*.031))); lx.lineTo(W, sy + 2); lx.closePath(); lx.fill();
+    for (const c of RIVE) cristal(c[0], c[1], c[2], c[3], false);
+    // l'eau
+    const gw = lx.createLinearGradient(0, sy, 0, H); gw.addColorStop(0, 'rgba(10,52,72,.95)'); gw.addColorStop(.45, 'rgba(4,22,36,.97)'); gw.addColorStop(1, 'rgba(1,6,12,1)'); lx.fillStyle = gw; lx.fillRect(0, sy, W, H - sy);
+    for (const c of RIVE) cristal(c[0], c[1], c[2], c[3], true);
+    // l'ombre sous l'eau : plus la tension monte par tirage, plus elle est grosse ; elle remonte à chaque tirage
+    if (L.state === 'ferre' || L.state === 'tire' || (L.state === 'lance' && L.lance >= 1)) {
+      const moy = L.tirages ? L.tension/L.tirages : 10, taille = (14 + moy*2.2)*Math.min(1.4, W/800 + .4), prof = sy + 24 + (1 - L.tirages/LAC.tirages)*(H - sy)*.55;
+      const ox = px + Math.sin(tNow*(1.5 + k*6))*(8 + k*24), g = lx.createRadialGradient(ox, prof, 0, ox, prof, taille*2);
+      g.addColorStop(0, `rgba(0,0,0,${.35 + .3*k})`); g.addColorStop(1, 'rgba(0,0,0,0)'); lx.fillStyle = g; lx.beginPath(); lx.ellipse(ox, prof, taille*2, taille*.9, 0, 0, TAU); lx.fill();
+    }
+    // les reflets à la surface
+    lx.save(); lx.globalCompositeOperation = 'lighter'; lx.strokeStyle = 'rgba(120,220,240,.16)'; lx.lineWidth = 1.2;
+    for (let i = 0; i < 26; i++) { const y = sy + 6 + (i*37 % (H - sy - 10)), x = (i*173 + tNow*(10 + i % 5*4)) % (W + 80) - 40, l = 20 + i % 4*14; lx.beginPath(); lx.moveTo(x, y); lx.lineTo(x + l, y + Math.sin(tNow + i)*1.5); lx.stroke(); }
+    for (const o of L.ondes) { lx.strokeStyle = `rgba(150,230,240,${o.a*.6})`; lx.beginPath(); lx.ellipse(o.x, o.y, o.r, o.r*.28, 0, 0, TAU); lx.stroke(); }
+    lx.restore();
+    // la prise qui sort
+    if (L.sortie && L.prise) {
+      const u = L.sortie, e = 1 - Math.pow(1 - u, 3), s = (L.prise === 4 ? H*.26 : H*.16)*Math.min(1.3, W/700 + .3), y = sy + s*.3 - e*(L.prise === 4 ? s*.15 : H*.2);
+      lx.save(); lx.beginPath(); lx.rect(0, 0, W, sy + (L.prise === 4 ? 0 : H)); lx.clip(); drawPrise(L.prise, px, y, s); lx.restore();
+      if (L.prise === 4) { lx.fillStyle = 'rgba(10,52,72,.6)'; lx.fillRect(0, sy, W, 4); }
+    }
+    // la canne
+    const bend = k*.35 + L.tire*.08 + L.morsure*.1, cxr = base[0] + (tip[0] - base[0])*.55 + bend*W*.08, cyr = base[1] + (tip[1] - base[1])*.55 + bend*H*.04;
+    lx.lineCap = 'round'; lx.strokeStyle = '#1d120a'; lx.lineWidth = Math.max(5, W*.009); lx.beginPath(); lx.moveTo(base[0], base[1]); lx.quadraticCurveTo(cxr, cyr, tip[0], tip[1]); lx.stroke();
+    lx.strokeStyle = 'rgba(190,150,100,.45)'; lx.lineWidth = 1.5; lx.stroke();
+    lx.fillStyle = '#2c2a2e'; lx.strokeStyle = 'rgba(200,190,170,.4)'; lx.beginPath(); lx.arc(base[0] + (tip[0] - base[0])*.12, base[1] + (tip[1] - base[1])*.12, Math.max(7, W*.012), 0, TAU); lx.fill(); lx.stroke();
+    // la ligne
+    const col = `rgba(${Math.round(220 + 35*k)},${Math.round(230 - 150*k)},${Math.round(220 - 170*k)},.9)`;
+    lx.strokeStyle = col; lx.lineWidth = 1.3 + k;
+    if (L.state === 'idle' || L.state === 'pose') { lx.beginPath(); lx.moveTo(tip[0], tip[1]); lx.quadraticCurveTo(tip[0] + 8, tip[1] + H*.1, tip[0] + 2, tip[1] + H*.16 + Math.sin(tNow*2)*3); lx.stroke(); }
+    else if (L.state === 'lance' && L.lance < 1) { const u = L.lance, ex = tip[0] + (px - tip[0])*u, ey = tip[1] + (py - tip[1])*u - Math.sin(Math.PI*u)*H*.18; lx.beginPath(); lx.moveTo(tip[0], tip[1]); lx.quadraticCurveTo((tip[0] + ex)/2, Math.min(tip[1], ey) - 20, ex, ey); lx.stroke(); }
+    else if (L.casse) { const u = L.casse, a = 1 - u; lx.globalAlpha = Math.max(0, a); lx.beginPath(); lx.moveTo(tip[0], tip[1]); lx.quadraticCurveTo(tip[0] + 30, tip[1] + H*.2*u + 40, tip[0] + 10, tip[1] + H*.3*u + 30); lx.stroke(); lx.beginPath(); lx.moveTo(px, py); lx.lineTo(px - 20, py - H*.15*(1 - u)); lx.stroke(); lx.globalAlpha = 1; }
+    else {
+      let ex = px, ey = py + Math.sin(tNow*3)*2 + L.morsure*10;
+      if (L.sortie && L.prise) { ey = py - (1 - Math.pow(1 - L.sortie, 3))*(L.prise === 4 ? H*.25 : H*.2); }
+      const jit = (L.state === 'ferre' || L.state === 'tire') ? (1 + k*5)*Math.sin(tNow*55) : 0, mx = (tip[0] + ex)/2, my = (tip[1] + ey)/2;
+      const ang = Math.atan2(ey - tip[1], ex - tip[0]) + Math.PI/2;
+      lx.beginPath(); lx.moveTo(tip[0], tip[1]); lx.quadraticCurveTo(mx + Math.cos(ang)*jit, my + Math.sin(ang)*jit + (1 - k)*14, ex, ey); lx.stroke();
+      if (k > .55 && (L.state === 'ferre' || L.state === 'tire')) { lx.save(); lx.globalCompositeOperation = 'lighter'; lx.strokeStyle = `rgba(255,90,60,${(k - .55)*.9*(.6 + .4*Math.sin(tNow*20))})`; lx.lineWidth = 4; lx.stroke(); lx.restore(); }
+      // le flotteur
+      if (!L.sortie) { lx.fillStyle = '#e8dcc4'; lx.beginPath(); lx.arc(ex, ey - 3, 4, Math.PI, TAU); lx.fill(); lx.fillStyle = '#a32a22'; lx.beginPath(); lx.arc(ex, ey - 3, 4, 0, Math.PI); lx.fill(); }
+    }
+    // les gouttes
+    lx.fillStyle = 'rgba(170,235,245,.8)'; for (const g of L.gouttes) { lx.globalAlpha = 1 - g.life/g.max; lx.fillRect(g.x, g.y, 2.5, 2.5); } lx.globalAlpha = 1;
+    const vg = lx.createRadialGradient(W/2, H/2, H*.35, W/2, H/2, H*.95); vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(0,0,0,.6)'); lx.fillStyle = vg; lx.fillRect(0, 0, W, H);
+    lx.restore();
+  }
+  $('lGo').onclick = () => { ac(); lStart(); };
+  $('lTirer').onclick = () => lTirer(); $('lCouper').onclick = () => lCouper();
+  lHud(); lHist(); lButtons();
+
+  // ================= JEU 5 : LE ROI LICHE =================
+  // Chaque échange est résolu par le serveur ; on rejoue ici ce qu'il raconte (mon geste, puis sa riposte).
+  const kcv = $('kc'), kx = kcv.getContext('2d'); let KW = 0, KH = 0, kdpr = 1, kRock = null;
+  const K = { state:'idle', bet:0, manche:0, pv:LICHE.pv, pvL:LICHE.pvLiche[0], pvLMax:LICHE.pvLiche[0], sort:0, potions:LICHE.potions, affPv:LICHE.pv, affPvL:LICHE.pvLiche[0],
+    coup:0, frappe:0, garde:0, soin:0, reforme:0, brise:0, mort:0, shake:0, parts:[], hist:[], sortJoue:false };
+  const kBet = makeBet($('kBet'));
+  const kSay = t => { $('ks').textContent = t; };
+  const kMult = () => LICHE.mult[K.manche];
+  function kFit() {
+    const r = $('kStage').getBoundingClientRect(); if (r.width < 10) return;
+    KW = r.width; KH = r.height; kdpr = Math.min(2, devicePixelRatio || 1); kcv.width = KW*kdpr; kcv.height = KH*kdpr;
+    kRock = caveTexture(KW, KH, kdpr, ['#07040c','#150b20','#06030a','rgba(180,120,255,.03)','rgba(160,110,255,.2)'], 57);
+  }
+  function kHud() {
+    $('kBarL').style.width = clamp(K.affPvL/K.pvLMax*100, 0, 100) + '%'; $('kPvL').textContent = `${Math.max(0, Math.round(K.affPvL))} / ${K.pvLMax}`;
+    $('kBarJ').style.width = clamp(K.affPv/LICHE.pv*100, 0, 100) + '%'; $('kPvJ').textContent = `${Math.max(0, Math.round(K.affPv))} / ${LICHE.pv}`;
+    $('kBarJ').classList.toggle('bas', K.affPv < 35);
+    const enJeu = K.state !== 'idle' && K.state !== 'pose';
+    $('kManche').textContent = `MANCHE ${Math.min(LICHE.manches, K.manche + 1)} / ${LICHE.manches}`;
+    $('km').textContent = '×' + (enJeu ? kMult() : LICHE.mult[1]).toFixed(2);
+    $('kmS').textContent = enJeu ? (K.manche ? `GAIN ACTUEL · PROCHAINE MANCHE ×${LICHE.mult[Math.min(LICHE.manches, K.manche + 1)]}` : 'FUIR MAINTENANT : LA MOITIÉ DE LA MISE') : 'LA PREMIÈRE MANCHE GAGNÉE';
+    const it = $('kInt'); it.textContent = !enJeu ? 'Le Roi Liche attend sur son trône.' : K.sort ? 'Il prépare un sort dévastateur !' : 'Il lève son bâton pour frapper.';
+    it.classList.toggle('sort', enJeu && !!K.sort);
+  }
+  function kHist() { $('kHist').innerHTML = K.hist.slice(-9).map(h => `<span class="${h.mort ? '' : h.m >= 4.8 ? 'h' : 'm'}">${h.texte}</span>`).join(''); }
+  function kButtons() {
+    const idle = K.state === 'idle' || K.state === 'pose';
+    $('kGo').style.display = idle ? '' : 'none'; ['kAtq', 'kDef', 'kSoin', 'kFuir'].forEach(id => { $(id).style.display = idle ? 'none' : ''; });
+    $('kGo').disabled = K.state === 'pose' || !peutMiser(); $('kGoT').textContent = K.state === 'pose' ? 'Tu entres dans la crypte…' : 'Défier le Roi Liche'; $('kGoS').textContent = `MISE ${fmt(BET)} ${unite().toUpperCase()} · ESPACE`;
+    if (idle) return;
+    const libre = K.state === 'combat';
+    $('kAtq').disabled = !libre; $('kDef').disabled = !libre;
+    $('kSoin').disabled = !libre || K.potions <= 0 || K.pv >= LICHE.pv; $('kSoinS').textContent = `${K.potions} POTION${K.potions > 1 ? 'S' : ''} · S`;
+    $('kFuir').disabled = !libre; $('kFuirT').textContent = `Fuir avec ${gain(K.bet, kMult())}`; $('kFuirS').textContent = 'ENTRÉE';
+  }
+  function kEtat(e) { K.manche = e.manche; K.pv = e.pv; K.pvL = e.pv_liche; K.pvLMax = e.pv_liche_max ?? K.pvLMax; K.sort = e.intention; K.potions = e.potions; }
+  async function kStart() {
+    if (K.state !== 'idle' || !peutMiser()) return; ac();
+    K.state = 'pose'; setBusy(4, true); kBet.lock(true); kButtons();
+    const r = await appel(serveur.commencer('liche', monnaie, BET));
+    if (!r) { if (!demonte) { K.state = 'idle'; setBusy(4, false); kBet.lock(false); kButtons(); } return; }
+    setBourse(r.bourse); annoncerReglee(r.reglee);
+    K.bet = r.mise; kEtat(r.liche); K.affPv = K.pv; K.affPvL = K.pvL; K.brise = 0; K.mort = 0; K.reforme = 0;
+    K.state = 'combat'; tone(110, 55, .9, 'sawtooth', .1); noise(1, 'lowpass', 500, 80, .2);
+    kSay('« Encore un mortel venu mourir sur mon trésor… »'); kButtons(); kHud();
+  }
+  const kRect = () => kcv.getBoundingClientRect();
+  const kTete = () => { const r = kRect(); return [r.left + KW/2, r.top + KH*.3]; };
+  const kMoi = () => { const r = $('kBarJ').getBoundingClientRect(); return [r.left + r.width/2, r.top - 10]; };
+  function kParts(x, y, n, col, f) { for (let i = 0; i < n; i++) K.parts.push({ x, y, vx: rnd(-1, 1)*120*f, vy: rnd(-1, .3)*160*f, life: 0, max: rnd(.5, 1.1), col, r: rnd(1.5, 3.5) }); }
+  async function kAgir(a) {
+    if (K.state !== 'combat') return;
+    if (a === 'soin' && (K.potions <= 0 || K.pv >= LICHE.pv)) return;
+    ac(); K.state = 'action'; kButtons();
+    const r = await appel(serveur.agir(a));
+    if (!r) { if (!demonte) { K.state = 'combat'; kButtons(); } return; }
+    const [tx, ty] = kTete();
+    if (a === 'attaque') {
+      K.coup = 1; K.pvL = Math.max(0, K.pvL - r.degats); noise(.2, 'highpass', 3000, 800, .25); tone(320, 120, .18, 'square', .06);
+      floatText(tx, ty, (r.critique ? 'CRITIQUE −' : '−') + r.degats, r.critique ? 'big' : ''); kParts(KW/2, KH*.4, r.critique ? 30 : 14, '255,240,200', 1.2);
+    } else if (a === 'defense') {
+      K.garde = 1; K.pvL = Math.max(0, K.pvL - r.degats); tone(520, 480, .4, 'triangle', .07); tone(780, 760, .5, 'sine', .04, .05);
+      floatText(tx, ty, '−' + r.degats, 'blue');
+    } else {
+      K.soin = 1; K.pv = Math.min(LICHE.pv, K.pv + r.soin); K.potions--; sPing(660);
+      const [mx, my] = kMoi(); floatText(mx, my, '+' + r.soin, 'blue');
+    }
+    kButtons();
+    plusTard(() => {
+      if (r.recu > 0) {
+        K.frappe = 1; K.sortJoue = !!r.sort; K.pv = Math.max(0, K.pv - r.recu); K.shake = r.sort ? 26 : 12;
+        if (r.sort) { noise(.9, 'bandpass', 700, 150, .4); tone(220, 60, 1, 'sawtooth', .12); flashScreen('rgba(170,80,255,.5)', 200); }
+        else { noise(.35, 'lowpass', 900, 100, .35); tone(90, 50, .3, 'sine', .25); flashScreen('rgba(200,40,40,.35)', 130); }
+        const [mx, my] = kMoi(); floatText(mx, my, '−' + r.recu, 'bad');
+      }
+      plusTard(() => kSuite(r), r.recu > 0 ? 700 : 250);
+    }, a === 'soin' ? 450 : 550);
+  }
+  function kSuite(r) {
+    const [tx, ty] = kTete();
+    if (r.mort) {
+      K.state = 'fin'; K.mort = .0001; K.pv = 0; setBourse(r.bourse); tone(150, 40, 2, 'sawtooth', .14); noise(1.6, 'lowpass', 600, 60, .3);
+      kSay('Le Roi Liche t\'a vaincu. Ton âme rejoint son armée… et ta mise est perdue.');
+      K.hist.push({ texte: 'Vaincu', mort: true }); kHist(); kButtons(); kHud(); plusTard(kFin, 2800); return;
+    }
+    if (r.victoire) {
+      K.state = 'fin'; K.brise = .0001; K.pvL = 0; K.manche = LICHE.manches; setBourse(r.bourse); flashScreen('rgba(220,200,255,.6)', 260); K.shake = 30;
+      noise(1.4, 'highpass', 4000, 300, .35); sPing(880); kParts(KW/2, KH*.4, 80, '210,190,255', 2.2);
+      plusTard(() => { const [x, y] = kTete(); flyCoins(x, y + 40, 44); sCoins(16); floatText(x, y, '+' + fmt(r.gain), 'big'); }, 700);
+      kSay(`Le Roi Liche tombe en poussière ! Son trésor est à toi : ${fmt(r.gain)} ${unite()}.`);
+      K.hist.push({ texte: '×19,2', m: 19.2 }); kHist(); kButtons(); plusTard(kFin, 3400); return;
+    }
+    kEtat(r);
+    if (r.manche_gagnee) {
+      K.reforme = 1; K.affPv = K.pv; tone(200, 400, .6, 'triangle', .08); kParts(KW/2, KH*.4, 50, '190,160,255', 1.6);
+      floatText(tx, ty, '×' + String(kMult()).replace('.', ','), 'big');
+      kSay(`Manche gagnée ! Tu reprends ton souffle… mais le Roi Liche se relève, plus fort. (manche ${K.manche + 1} / ${LICHE.manches})`);
+    } else kSay(K.sort ? 'Ses yeux s\'embrasent : il prépare un sort dévastateur ! Te défendre en réduit les trois quarts.' : ['Il ricane.', 'Ses os craquent.', 'Le froid de la crypte te mord.', '« Tu faiblis, mortel. »'][Math.floor(Math.random()*4)]);
+    K.state = 'combat'; kButtons(); kHud();
+  }
+  async function kFuir() {
+    if (K.state !== 'combat') return; ac(); K.state = 'action'; kButtons();
+    const r = await appel(serveur.encaisser());
+    if (!r) { if (!demonte) { K.state = 'combat'; kButtons(); } return; }
+    setBourse(r.bourse); K.state = 'fin';
+    const [x, y] = kMoi(); if (r.gain > 0) { flyCoins(x, y - 40, Math.min(40, 8 + K.manche*8)); sCoins(10); } floatText(x, y - 40, '+' + fmt(r.gain), K.manche ? 'big' : 'blue');
+    kSay(K.manche ? `Tu t'enfuis de la crypte avec ${fmt(r.gain)} ${unite()}.` : `Tu t'enfuis… et sauves la moitié de ta mise (${fmt(r.gain)}).`);
+    K.hist.push({ texte: K.manche ? '×' + String(LICHE.mult[K.manche]).replace('.', ',') : 'Fuite', m: LICHE.mult[K.manche], mort: !K.manche }); kHist(); kButtons(); plusTard(kFin, 1500);
+  }
+  function kFin() {
+    K.state = 'idle'; K.manche = 0; K.pv = LICHE.pv; K.pvL = K.pvLMax = LICHE.pvLiche[0]; K.potions = LICHE.potions; K.brise = 0; K.mort = 0; K.reforme = 0;
+    setBusy(4, false); kBet.lock(false); kSay('Le Roi Liche attend sur son trône. Oseras-tu le défier ?'); kButtons(); kHud();
+  }
+  // le Roi Liche : une silhouette en facettes (robe, épaulières, crâne, couronne, bâton et son orbe)
+  function drawLiche(cx, cy, u, sortCol, alpha) {
+    kx.save(); kx.globalAlpha = alpha; kx.translate(cx, cy); kx.scale(u, u);
+    // la robe
+    kx.beginPath(); kx.moveTo(-58, -165); kx.lineTo(58, -165); kx.lineTo(86, -40); kx.lineTo(112, 120); kx.lineTo(70, 98); kx.lineTo(44, 132); kx.lineTo(12, 104); kx.lineTo(-20, 136); kx.lineTo(-50, 100); kx.lineTo(-84, 128); kx.lineTo(-106, 110); kx.lineTo(-86, -40); kx.closePath();
+    let g = kx.createLinearGradient(0, -170, 0, 130); g.addColorStop(0, '#2a2236'); g.addColorStop(1, '#07050c'); kx.fillStyle = g; kx.fill();
+    kx.strokeStyle = 'rgba(200,180,230,.18)'; kx.lineWidth = 1.5; kx.beginPath();
+    for (const [a, b] of [[[-58,-165],[-20,136]],[[58,-165],[12,104]],[[0,-165],[44,132]],[[-86,-40],[-50,100]],[[86,-40],[70,98]]]) { kx.moveTo(a[0], a[1]); kx.lineTo(b[0], b[1]); }
+    kx.stroke();
+    kx.strokeStyle = 'rgba(217,205,180,.55)'; kx.lineWidth = 3; kx.beginPath(); kx.moveTo(-10, -160); kx.lineTo(-4, 120); kx.moveTo(10, -160); kx.lineTo(4, 120); kx.stroke();
+    // les épaulières
+    kx.fillStyle = '#3d3846'; kx.strokeStyle = 'rgba(220,210,190,.35)'; kx.lineWidth = 1.5;
+    for (const s of [-1, 1]) { kx.beginPath(); kx.moveTo(s*30, -170); kx.lineTo(s*96, -178); kx.lineTo(s*118, -214); kx.lineTo(s*82, -160); kx.lineTo(s*64, -138); kx.closePath(); kx.fill(); kx.stroke(); }
+    // la capuche et le crâne
+    kx.fillStyle = '#120d1a'; kx.beginPath(); kx.moveTo(-40, -150); kx.lineTo(-46, -214); kx.lineTo(0, -250); kx.lineTo(46, -214); kx.lineTo(40, -150); kx.closePath(); kx.fill();
+    kx.beginPath(); kx.moveTo(-24, -226); kx.lineTo(24, -226); kx.lineTo(28, -196); kx.lineTo(16, -172); kx.lineTo(-16, -172); kx.lineTo(-28, -196); kx.closePath();
+    g = kx.createLinearGradient(-28, -226, 28, -172); g.addColorStop(0, '#e6dfcc'); g.addColorStop(1, '#8f8676'); kx.fillStyle = g; kx.fill();
+    kx.strokeStyle = 'rgba(40,30,30,.5)'; kx.lineWidth = 1.2; kx.beginPath(); kx.moveTo(0, -226); kx.lineTo(0, -196); kx.moveTo(-28, -196); kx.lineTo(28, -196); kx.stroke();
+    kx.fillStyle = '#0a0610'; for (const s of [-1, 1]) { kx.beginPath(); kx.moveTo(s*4, -206); kx.lineTo(s*20, -212); kx.lineTo(s*16, -198); kx.closePath(); kx.fill(); }
+    kx.beginPath(); kx.moveTo(-10, -182); kx.lineTo(10, -182); kx.lineTo(6, -176); kx.lineTo(-6, -176); kx.closePath(); kx.fill();
+    // la couronne
+    kx.beginPath(); kx.moveTo(-30, -232); kx.lineTo(-34, -262); kx.lineTo(-18, -244); kx.lineTo(-8, -274); kx.lineTo(0, -248); kx.lineTo(8, -274); kx.lineTo(18, -244); kx.lineTo(34, -262); kx.lineTo(30, -232); kx.closePath();
+    g = kx.createLinearGradient(0, -274, 0, -232); g.addColorStop(0, '#c9b37a'); g.addColorStop(1, '#5e4f2c'); kx.fillStyle = g; kx.fill(); kx.strokeStyle = 'rgba(30,20,10,.6)'; kx.stroke();
+    // le bâton et son orbe
+    kx.strokeStyle = '#1e1622'; kx.lineWidth = 7; kx.lineCap = 'round'; kx.beginPath(); kx.moveTo(128, -230); kx.lineTo(140, 130); kx.stroke();
+    kx.strokeStyle = 'rgba(200,180,150,.3)'; kx.lineWidth = 1.5; kx.stroke();
+    kx.fillStyle = '#d9d2c0'; kx.beginPath(); kx.moveTo(84, -150); kx.lineTo(126, -170); kx.lineTo(132, -158); kx.lineTo(92, -140); kx.closePath(); kx.fill();
+    kx.globalCompositeOperation = 'lighter';
+    const p = .75 + .25*Math.sin(tNow*(K.sort ? 9 : 3)), orbe = kx.createRadialGradient(128, -246, 0, 128, -246, K.sort ? 60 : 34);
+    orbe.addColorStop(0, `rgba(255,255,255,${.9*p})`); orbe.addColorStop(.25, `rgba(${sortCol},${.8*p})`); orbe.addColorStop(1, `rgba(${sortCol},0)`); kx.fillStyle = orbe; kx.fillRect(68, -306, 120, 120);
+    for (const s of [-1, 1]) { const e = kx.createRadialGradient(s*12, -205, 0, s*12, -205, K.sort ? 22 : 14); e.addColorStop(0, `rgba(${sortCol},1)`); e.addColorStop(1, `rgba(${sortCol},0)`); kx.fillStyle = e; kx.fillRect(s*12 - 24, -229, 48, 48); }
+    kx.restore();
+  }
+  function licheFrame(dt) {
+    if (KW < 10 || !kRock) return;
+    for (const c of ['coup', 'frappe', 'garde', 'soin']) K[c] = Math.max(0, K[c] - dt*1.6);
+    K.reforme = Math.max(0, K.reforme - dt*.8); K.shake = Math.max(0, K.shake - dt*40);
+    if (K.brise) K.brise = Math.min(1, K.brise + dt*.7); if (K.mort) K.mort = Math.min(1, K.mort + dt*.8);
+    K.affPv += (K.pv - K.affPv)*Math.min(1, dt*6); K.affPvL += (K.pvL - K.affPvL)*Math.min(1, dt*6); kHud();
+    K.parts = K.parts.filter(p => { p.life += dt; p.x += p.vx*dt; p.y += p.vy*dt; p.vy -= 30*dt; return p.life < p.max; });
+    const W = KW, H = KH, sol = H*.86, u = Math.min(H/560, W/520)*.92, cyL = H*.62 + Math.sin(tNow*1.4)*6*u, sortCol = K.sort && K.state !== 'idle' ? '220,90,255' : '110,240,230';
+    kx.setTransform(kdpr,0,0,kdpr,0,0); kx.clearRect(0,0,W,H); kx.save(); if (K.shake > .1) kx.translate(rnd(-K.shake, K.shake), rnd(-K.shake, K.shake));
+    kx.drawImage(kRock, 0, 0, W, H);
+    // la salle du trône : deux piliers, des cierges, le sol
+    for (const fx_ of [.1, .9]) { const x = W*fx_, w = Math.max(30, W*.06); const g = kx.createLinearGradient(x - w/2, 0, x + w/2, 0); g.addColorStop(0, '#0a0710'); g.addColorStop(.5, '#1d1726'); g.addColorStop(1, '#07050b'); kx.fillStyle = g; kx.fillRect(x - w/2, 0, w, sol); kx.fillStyle = '#241d2e'; kx.fillRect(x - w*.65, sol - 14, w*1.3, 14);
+      kx.save(); kx.globalCompositeOperation = 'lighter'; for (const d of [-1, 1]) { const cx_ = x + d*w*.9, cy_ = sol - 26, fl = 1 + .12*Math.sin(tNow*13 + fx_*7 + d); kx.fillStyle = '#d9cfb8'; kx.fillRect(cx_ - 3, cy_, 6, 24); const g2 = kx.createRadialGradient(cx_, cy_ - 6, 0, cx_, cy_ - 6, 60*fl); g2.addColorStop(0, 'rgba(255,190,110,.45)'); g2.addColorStop(1, 'rgba(255,140,60,0)'); kx.fillStyle = g2; kx.fillRect(cx_ - 60, cy_ - 66, 120, 120); kx.fillStyle = 'rgba(255,230,170,.95)'; kx.beginPath(); kx.ellipse(cx_, cy_ - 6, 3*fl, 7*fl, 0, 0, TAU); kx.fill(); } kx.restore(); }
+    const gs = kx.createLinearGradient(0, sol, 0, H); gs.addColorStop(0, '#120c18'); gs.addColorStop(1, '#030205'); kx.fillStyle = gs; kx.fillRect(0, sol, W, H - sol);
+    // son aura
+    kx.save(); kx.globalCompositeOperation = 'lighter'; const au = kx.createRadialGradient(W/2, cyL - 120*u, 0, W/2, cyL - 120*u, 260*u); au.addColorStop(0, `rgba(${sortCol},${K.sort && K.state !== 'idle' ? .28 : .14})`); au.addColorStop(1, `rgba(${sortCol},0)`); kx.fillStyle = au; kx.fillRect(0, 0, W, H); kx.restore();
+    // le Roi Liche (qui tremble quand on le frappe, se brise et se relève entre deux manches)
+    const a = K.brise ? 1 - K.brise : K.reforme ? .35 + .65*Math.abs(Math.sin(K.reforme*14)) : 1;
+    const jx = K.coup ? rnd(-6, 6)*K.coup : 0;
+    if (a > .01) drawLiche(W/2 + jx, cyL, u, sortCol, a);
+    if (K.coup > .01) { kx.save(); kx.globalCompositeOperation = 'lighter'; kx.strokeStyle = `rgba(255,245,220,${K.coup})`; kx.lineWidth = 4; kx.beginPath(); kx.moveTo(W/2 - 90*u, cyL - 220*u); kx.lineTo(W/2 + 80*u, cyL - 40*u); kx.moveTo(W/2 + 70*u, cyL - 210*u); kx.lineTo(W/2 - 60*u, cyL - 60*u); kx.stroke(); kx.restore(); }
+    // sa riposte : un trait de magie vers toi (en bas)
+    if (K.frappe > .01) { kx.save(); kx.globalCompositeOperation = 'lighter'; kx.strokeStyle = K.sortJoue ? `rgba(220,90,255,${K.frappe})` : `rgba(255,120,90,${K.frappe})`; kx.lineWidth = K.sortJoue ? 7 : 4; kx.beginPath(); let x = W/2 + 128*u, y = cyL - 246*u; kx.moveTo(x, y); for (let i = 1; i <= 8; i++) { x += (W/2 - (W/2 + 128*u))/8 + rnd(-18, 18); y += (H - (cyL - 246*u))/8; kx.lineTo(x, y); } kx.stroke(); kx.restore(); }
+    // ta garde, tes soins
+    if (K.garde > .01) { kx.save(); kx.globalCompositeOperation = 'lighter'; kx.strokeStyle = `rgba(140,220,255,${K.garde})`; kx.lineWidth = 5; kx.beginPath(); kx.arc(W/2, H + 40, Math.min(W*.45, 260), Math.PI*1.15, Math.PI*1.85); kx.stroke(); kx.restore(); }
+    if (K.soin > .01 && Math.random() < .6) kParts(W/2 + rnd(-W*.25, W*.25), H - 10, 1, '120,255,170', .6);
+    kx.save(); kx.globalCompositeOperation = 'lighter'; for (const p of K.parts) { const k = 1 - p.life/p.max; kx.fillStyle = `rgba(${p.col},${k})`; kx.beginPath(); kx.arc(p.x, p.y, p.r, 0, TAU); kx.fill(); } kx.restore();
+    if (K.mort) { kx.fillStyle = `rgba(40,0,10,${K.mort*.55})`; kx.fillRect(0, 0, W, H); }
+    const vg = kx.createRadialGradient(W/2, H/2, H*.35, W/2, H/2, H*.95); vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(0,0,0,.6)'); kx.fillStyle = vg; kx.fillRect(0, 0, W, H);
+    kx.restore();
+  }
+  $('kGo').onclick = () => { ac(); kStart(); };
+  $('kAtq').onclick = () => kAgir('attaque'); $('kDef').onclick = () => kAgir('defense'); $('kSoin').onclick = () => kAgir('soin'); $('kFuir').onclick = () => kFuir();
+  kHud(); kHist(); kButtons();
+
   // ================= BOUCLE / ENTRÉES =================
-  function fitAll() { fitBG(); fitFX(); fitD(); cFit(); }
-  const ro = new ResizeObserver(() => { fitBG(); fitD(); cFit(); }); ro.observe(racine.querySelector('.jeux'));
+  function fitAll() { fitBG(); fitFX(); fitD(); cFit(); lFit(); kFit(); }
+  const ro = new ResizeObserver(() => { fitBG(); fitD(); cFit(); lFit(); kFit(); }); ro.observe(racine.querySelector('.jeux'));
   const surTaille = () => { fitBG(); fitFX(); };
   const surTouche = e => {
     if (document.activeElement && document.activeElement.tagName === 'INPUT') return;
@@ -637,9 +1038,15 @@ export function monterCaverne(racine, { serveur, notifier, bourse }) {
       e.preventDefault(); ac();
       if (active === 0) { if (D.state === 'idle') dStart(); else if (D.state === 'run') dFuir(); }
       else if (active === 1) { if (B.state === 'play') bCash(); else bStart(); }
-      else { if (C.state === 'idle') cStart(); else cAdvance(1); }
+      else if (active === 2) { if (C.state === 'idle') cStart(); else cAdvance(1); }
+      else if (active === 3) { if (L.state === 'idle') lStart(); else lTirer(); }
+      else { if (K.state === 'idle') kStart(); else kAgir('attaque'); }
     } else if (active === 2 && e.code === 'Enter') { e.preventDefault(); cCash(); }
     else if (active === 2 && (e.code === 'KeyS' || e.code === 'ArrowRight')) { e.preventDefault(); cAdvance(2); }
+    else if (active === 3 && e.code === 'Enter') { e.preventDefault(); lCouper(); }
+    else if (active === 4 && e.code === 'Enter') { e.preventDefault(); kFuir(); }
+    else if (active === 4 && e.code === 'KeyD') { e.preventDefault(); kAgir('defense'); }
+    else if (active === 4 && e.code === 'KeyS') { e.preventDefault(); kAgir('soin'); }
   };
   const surGeste = () => ac();
   addEventListener('resize', surTaille);
@@ -656,6 +1063,8 @@ export function monterCaverne(racine, { serveur, notifier, bourse }) {
     drawBG(dt);
     if (active === 0) { dragonFrame(dt); if (D.state === 'idle') dButton(); }
     else if (active === 2) pontFrame(dt);
+    else if (active === 3) lacFrame(dt);
+    else if (active === 4) licheFrame(dt);
     stepFX(dt);
     raf = requestAnimationFrame(frame);
   }
