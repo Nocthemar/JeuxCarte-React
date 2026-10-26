@@ -170,3 +170,17 @@
 @media (max-width: 700px) {
   .caverne { left: 0; bottom: 80px; }
 }
+
+/* Le bandeau des messages (components/Notifications.jsx) : au-dessus de la caverne, en haut au centre */
+.page-caverne .notif {
+  position: fixed; left: calc(50% + var(--hud, 0px) / 2); top: 84px; z-index: 100;
+  transform: translate(-50%, -10px); max-width: min(560px, calc(100% - 32px));
+  padding: 12px 18px; border-radius: 10px; text-align: center;
+  background: rgba(8,11,20,.94); border: 1px solid rgba(226,176,74,.5); color: #f2e8cf;
+  font-family: "EB Garamond", "EB Garamond Repli", Georgia, serif; font-size: 1rem;
+  box-shadow: 0 10px 30px rgba(0,0,0,.6);
+  opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s;
+}
+.page-caverne .notif--visible { opacity: 1; transform: translate(-50%, 0); }
+.page-caverne .notif--erreur { border-color: #ff6a4a; color: #ffd2c4; }
+@media (max-width: 700px) { .page-caverne .notif { left: 50%; } }
