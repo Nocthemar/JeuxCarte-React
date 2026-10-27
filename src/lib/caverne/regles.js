@@ -16,7 +16,7 @@ const auCentieme = (m) => Math.min(PLAFOND, Math.floor(m * 100 + 1e-9) / 100);
 export const CROISSANCE = 0.12;
 export const multDragon = (secondes) => Math.min(PLAFOND, Math.exp(CROISSANCE * Math.max(0, secondes)));
 
-// II. Les Bourses : 25 bourses, le nombre de cristaux maudits au choix
+// II. Les Bourses : 25 bourses, le nombre de bourses piégées au choix
 export const NB_BOURSES = 25;
 export const MAUDITES = [1, 3, 5, 8, 12];
 export function multBourses(ouvertes, maudites) {
@@ -44,13 +44,4 @@ export const LAC = {
     { nom: 'un cristal des esprits', court: 'Cristal', mult: 2.4, tension: 19 },
     { nom: 'la créature du lac', court: 'Créature', mult: 10, tension: 27 },
   ],
-};
-
-// V. Le Roi Liche : 5 manches ; le gain selon les manches gagnées (avant la première : la moitié de la mise)
-export const LICHE = {
-  manches: 5,
-  pv: 100,
-  potions: 3,
-  pvLiche: [85, 90, 95, 100, 105],
-  mult: [0.5, 1.2, 2.4, 4.8, 9.6, 19.2],
 };

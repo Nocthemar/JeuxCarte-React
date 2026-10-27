@@ -51,18 +51,12 @@
 }
 .caverne-porte h1 {
   margin: 0; font-family: "Cinzel","Cinzel Repli", serif; font-weight: 900; letter-spacing: .12em;
-  font-size: clamp(1.6rem, 3.4vw, 2.6rem); color: #ffe29a; text-shadow: 0 4px 24px rgba(0,0,0,.9);
+  font-size: clamp(1.6rem, 3.4vw, 2.6rem); color: #ece4d2; text-shadow: 0 4px 24px rgba(0,0,0,.9);
 }
 .caverne-porte__texte { margin: 0; max-width: 60ch; font-family: "EB Garamond","EB Garamond Repli", serif; font-size: 1.15rem; line-height: 1.5; color: #d9cfb6; }
 .caverne-porte__lien {
-  font-family: "Cinzel","Cinzel Repli", serif; letter-spacing: .1em; color: #e2b04a; text-decoration: none;
-  border-bottom: 1px solid rgba(226,176,74,.45); padding-bottom: 2px;
+  font-family: "Cinzel","Cinzel Repli", serif; letter-spacing: .1em; color: #ece4d2; text-decoration: none;
+  border-bottom: 1px solid rgba(194,61,72,.7); padding-bottom: 2px;
 }
-.caverne-porte__lien:hover, .caverne-porte__lien:focus-visible { color: #ffe29a; border-color: #ffe29a; outline: none; }
+.caverne-porte__lien:hover, .caverne-porte__lien:focus-visible { color: #fff; border-color: #c23d48; outline: none; }
 
-/* Dans la Caverne ouverte : le temps qui reste, en haut */
-.caverne .caverne-temps {
-  display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px;
-  font-size: 12px; letter-spacing: .06em; color: #e9dfc4; white-space: nowrap;
-}
-.caverne .caverne-temps b { color: #ffe29a; }

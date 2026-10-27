@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!-- Le piège d'une bourse : une tête de mort en facettes (os ivoire, orbites creuses) -->
+  <g stroke-linejoin="round">
+    <polygon points="50,8 70,13 82,28 84,46 76,60 24,60 16,46 18,28 30,13" fill="#d8ccb4"/>
+    <polygon points="50,8 70,13 82,28 64,30 50,24" fill="#ece3cf"/>
+    <polygon points="50,8 50,24 36,30 18,28 30,13" fill="#c4b79d"/>
+    <polygon points="82,28 84,46 76,60 66,52 64,30" fill="#b3a68b"/>
+    <polygon points="18,28 36,30 34,52 24,60 16,46" fill="#a89a80"/>
+    <polygon points="36,30 50,24 64,30 66,52 50,56 34,52" fill="#d2c6ad"/>
+    <polygon points="32,36 46,38 44,52 30,50" fill="#1a1414"/>
+    <polygon points="54,38 68,36 70,50 56,52" fill="#1a1414"/>
+    <polygon points="50,55 46,63 54,63" fill="#2a2020"/>
+    <polygon points="30,60 70,60 66,74 34,74" fill="#c9bca2"/>
+    <polygon points="34,74 66,74 62,86 38,86" fill="#a99b80"/>
+    <g fill="#1a1414"><rect x="40" y="66" width="3" height="12"/><rect x="48.5" y="66" width="3" height="13"/><rect x="57" y="66" width="3" height="12"/></g>
+    <polyline points="30,13 50,8 70,13" fill="none" stroke="#f6eedc" stroke-width="1"/>
+  </g>
+</svg>

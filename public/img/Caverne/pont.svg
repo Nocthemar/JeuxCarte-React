@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!-- Le Pont Maudit : un pont de cordes et de planches entre deux falaises de pierre, en facettes -->
+  <polygon points="0,58 22,56 26,100 0,100" fill="#3c404c"/>
+  <polygon points="0,58 22,56 14,72 0,74" fill="#555a68"/>
+  <polygon points="78,56 100,58 100,100 74,100" fill="#353945"/>
+  <polygon points="78,56 100,58 100,72 88,70" fill="#4d5260"/>
+  <g fill="#3a2414"><rect x="19" y="34" width="4" height="24"/><rect x="77" y="34" width="4" height="24"/></g>
+  <g fill="#6b4524"><rect x="17.5" y="32" width="7" height="3"/><rect x="75.5" y="32" width="7" height="3"/></g>
+  <path d="M21 36 Q50 52 79 36" fill="none" stroke="#6b4a2a" stroke-width="2"/>
+  <path d="M21 56 Q50 70 79 56" fill="none" stroke="#2c1a0e" stroke-width="1.5"/>
+  <g stroke="#5a3d22" stroke-width="1">
+    <line x1="30" y1="40" x2="30" y2="60"/><line x1="40" y1="43.5" x2="40" y2="63.5"/><line x1="50" y1="44" x2="50" y2="64"/><line x1="60" y1="43.5" x2="60" y2="63.5"/><line x1="70" y1="40" x2="70" y2="60"/>
+  </g>
+  <g>
+    <polygon points="24,57 31,58.5 30,62 23,60.5" fill="#a06a30"/>
+    <polygon points="33,59.5 40,61 39.5,64.5 32.5,63" fill="#8e5d2a"/>
+    <polygon points="43,61.5 50,62.5 50,66 43,65" fill="#a06a30"/>
+    <polygon points="62,61 69,59.5 69.5,63 62.5,64.5" fill="#8e5d2a"/>
+    <polygon points="71,58.5 77,57 77.5,60.5 71.5,62" fill="#a06a30"/>
+  </g>
+  <polygon points="52,62.5 59,61.5 58,74 53,73" fill="#6b4524" transform="rotate(18 55 66)"/>
+</svg>

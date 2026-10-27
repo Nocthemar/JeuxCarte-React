@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!-- Le Lac des Esprits : un poisson pâle qui jaillit de l'eau sombre, en facettes -->
+  <polygon points="4,70 96,70 92,96 8,96" fill="#0f2c33"/>
+  <polygon points="4,70 50,70 30,84 8,82" fill="#174049"/>
+  <polygon points="50,70 96,70 92,82 66,84" fill="#123640"/>
+  <g fill="none" stroke="#6fc2c0" stroke-width="1.2" opacity=".7">
+    <path d="M30 74 Q50 69 70 74"/><path d="M24 80 Q50 76 76 80" opacity=".5"/>
+  </g>
+  <g transform="rotate(-28 50 46)">
+    <polygon points="22,46 40,34 64,36 78,46 64,57 40,58" fill="#9fc6cc"/>
+    <polygon points="22,46 40,34 52,46" fill="#cfe4e8"/>
+    <polygon points="40,34 64,36 52,46" fill="#b6d6da"/>
+    <polygon points="64,36 78,46 52,46" fill="#8db6bd"/>
+    <polygon points="22,46 52,46 40,58" fill="#7aa3ab"/>
+    <polygon points="52,46 78,46 64,57" fill="#5f8a93"/>
+    <polygon points="78,46 94,34 90,46 94,58" fill="#6f99a2"/>
+    <polygon points="44,34 54,24 60,36" fill="#7aa3ab"/>
+    <circle cx="31" cy="44" r="2.2" fill="#0a1418"/>
+  </g>
+  <g fill="#9ad8dc"><circle cx="34" cy="68" r="1.6"/><circle cx="62" cy="66" r="1.2"/><circle cx="70" cy="70" r="1.4"/></g>
+</svg>
