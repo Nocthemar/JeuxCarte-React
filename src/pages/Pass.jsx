@@ -309,37 +309,34 @@ export default function Pass() {
                       : `${nombre(dansPalier)} / ${nombre(saison.xp_par_palier)} XP vers le palier ${palierActuel + 1}`}
                   </span>
                 </div>
+                {/* Comment gagner de l'XP : une bulle qui s'ouvre par-dessus la page */}
+                <details className="pass-aide">
+                  <summary>Gagner de l&apos;XP ?</summary>
+                  <ul>
+                    <li><strong>Duel contre l&apos;IA</strong> : 100 XP par victoire et de l&apos;or selon la difficulté (2 en facile, 5 en normal, 10 en difficile), 30 XP par défaite (1 000 XP par jour au plus).</li>
+                    <li><strong>Duel contre un ami</strong> : 150 XP par victoire, 50 par défaite (1 500 XP par jour au plus).</li>
+                    <li><strong>Mode Histoire</strong> : 200 XP par niveau gagné pour la première fois, 500 pour un boss.</li>
+                    <li>Un abandon ne rapporte rien.</li>
+                  </ul>
+                </details>
               </div>
               {c && (
                 <div className={`pass-premium${c.prog.premium ? ' est-debloque' : ''}`} id="bloc-premium">
                   <span className="pass-premium__titre">Piste premium</span>
-                  <p className="pass-premium__texte" id="premium-texte">
-                    {c.prog.premium ? 'Débloquée : toutes les récompenses premium atteintes sont à toi.'
-                      : 'Une carte transcendante, des cartes légendaires, des Grands Boosters et l\'Arène des Cristaux d\'Or. Payée avec l\'or du jeu.'}
-                  </p>
+                  {c.prog.premium && <p className="pass-premium__texte" id="premium-texte">Débloquée : toutes les récompenses premium atteintes sont à toi.</p>}
                   {!c.prog.premium && (
                     <button type="button" className={`btn-premium${confirmation ? ' btn-premium--confirmer' : ''}`} id="btn-premium"
+                      title="Une carte transcendante, des cartes légendaires, des Grands Boosters et l'Arène des Cristaux d'Or. Payée avec l'or du jeu."
                       disabled={manque > 0 || achat} onClick={debloquer}>
                       {confirmation ? 'Confirmer l\'achat' : 'Débloquer la piste premium'} <PrixPremium prix={saison.prix_premium} />
                     </button>
                   )}
                   <span className="pass-premium__solde" id="premium-solde">
-                    {c.prog.premium ? '' : manque > 0 ? `Ta bourse : ${nombre(c.solde)} or — il t'en manque ${nombre(manque)}.` : `Ta bourse : ${nombre(c.solde)} or.`}
+                    {c.prog.premium ? '' : manque > 0 ? `Ta bourse : ${nombre(c.solde)} or — il en manque ${nombre(manque)}.` : `Ta bourse : ${nombre(c.solde)} or.`}
                   </span>
                 </div>
               )}
             </section>
-
-            {/* Comment gagner de l'XP */}
-            <details className="pass-aide">
-              <summary>Comment gagner de l&apos;XP de pass ?</summary>
-              <ul>
-                <li><strong>Duel contre l&apos;IA</strong> : 100 XP par victoire et de l&apos;or selon la difficulté (2 en facile, 5 en normal, 10 en difficile), 30 XP par défaite (1 000 XP par jour au plus).</li>
-                <li><strong>Duel contre un ami</strong> : 150 XP par victoire, 50 par défaite (1 500 XP par jour au plus).</li>
-                <li><strong>Mode Histoire</strong> : 200 XP par niveau gagné pour la première fois, 500 pour un boss.</li>
-                <li>Un abandon ne rapporte rien.</li>
-              </ul>
-            </details>
 
             {/* La piste : gratuite en haut, premium en bas (défile horizontalement) */}
             <section className="pass-piste" aria-label="Récompenses du pass">
@@ -347,7 +344,8 @@ export default function Pass() {
                 <span className="legende legende--gratuite">Gratuit</span>
                 <span className="legende legende--premium">Premium</span>
               </div>
-              <div className="pass-piste__defile" id="piste" tabIndex={0} ref={piste}>
+              <div className="pass-piste__defile" id="piste" tabIndex={0} ref={piste}
+                onWheel={(e) => { if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) e.currentTarget.scrollLeft += e.deltaY; }}>
                 {Array.from({ length: saison.nb_paliers }, (_, k) => {
                   const i = k + 1;
                   const atteint = c ? palierActuel : 0;

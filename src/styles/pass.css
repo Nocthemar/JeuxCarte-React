@@ -127,17 +127,22 @@
 .btn-premium__prix { display: inline-flex; align-items: center; gap: 5px; color: var(--or-vif); }
 .btn-premium__prix img { width: 20px; height: 20px; }
 
-/* ---------- Aide : comment gagner de l'XP ---------- */
-.pass-aide {
-  margin-bottom: 16px; padding: 10px 16px;
-  border: 1px solid var(--trait); background: rgba(255,255,255,.02);
-}
+/* ---------- Aide : comment gagner de l'XP (un petit bouton dans la bande du palier, la bulle par-dessus) ---------- */
+.pass-aide { position: relative; flex: none; align-self: flex-start; }
 .pass-aide summary {
-  cursor: pointer;
-  font-family: "Cinzel","Cinzel Repli", serif; font-size: .8rem; letter-spacing: .08em;
+  list-style: none; cursor: pointer; white-space: nowrap;
+  padding: 4px 10px; border: 1px solid var(--trait);
+  font-family: "Cinzel","Cinzel Repli", serif; font-size: .68rem; letter-spacing: .08em;
   color: var(--or);
 }
-.pass-aide ul { margin: 10px 0 4px; padding-left: 20px; color: var(--texte-doux); }
+.pass-aide summary::-webkit-details-marker { display: none; }
+.pass-aide summary:hover, .pass-aide[open] summary { border-color: var(--or); }
+.pass-aide ul {
+  position: absolute; z-index: 30; top: calc(100% + 6px); right: 0; width: min(440px, 80vw);
+  margin: 0; padding: 12px 14px 12px 30px;
+  background: #17120f; border: 1px solid var(--or); box-shadow: 0 14px 30px rgba(0,0,0,.6);
+  color: var(--texte-doux); font-size: .88rem;
+}
 .pass-aide li { margin: 4px 0; }
 .pass-aide strong { color: var(--texte); }
 
@@ -414,12 +419,62 @@ body.fete-ouverte { overflow: hidden; }
 .recompense__loupe .carte-jeu { cursor: zoom-in; }
 @media (max-width: 600px) { .recompense__loupe { width: 52px; } }
 
-/* Palier « plateau » : la miniature du plateau de la Boutique */
+/* Palier « plateau » : la miniature du plateau de la Boutique, sans cadre (comme les autres récompenses) */
 .recompense__visuel--plateau img {
-  width: 100%; max-width: 120px; height: 76px; object-fit: cover;
-  border-radius: 4px;
-  box-shadow: 0 0 0 1px rgba(231,196,106,.5), 0 4px 10px rgba(0,0,0,.6);
+  width: 100%; max-width: 140px; height: 92px; object-fit: contain;
+  filter: drop-shadow(0 4px 8px rgba(0,0,0,.6));
 }
 
 /* Palier « badge de la Caverne » : l'image du badge */
 .recompense__visuel--badge img { width: 100%; max-width: 124px; height: auto; filter: drop-shadow(0 4px 8px rgba(0,0,0,.6)); }
+
+/* =====================================================================
+   Ordinateur : la page tient dans l'écran, sans défiler. En-tête sur une ligne, une bande fine
+   (palier, XP, piste premium), et la piste des récompenses prend toute la hauteur et la largeur qui restent.
+   ===================================================================== */
+@media (min-width: 701px) and (min-height: 560px) {
+  html:has(body.page-pass) { overflow: hidden; }
+  body.page-pass.has-rail { height: 100dvh; min-height: 0; overflow: hidden; padding-bottom: 0; }
+  .page-pass .pass-wrap {
+    max-width: none; height: 100dvh; box-sizing: border-box;
+    display: flex; flex-direction: column; padding-top: 14px; padding-bottom: 16px;
+  }
+  .page-pass #bloc-saison { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+
+  .pass-entete { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: center; gap: 4px 22px; margin: 0 0 12px; }
+  .pass-entete h1 { margin: 0; font-size: clamp(1.3rem, 2.2vw, 1.8rem); }
+
+  .pass-tableau { margin-bottom: 12px; gap: 12px; flex: none; }
+  .pass-niveau, .pass-premium { padding: 10px 16px; }
+  .pass-niveau { gap: 14px; }
+  .pass-niveau__blason { flex-basis: 52px; height: 60px; }
+  .pass-niveau__blason span { width: 44px; height: 52px; font-size: 1.4rem; }
+  .pass-niveau__infos { gap: 5px; }
+  .pass-premium { flex-direction: row; flex-wrap: wrap; align-items: center; gap: 6px 14px; }
+  .pass-premium__titre { flex-basis: 100%; }
+  .pass-premium__texte { font-size: .88rem; }
+
+  .pass-piste { flex: 1; min-height: 0; }
+  .pass-piste__defile { height: 100%; box-sizing: border-box; }
+  .palier { grid-template-rows: 34px minmax(0, 1fr) minmax(0, 1fr); }
+  .recompense { min-height: 0; margin: 6px; padding: 8px 6px; gap: 4px; overflow: hidden; }
+  .page-pass { --case-l: clamp(132px, 15vh, 168px); }
+  /* le visuel prend la hauteur libre de la case, sans jamais déborder sur le nom */
+  .recompense__visuel { position: relative; flex: 1 1 0; height: auto; min-height: 0; }
+  .recompense__visuel > img {
+    position: absolute; inset: 0; margin: auto;
+    width: 100%; height: 100%; max-height: 150px; object-fit: contain;
+  }
+  .recompense__visuel--or > img { max-height: 76px; }
+  .recompense__visuel svg { height: 100%; max-height: 60px; }
+  .recompense__loupe { height: 100%; }
+  .recompense__nom { min-height: 0; }
+}
+
+/* Téléphone : « Gagner de l'XP ? » passe sous la barre d'XP (sinon il serre le palier) */
+@media (max-width: 600px) {
+  .pass-niveau { flex-wrap: wrap; }
+  .pass-aide { flex-basis: 100%; }
+  .pass-aide summary { display: inline-block; }
+  .pass-aide ul { right: auto; left: 0; }
+}

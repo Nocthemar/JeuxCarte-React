@@ -210,7 +210,7 @@ paliers (numero, piste, type_recompense, valeur) as (values
   (27, 'gratuite', 'or',             '{"montant": 175}'),
   (28, 'gratuite', 'or',             '{"montant": 175}'),
   (29, 'gratuite', 'carte_rarete',   '{"rarete": "legendaire", "or_si_deja": 400}'),
-  (30, 'gratuite', 'fond_plateau',   '{"plateau": "automne", "nom": "Arène d''Automne", "or_si_deja": 500}'),
+  (30, 'gratuite', 'or',             '{"montant": 500}'),   -- à la place de l'Arène d'Automne (27/10/2026), qui reste en vente en Boutique
   ( 1, 'premium',  'carte_rarete',   '{"rarete": "transcendante", "or_si_deja": 800}'),
   ( 2, 'premium',  'or',             '{"montant": 75}'),
   ( 3, 'premium',  'or',             '{"montant": 75}'),
