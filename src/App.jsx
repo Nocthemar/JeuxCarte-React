@@ -23,6 +23,7 @@ const Marche = lazy(() => import('./pages/Marche.jsx'));
 const Pass = lazy(() => import('./pages/Pass.jsx'));
 const Profil = lazy(() => import('./pages/Profil.jsx'));
 const Parametres = lazy(() => import('./pages/Parametres.jsx'));
+const Mj = lazy(() => import('./pages/Mj.jsx'));
 
 export default function App() {
   return (
@@ -44,6 +45,7 @@ export default function App() {
             <Route path="/pass" element={<Pass />} />
             <Route path="/profil" element={<Profil />} />
             <Route path="/parametres" element={<Parametres />} />
+            <Route path="/mj" element={<Mj />} />
             {/* L'entrée du jeu (et toute adresse inconnue) mène au Duel, comme l'ancien index.html */}
             <Route path="*" element={<Navigate to="/duel" replace />} />
           </Route>

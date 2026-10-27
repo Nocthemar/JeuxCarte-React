@@ -20,12 +20,6 @@
 
 /* ----- en-tête : les deux bourses (cliquer pour miser l'une ou l'autre) ----- */
 .caverne .hdr { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 16px 6px; }
-/* laisse la place aux hexagones du coin (styles/barre-jeu.css : .coin-hud, 48 px chacun, à 18 px du bord) */
-@media (min-width: 701px) {
-  body:has(.coin-hud .coin-hud__bouton) .caverne .hdr { padding-right: 84px; }
-  body:has(.coin-hud .coin-hud__bouton + .coin-hud__bouton) .caverne .hdr { padding-right: 142px; }
-  body:has(.coin-hud .coin-hud__bouton + .coin-hud__bouton + .coin-hud__bouton) .caverne .hdr { padding-right: 200px; }
-}
 .caverne .bals { display: flex; gap: 8px; }
 .caverne .bal { display: flex; align-items: center; gap: 10px; padding: 6px 18px 6px 10px; font-size: 25px; color: var(--gold-l); font-weight: 700; font-variant-numeric: lining-nums; cursor: pointer; opacity: .5; transition: .18s; }
 .caverne .bal img { width: 34px; height: 34px; object-fit: contain; }

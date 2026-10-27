@@ -9,11 +9,11 @@
 //  une barre en bas à 5 boutons (Jouer, Collection, le portrait au centre, Boutique, « Plus »),
 //  les autres écrans dans le menu Plus.
 //  data-place : la place du bouton dans la barre du téléphone ; « menu » : dans le menu Plus.
-//  En haut à droite de l'écran (ordinateur) : le panneau MJ, pour les MJ.
+//  Sur le médaillon du portrait (ordinateur) : le sceau du panneau MJ (#/mj), pour les MJ.
 // =====================================================================
 import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { NOCTHEMAR_SITE, lienSite } from '../lib/lienSite.js';
+import { NOCTHEMAR_SITE } from '../lib/lienSite.js';
 import { useAuth, connexionDiscord, deconnexion } from '../lib/auth.js';
 import { supabase } from '../lib/supabase.js';
 import OrAnime from './OrAnime.jsx';
@@ -132,16 +132,6 @@ const PAGES = [
 const PARAMETRES = { icone: 'reglages', libelle: 'Paramètres', chemin: '/parametres' };
 const DANS_LE_MENU = [...PAGES.filter((p) => typeof p.place !== 'number' && p.place !== 'profil'), PARAMETRES];
 
-// En haut à droite de l'écran (ordinateur) : le panneau MJ, pour les MJ seulement
-// (Paramètres et Retour sont dans la barre)
-function BoutonsCoin({ joueur }) {
-  if (!joueur?.is_mj) return null;
-  return (
-    <div className="coin-hud">
-      <a className="coin-hud__bouton" href={lienSite('mj.html')} title="Panneau MJ" aria-label="Panneau MJ"><Icone nom="mj" /></a>
-    </div>
-  );
-}
 
 // Un écran de la barre ; l'écran en cours devient une plaque rouge sang
 function Entree({ icone, libelle, chemin, actif, place }) {
@@ -195,6 +185,10 @@ export default function BarreLaterale() {
               <span className="btn-discord__logo" aria-hidden="true" />
             </button>
           )}
+        {/* (ordinateur, MJ seulement) le panneau MJ : un sceau hexagonal accroché au médaillon */}
+        {joueur?.is_mj && (
+          <Link to="/mj" className={`barre__mj${pathname === '/mj' ? ' est-actif' : ''}`} title="Panneau MJ" aria-label="Panneau MJ"><Icone nom="mj" /></Link>
+        )}
       </div>
       {!chargement && !joueur && <button type="button" className="barre__connexion" data-place="menu" onClick={() => connexionDiscord()}>Se connecter</button>}
       {/* (ordinateur) le pseudo sous le portrait, et un ornement à losange */}
@@ -217,7 +211,6 @@ export default function BarreLaterale() {
       {/* (ordinateur) la signature, en bas */}
       <Bourse discordId={joueur?.discord_id ?? null} />
       <div className="barre__pied-signature" data-place="menu" aria-hidden="true"><i />Nocthémar<i /></div>
-      <BoutonsCoin joueur={joueur} />
       <MenuPlus />
     </nav>
   );
@@ -248,7 +241,7 @@ function MenuPlus() {
               </Link>
             ))}
             <a className="barre-menu__item" role="menuitem" href={NOCTHEMAR_SITE}><Icone nom="retour" /><span>Site Nocthémar</span></a>
-            {joueur?.is_mj && <a className="barre-menu__item" role="menuitem" href={lienSite('mj.html')}><Icone nom="mj" /><span>Panneau MJ</span></a>}
+            {joueur?.is_mj && <Link className="barre-menu__item" role="menuitem" to="/mj" onClick={fermer}><Icone nom="mj" /><span>Panneau MJ</span></Link>}
             {joueur && (
               <button type="button" className="barre-menu__item barre-menu__item--sortie" role="menuitem" onClick={() => { fermer(); deconnexion(); }}>
                 <Icone nom="deconnexion" /><span>Se déconnecter</span>

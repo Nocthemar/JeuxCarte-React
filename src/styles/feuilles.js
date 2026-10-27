@@ -38,6 +38,7 @@ export const FEUILLES = {
   pass: liste(['cartes-jeu', 'carte-infos', 'pass']),
   profil: liste(['cartes-jeu', 'carte-infos', 'succes-badges', 'profil-heros']),
   parametres: liste(['parametres']),
+  mj: liste(['mj']),
   // L'écran de connexion : sans la barre latérale
   connexion: [...DEBUT, 'connexion', ...FIN],
 };

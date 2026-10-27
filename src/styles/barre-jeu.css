@@ -204,35 +204,30 @@
 /* Pendant un duel, la barre s'efface (le style du duel gère lui-même la place du plateau) */
 .en-duel .barre { display: none !important; }
 
-/* ---------- En haut à droite : Paramètres, panneau MJ, retour au site (des hexagones) ---------- */
-.coin-hud {
-  position: fixed; top: 14px; right: 18px; z-index: 40;
-  display: flex; gap: 10px;
-}
-.coin-hud__bouton {
-  position: relative;
+/* ---------- Le sceau du panneau MJ : un petit hexagone accroché en bas à droite du médaillon (MJ seulement) ---------- */
+.barre__mj {
+  position: absolute; right: -4px; bottom: -2px; z-index: 3;
   display: grid; place-items: center;
-  width: 48px; height: 54px;
+  width: 38px; height: 43px;
   color: var(--ivoire);
   text-decoration: none;
   /* l'hexagone : un liseré d'or vieilli (calque du dessous), un fond charbon (calque du dessus) */
   clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
   background: linear-gradient(160deg, var(--or-pale), var(--or) 45%, #6b5530);
-  filter: drop-shadow(0 4px 8px rgba(0,0,0,.6));
+  filter: drop-shadow(0 4px 8px rgba(0,0,0,.7));
   transition: filter .2s ease, transform .15s ease;
 }
-.coin-hud__bouton::before {
+.barre__mj::before {
   content: ""; position: absolute; inset: 1.5px;
   clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
   background: linear-gradient(160deg, rgba(255,255,255,.06) 0 45%, transparent 45.1%), radial-gradient(circle at 50% 35%, #2a2725, #121110);
 }
-.coin-hud__bouton .barre-ico { z-index: 1; width: 24px; height: 24px; }
-.coin-hud__bouton .barre-ico svg { width: 22px; height: 22px; }
-.coin-hud__bouton:hover, .coin-hud__bouton:focus-visible { transform: translateY(-1px); filter: drop-shadow(0 0 10px rgba(200,168,106,.45)); outline: none; }
-.coin-hud__bouton.est-actif::before { background: linear-gradient(160deg, rgba(255,255,255,.08) 0 45%, transparent 45.1%), radial-gradient(circle at 50% 35%, #a83440, #5e1419); }
-/* téléphone (le menu « Plus » les contient) et pendant un duel : cachés */
-@media (max-width: 700px) { .coin-hud { display: none; } }
-.en-duel .coin-hud { display: none; }
+.barre__mj .barre-ico { z-index: 1; width: 20px; height: 20px; }
+.barre__mj .barre-ico svg { width: 18px; height: 18px; }
+.barre__mj:hover, .barre__mj:focus-visible { transform: translateY(-1px); filter: drop-shadow(0 0 10px rgba(200,168,106,.5)); outline: none; }
+.barre__mj.est-actif::before { background: linear-gradient(160deg, rgba(255,255,255,.08) 0 45%, transparent 45.1%), radial-gradient(circle at 50% 35%, #a83440, #5e1419); }
+/* téléphone : le panneau MJ est dans le menu « Plus » */
+@media (max-width: 700px) { .barre__mj { display: none; } }
 
 /* ---------- Retouches : la barre a 8 écrans (Paramètres, MJ et retour sont en haut à droite) ---------- */
 /* le portrait entier, un peu détaché du haut de l'écran */
