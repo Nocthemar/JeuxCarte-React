@@ -4,6 +4,13 @@
    Utilise les variables de CSS/compte.css et les couleurs de rareté de CSS/cartes-jeu.css.
    ===================================================================== */
 .page-catalogue { --or: #d8b978; --trait: rgba(240,236,227,.16); }
+/* Le même fond que le Marché (styles/marche.css) : le ciel de Nocthémar, assombri vers le bas */
+body.page-catalogue {
+  background:
+    linear-gradient(180deg, rgba(6,8,13,.55), rgba(6,8,13,.86) 60%, rgba(6,8,13,.95)),
+    url("/img/Fond/Profil_fond.png") center top / cover no-repeat fixed,
+    #07080c;
+}
 
 .catalogue {
   position: relative; z-index: 1;
