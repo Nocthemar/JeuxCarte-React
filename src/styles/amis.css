@@ -1,7 +1,8 @@
 /* =====================================================================
-   L'écran des amis (pages/Amis.jsx), dans le style Nocthémar (comme le Conseil du MJ) :
-   le ciel de Nocthémar derrière, des plaques de pierre taillée à facettes, l'ivoire pour le texte,
-   un seul accent, le rouge sang (bouton principal, défi reçu). Les portraits dans un hexagone.
+   L'écran des amis (pages/Amis.jsx) : la salle des étendards, dans le style Nocthémar.
+   Chaque ami est un étendard de tissu pendu à une tringle de fer, la pointe en bas, à facettes low-poly :
+   rouge sang quand il est en ligne (avec un rai de lumière qui tombe sur lui), plus vif en duel,
+   gris délavé quand il est absent. En haut, un bandeau de pierre : chercher un joueur, et les demandes.
    ===================================================================== */
 body.page-amis {
   --ivoire: #ece4d2;
@@ -10,121 +11,170 @@ body.page-amis {
   --pierre-1: #1d212b;
   --pierre-2: #13161d;
   --filet: rgba(236,228,210,.13);
-  --filet-fort: rgba(236,228,210,.32);
+  --filet-fort: rgba(236,228,210,.3);
   --sang: #9b2730;
   --sang-vif: #c23d48;
   --sang-sombre: #5e1419;
-  --vert: #7fcf9b;
-  --taille: polygon(14px 0, calc(100% - 14px) 0, 100% 14px, 100% calc(100% - 14px), calc(100% - 14px) 100%, 14px 100%, 0 calc(100% - 14px), 0 14px);
-  --taille-petite: polygon(7px 0, calc(100% - 7px) 0, 100% 7px, 100% calc(100% - 7px), calc(100% - 7px) 100%, 7px 100%, 0 calc(100% - 7px), 0 7px);
+  --fer: #2b2f38;
   --hexagone: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
-  --facettes:
-    linear-gradient(118deg, rgba(255,255,255,.045) 0 18%, transparent 18.2%),
-    linear-gradient(64deg, transparent 0 62%, rgba(255,255,255,.025) 62.2% 80%, transparent 80.2%),
-    linear-gradient(205deg, transparent 0 58%, rgba(0,0,0,.28) 58.2%),
-    linear-gradient(180deg, var(--pierre-1), var(--pierre-2));
+  --taille: polygon(12px 0, calc(100% - 12px) 0, 100% 12px, 100% calc(100% - 12px), calc(100% - 12px) 100%, 12px 100%, 0 calc(100% - 12px), 0 12px);
+  --taille-petite: polygon(6px 0, calc(100% - 6px) 0, 100% 6px, 100% calc(100% - 6px), calc(100% - 6px) 100%, 6px 100%, 0 calc(100% - 6px), 0 6px);
   background:
-    linear-gradient(180deg, rgba(6,8,13,.55), rgba(6,8,13,.86) 60%, rgba(6,8,13,.95)),
-    url("/img/Fond/Profil_fond.png") center top / cover no-repeat fixed,
+    radial-gradient(ellipse 70% 50% at 50% 0%, rgba(155,39,48,.12), transparent 70%),
+    linear-gradient(180deg, rgba(6,8,13,.6), rgba(6,8,13,.9) 50%, rgba(6,8,13,.97)),
+    url("/img/Fond/multijoueur_fond.png") center top / cover no-repeat fixed,
     #07080c;
   color: var(--ivoire);
 }
 
-.amis { max-width: 1100px; margin: 0 auto; padding: 30px 28px 70px; font-family: "EB Garamond","EB Garamond Repli", serif; font-size: 1.04rem; }
+.amis { max-width: 1240px; margin: 0 auto; padding: 34px 28px 80px; font-family: "EB Garamond","EB Garamond Repli", serif; font-size: 1.04rem; }
 .amis h1, .amis h2 { margin: 0; font-family: "Cinzel","Cinzel Repli", serif; font-weight: 700; color: var(--ivoire); }
-.amis-vide { margin: 6px 0; color: var(--gris); font-style: italic; list-style: none; }
+.amis section { max-width: none; margin: 0; padding: 0; border-bottom: 0; }   /* (pas la <section> générique du site) */
+.amis-vide { margin: 4px 0; color: var(--gris); font-style: italic; list-style: none; }
 
-/* ---------- L'en-tête ---------- */
-.amis-entete { margin-bottom: 26px; }
-.amis-entete span { display: block; margin-bottom: 6px; font-family: "Cinzel","Cinzel Repli", serif; font-size: .7rem; letter-spacing: .45em; text-transform: uppercase; color: var(--gris); }
-.amis-entete h1 { font-size: clamp(1.7rem, 3vw, 2.6rem); letter-spacing: .03em; text-shadow: 0 6px 30px rgba(0,0,0,.9); }
-.amis-entete p { margin: 8px 0 0; color: var(--ivoire-doux); }
-
-/* ---------- Les plaques de pierre ---------- */
-/* (les <section> du site ont une largeur maximale et des marges : pas ici) */
-.amis section { max-width: none; margin: 0; border-bottom: 0; }
-.amis-bloc {
-  margin-bottom: 18px !important; padding: 20px 22px 22px;
-  clip-path: var(--taille); background: var(--facettes); box-shadow: inset 0 0 0 1px var(--filet), inset 0 1px 0 rgba(255,255,255,.06);
-}
-.amis-bloc h2 {
-  display: flex; align-items: center; gap: 10px; margin-bottom: 14px; padding-bottom: 12px; border-bottom: 1px solid var(--filet);
-  font-size: .8rem; letter-spacing: .2em; text-transform: uppercase; color: var(--ivoire-doux);
-}
-.amis-bloc h2 small { padding: 2px 9px; font-size: .72rem; letter-spacing: .05em; color: var(--ivoire); clip-path: var(--taille-petite); background: rgba(236,228,210,.1); }
-.amis-bloc--defis { box-shadow: inset 0 0 0 1px rgba(194,61,72,.55), inset 0 0 40px rgba(155,39,48,.25); }
-.amis-bloc--defis h2 { color: var(--sang-vif); border-color: rgba(194,61,72,.3); }
-
-/* ---------- Les portraits ---------- */
-.amis-portrait {
-  display: grid; place-items: center; flex: none; width: 44px; height: 50px; overflow: hidden;
-  clip-path: var(--hexagone); background: linear-gradient(160deg, #3a3f4b, #191c24);
-  font-family: "Cinzel","Cinzel Repli", serif; font-weight: 700; font-size: 1.1rem; color: var(--ivoire-doux); text-transform: uppercase;
-}
-.amis-portrait img { width: 100%; height: 100%; object-fit: cover; }
-.amis-portrait--grand { width: 74px; height: 84px; font-size: 1.8rem; }
-
-/* ---------- Les lignes (défis, demandes, recherche) ---------- */
-.amis-lignes { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
-.amis-lignes--recherche { margin-top: 12px; }
-.amis-ligne {
-  display: flex; align-items: center; gap: 12px; padding: 8px 12px;
-  clip-path: var(--taille-petite); background: rgba(0,0,0,.25); box-shadow: inset 0 0 0 1px var(--filet);
-}
-.amis-ligne__texte { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--ivoire-doux); }
-.amis-ligne__texte b { color: var(--ivoire); font-weight: 600; }
-.amis-ligne__note { color: var(--gris); font-style: italic; font-size: .95rem; }
-.amis-ligne--defi { background: linear-gradient(90deg, rgba(155,39,48,.3), rgba(0,0,0,.25) 70%); }
-
-/* ---------- Le champ de recherche ---------- */
-.amis-champ {
-  width: 100%; box-sizing: border-box; padding: 12px 16px; border: 0; outline: none;
-  font: inherit; color: var(--ivoire);
-  clip-path: var(--taille-petite); background: rgba(0,0,0,.35); box-shadow: inset 0 0 0 1px var(--filet);
-}
-.amis-champ::placeholder { color: var(--gris); font-style: italic; }
-.amis-champ:focus { box-shadow: inset 0 0 0 1px var(--filet-fort); }
+/* ---------- L'en-tête, centré ---------- */
+.amis-entete { margin-bottom: 26px; text-align: center; }
+.amis-entete span { display: block; margin-bottom: 8px; font-family: "Cinzel","Cinzel Repli", serif; font-size: .7rem; letter-spacing: .5em; text-transform: uppercase; color: var(--gris); }
+.amis-entete h1 { font-size: clamp(2rem, 4vw, 3.2rem); letter-spacing: .08em; text-shadow: 0 6px 30px rgba(0,0,0,.9); }
+.amis-entete h1::after { content: ""; display: block; width: 180px; height: 1px; margin: 12px auto 0; background: linear-gradient(90deg, transparent, var(--sang-vif), transparent); }
+.amis-entete p { margin: 10px 0 0; font-style: italic; color: var(--ivoire-doux); }
 
 /* ---------- Les boutons ---------- */
 .amis-btn {
   display: inline-flex; align-items: center; justify-content: center; padding: 8px 16px; border: 0; cursor: pointer; text-decoration: none; white-space: nowrap;
-  font-family: "Cinzel","Cinzel Repli", serif; font-size: .7rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase;
-  color: var(--ivoire-doux);
-  clip-path: var(--taille-petite);
-  background: linear-gradient(160deg, rgba(255,255,255,.06) 0 45%, transparent 45.2%), var(--pierre-1);
+  font-family: "Cinzel","Cinzel Repli", serif; font-size: .68rem; font-weight: 700; letter-spacing: .14em; text-transform: uppercase;
+  color: #fff; clip-path: var(--taille-petite);
+  background: linear-gradient(160deg, rgba(255,255,255,.14) 0 45%, transparent 45.2%), linear-gradient(180deg, var(--sang-vif), var(--sang) 55%, var(--sang-sombre));
+  transition: filter .2s ease, transform .2s ease;
+}
+.amis-btn:hover, .amis-btn:focus-visible { filter: brightness(1.2); outline: none; }
+.amis-btn--ivoire { color: #2a0c0f; background: linear-gradient(160deg, rgba(255,255,255,.5) 0 45%, transparent 45.2%), linear-gradient(180deg, #f4ecda, #d6ccb6); }
+.amis-btn:disabled { opacity: .4; cursor: default; filter: none; }
+.amis-lien { padding: 4px 6px; border: 0; background: none; cursor: pointer; font: italic .92rem "EB Garamond","EB Garamond Repli", serif; color: var(--gris); transition: color .2s ease; }
+.amis-lien:hover, .amis-lien:focus-visible { color: var(--ivoire); outline: none; }
+.amis-lien:disabled { opacity: .4; cursor: default; }
+
+/* ---------- Les portraits ---------- */
+.amis-portrait {
+  display: grid; place-items: center; flex: none; width: 36px; height: 41px; overflow: hidden;
+  clip-path: var(--hexagone); background: linear-gradient(160deg, #3a3f4b, #191c24);
+  font-family: "Cinzel","Cinzel Repli", serif; font-weight: 700; font-size: .95rem; color: var(--ivoire-doux); text-transform: uppercase;
+}
+.amis-portrait img { width: 100%; height: 100%; object-fit: cover; clip-path: var(--hexagone); }
+
+/* ---------- Un défi reçu ---------- */
+.amis-defi {
+  display: flex; align-items: center; gap: 14px; max-width: 760px; margin: 0 auto 12px; padding: 12px 22px;
+  clip-path: var(--taille);
+  background: linear-gradient(115deg, rgba(255,255,255,.09) 0 28%, transparent 28.2%), linear-gradient(90deg, var(--sang-sombre), var(--sang) 50%, var(--sang-sombre));
+  animation: amis-appel 2.4s ease-in-out infinite;
+}
+.amis-defi p { flex: 1; margin: 0; font-size: 1.1rem; color: #f3dcd8; }
+.amis-defi p b { font-family: "Cinzel","Cinzel Repli", serif; color: #fff; }
+.amis-defi .amis-lien { color: #e6b9b5; }
+@keyframes amis-appel { 50% { filter: brightness(1.2); } }
+
+/* ---------- Le bandeau : chercher, et les demandes ---------- */
+.amis-bandeau {
+  display: grid; grid-template-columns: 1fr 1fr; margin-bottom: 44px;
+  clip-path: var(--taille);
+  background:
+    linear-gradient(118deg, rgba(255,255,255,.04) 0 20%, transparent 20.2%),
+    linear-gradient(64deg, transparent 0 64%, rgba(255,255,255,.025) 64.2% 82%, transparent 82.2%),
+    linear-gradient(180deg, rgba(29,33,43,.94), rgba(19,22,29,.94));
   box-shadow: inset 0 0 0 1px var(--filet);
-  transition: color .2s ease, filter .2s ease;
 }
-.amis-btn:hover, .amis-btn:focus-visible { color: var(--ivoire); filter: brightness(1.3); outline: none; }
-.amis-btn--sang { color: #fff; background: linear-gradient(160deg, rgba(255,255,255,.14) 0 45%, transparent 45.2%), linear-gradient(180deg, var(--sang-vif), var(--sang) 55%, var(--sang-sombre)); }
-.amis-btn:disabled { opacity: .45; cursor: default; filter: none; }
+.amis-bandeau > div { display: flex; flex-direction: column; gap: 10px; padding: 18px 22px 20px; min-width: 0; }
+.amis-bandeau__demandes { border-left: 1px solid var(--filet); }
+.amis-bandeau h2 { display: flex; align-items: center; gap: 8px; font-size: .72rem; letter-spacing: .24em; text-transform: uppercase; color: var(--ivoire-doux); }
+.amis-bandeau h2 small { padding: 1px 8px; font-size: .7rem; letter-spacing: 0; color: #fff; background: var(--sang); clip-path: var(--taille-petite); }
+.amis-champ {
+  width: 100%; box-sizing: border-box; padding: 10px 14px; border: 0; border-bottom: 1px solid var(--filet-fort); outline: none;
+  font: inherit; color: var(--ivoire); background: rgba(0,0,0,.32); transition: border-color .2s ease;
+}
+.amis-champ::placeholder { color: var(--gris); font-style: italic; }
+.amis-champ:focus { border-bottom-color: var(--sang-vif); }
+.amis-lignes { display: grid; gap: 2px; margin: 0; padding: 0; list-style: none; }
+.amis-lignes:empty { display: none; }
+.amis-ligne { display: flex; align-items: center; gap: 10px; padding: 5px 4px; border-bottom: 1px solid rgba(236,228,210,.06); }
+.amis-ligne__nom { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--ivoire); }
+.amis-ligne__nom i, .amis-ligne__note { font-size: .9rem; color: var(--gris); }
+.amis-ligne__note { font-style: italic; }
+.amis-ligne .amis-btn { padding: 6px 12px; font-size: .62rem; }
+.amis-ligne--recue { background: linear-gradient(90deg, rgba(155,39,48,.24), transparent 80%); }
 
-/* ---------- Mes amis : des cartes ---------- */
-.amis-cartes { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; margin: 0; padding: 0; list-style: none; }
-.amis-carte {
-  position: relative; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 20px 14px 14px; text-align: center;
-  clip-path: var(--taille); background: rgba(0,0,0,.28); box-shadow: inset 0 0 0 1px var(--filet);
+/* ---------- La salle des étendards ---------- */
+.amis-etendards { display: flex; flex-wrap: wrap; justify-content: center; gap: 46px 30px; margin: 0; padding: 0; list-style: none; }
+.amis-etendard {
+  --tissu-1: #3a3d46; --tissu-2: #23252c; --lueur: transparent;
+  position: relative; width: 196px; padding-top: 8px;
+  filter: drop-shadow(0 14px 18px rgba(0,0,0,.55));   /* (sur le tissu, son découpage la rognerait) */
 }
-.amis-carte.est-en-ligne .amis-portrait--grand { box-shadow: none; filter: drop-shadow(0 0 0 transparent); background: linear-gradient(160deg, #4a6a56, #1b2a22); }
-.amis-carte__nom { margin-top: 4px; font-family: "Cinzel","Cinzel Repli", serif; font-weight: 700; font-size: 1.02rem; color: var(--ivoire); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.amis-statut { font-size: .92rem; font-style: italic; color: var(--gris); }
-.amis-statut::before { content: ""; display: inline-block; width: 7px; height: 7px; margin-right: 6px; vertical-align: middle; transform: rotate(45deg); background: currentColor; opacity: .7; }
-.amis-statut--ligne { color: var(--vert); font-style: normal; }
-.amis-statut--duel { color: var(--sang-vif); font-style: normal; }
-.amis-carte__actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; margin-top: 10px; }
-.amis-btn--large { flex-basis: 100%; padding: 10px 16px; font-size: .76rem; }
-.amis-carte__retirer {
-  position: absolute; top: 8px; right: 12px; padding: 2px 4px; border: 0; background: none; cursor: pointer;
-  font: italic .82rem "EB Garamond","EB Garamond Repli", serif; color: var(--gris); opacity: 0; transition: opacity .2s ease, color .2s ease;
-}
-.amis-carte:hover .amis-carte__retirer, .amis-carte__retirer:focus-visible { opacity: 1; }
-.amis-carte__retirer:hover { color: var(--sang-vif); }
+.amis-etendard.est-ligne { --tissu-1: var(--sang); --tissu-2: var(--sang-sombre); --lueur: rgba(236,228,210,.13); }
+.amis-etendard.est-duel  { --tissu-1: var(--sang-vif); --tissu-2: #7a1a22; --lueur: rgba(194,61,72,.22); }
 
-/* ---------- Petit écran ---------- */
-@media (max-width: 700px) {
-  .amis { padding: 20px 14px 60px; }
-  .amis-bloc { padding: 16px 14px 18px; }
-  .amis-ligne { flex-wrap: wrap; }
-  .amis-ligne__texte { flex-basis: calc(100% - 60px); white-space: normal; }
-  .amis-carte__retirer { opacity: 1; }
+/* le rai de lumière qui tombe sur un ami en ligne */
+.amis-etendard::before {
+  content: ""; position: absolute; left: -30px; right: -30px; top: -40px; height: 360px; z-index: -1; pointer-events: none;
+  background: radial-gradient(ellipse 50% 60% at 50% 10%, var(--lueur), transparent 75%);
+}
+/* la tringle de fer, plus large que le tissu, et ses deux pommeaux */
+.amis-etendard__tringle {
+  position: absolute; top: 0; left: -14px; right: -14px; height: 8px;
+  background: linear-gradient(180deg, #4a4f5b, var(--fer) 50%, #121419);
+  clip-path: polygon(0 50%, 8px 0, calc(100% - 8px) 0, 100% 50%, calc(100% - 8px) 100%, 8px 100%);
+  box-shadow: 0 4px 8px rgba(0,0,0,.6);
+}
+/* le tissu : pointe en bas, facettes franches, qui se balance au survol */
+.amis-etendard__tissu {
+  display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 22px 16px 70px; text-align: center;
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 46px), 50% 100%, 0 calc(100% - 46px));
+  background:
+    linear-gradient(112deg, rgba(255,255,255,.08) 0 24%, transparent 24.2%),
+    linear-gradient(248deg, transparent 0 62%, rgba(0,0,0,.22) 62.2%),
+    linear-gradient(20deg, transparent 0 70%, rgba(255,255,255,.04) 70.2%),
+    linear-gradient(180deg, var(--tissu-1), var(--tissu-2));
+  /* les deux bords cousus */
+  box-shadow: inset 6px 0 0 rgba(0,0,0,.18), inset -6px 0 0 rgba(0,0,0,.18);
+  transform-origin: 50% 0; transition: transform .5s cubic-bezier(.3,1.4,.5,1), filter .3s ease;
+}
+.amis-etendard:hover .amis-etendard__tissu { transform: rotate(-1.6deg); filter: brightness(1.1); }
+.amis-etendard.est-absent .amis-etendard__tissu { filter: saturate(.6); }
+
+.amis-portrait--grand {
+  width: 96px; height: 110px; padding: 3px; box-sizing: border-box; margin-bottom: 6px;
+  background: linear-gradient(160deg, var(--ivoire), #8d8572); font-size: 2.2rem; color: var(--sang-sombre);
+}
+.amis-portrait--grand img { background: var(--pierre-2); }
+.est-absent .amis-portrait--grand { background: linear-gradient(160deg, #8a8f99, #4a4e57); color: #23252c; }
+.est-absent .amis-portrait--grand img { filter: grayscale(.7) brightness(.8); }
+
+.amis-etendard__nom { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: "Cinzel","Cinzel Repli", serif; font-weight: 700; font-size: 1.12rem; letter-spacing: .05em; color: #fff; text-shadow: 0 2px 6px rgba(0,0,0,.6); }
+.amis-etendard__etat { margin-bottom: 8px; font-size: .92rem; font-style: italic; color: rgba(236,228,210,.75); }
+.est-ligne .amis-etendard__etat, .est-duel .amis-etendard__etat { font-style: normal; font-family: "Cinzel","Cinzel Repli", serif; font-size: .64rem; font-weight: 700; letter-spacing: .26em; text-transform: uppercase; color: var(--ivoire); }
+.amis-etendard .amis-btn--ivoire { width: 100%; padding: 10px; font-size: .72rem; }
+.amis-etendard__liens { display: flex; justify-content: center; gap: 16px; margin-top: 4px; }
+.amis-etendard__liens a {
+  font-family: "Cinzel","Cinzel Repli", serif; font-size: .64rem; font-weight: 700; letter-spacing: .16em; text-transform: uppercase;
+  color: rgba(236,228,210,.8); text-decoration: none; border-bottom: 1px solid rgba(236,228,210,.25); padding-bottom: 2px; transition: color .2s ease, border-color .2s ease;
+}
+.amis-etendard__liens a:hover, .amis-etendard__liens a:focus-visible { color: #fff; border-color: #fff; outline: none; }
+.amis-etendard__retirer { margin-top: 2px; font-size: .82rem; color: rgba(236,228,210,.5); opacity: 0; }
+.amis-etendard:hover .amis-etendard__retirer, .amis-etendard__retirer:focus-visible { opacity: 1; }
+.amis-etendard__retirer:hover { color: #fff; }
+
+.amis-salle__vide { display: grid; place-items: center; gap: 6px; min-height: 220px; padding: 30px; text-align: center; border: 1px dashed var(--filet-fort); }
+.amis-salle__vide p { margin: 0; font-family: "Cinzel","Cinzel Repli", serif; font-size: 1.1rem; letter-spacing: .08em; color: var(--ivoire-doux); }
+.amis-salle__vide span { font-style: italic; color: var(--gris); }
+
+/* ---------- Écrans plus étroits ---------- */
+@media (max-width: 760px) {
+  .amis { padding: 22px 14px 60px; }
+  .amis-bandeau { grid-template-columns: 1fr; }
+  .amis-bandeau__demandes { border-left: 0; border-top: 1px solid var(--filet); }
+  .amis-etendards { gap: 36px 22px; }
+  .amis-etendard { width: calc(50% - 11px); max-width: 196px; }
+  .amis-etendard__retirer { opacity: 1; }
+  .amis-defi { flex-wrap: wrap; }
+  .amis-defi p { flex-basis: calc(100% - 50px); }
 }
