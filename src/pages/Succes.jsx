@@ -15,6 +15,7 @@ import { useAuth, connexionDiscord } from '../lib/auth.js';
 import { useNotifier } from '../lib/notification.js';
 import { urlPublique } from '../lib/chemins.js';
 import { RARETES_SUCCES, pourcentageTexte, celebrerSucces } from '../lib/succes.js';
+import { badgeDuPass } from '../lib/caverne/badges.js';
 
 const ORDRE_CATEGORIES = ['Duels', 'Classé', 'Collection', 'Boosters', 'Histoire', 'Marché'];
 const VITRINE_MAX = 3;
@@ -44,6 +45,7 @@ function Succes({ s, vitrinePleine, surReclamer, surEpingler }) {
       </div>
       <div className="succ__droite">
         {s.recompense > 0 && <span className="succ__or"><Or /> {nombre(s.recompense)}</span>}
+        {s.badge_caverne && <span className="succ__badge-caverne" title="Badge de la Caverne aux Trésors">+ badge {badgeDuPass(s.badge_caverne)?.nom ?? s.badge_caverne}</span>}
         {s.reclame ? (
           <button type="button" className={`succ__epingle${epingle ? ' est-epingle' : ''}`} data-epingler={s.id} aria-pressed={epingle}
             disabled={plein || envoi} title={plein ? 'Ta vitrine est pleine : retire un badge d\'abord' : undefined} onClick={() => agir(surEpingler)}>
@@ -69,8 +71,16 @@ export default function PageSucces() {
   useEffect(() => {
     if (!discordId) return undefined;
     let actif = true;
-    supabase.rpc('mes_succes').then(({ data, error }) => {
-      if (actif) setDonnees(error ? { pour: discordId, erreur: true } : { pour: discordId, succes: data ?? [] });
+    Promise.all([
+      supabase.rpc('mes_succes'),
+      // les succès qui donnent aussi un badge de la Caverne (colonne ajoutée par caverne.sql : ignorée si absente)
+      supabase.from('succes').select('id, badge_caverne').not('badge_caverne', 'is', null),
+    ]).then(([{ data, error }, { data: badges }]) => {
+      const badge = new Map((badges ?? []).map((x) => [x.id, x.badge_caverne]));
+      if (actif) {
+        setDonnees(error ? { pour: discordId, erreur: true }
+          : { pour: discordId, succes: (data ?? []).map((s) => ({ ...s, badge_caverne: badge.get(s.id) ?? null })) });
+      }
     });
     return () => { actif = false; };
   }, [discordId]);
@@ -87,6 +97,7 @@ export default function PageSucces() {
     majSucces((liste) => liste.map((x) => (x.id === id
       ? { ...x, reclame: true, reclame_le: new Date().toISOString(), pourcentage: data?.pourcentage ?? x.pourcentage } : x)));
     await celebrerSucces({ ...s, ...data });
+    if (s?.badge_caverne) notifier(`Badge de la Caverne « ${badgeDuPass(s.badge_caverne)?.nom ?? s.badge_caverne} » obtenu : active-le quand tu veux, à la Boutique ou devant la Caverne.`);
     return data?.recompense ?? 0;
   };
   const toutReclamer = async () => {

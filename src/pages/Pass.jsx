@@ -19,6 +19,7 @@ import { urlPublique } from '../lib/chemins.js';
 import { jouerSon } from '../lib/son.js';
 import { RARETES } from '../data/affichage.js';
 import { TYPES, nombre, PIECE } from '../data/pass.js';
+import { badgeDuPass } from '../lib/caverne/badges.js';
 
 // La saison en cours, ses paliers, et ce qu'il faut pour afficher les récompenses (cartes, boosters, plateaux)
 // (la saison et ses paliers arrivent en une seule requête ; ce qu'il faut pour les récompenses vient
@@ -223,6 +224,8 @@ export default function Pass() {
         : data.or > 0
           ? `Plus aucune carte ${rarete} à découvrir : +${nombre(data.or)} or à la place.`
           : `Tu as déjà toutes les cartes ${rarete}s : un exemplaire de plus de « ${data.nom} » (à recycler dans ton grimoire).`);
+    } else if (data.type === 'badge_caverne') {
+      notifier(`Badge de la Caverne « ${badgeDuPass(data.nom)?.nom ?? data.nom} » obtenu : active-le quand tu veux, à la Boutique ou devant la Caverne.`);
     } else notifier(`${TYPES[data.type]} « ${data.nom} » obtenu.`);
     setVersion((v) => v + 1);
   };

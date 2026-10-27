@@ -7,7 +7,8 @@
 //   V.   Le Roi Liche : un combat en cinq manches, fuir à temps.
 //  Le serveur (supabase/caverne.sql) prend la mise, tire le hasard et paie ; le dessin et l'animation
 //  sont dans lib/caverne/caverne.js, branché ici une fois la bourse du joueur lue.
-//  On y entre depuis le hall de la Boutique.
+//  On y entre depuis la barre latérale. Elle est scellée : sans badge activé (lib/caverne/badges.js),
+//  la page montre la porte scellée, les badges du joueur à activer et le chemin de la Boutique.
 // =====================================================================
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
@@ -16,6 +17,8 @@ import { supabase } from '../lib/supabase.js';
 import { useAuth } from '../lib/auth.js';
 import { useNotifier } from '../lib/notification.js';
 import { monterCaverne } from '../lib/caverne/caverne.js';
+import { lireBadges, accesOuvert, tempsRestant } from '../lib/caverne/badges.js';
+import BadgesCaverne from '../components/BadgesCaverne.jsx';
 
 // Une fonction du serveur : sa réponse, ou une erreur avec le message à montrer
 async function rpc(nom, args) {
@@ -48,6 +51,8 @@ export default function Caverne() {
   const notifier = useNotifier();
   const racine = useRef(null);
   const [bourse, setBourse] = useState(null);
+  const [badges, setBadges] = useState(null);   // caverne_badges_etat, ou { erreur }
+  const [maintenant, setMaintenant] = useState(() => Date.now());
 
   // La bourse du joueur, lue une fois ; ensuite, chaque réponse du serveur la donne
   useEffect(() => {
@@ -55,10 +60,18 @@ export default function Caverne() {
     let actif = true;
     supabase.from('wallets').select('balance, cristaux').eq('discord_id', discordId).maybeSingle()
       .then(({ data }) => { if (actif) setBourse({ or: data?.balance ?? 0, cristaux: data?.cristaux ?? 0 }); });
+    lireBadges().then((e) => { if (actif) setBadges(e); }).catch((e) => { if (actif) setBadges({ erreur: e.message }); });
     return () => { actif = false; };
   }, [discordId]);
+  // Le temps qui reste (chaque minute)
+  useEffect(() => {
+    const t = setInterval(() => setMaintenant(Date.now()), 60000);
+    return () => clearInterval(t);
+  }, []);
 
-  const pret = bourse !== null;
+  // La Caverne est scellée tant qu'aucun badge n'est activé (le serveur le revérifie à chaque partie)
+  const ouverte = accesOuvert(badges);
+  const pret = bourse !== null && ouverte;
   useEffect(() => {
     if (!pret || !racine.current) return undefined;
     return monterCaverne(racine.current, { serveur: SERVEUR, notifier, bourse });
@@ -70,6 +83,23 @@ export default function Caverne() {
     <Page id="caverne" classes="page-caverne" titre="La Caverne aux Trésors">
       <div className="caverne" ref={racine}>
         <canvas id="bg" />
+        {badges && !ouverte && (
+          <section className="caverne-porte">
+            <h1>La Caverne est scellée</h1>
+            {badges.erreur ? <p className="caverne-porte__texte">La Caverne n&apos;est pas encore prête. Reviens un peu plus tard.</p> : (
+              <>
+                <p className="caverne-porte__texte">
+                  Seul un badge brise le sceau, pour le temps écrit dessus.
+                  {badges.badges.some((x) => x.nombre > 0) ? ' Active l\'un des tiens pour descendre.' : ' Tu n\'en as aucun pour l\'instant.'}
+                </p>
+                {badges.badges.some((x) => x.nombre > 0) && (
+                  <BadgesCaverne etat={{ ...badges, badges: badges.badges.filter((x) => x.nombre > 0) }} surEtat={setBadges} />
+                )}
+                <Link className="caverne-porte__lien" to="/boutique?echoppe=boosters">Acheter un badge à la Boutique →</Link>
+              </>
+            )}
+          </section>
+        )}
         {!pret ? null : (
           <>
             <div className="hdr">
@@ -79,6 +109,7 @@ export default function Caverne() {
               </div>
               <div className="ttl">LA CAVERNE AUX TRÉSORS</div>
               <div className="hr">
+                {!badges.mj && <span className="panel caverne-temps" title="Active un autre badge à la Boutique pour rester plus longtemps">Encore <b>{tempsRestant(badges.jusqu_a, maintenant)}</b></span>}
                 <Link className="panel retour" to="/boutique" title="Retour à la Boutique">← <b>BOUTIQUE</b></Link>
                 <button type="button" className="panel snd" id="snd">SON : OUI</button>
               </div>

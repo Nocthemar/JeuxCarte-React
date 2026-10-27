@@ -420,3 +420,6 @@ body.fete-ouverte { overflow: hidden; }
   border-radius: 4px;
   box-shadow: 0 0 0 1px rgba(231,196,106,.5), 0 4px 10px rgba(0,0,0,.6);
 }
+
+/* Palier « badge de la Caverne » : l'image du badge */
+.recompense__visuel--badge img { width: 100%; max-width: 124px; height: auto; filter: drop-shadow(0 4px 8px rgba(0,0,0,.6)); }

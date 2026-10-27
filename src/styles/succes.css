@@ -107,6 +107,7 @@
 .succ__droite { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; text-align: right; }
 .succ__or { display: inline-flex; align-items: center; gap: 5px; font-family: "Cinzel","Cinzel Repli", serif; font-weight: 700; color: var(--or); }
 .succ__or img { width: 18px; height: 18px; }
+.succ__badge-caverne { font-family: "Cinzel","Cinzel Repli", serif; font-size: .72rem; letter-spacing: .06em; color: #9cc4ff; white-space: nowrap; }
 .succ__compte { font-family: "Cinzel","Cinzel Repli", serif; font-size: .78rem; color: var(--texte-doux); font-variant-numeric: tabular-nums; }
 
 /* Verrouillé : badge éteint, texte plus sombre */

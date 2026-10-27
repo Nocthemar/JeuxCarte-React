@@ -5,18 +5,20 @@
 //     (offrande prête, boosters à ouvrir) ;
 //   - une échoppe (#/boutique?echoppe=boosters…) : ses articles, et des onglets pour passer aux autres.
 //  Les échoppes :
-//   I.   les boosters de cartes, et l'offrande gratuite (components/boutique/Boosters.jsx) ;
+//   I.   les boosters de cartes, l'offrande gratuite (components/boutique/Boosters.jsx), et les badges de la
+//        Caverne aux Trésors (components/boutique/EtalBadges.jsx) ;
 //   II.  l'armoire des apparences (bannières, titres, thèmes) ;
 //   III. l'atelier des plateaux du Duel (components/boutique/Etals.jsx).
 //  (L'étal du marchand ambulant a été retiré du jeu le 20/10/2026 ; sa table daily_shop reste en base,
 //  le bot Discord et le site Nocthémar s'en servent.)
 //  La bourse (solde) reste en haut ; après chaque achat, tout est rechargé (le solde est commun).
-//  Sous le hall, l'entrée de la Caverne aux Trésors (pages/Caverne.jsx).
+//  (La Caverne aux Trésors s'ouvre depuis la barre latérale.)
 // =====================================================================
 import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import Page from '../components/Page.jsx';
 import Boosters from '../components/boutique/Boosters.jsx';
+import EtalBadges from '../components/boutique/EtalBadges.jsx';
 import { ArmoireProfil, AtelierPlateaux } from '../components/boutique/Etals.jsx';
 import { supabase } from '../lib/supabase.js';
 import { useAuth } from '../lib/auth.js';
@@ -25,7 +27,7 @@ import { urlPublique } from '../lib/chemins.js';
 const ECHOPPES = [
   {
     id: 'boosters', num: 'I', court: 'Boosters', sur: 'Boosters de cartes', titre: 'La porte aux mille cartes',
-    porte: 'Des cartes tirées au hasard, et une offrande offerte toutes les 10 minutes.',
+    porte: 'Des cartes tirées au hasard, une offrande toutes les 10 minutes, et les badges de la Caverne.',
     intro: 'Chaque booster renferme des cartes tirées au hasard. Tape sur la porte pour la briser : sa lumière trahit la rareté qui t\'attend.',
   },
   {
@@ -205,7 +207,7 @@ export default function Boutique() {
                 <h2 id="echoppe-titre">{ici.titre}</h2>
                 <p className="echoppe__intro">{ici.intro}</p>
               </header>
-              {ici.id === 'boosters' && <Boosters {...props} />}
+              {ici.id === 'boosters' && <><Boosters {...props} /><EtalBadges {...props} /></>}
               {ici.id === 'apparences' && <ArmoireProfil {...props} />}
               {ici.id === 'plateaux' && <AtelierPlateaux {...props} />}
             </section>

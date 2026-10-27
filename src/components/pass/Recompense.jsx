@@ -8,6 +8,7 @@ import Carte from '../Carte.jsx';
 import { RARETES, versoDe } from '../../data/affichage.js';
 import { urlPublique } from '../../lib/chemins.js';
 import { TYPES, nombre, PIECE } from '../../data/pass.js';
+import { badgeDuPass } from '../../lib/caverne/badges.js';
 
 const ICONES = {
   dos_carte: <><rect x="6" y="3" width="12" height="18" rx="1.5" /><path d="M12 7l3 5-3 5-3-5z" /></>,
@@ -72,6 +73,16 @@ function Contenu({ p, catalogue, surApercu }) {
       <>
         <span className="recompense__visuel recompense__visuel--plateau">{pl?.miniature ? <img src={urlPublique(pl.miniature)} alt="" loading="lazy" /> : <Icone nom="fond_plateau" />}</span>
         <span className="recompense__nom">{pl?.nom ?? v.nom ?? 'Plateau'}</span>
+      </>
+    );
+  }
+  if (p.type_recompense === 'badge_caverne') {
+    // Un badge qui ouvre la Caverne aux Trésors, à activer quand on veut (Boutique ou porte de la Caverne)
+    const badge = badgeDuPass(v.nom);
+    return (
+      <>
+        <span className="recompense__visuel recompense__visuel--badge">{badge ? <img src={urlPublique(badge.image)} alt="" loading="lazy" /> : <Icone nom="cadenas" />}</span>
+        <span className="recompense__nom">Caverne : {badge?.nom ?? v.nom}</span>
       </>
     );
   }

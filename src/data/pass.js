@@ -10,6 +10,7 @@ export const TYPES = {
   cadre_portrait: 'Cadre de portrait',
   titre: 'Titre',
   fond_plateau: 'Plateau',
+  badge_caverne: 'Badge de la Caverne',
 };
 export const nombre = (n) => Number(n ?? 0).toLocaleString('fr-FR');
 export const PIECE = 'img/Equipement/Or-icone.webp';

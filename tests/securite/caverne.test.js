@@ -20,6 +20,7 @@ beforeAll(async () => {
   await b.db.exec(caverne);   // relançable sans casse
   await b.compte({ id: ALICE, fournisseur: 'discord', meta: { provider_id: '111111', full_name: 'Alice' } });
   await b.sql(`update wallets set balance = 1000, cristaux = 100 where discord_id = '111111'`);
+  await b.sql(`insert into caverne_acces values ('111111', now() + interval '1 day')`);   // un badge activé
 }, 60000);
 
 describe('la Caverne aux Trésors', () => {

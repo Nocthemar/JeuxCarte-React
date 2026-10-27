@@ -1,6 +1,7 @@
 -- =====================================================================
 --  La Caverne aux Trésors : cinq jeux de hasard, avec l'or ou les cristaux du jeu (écran #/caverne)
 --  À lancer APRÈS schema.sql et securite.sql, dans les deux projets (dev puis le vrai). Relançable sans casse.
+--  La Caverne est scellée : on n'y joue qu'avec un badge activé (24 h à 3 mois), ou en MJ (en fin de fichier).
 --
 --  Tout se décide ici, jamais dans le navigateur : le serveur prend la mise, tire le hasard (le réveil du
 --  dragon, les cristaux maudits, les planches qui cèdent, la prise au bout de la ligne, les coups du Roi Liche),
@@ -202,6 +203,7 @@ declare
   v_r      double precision;
 begin
   if v_moi is null then raise exception 'Connecte-toi d''abord.'; end if;
+  if not caverne_a_acces(v_moi) then raise exception 'La Caverne est scellée : active un badge pour y entrer.'; end if;
   if p_jeu not in ('dragon', 'bourses', 'pont', 'lac', 'liche') then raise exception 'Jeu inconnu.'; end if;
   if v_bornes is null then raise exception 'Monnaie inconnue.'; end if;
   if p_mise is null or p_mise < v_bornes[1] or p_mise > v_bornes[2] then
@@ -446,3 +448,172 @@ create or replace view admin.caverne_bilan as
   from public.caverne_historique where joue_le > now() - interval '7 days'
   group by discord_id, monnaie order by solde desc;
 revoke all on admin.caverne_bilan from public, anon, authenticated;
+
+
+-- =====================================================================
+--  Les badges de la Caverne : la Caverne est scellée ; un badge l'ouvre pour un temps (24 h, 1 semaine,
+--  1 mois, 3 mois). On les achète en Boutique (or) ou on les gagne (succès, palier du Pass). Le joueur les
+--  garde et les active quand il veut ; activer un badge pendant que l'accès court ajoute son temps au temps
+--  restant. Les MJ entrent toujours. Une partie commencée se finit, même si l'accès expire entre-temps.
+--
+--  Les prix se changent dans la table (relancer ce fichier ne les écrase pas) :
+--    update public.caverne_badges_types set prix = 300 where id = '24h';   -- null : plus en vente
+--  Un badge en récompense :
+--    - d'un succès : update public.succes set badge_caverne = '1semaine' where id = '…';
+--    - d'un palier du Pass : type_recompense 'badge_caverne', valeur '{"nom": "1semaine"}'
+-- =====================================================================
+create table if not exists public.caverne_badges_types (
+  id     text primary key,
+  nom    text not null,
+  duree  interval not null,
+  prix   int check (prix is null or prix >= 0),   -- en or ; null : pas en vente
+  image  text not null,
+  ordre  int not null default 0
+);
+insert into public.caverne_badges_types (id, nom, duree, prix, image, ordre) values
+  ('24h',      '24 heures', interval '24 hours', 250,   'img/Badge/Badge_24h.webp',      1),
+  ('1semaine', '1 semaine', interval '7 days',   1200,  'img/Badge/Badge_1semaine.webp', 2),
+  ('1mois',    '1 mois',    interval '30 days',  4000,  'img/Badge/Badge_1mois.webp',    3),
+  ('3mois',    '3 mois',    interval '90 days',  10000, 'img/Badge/Badge_3mois.webp',    4)
+on conflict (id) do update set nom = excluded.nom, duree = excluded.duree, image = excluded.image, ordre = excluded.ordre;
+alter table public.caverne_badges_types enable row level security;
+revoke all on public.caverne_badges_types from anon, authenticated;
+grant select on public.caverne_badges_types to anon, authenticated;
+drop policy if exists caverne_badges_types_lire on public.caverne_badges_types;
+create policy caverne_badges_types_lire on public.caverne_badges_types for select to anon, authenticated using (true);
+
+-- Les badges que chaque joueur garde (pas encore activés)
+create table if not exists public.caverne_badges (
+  discord_id text not null references public.players(discord_id) on delete cascade,
+  badge_id   text not null references public.caverne_badges_types(id) on delete cascade,
+  nombre     int  not null default 0 check (nombre >= 0),
+  primary key (discord_id, badge_id)
+);
+-- Jusqu'à quand chaque joueur peut entrer
+create table if not exists public.caverne_acces (
+  discord_id text primary key references public.players(discord_id) on delete cascade,
+  jusqu_a    timestamptz not null
+);
+alter table public.caverne_badges enable row level security;
+alter table public.caverne_acces  enable row level security;
+revoke all on public.caverne_badges, public.caverne_acces from anon, authenticated;
+grant select on public.caverne_badges, public.caverne_acces to authenticated;
+drop policy if exists caverne_badges_lire on public.caverne_badges;
+create policy caverne_badges_lire on public.caverne_badges for select to authenticated using (discord_id = public.my_discord_id());
+drop policy if exists caverne_acces_lire on public.caverne_acces;
+create policy caverne_acces_lire on public.caverne_acces for select to authenticated using (discord_id = public.my_discord_id());
+
+-- Peut-il entrer ? (MJ, ou un accès qui court encore)
+create or replace function public.caverne_a_acces(p_moi text)
+returns boolean language sql stable security definer set search_path = public as $$
+  select exists (select 1 from players where discord_id = p_moi and is_mj)
+      or exists (select 1 from caverne_acces where discord_id = p_moi and jusqu_a > now())
+$$;
+
+-- Donner des badges (interne : achat, succès, Pass)
+create or replace function public.caverne_badge_donner(p_moi text, p_badge text, p_nombre int default 1)
+returns void language plpgsql security definer set search_path = public as $$
+begin
+  if not exists (select 1 from caverne_badges_types where id = p_badge) then raise exception 'Badge inconnu : %', p_badge; end if;
+  insert into caverne_badges (discord_id, badge_id, nombre) values (p_moi, p_badge, p_nombre)
+  on conflict (discord_id, badge_id) do update set nombre = caverne_badges.nombre + excluded.nombre;
+end;
+$$;
+
+-- Où en est le joueur : son accès (jusqu_a, null s'il n'en a pas), MJ ou non, et chaque badge (prix, combien il en a)
+create or replace function public.caverne_badges_etat()
+returns jsonb language sql stable security definer set search_path = public as $$
+  select jsonb_build_object(
+    'jusqu_a', (select jusqu_a from caverne_acces where discord_id = my_discord_id() and jusqu_a > now()),
+    'mj', exists (select 1 from players where discord_id = my_discord_id() and is_mj),
+    'badges', coalesce((
+      select jsonb_agg(jsonb_build_object('id', t.id, 'nom', t.nom, 'image', t.image, 'prix', t.prix,
+               'secondes', extract(epoch from t.duree)::int, 'nombre', coalesce(b.nombre, 0)) order by t.ordre)
+      from caverne_badges_types t
+      left join caverne_badges b on b.badge_id = t.id and b.discord_id = my_discord_id()), '[]'::jsonb))
+$$;
+
+-- Acheter un badge (en or), puis l'activer quand on veut
+create or replace function public.caverne_badge_acheter(p_badge text)
+returns jsonb language plpgsql security definer set search_path = public as $$
+declare
+  v_moi  text := my_discord_id();
+  v_type caverne_badges_types;
+begin
+  if v_moi is null then raise exception 'Connecte-toi d''abord.'; end if;
+  perform pg_advisory_xact_lock(hashtext('caverne:' || v_moi));
+  select * into v_type from caverne_badges_types where id = p_badge;
+  if not found then raise exception 'Badge inconnu.'; end if;
+  if v_type.prix is null then raise exception 'Ce badge n''est pas en vente.'; end if;
+  perform caverne_bouger(v_moi, 'or', -v_type.prix);
+  perform caverne_badge_donner(v_moi, p_badge);
+  begin
+    insert into transactions (discord_id, amount, source, reason) values (v_moi, -v_type.prix, 'boutique', 'Badge de la Caverne : ' || v_type.nom);
+  exception when others then null;
+  end;
+  return caverne_badges_etat() || jsonb_build_object('achete', v_type.nom, 'prix', v_type.prix);
+end;
+$$;
+
+create or replace function public.caverne_badge_activer(p_badge text)
+returns jsonb language plpgsql security definer set search_path = public as $$
+declare
+  v_moi  text := my_discord_id();
+  v_type caverne_badges_types;
+begin
+  if v_moi is null then raise exception 'Connecte-toi d''abord.'; end if;
+  perform pg_advisory_xact_lock(hashtext('caverne:' || v_moi));
+  select * into v_type from caverne_badges_types where id = p_badge;
+  if not found then raise exception 'Badge inconnu.'; end if;
+  update caverne_badges set nombre = nombre - 1 where discord_id = v_moi and badge_id = p_badge and nombre > 0;
+  if not found then raise exception 'Tu n''as pas ce badge.'; end if;
+  insert into caverne_acces (discord_id, jusqu_a) values (v_moi, now() + v_type.duree)
+  on conflict (discord_id) do update set jusqu_a = greatest(caverne_acces.jusqu_a, now()) + v_type.duree;
+  return caverne_badges_etat() || jsonb_build_object('active', v_type.nom);
+end;
+$$;
+
+-- Un succès peut donner un badge (en plus de son or)
+alter table public.succes add column if not exists badge_caverne text references public.caverne_badges_types(id) on delete set null;
+create or replace function public.caverne_badge_du_succes()
+returns trigger language plpgsql security definer set search_path = public as $$
+declare
+  v_badge text;
+begin
+  select badge_caverne into v_badge from succes where id = new.succes_id;
+  if v_badge is not null then perform caverne_badge_donner(new.discord_id, v_badge); end if;
+  return new;
+end;
+$$;
+drop trigger if exists caverne_badge_du_succes on public.player_succes;
+create trigger caverne_badge_du_succes after insert on public.player_succes
+  for each row execute function public.caverne_badge_du_succes();
+
+-- Un palier du Pass peut donner un badge : type 'badge_caverne', valeur {"nom": "<id du badge>"}.
+-- pass_reclamer range les types qu'il ne connaît pas dans pass_cosmetiques : on les intercepte là.
+alter table public.pass_paliers drop constraint if exists pass_paliers_type_recompense_check;
+alter table public.pass_paliers add constraint pass_paliers_type_recompense_check check (type_recompense in
+  ('or', 'carte', 'carte_rarete', 'booster', 'dos_carte', 'cadre_portrait', 'titre', 'fond_plateau', 'badge_caverne'));
+alter table public.pass_cosmetiques drop constraint if exists pass_cosmetiques_type_check;
+alter table public.pass_cosmetiques add constraint pass_cosmetiques_type_check check (type in
+  ('dos_carte', 'cadre_portrait', 'titre', 'fond_plateau', 'badge_caverne'));
+create or replace function public.caverne_badge_du_pass()
+returns trigger language plpgsql security definer set search_path = public as $$
+declare
+  v_badge text;
+begin
+  if new.type <> 'badge_caverne' then return new; end if;
+  select id into v_badge from caverne_badges_types where id = new.nom or nom = new.nom;
+  if v_badge is null then raise exception 'Badge inconnu : %', new.nom; end if;
+  perform caverne_badge_donner(new.discord_id, v_badge);
+  return null;   -- rien à ranger dans les cosmétiques
+end;
+$$;
+drop trigger if exists caverne_badge_du_pass on public.pass_cosmetiques;
+create trigger caverne_badge_du_pass before insert on public.pass_cosmetiques
+  for each row execute function public.caverne_badge_du_pass();
+
+revoke all on function public.caverne_a_acces(text), public.caverne_badge_donner(text, text, int),
+  public.caverne_badge_du_succes(), public.caverne_badge_du_pass() from public, anon, authenticated;
+revoke all on function public.caverne_badges_etat(), public.caverne_badge_acheter(text), public.caverne_badge_activer(text) from public, anon;
+grant execute on function public.caverne_badges_etat(), public.caverne_badge_acheter(text), public.caverne_badge_activer(text) to authenticated;

@@ -1,0 +1,68 @@
+/* =====================================================================
+   Les badges de la Caverne (components/BadgesCaverne.jsx) : dans l'échoppe des boosters de la Boutique,
+   et sur la porte scellée de la Caverne (pages/Caverne.jsx). Les badges eux-mêmes sont des images
+   (img/Badge) ; autour, seulement de quoi les poser : une ombre, le nombre gardé, les boutons.
+   ===================================================================== */
+.badges-caverne {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 22px;
+  width: 100%; max-width: 1100px; margin: 0 auto;
+}
+.badge-caverne { position: relative; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.badge-caverne__image {
+  display: block; width: 100%; height: auto; aspect-ratio: 836 / 470; object-fit: contain;
+  filter: drop-shadow(0 12px 18px rgba(0,0,0,.65));
+  transition: transform .25s ease, filter .25s ease;
+}
+.badge-caverne:hover .badge-caverne__image { transform: translateY(-3px); filter: drop-shadow(0 16px 22px rgba(0,0,0,.7)); }
+.badge-caverne__nombre {
+  position: absolute; top: 6%; right: 6%;
+  min-width: 34px; padding: 3px 9px; border-radius: 999px;
+  font-family: "Cinzel","Cinzel Repli", serif; font-weight: 700; font-size: .85rem; text-align: center;
+  color: #1b1408; background: linear-gradient(180deg, #f3cf7c, #c8962f);
+  box-shadow: 0 3px 8px rgba(0,0,0,.6);
+}
+.badge-caverne__bas { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; min-height: 38px; }
+.badge-caverne__btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 16px; border: 1px solid rgba(217,164,65,.55); border-radius: 4px;
+  font-family: "Cinzel","Cinzel Repli", serif; font-size: .78rem; letter-spacing: .08em;
+  color: #eee4cc; background: linear-gradient(180deg, rgba(30,34,45,.95), rgba(14,16,22,.95));
+  cursor: pointer; transition: border-color .2s ease, color .2s ease, filter .2s ease;
+}
+.badge-caverne__btn img { width: 16px; height: 16px; }
+.badge-caverne__btn:hover:not(:disabled), .badge-caverne__btn:focus-visible { border-color: #f3cf7c; color: #f3cf7c; outline: none; }
+.badge-caverne__btn:disabled { opacity: .5; cursor: default; }
+.badge-caverne__btn--activer { color: #1b1408; background: linear-gradient(180deg, #f3cf7c, #c8962f); border-color: #f3cf7c; }
+.badge-caverne__btn--activer:hover:not(:disabled), .badge-caverne__btn--activer:focus-visible { color: #1b1408; filter: brightness(1.1); }
+
+/* Dans la Boutique : sous les boosters, avec son titre */
+.page-boutique .etal-badges { margin-top: 46px; }
+.page-boutique .etal-badges__entete { margin-bottom: 20px; text-align: center; }
+.page-boutique .etal-badges__entete h3 { margin: 0 0 6px; font-family: "Cinzel","Cinzel Repli", serif; font-size: 1.3rem; letter-spacing: .08em; color: #f2ead8; }
+.page-boutique .etal-badges__entete p { margin: 0 auto; max-width: 62ch; color: #b4bac5; }
+.page-boutique .etal-badges__entete strong { color: #f3cf7c; font-weight: 600; }
+
+/* La porte scellée de la Caverne : par-dessus la grotte (pages/Caverne.jsx) */
+.caverne-porte {
+  position: relative; z-index: 2;
+  min-height: 100dvh; box-sizing: border-box; padding: 48px 24px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 26px;
+  text-align: center; color: #e9dfc4;
+}
+.caverne-porte h1 {
+  margin: 0; font-family: "Cinzel","Cinzel Repli", serif; font-weight: 900; letter-spacing: .12em;
+  font-size: clamp(1.6rem, 3.4vw, 2.6rem); color: #ffe29a; text-shadow: 0 4px 24px rgba(0,0,0,.9);
+}
+.caverne-porte__texte { margin: 0; max-width: 60ch; font-family: "EB Garamond","EB Garamond Repli", serif; font-size: 1.15rem; line-height: 1.5; color: #d9cfb6; }
+.caverne-porte__lien {
+  font-family: "Cinzel","Cinzel Repli", serif; letter-spacing: .1em; color: #e2b04a; text-decoration: none;
+  border-bottom: 1px solid rgba(226,176,74,.45); padding-bottom: 2px;
+}
+.caverne-porte__lien:hover, .caverne-porte__lien:focus-visible { color: #ffe29a; border-color: #ffe29a; outline: none; }
+
+/* Dans la Caverne ouverte : le temps qui reste, en haut */
+.caverne .caverne-temps {
+  display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px;
+  font-size: 12px; letter-spacing: .06em; color: #e9dfc4; white-space: nowrap;
+}
+.caverne .caverne-temps b { color: #ffe29a; }
