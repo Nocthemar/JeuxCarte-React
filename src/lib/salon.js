@@ -27,19 +27,21 @@ export function nouveauCode() {
 
 // ---------------------------------------------------------------------
 //  Nettoyage des messages reçus : ni balise ni guillemet droit dans les textes (ils s'affichent sans
-//  danger, même insérés dans du HTML), images limitées aux fichiers du jeu, avatars à Discord,
+//  danger, même insérés dans du HTML), images limitées aux fichiers du jeu, avatars à Discord (ou au
+//  stockage « avatars » du jeu, pour les comptes e-mail : supabase/avatars.sql),
 //  nombres finis, taille et profondeur bornées
 // ---------------------------------------------------------------------
 const CLES_INTERDITES = new Set(['__proto__', 'constructor', 'prototype']);
 const IMAGE_DU_JEU = /^img\/[^:?#\\<>"'`]+$/;
 const AVATAR_DISCORD = /^https:\/\/(cdn\.discordapp\.com|media\.discordapp\.net)\/[^\s"'<>`\\]+$/;
+const AVATAR_DU_JEU = /^https:\/\/[a-z0-9-]+\.supabase\.co\/storage\/v1\/object\/public\/avatars\/[a-z0-9_]+\/[a-z0-9-]+\.(webp|png)$/;
 const texteSur = (s) => s.slice(0, 2000).replace(/[<>`]/g, '').replace(/"/g, '”').replace(/'/g, '’');
 
 export function nettoyer(x, cle = '', profondeur = 0) {
   if (profondeur > 40) return null;
   if (typeof x === 'string') {
     if (cle === 'image') return IMAGE_DU_JEU.test(x) && !x.includes('..') ? x : null;
-    if (cle === 'avatar' || cle === 'avatar_url') return AVATAR_DISCORD.test(x) ? x : null;
+    if (cle === 'avatar' || cle === 'avatar_url') return AVATAR_DISCORD.test(x) || AVATAR_DU_JEU.test(x) ? x : null;
     return texteSur(x);
   }
   if (typeof x === 'number') return Number.isFinite(x) ? x : 0;

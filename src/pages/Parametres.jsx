@@ -14,6 +14,7 @@ import Page from '../components/Page.jsx';
 import { supabase } from '../lib/supabase.js';
 import { useAuth, connexionDiscord, connexionEmail, deconnexion } from '../lib/auth.js';
 import { useNotifier } from '../lib/notification.js';
+import { changerPortrait, retirerPortrait, effacerMesPortraits } from '../lib/portrait.js';
 import { CLES, lirePref, ecrirePref, niveauAnimationsChoisi, ecrireNiveauAnimations } from '../lib/preferences.js';
 import { estIOS, installer, useAppli } from '../lib/appli.js';
 import {
@@ -139,6 +140,39 @@ function DoubleAuth() {
 
 // La confirmation de la suppression du compte : il faut taper SUPPRIMER, et s'être connecté il y a moins de
 // 10 minutes (vérifié par le serveur) : compte e-mail, le mot de passe ; compte Discord, un passage par Discord
+// Le portrait d'un compte e-mail : une image choisie sur l'appareil (lib/portrait.js) ; les comptes Discord gardent celui de Discord
+function Portrait({ joueur }) {
+  const { recharger } = useAuth();
+  const notifier = useNotifier();
+  const champ = useRef(null);
+  const [envoi, setEnvoi] = useState(false);
+  const agir = async (travail, message) => {
+    setEnvoi(true);
+    try { await travail(); await recharger(); notifier(message); }
+    catch (e) { notifier(e.message, 'erreur'); }
+    setEnvoi(false);
+  };
+  const choisi = (e) => {
+    const fichier = e.target.files?.[0];
+    e.target.value = '';   // pour pouvoir rechoisir le même fichier
+    if (fichier) agir(() => changerPortrait(joueur.discord_id, fichier), 'Ton nouveau portrait est en place.');
+  };
+  return (
+    <div className="reglage reglage--portrait">
+      <span className="reglage__compte">
+        {joueur.avatar_url ? <img src={joueur.avatar_url} alt="" /> : <span className="reglage__portrait-vide" aria-hidden="true">{(joueur.username ?? '?').slice(0, 1)}</span>}
+        <span><b>Portrait</b><small>Choisis une image sur ton appareil : elle est recadrée en carré.</small></span>
+      </span>
+      <span className="reglage__boutons">
+        <input ref={champ} type="file" accept="image/*" hidden onChange={choisi} />
+        <button type="button" className="btn-or" disabled={envoi} onClick={() => champ.current.click()}>{envoi ? 'Envoi…' : 'Choisir une image'}</button>
+        {joueur.avatar_url && <button type="button" className="btn-sobre" disabled={envoi}
+          onClick={() => agir(() => retirerPortrait(joueur.discord_id), 'Portrait retiré.')}>Retirer</button>}
+      </span>
+    </div>
+  );
+}
+
 function Suppression({ joueur, surFermeture }) {
   const notifier = useNotifier();
   const fenetre = useRef(null);
@@ -159,6 +193,7 @@ function Suppression({ joueur, surFermeture }) {
       const erreur = await connexionEmail(user?.email ?? '', mdp);
       if (erreur) { notifier(erreur, 'erreur'); setEnvoi(false); return; }
     }
+    if (parEmail) await effacerMesPortraits(joueur.discord_id);   // ses images ne restent pas en ligne
     const { error } = await supabase.rpc('supprimer_mon_compte', { p_confirmation: texte.trim() });
     if (error && /^REAUTH/.test(error.message)) { setReconnexion(true); setEnvoi(false); return; }
     if (error) {
@@ -321,6 +356,7 @@ export default function Parametres() {
                     onClick={() => deconnexion('global')}>Partout</button>
                 </span>
               </div>
+              {joueur.fournisseur === 'email' && <Portrait joueur={joueur} />}
               {joueur.fournisseur === 'email' && (
                 <div className="reglage">
                   <span><b>Mot de passe</b><small>Choisis un nouveau mot de passe pour ton compte.</small></span>
