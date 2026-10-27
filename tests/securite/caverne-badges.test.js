@@ -87,9 +87,11 @@ describe('les badges de la Caverne', () => {
     expect((await b.essai('anon', null, `select caverne_badge_acheter('24h')`)).ok).toBe(false);
   });
 
-  it('un MJ entre toujours', async () => {
-    await b.sql(`delete from caverne_acces; update players set is_mj = true where discord_id = '111111'`);
-    expect((await rpc('caverne_badges_etat()')).mj).toBe(true);
+  it('un MJ aussi a besoin d\'un badge', async () => {
+    await b.sql(`delete from caverne_parties; delete from caverne_acces; update players set is_mj = true where discord_id = '111111'`);
+    expect((await essai(`caverne_commencer('pont', 'or', 10)`)).ok).toBe(false);
+    await b.sql(`insert into caverne_badges values ('111111', '24h', 1) on conflict (discord_id, badge_id) do update set nombre = 1`);
+    await rpc(`caverne_badge_activer('24h')`);
     expect((await essai(`caverne_commencer('pont', 'or', 10)`)).ok).toBe(true);
   });
 });

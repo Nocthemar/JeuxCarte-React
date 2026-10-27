@@ -109,7 +109,7 @@ export default function Caverne() {
               </div>
               <div className="ttl">LA CAVERNE AUX TRÉSORS</div>
               <div className="hr">
-                {!badges.mj && <span className="panel caverne-temps" title="Active un autre badge à la Boutique pour rester plus longtemps">Encore <b>{tempsRestant(badges.jusqu_a, maintenant)}</b></span>}
+                <span className="panel caverne-temps" title="Active un autre badge à la Boutique pour rester plus longtemps">Encore <b>{tempsRestant(badges.jusqu_a, maintenant)}</b></span>
                 <Link className="panel retour" to="/boutique" title="Retour à la Boutique">← <b>BOUTIQUE</b></Link>
                 <button type="button" className="panel snd" id="snd">SON : OUI</button>
               </div>

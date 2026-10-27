@@ -2,7 +2,7 @@
 //  Les badges de la Caverne (supabase/caverne.sql, en fin de fichier) : la Caverne est scellée ; un badge
 //  activé l'ouvre pour 24 h, 1 semaine, 1 mois ou 3 mois (le temps s'ajoute au temps restant).
 //  Le serveur garde les badges, l'accès et les prix ; ici, on ne fait que demander et afficher.
-//  etat : { jusqu_a (date ISO, ou null), mj, badges: [{ id, nom, image, prix, secondes, nombre }] }
+//  etat : { jusqu_a (date ISO, ou null), badges: [{ id, nom, image, prix, secondes, nombre }] }
 // =====================================================================
 import { supabase } from '../supabase.js';
 
@@ -17,7 +17,7 @@ export const acheterBadge = (id) => rpc('caverne_badge_acheter', { p_badge: id }
 export const activerBadge = (id) => rpc('caverne_badge_activer', { p_badge: id });
 
 // Peut-il entrer ?
-export const accesOuvert = (etat) => !!etat && (etat.mj || (!!etat.jusqu_a && new Date(etat.jusqu_a) > new Date()));
+export const accesOuvert = (etat) => !!etat?.jusqu_a && new Date(etat.jusqu_a) > new Date();
 
 // Le temps qui reste, en mots : « 6 j 23 h », « 5 h 12 min », « 3 min »
 export function tempsRestant(jusqua, maintenant = Date.now()) {

@@ -1,7 +1,7 @@
 -- =====================================================================
 --  La Caverne aux Trésors : cinq jeux de hasard, avec l'or ou les cristaux du jeu (écran #/caverne)
 --  À lancer APRÈS schema.sql et securite.sql, dans les deux projets (dev puis le vrai). Relançable sans casse.
---  La Caverne est scellée : on n'y joue qu'avec un badge activé (24 h à 3 mois), ou en MJ (en fin de fichier).
+--  La Caverne est scellée : on n'y joue qu'avec un badge activé (24 h à 3 mois), MJ compris (en fin de fichier).
 --
 --  Tout se décide ici, jamais dans le navigateur : le serveur prend la mise, tire le hasard (le réveil du
 --  dragon, les cristaux maudits, les planches qui cèdent, la prise au bout de la ligne, les coups du Roi Liche),
@@ -454,7 +454,7 @@ revoke all on admin.caverne_bilan from public, anon, authenticated;
 --  Les badges de la Caverne : la Caverne est scellée ; un badge l'ouvre pour un temps (24 h, 1 semaine,
 --  1 mois, 3 mois). On les achète en Boutique (or) ou on les gagne (succès, palier du Pass). Le joueur les
 --  garde et les active quand il veut ; activer un badge pendant que l'accès court ajoute son temps au temps
---  restant. Les MJ entrent toujours. Une partie commencée se finit, même si l'accès expire entre-temps.
+--  restant. Les MJ aussi ont besoin d'un badge. Une partie commencée se finit, même si l'accès expire entre-temps.
 --
 --  Les prix se changent dans la table (relancer ce fichier ne les écrase pas) :
 --    update public.caverne_badges_types set prix = 300 where id = '24h';   -- null : plus en vente
@@ -503,11 +503,10 @@ create policy caverne_badges_lire on public.caverne_badges for select to authent
 drop policy if exists caverne_acces_lire on public.caverne_acces;
 create policy caverne_acces_lire on public.caverne_acces for select to authenticated using (discord_id = public.my_discord_id());
 
--- Peut-il entrer ? (MJ, ou un accès qui court encore)
+-- Peut-il entrer ? (un accès qui court encore ; les MJ aussi)
 create or replace function public.caverne_a_acces(p_moi text)
 returns boolean language sql stable security definer set search_path = public as $$
-  select exists (select 1 from players where discord_id = p_moi and is_mj)
-      or exists (select 1 from caverne_acces where discord_id = p_moi and jusqu_a > now())
+  select exists (select 1 from caverne_acces where discord_id = p_moi and jusqu_a > now())
 $$;
 
 -- Donner des badges (interne : achat, succès, Pass)
@@ -520,12 +519,11 @@ begin
 end;
 $$;
 
--- Où en est le joueur : son accès (jusqu_a, null s'il n'en a pas), MJ ou non, et chaque badge (prix, combien il en a)
+-- Où en est le joueur : son accès (jusqu_a, null s'il n'en a pas) et chaque badge (prix, combien il en a)
 create or replace function public.caverne_badges_etat()
 returns jsonb language sql stable security definer set search_path = public as $$
   select jsonb_build_object(
     'jusqu_a', (select jusqu_a from caverne_acces where discord_id = my_discord_id() and jusqu_a > now()),
-    'mj', exists (select 1 from players where discord_id = my_discord_id() and is_mj),
     'badges', coalesce((
       select jsonb_agg(jsonb_build_object('id', t.id, 'nom', t.nom, 'image', t.image, 'prix', t.prix,
                'secondes', extract(epoch from t.duree)::int, 'nombre', coalesce(b.nombre, 0)) order by t.ordre)
