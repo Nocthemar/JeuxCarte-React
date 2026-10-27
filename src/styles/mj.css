@@ -1,240 +1,348 @@
 /* =====================================================================
-   Panneau MJ (#/mj) — ancien CSS/mj.css du site, utilise les variables de compte.css
-   (à charger APRÈS compte.css)
+   Le Conseil du Maître du Jeu (pages/Mj.jsx), dans le style Nocthémar :
+   le ciel de Nocthémar derrière, des plaques de pierre taillée à grandes facettes, l'ivoire pour le texte,
+   un seul accent, le rouge sang du jeu (onglet en cours, bouton principal, sceaux). Le doré est réservé
+   aux petites images du jeu (pièce, booster).
    ===================================================================== */
-
-.page-mj .mj-wrap { max-width: 1200px; }
-
-/* .onglet-contenu est une balise <section> : sans ça elle hérite du style
-   générique `section` de CSS/index.css (gros padding, largeur/centrage,
-   bordure basse) — même précaution que .entete/.carte dans compte.css. */
-.page-mj .onglet-contenu {
-  padding: 0;
-  max-width: none;
-  margin-left: 0;
-  margin-right: 0;
-  border-bottom: 0;
+body.page-mj {
+  --ivoire: #ece4d2;
+  --ivoire-doux: #b9b2a2;
+  --gris: #878d98;
+  --pierre-1: #1d212b;
+  --pierre-2: #13161d;
+  --filet: rgba(236,228,210,.13);
+  --filet-fort: rgba(236,228,210,.32);
+  --sang: #9b2730;
+  --sang-vif: #c23d48;
+  --sang-sombre: #5e1419;
+  --vert: #7fcf9b;
+  /* une plaque à coins taillés, et ses facettes low-poly (des pans de lumière francs) */
+  --taille: polygon(14px 0, calc(100% - 14px) 0, 100% 14px, 100% calc(100% - 14px), calc(100% - 14px) 100%, 14px 100%, 0 calc(100% - 14px), 0 14px);
+  --taille-petite: polygon(7px 0, calc(100% - 7px) 0, 100% 7px, 100% calc(100% - 7px), calc(100% - 7px) 100%, 7px 100%, 0 calc(100% - 7px), 0 7px);
+  --facettes:
+    linear-gradient(118deg, rgba(255,255,255,.045) 0 18%, transparent 18.2%),
+    linear-gradient(64deg, transparent 0 62%, rgba(255,255,255,.025) 62.2% 80%, transparent 80.2%),
+    linear-gradient(205deg, transparent 0 58%, rgba(0,0,0,.28) 58.2%),
+    linear-gradient(180deg, var(--pierre-1), var(--pierre-2));
+  background:
+    linear-gradient(180deg, rgba(6,8,13,.55), rgba(6,8,13,.86) 60%, rgba(6,8,13,.95)),
+    url("/img/Fond/Profil_fond.png") center top / cover no-repeat fixed,
+    #07080c;
+  color: var(--ivoire);
 }
 
-.page-mj .mj-entete h1 {
-  margin: 8px 0 16px;
-  text-align: center;
-  color: var(--accent);
+.mj { max-width: 1480px; margin: 0 auto; padding: 30px 28px 70px; font-family: "EB Garamond","EB Garamond Repli", serif; font-size: 1.02rem; }
+.mj h1, .mj h2, .mj h3 { margin: 0; font-family: "Cinzel","Cinzel Repli", serif; font-weight: 700; color: var(--ivoire); }
+.mj .est-gain { color: var(--vert); }
+.mj .est-perte { color: var(--sang-vif); }
+.mj-vide { margin: 10px 0; color: var(--gris); font-style: italic; }
+.mj-aide { margin: 0; color: var(--gris); font-size: .95rem; }
+.mj-ico { width: 22px; height: 22px; object-fit: contain; flex: none; filter: drop-shadow(0 2px 3px rgba(0,0,0,.6)); }
+
+/* ---------- L'en-tête : le titre à gauche, les salles (onglets) à droite ---------- */
+.mj-entete { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 18px 30px; margin-bottom: 30px; }
+.mj-entete__titre span { display: block; margin-bottom: 6px; font-family: "Cinzel","Cinzel Repli", serif; font-size: .7rem; letter-spacing: .45em; text-transform: uppercase; color: var(--gris); }
+.mj-entete h1 { font-size: clamp(1.7rem, 3vw, 2.6rem); letter-spacing: .03em; text-shadow: 0 6px 30px rgba(0,0,0,.9); }
+.mj-onglets { display: flex; gap: 6px; }
+.mj-onglets button {
+  position: relative; padding: 12px 30px; border: 0; cursor: pointer;
+  font-family: "Cinzel","Cinzel Repli", serif; font-size: .78rem; font-weight: 700; letter-spacing: .16em; text-transform: uppercase;
+  color: var(--ivoire-doux);
+  /* une plaque aux bouts pointus, comme les entrées de la barre */
+  clip-path: polygon(12px 0, calc(100% - 12px) 0, 100% 50%, calc(100% - 12px) 100%, 12px 100%, 0 50%);
+  background: linear-gradient(160deg, rgba(255,255,255,.06) 0 45%, transparent 45.2%), var(--pierre-1);
+  box-shadow: inset 0 0 0 1px var(--filet);
+  transition: color .2s ease, filter .2s ease;
+}
+.mj-onglets button:hover, .mj-onglets button:focus-visible { color: var(--ivoire); filter: brightness(1.25); outline: none; }
+.mj-onglets button.est-actif { color: #fff; background: linear-gradient(160deg, rgba(255,255,255,.14) 0 45%, transparent 45.2%), linear-gradient(180deg, var(--sang-vif), var(--sang) 55%, var(--sang-sombre)); }
+
+/* ---------- Les plaques de pierre ---------- */
+.mj-salle, .mj-stele, .mj-registre, .mj-bandeau, .mj-attente, .mj-refus {
+  clip-path: var(--taille); background: var(--facettes); box-shadow: inset 0 0 0 1px var(--filet), inset 0 1px 0 rgba(255,255,255,.06);
+}
+/* (les <section> du site ont une largeur maximale et des marges : pas ici) */
+.mj section { max-width: none; margin: 0; border-bottom: 0; }
+.mj-salle { padding: 20px 22px 22px; }
+.mj-salle__titre {
+  display: flex; align-items: center; gap: 10px; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid var(--filet);
+  font-size: .8rem !important; letter-spacing: .2em; text-transform: uppercase; color: var(--ivoire-doux) !important;
+}
+.mj-salle--danger { box-shadow: inset 0 0 0 1px rgba(194,61,72,.4); }
+.mj-salle--danger .mj-salle__titre { color: var(--sang-vif) !important; border-color: rgba(194,61,72,.3); }
+.mj-refus, .mj-attente { display: grid; place-items: center; min-height: 260px; padding: 30px; text-align: center; color: var(--ivoire-doux); font-size: 1.1rem; font-style: italic; }
+.mj-refus { max-width: 620px; margin: 80px auto; }
+.mj-refus h1 { margin-bottom: 10px; font-size: 1.8rem; font-style: normal; }
+
+/* ---------- Champs et boutons ---------- */
+.mj-champ {
+  min-width: 0; padding: 10px 12px; border: 1px solid var(--filet); border-radius: 2px;
+  font: inherit; font-size: 1rem; color: var(--ivoire); background: rgba(5,6,10,.65);
+  transition: border-color .2s ease;
+}
+.mj-champ::placeholder { color: #6c717b; }
+.mj-champ:focus { outline: none; border-color: var(--filet-fort); }
+.mj-champ--court { width: 130px; flex: none; }
+.mj-champ--mini { width: 74px; flex: none; text-align: center; }
+.mj-form { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.mj-form > .mj-champ:not(.mj-champ--court):not(.mj-champ--mini) { flex: 1 1 200px; }
+.mj-form__boutons { display: flex; flex-wrap: wrap; gap: 8px; }
+.mj-btn {
+  padding: 10px 20px; border: 0; cursor: pointer;
+  font-family: "Cinzel","Cinzel Repli", serif; font-size: .72rem; font-weight: 700; letter-spacing: .14em; text-transform: uppercase;
+  color: var(--ivoire); clip-path: var(--taille-petite);
+  background: linear-gradient(160deg, rgba(255,255,255,.08) 0 45%, transparent 45.2%), #252a35;
+  box-shadow: inset 0 0 0 1px var(--filet-fort);
+  transition: filter .2s ease, transform .1s ease;
+}
+.mj-btn:hover, .mj-btn:focus-visible { filter: brightness(1.3); outline: none; }
+.mj-btn:active { transform: translateY(1px); }
+.mj-btn--plein { color: #fff; background: linear-gradient(160deg, rgba(255,255,255,.14) 0 45%, transparent 45.2%), linear-gradient(180deg, var(--sang-vif), var(--sang)); box-shadow: none; }
+.mj-btn--danger { color: #f3c4c8; background: rgba(94,20,25,.55); box-shadow: inset 0 0 0 1px rgba(194,61,72,.6); }
+.mj-btn--large { width: 100%; margin-top: 12px; }
+
+
+/* Un sceau : « Premium », « Ouverte », « Scellée » */
+.mj-sceau {
+  display: inline-block; margin-left: 10px; padding: 3px 12px; vertical-align: 1px;
+  font-family: "Cinzel","Cinzel Repli", serif; font-size: .66rem; font-weight: 700; letter-spacing: .16em; text-transform: uppercase;
+  color: #fff; clip-path: polygon(6px 0, calc(100% - 6px) 0, 100% 50%, calc(100% - 6px) 100%, 6px 100%, 0 50%);
+  background: linear-gradient(180deg, var(--sang-vif), var(--sang));
+}
+.mj-sceau:not(.mj-sceau--ouvert):not(:only-child) { margin-left: 10px; }
+.mj-caverne__etat .mj-sceau { margin-left: 0; background: #3a3f4a; color: var(--ivoire-doux); }
+.mj-caverne__etat .mj-sceau--ouvert { background: linear-gradient(180deg, #3f8a5c, #2a5e3e); color: #fff; }
+
+/* ---------- Le royaume ---------- */
+.mj-royaume { display: flex; flex-direction: column; gap: 16px; }
+.mj-steles { display: grid; grid-template-columns: 1.3fr repeat(3, 1fr); gap: 16px; }
+.mj-steles--petites { grid-template-columns: repeat(4, 1fr); }
+.mj-stele { position: relative; display: flex; flex-direction: column; justify-content: flex-end; gap: 6px; min-height: 150px; padding: 20px 22px; overflow: hidden; }
+.mj-steles--petites .mj-stele { min-height: 118px; }
+.mj-stele__titre { font-family: "Cinzel","Cinzel Repli", serif; font-size: .68rem; letter-spacing: .2em; text-transform: uppercase; color: var(--gris); }
+.mj-stele strong { font-family: "Cinzel","Cinzel Repli", serif; font-size: 2.3rem; font-weight: 700; line-height: 1; color: var(--ivoire); text-shadow: 0 4px 18px rgba(0,0,0,.7); }
+.mj-steles--petites .mj-stele strong { font-size: 1.8rem; }
+.mj-stele small { color: var(--ivoire-doux); font-size: .92rem; }
+.mj-stele:has(.mj-stele__image) .mj-stele__titre { padding-right: 64px; }
+.mj-stele__image { position: absolute; top: 14px; right: 16px; width: 54px; height: 54px; object-fit: contain; opacity: .9; filter: drop-shadow(0 6px 10px rgba(0,0,0,.7)); }
+.mj-stele--grande { background: linear-gradient(160deg, rgba(255,255,255,.1) 0 30%, transparent 30.2%), linear-gradient(180deg, rgba(155,39,48,.85), rgba(70,15,20,.95)); }
+.mj-stele--grande strong { font-size: 3.2rem; }
+.mj-stele--grande .mj-stele__titre, .mj-stele--grande small { color: rgba(255,235,225,.8); }
+.mj-caverne-bilan { display: flex; flex-direction: column; gap: 10px; }
+.mj-caverne-bilan__ligne { display: grid; grid-template-columns: 1.1fr repeat(3, 1fr) 1.4fr; align-items: center; gap: 12px; padding: 12px 14px; background: rgba(5,6,10,.4); box-shadow: inset 0 0 0 1px var(--filet); }
+.mj-caverne-bilan__ligne > span { display: flex; flex-direction: column; gap: 2px; }
+.mj-caverne-bilan__ligne small { font-family: "Cinzel","Cinzel Repli", serif; font-size: .62rem; letter-spacing: .14em; text-transform: uppercase; color: var(--gris); }
+.mj-caverne-bilan__ligne strong { font-family: "Cinzel","Cinzel Repli", serif; font-size: 1.3rem; color: var(--ivoire); }
+.mj-caverne-bilan__nom { flex-direction: row !important; align-items: center; gap: 10px !important; font-family: "Cinzel","Cinzel Repli", serif; font-size: 1rem; letter-spacing: .08em; }
+
+/* ---------- Les joueurs : le registre à gauche, le dossier à droite ---------- */
+.mj-joueurs { display: grid; grid-template-columns: 320px minmax(0, 1fr); gap: 18px; align-items: start; }
+.mj-registre { position: sticky; top: 18px; display: flex; flex-direction: column; gap: 12px; padding: 18px 14px 14px; }
+.mj-registre__titre { display: flex; align-items: baseline; justify-content: space-between; padding: 0 6px; font-size: .8rem !important; letter-spacing: .2em; text-transform: uppercase; color: var(--ivoire-doux) !important; }
+.mj-registre__titre small { font-size: .9rem; letter-spacing: 0; color: var(--gris); }
+.mj-registre ul { list-style: none; margin: 0; padding: 0; max-height: calc(100dvh - 250px); overflow-y: auto; scrollbar-width: thin; }
+.mj-registre button {
+  display: flex; align-items: center; gap: 12px; width: 100%; padding: 9px 16px 9px 8px; border: 0; cursor: pointer; text-align: left;
+  font: inherit; color: var(--ivoire);
+  clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 50%, calc(100% - 14px) 100%, 0 100%);
+  background: transparent; transition: background .15s ease;
+}
+.mj-registre li + li button { border-top: 1px solid rgba(236,228,210,.06); }
+.mj-registre button:hover, .mj-registre button:focus-visible { background: rgba(255,255,255,.05); outline: none; }
+.mj-registre button.est-actif { background: linear-gradient(160deg, rgba(255,255,255,.12) 0 40%, transparent 40.2%), linear-gradient(90deg, var(--sang), var(--sang-sombre)); }
+.mj-registre__avatar {
+  display: grid; place-items: center; width: 38px; height: 43px; flex: none; overflow: hidden;
+  font-family: "Cinzel","Cinzel Repli", serif; color: var(--ivoire-doux); background: #2a2f3a;
+  clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+}
+.mj-registre__avatar img { width: 100%; height: 100%; object-fit: cover; }
+.mj-registre__nom { display: flex; flex-direction: column; gap: 3px; flex: 1; min-width: 0; font-size: 1.05rem; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mj-registre__nom small { font-family: "Cinzel","Cinzel Repli", serif; font-size: .58rem; letter-spacing: .16em; text-transform: uppercase; color: var(--sang-vif); }
+.mj-registre button.est-actif .mj-registre__nom small { color: rgba(255,230,225,.85); }
+.mj-registre__or { display: inline-flex; align-items: center; gap: 5px; font-family: "Cinzel","Cinzel Repli", serif; font-size: .88rem; color: var(--ivoire-doux); }
+.mj-registre__or .mj-ico { width: 16px; height: 16px; }
+
+/* Le dossier */
+.mj-dossier { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.mj-bandeau { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 18px 24px; align-items: center; padding: 24px 26px; }
+.mj-medaillon {
+  width: 104px; height: 104px; border-radius: 50%; overflow: hidden; display: grid; place-items: center;
+  background: radial-gradient(circle at 50% 35%, #2a3142, #0b0e15);
+  box-shadow: 0 0 0 3px #0a0d14, 0 0 0 5px var(--ivoire-doux), 0 0 0 7px #0a0d14, 0 0 0 8px rgba(236,228,210,.3), 0 12px 30px rgba(0,0,0,.7);
+}
+.mj-medaillon img { width: 100%; height: 100%; object-fit: cover; }
+.mj-medaillon__vide { font-family: "Cinzel","Cinzel Repli", serif; font-size: 2.4rem; color: var(--ivoire-doux); }
+.mj-bandeau__nom { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.mj-bandeau__sur { font-family: "Cinzel","Cinzel Repli", serif; font-size: .66rem; letter-spacing: .24em; text-transform: uppercase; color: var(--gris); }
+.mj-bandeau__nom h2 { font-size: clamp(1.6rem, 2.6vw, 2.3rem); line-height: 1.1; overflow-wrap: anywhere; }
+.mj-bandeau__meta { color: var(--ivoire-doux); }
+.mj-bandeau__meta a { color: var(--ivoire); text-decoration-color: var(--sang-vif); text-underline-offset: 3px; }
+.mj-plaques { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; list-style: none; margin: 4px 0 0; padding: 0; }
+.mj-plaques li {
+  position: relative; display: flex; flex-direction: column; gap: 2px; padding: 12px 14px;
+  clip-path: var(--taille-petite); background: rgba(5,6,10,.5); box-shadow: inset 0 0 0 1px var(--filet);
+}
+.mj-plaques .mj-ico { position: absolute; top: 10px; right: 10px; width: 24px; height: 24px; }
+.mj-plaques strong { font-family: "Cinzel","Cinzel Repli", serif; font-size: 1.45rem; line-height: 1.1; color: var(--ivoire); }
+.mj-plaques strong i { margin: 0 3px; font-style: normal; color: var(--gris); font-size: 1rem; }
+.mj-plaques small { font-size: .85rem; color: var(--gris); }
+
+.mj-salles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.mj-salle--large { grid-column: 1 / -1; }
+.mj-rangee { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 0; }
+.mj-rangee + .mj-rangee { border-top: 1px solid rgba(236,228,210,.07); }
+.mj-rangee__nom { font-size: 1.05rem; color: var(--ivoire-doux); }
+.mj-jauge { height: 10px; background: rgba(5,6,10,.7); box-shadow: inset 0 0 0 1px var(--filet); clip-path: polygon(4px 0, 100% 0, calc(100% - 4px) 100%, 0 100%); }
+.mj-jauge span { display: block; height: 100%; background: linear-gradient(90deg, var(--sang-sombre), var(--sang-vif)); }
+.mj-jauge__texte { margin: 10px 0 6px; color: var(--ivoire-doux); }
+.mj-jauge__texte strong { font-family: "Cinzel","Cinzel Repli", serif; color: var(--ivoire); }
+
+/* La Caverne : l'état et ses boutons à gauche, les badges à droite */
+.mj-caverne { display: grid; grid-template-columns: minmax(220px, .8fr) minmax(0, 2fr); gap: 20px; align-items: start; }
+.mj-caverne__etat { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; }
+.mj-caverne__etat p { margin: 0; color: var(--ivoire-doux); }
+.mj-caverne__etat strong { color: var(--ivoire); }
+.mj-badges { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; list-style: none; margin: 0; padding: 0; }
+.mj-badges li { position: relative; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.mj-badges .mj-cartes__nombre { right: 2px; bottom: auto; top: 2px; }
+.mj-badges img { width: 100%; height: auto; filter: drop-shadow(0 8px 12px rgba(0,0,0,.7)); }
+
+/* La pastille « ×n » (le nombre de badges gardés) */
+.mj-cartes__nombre {
+  position: absolute; right: -8px; bottom: -6px; padding: 2px 8px;
+  font-family: "Cinzel","Cinzel Repli", serif; font-size: .78rem; font-weight: 700; color: #fff;
+  clip-path: polygon(5px 0, calc(100% - 5px) 0, 100% 50%, calc(100% - 5px) 100%, 5px 100%, 0 50%);
+  background: linear-gradient(180deg, var(--sang-vif), var(--sang));
 }
 
-/* Onglets */
-.page-mj .onglets {
-  display: flex;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: 6px;
-  border-bottom: 1px solid var(--bord);
-}
-.page-mj .onglet {
-  padding: 10px 18px;
-  border: 0;
-  border-bottom: 2px solid transparent;
-  background: none;
-  color: var(--texte-doux);
-  font: inherit;
-  letter-spacing: .06em;
-  text-transform: uppercase;
-  cursor: pointer;
-}
-.page-mj .onglet:hover { color: var(--texte); }
-.page-mj .onglet.actif { color: var(--accent); border-bottom-color: var(--accent); }
+/* Le journal : montant, raison, source, date, annuler */
+.mj-journal { list-style: none; margin: 0; padding: 0; }
+.mj-tx { display: grid; grid-template-columns: 90px minmax(0, 1fr) 110px 120px 70px; align-items: center; gap: 14px; padding: 10px 6px; border-bottom: 1px solid rgba(236,228,210,.07); }
+.mj-tx:last-child { border-bottom: 0; }
+.mj-tx.est-annulee { opacity: .4; }
+.mj-tx__montant { font-family: "Cinzel","Cinzel Repli", serif; font-size: 1.1rem; font-weight: 700; text-align: right; }
+.mj-tx__texte { display: flex; flex-direction: column; min-width: 0; }
+.mj-tx__texte strong { font-family: "Cinzel","Cinzel Repli", serif; font-size: .85rem; letter-spacing: .04em; }
+.mj-tx__texte span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--ivoire-doux); }
+.mj-tx__source { font-family: "Cinzel","Cinzel Repli", serif; font-size: .64rem; letter-spacing: .14em; text-transform: uppercase; color: var(--gris); }
+.mj-tx__date { font-size: .9rem; color: var(--gris); }
+.mj-tx__annuler { padding: 0; border: 0; background: none; cursor: pointer; font: inherit; font-size: .9rem; color: var(--ivoire-doux); text-decoration: underline; text-decoration-color: var(--sang-vif); text-underline-offset: 3px; }
+.mj-tx__annuler:hover { color: var(--ivoire); }
+.mj-salle--journal .mj-form { margin-bottom: 10px; }
+.mj-salle--journal .mj-form > .mj-champ { flex: 0 1 280px; }
 
-/* Colonnes Joueurs : liste | fiche */
-.page-mj .mj-colonnes {
-  display: grid;
-  grid-template-columns: minmax(240px, 320px) 1fr;
-  gap: 0 20px;
-  align-items: start;
+/* ---------- Écrans plus étroits ---------- */
+@media (max-width: 1250px) {
+  .mj-steles, .mj-steles--petites { grid-template-columns: repeat(2, 1fr); }
+  .mj-plaques { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .mj-caverne { grid-template-columns: 1fr; }
 }
+@media (max-width: 1050px) {
+  .mj-joueurs { grid-template-columns: 1fr; }
+  .mj-registre { position: static; }
+  .mj-registre ul { max-height: 280px; }
+  .mj-salles { grid-template-columns: 1fr; }
+  .mj-caverne-bilan__ligne { grid-template-columns: repeat(2, 1fr); }
+  .mj-tx { grid-template-columns: 80px minmax(0, 1fr) 70px; }
+  .mj-tx__source, .mj-tx__date { display: none; }
+}
+@media (max-width: 600px) {
+  .mj { padding: 18px 12px 100px; }
+  .mj-onglets button { padding: 10px 16px; font-size: .66rem; }
+  .mj-steles, .mj-steles--petites, .mj-plaques { grid-template-columns: 1fr 1fr; }
+  .mj-badges { grid-template-columns: repeat(2, 1fr); }
+  .mj-bandeau { grid-template-columns: 1fr; justify-items: center; text-align: center; }
+}
+
+
+/* ---------- L'ajusteur : ce qu'il a, la quantité, « − n » et « + n » (remplace le petit compteur) ---------- */
+.mj-ajusteur { display: inline-flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 6px; }
+.mj-ajusteur__valeur {
+  min-width: 56px; margin-right: 6px; text-align: right;
+  font-family: "Cinzel","Cinzel Repli", serif; font-size: 1.35rem; color: var(--ivoire);
+}
+.mj-ajusteur input {
+  width: 76px; height: 34px; padding: 0 6px; border: 1px solid var(--filet); border-radius: 0;
+  font: inherit; font-size: .95rem; text-align: center; color: var(--ivoire); background: rgba(5,6,10,.65);
+}
+.mj-ajusteur input:focus { outline: none; border-color: var(--filet-fort); }
+.mj-ajusteur button {
+  height: 34px; padding: 0 12px; border: 0; cursor: pointer; white-space: nowrap;
+  font-family: "Cinzel","Cinzel Repli", serif; font-size: .78rem; font-weight: 700; letter-spacing: .04em;
+  clip-path: polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px);
+  transition: filter .15s ease;
+}
+.mj-ajusteur__moins { color: #f3c4c8; background: rgba(94,20,25,.75); box-shadow: inset 0 0 0 1px rgba(194,61,72,.55); }
+.mj-ajusteur__plus { color: #d9f2e1; background: rgba(30,74,48,.8); box-shadow: inset 0 0 0 1px rgba(127,207,155,.5); }
+.mj-ajusteur button:hover:not(:disabled), .mj-ajusteur button:focus-visible { filter: brightness(1.35); outline: none; }
+.mj-ajusteur button:disabled { opacity: .3; cursor: default; }
+.mj-rangee__nom { display: inline-flex; align-items: center; gap: 8px; }
+.mj-raison { width: 100%; margin: 4px 0 6px; font-size: .92rem; }
+.mj-durees { display: flex; flex-direction: column; gap: 6px; }
+.mj-durees .mj-ajusteur { justify-content: flex-start; }
+/* dans une carte ou sous un badge : plus serré */
+.mj-badges .mj-ajusteur { justify-content: center; gap: 4px; }
+.mj-badges .mj-ajusteur input { width: 44px; height: 28px; }
+.mj-badges .mj-ajusteur button { height: 28px; padding: 0 8px; font-size: .72rem; }
+
+/* ---------- La collection : le grimoire (toutes les cartes du jeu, les siennes en couleur) et la fiche à droite ---------- */
+.mj-grimoire__filtres { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; margin-bottom: 16px; }
+.mj-filtres { display: flex; flex-wrap: wrap; gap: 4px; }
+.mj-filtres button {
+  --rarete: var(--ivoire-doux);
+  padding: 7px 14px; border: 0; cursor: pointer;
+  font-family: "Cinzel","Cinzel Repli", serif; font-size: .68rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--rarete); background: rgba(5,6,10,.55);
+  clip-path: polygon(8px 0, calc(100% - 8px) 0, 100% 50%, calc(100% - 8px) 100%, 8px 100%, 0 50%);
+  box-shadow: inset 0 0 0 1px var(--filet);
+  transition: background .15s ease, color .15s ease;
+}
+.mj-filtres button:hover { background: rgba(255,255,255,.06); }
+.mj-filtres button.est-actif { color: #0b0d12; background: var(--rarete); }
+.mj-interrupteur { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; color: var(--ivoire-doux); }
+.mj-interrupteur input { width: 16px; height: 16px; accent-color: var(--sang-vif); }
+.mj-grimoire__recherche { flex: 1 1 180px; max-width: 280px; margin-left: auto; padding: 7px 10px; font-size: .95rem; }
+
+.mj-grimoire__corps { display: grid; grid-template-columns: minmax(0, 1fr) 260px; gap: 18px; align-items: start; }
+.mj-vignettes { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 14px 12px; list-style: none; margin: 0; padding: 0; }
+.mj-vignette {
+  position: relative; display: flex; flex-direction: column; align-items: center; gap: 6px; width: 100%;
+  padding: 0; border: 0; cursor: pointer; background: none; font: inherit; color: var(--ivoire);
+}
+.mj-vignette img, .mj-vignette__vide {
+  display: block; width: 100%; aspect-ratio: 2 / 3; object-fit: cover; border-radius: 4px; background: #1c2130;
+  filter: drop-shadow(0 0 8px color-mix(in srgb, var(--rarete) 40%, transparent)) drop-shadow(0 6px 10px rgba(0,0,0,.7));
+  transition: transform .18s ease, filter .18s ease;
+}
+.mj-vignette:hover img, .mj-vignette:focus-visible img { transform: translateY(-4px); }
+.mj-vignette:focus-visible { outline: none; }
+/* celles qu'il n'a pas : éteintes */
+.mj-vignette.est-absente img { filter: grayscale(.9) brightness(.45) drop-shadow(0 6px 10px rgba(0,0,0,.7)); }
+.mj-vignette.est-absente:hover img { filter: grayscale(.5) brightness(.7) drop-shadow(0 6px 10px rgba(0,0,0,.7)); }
+.mj-vignette.est-absente .mj-vignette__nom { color: var(--gris); }
+/* la carte choisie : un liseré ivoire et un petit losange dessous */
+.mj-vignette.est-choisie img { outline: 2px solid var(--ivoire); outline-offset: 3px; transform: translateY(-4px); }
+.mj-vignette__nombre {
+  position: absolute; top: -6px; right: -6px; padding: 2px 8px;
+  font-family: "Cinzel","Cinzel Repli", serif; font-size: .74rem; font-weight: 700; color: #fff;
+  clip-path: polygon(5px 0, calc(100% - 5px) 0, 100% 50%, calc(100% - 5px) 100%, 5px 100%, 0 50%);
+  background: linear-gradient(180deg, var(--sang-vif), var(--sang));
+}
+.mj-vignette__nom { width: 100%; font-size: .82rem; line-height: 1.15; text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.mj-fiche-carte {
+  position: sticky; top: 18px; display: flex; flex-direction: column; align-items: center; gap: 8px; min-height: 200px; padding: 18px 16px;
+  text-align: center; clip-path: var(--taille-petite); background: rgba(5,6,10,.55); box-shadow: inset 0 0 0 1px var(--filet), inset 0 3px 0 var(--rarete);
+}
+.mj-fiche-carte .mj-vide { margin: auto 0; }
+.mj-fiche-carte__image { width: 150px; border-radius: 6px; filter: drop-shadow(0 0 14px color-mix(in srgb, var(--rarete) 50%, transparent)) drop-shadow(0 10px 16px rgba(0,0,0,.75)); }
+.mj-fiche-carte h4 { margin: 6px 0 0; font-family: "Cinzel","Cinzel Repli", serif; font-size: 1.05rem; color: var(--ivoire); }
+.mj-fiche-carte__rarete { font-style: italic; color: var(--rarete); }
+.mj-fiche-carte__possede { margin: 4px 0 6px; color: var(--ivoire-doux); }
+.mj-fiche-carte__possede strong { font-family: "Cinzel","Cinzel Repli", serif; font-size: 1.3rem; color: var(--ivoire); }
+.mj-fiche-carte .mj-ajusteur { justify-content: center; }
 @media (max-width: 800px) {
-  .page-mj .mj-colonnes { grid-template-columns: 1fr; }
+  .mj-grimoire__corps { grid-template-columns: 1fr; }
+  .mj-fiche-carte { position: static; order: -1; }
+  .mj-grimoire__recherche { margin-left: 0; max-width: none; }
 }
-
-.page-mj .mj-titre {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-bottom: 10px;
-}
-.page-mj .mj-titre h2 { margin: 0; }
-
-.page-mj h3 {
-  margin: 22px 0 10px;
-  font-size: .85rem;
-  letter-spacing: .08em;
-  text-transform: uppercase;
-  color: var(--texte-doux);
-}
-
-.page-mj .aide { margin: 0 0 10px; font-size: .9rem; color: var(--texte-doux); font-style: italic; }
-.page-mj .doux { color: var(--texte-doux); }
-.page-mj .petit-type {
-  display: block;
-  font-size: .7rem;
-  text-transform: uppercase;
-  letter-spacing: .06em;
-  color: var(--texte-doux);
-}
-
-/* Champs */
-.page-mj .champ {
-  width: 100%;
-  padding: 8px 10px;
-  border: 1px solid var(--bord);
-  border-radius: var(--rayon);
-  background: var(--fond);
-  color: var(--texte);
-  font: inherit;
-  box-sizing: border-box;
-}
-.page-mj .champ:focus { outline: none; border-color: var(--accent); }
-.page-mj .champ--court { width: 110px; flex: none; }
-.page-mj .champ--auto  { width: auto; }
-.page-mj textarea.champ { resize: vertical; }
-
-.page-mj .ligne-form {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 10px;
-}
-.page-mj .ligne-form .champ:not(.champ--court) { flex: 1 1 180px; width: auto; }
-
-/* Liste des joueurs */
-.page-mj .liste-joueurs { margin-top: 12px; max-height: 70vh; overflow-y: auto; }
-.page-mj .liste-joueurs .joueur {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 8px;
-  cursor: pointer;
-  border-radius: var(--rayon);
-}
-.page-mj .liste-joueurs .joueur:hover { background: var(--fond); }
-.page-mj .liste-joueurs .joueur--actif { background: var(--fond); outline: 1px solid var(--accent); }
-.page-mj .joueur img,
-.page-mj .avatar-vide {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  flex: none;
-  background: var(--bord);
-}
-.page-mj .joueur__nom { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-
-.page-mj .badge-mj {
-  display: inline-block;
-  padding: 1px 6px;
-  border: 1px solid var(--accent);
-  border-radius: 4px;
-  font-size: .65rem;
-  color: var(--accent);
-  vertical-align: middle;
-}
-
-/* Fiche joueur */
-.page-mj .fiche-entete {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  flex-wrap: wrap;
-}
-.page-mj .fiche-entete img { width: 56px; height: 56px; border-radius: 50%; }
-.page-mj .fiche-entete h2 { margin: 0 0 4px; }
-.page-mj .fiche-entete a { color: var(--texte-doux); font-size: .85rem; }
-.page-mj .fiche-solde { margin-left: auto; font-size: 1.1rem; color: var(--texte-doux); }
-.page-mj .fiche-solde strong { font-size: 1.8rem; color: var(--texte); }
-
-.page-mj .actions {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: 10px;
-}
-
-/* Boutons */
-.page-mj .btn-lien {
-  padding: 0;
-  border: 0;
-  background: none;
-  color: var(--texte-doux);
-  font: inherit;
-  font-size: .85rem;
-  text-decoration: underline;
-  cursor: pointer;
-}
-.page-mj .btn-lien:hover { color: var(--accent); }
-
-.page-mj .btn-petit--rouge { border-color: var(--perte); color: var(--perte); }
-.page-mj .btn-petit--rouge:hover { background: var(--perte); color: var(--fond); }
-
-.page-mj .objet-catalogue__entete { display: flex; align-items: center; gap: 10px; }
-.page-mj .objet-catalogue__icone {
-  width: 32px;
-  height: 32px;
-  object-fit: contain;
-  flex: none;
-  border: 1px solid var(--bord);
-  border-radius: var(--rayon);
-  background: var(--fond);
-}
-
-/* États */
-.page-mj .tx--annulee > div:first-child { opacity: .5; text-decoration: line-through; }
-.page-mj .objet--cache { opacity: .55; }
-
-.page-mj .zone-danger-titre { color: var(--perte); }
-.page-mj .zone-danger {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  padding: 12px;
-  border: 1px dashed var(--perte);
-  border-radius: var(--rayon);
-}
-
-/* Formulaire d'objet */
-.page-mj .form-objet {
-  margin: 10px 0 20px;
-  padding: 16px;
-  border: 1px solid var(--accent);
-  border-radius: var(--rayon);
-}
-.page-mj .form-objet h3 { margin-top: 0; }
-.page-mj .grille-form {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 12px;
-}
-.page-mj .grille-form label { display: flex; flex-direction: column; gap: 4px; font-size: .85rem; color: var(--texte-doux); }
-.page-mj .grille-form .large { grid-column: 1 / -1; }
-.page-mj .grille-form .case { flex-direction: row; align-items: center; gap: 8px; }
-
-/* Notification (même style que la boutique) */
-.notif {
-  position: fixed;
-  left: 50%;
-  bottom: 24px;
-  transform: translate(-50%, 20px);
-  max-width: calc(100% - 32px);
-  padding: 12px 18px;
-  border-radius: var(--rayon);
-  background: var(--carte);
-  border: 1px solid var(--bord);
-  color: var(--texte);
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity .2s, transform .2s;
-  z-index: 100;
-}
-.notif--visible { opacity: 1; transform: translate(-50%, 0); }
-.notif--ok     { border-color: var(--gain); }
-.notif--erreur { border-color: var(--perte); }
