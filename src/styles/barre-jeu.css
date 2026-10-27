@@ -724,3 +724,14 @@
   }
   body.has-rail::before { left: var(--hud, 0px); }
 }
+
+/* La pastille d'une entrée (Amis : demandes et défis qui t'attendent) : rouge sang, à droite du nom ;
+   quand la barre ne montre que les icônes, posée sur le coin de l'icône */
+.barre .barre-entree { position: relative; }
+.barre .barre-entree__nb {
+  display: inline-grid; place-items: center; min-width: 20px; height: 20px; margin-left: auto; padding: 0 6px; border-radius: 10px;
+  font-family: "Cinzel","Cinzel Repli", serif; font-size: .66rem; font-weight: 700; color: #fff;
+  background: #c23d48; box-shadow: 0 0 0 2px rgba(10,12,17,.9), 0 0 10px rgba(194,61,72,.6);
+}
+@media (min-width: 701px) and (max-width: 1100px) { .barre .barre-entree__nb { position: absolute; top: 2px; right: 8px; margin: 0; min-width: 16px; height: 16px; padding: 0 4px; font-size: .58rem; } }
+@media (max-width: 700px) { .barre .barre-entree__nb { position: absolute; top: 4px; right: 18%; margin: 0; } }

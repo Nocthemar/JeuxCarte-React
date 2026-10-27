@@ -18,6 +18,7 @@ import { useAuth, connexionDiscord, deconnexion } from '../lib/auth.js';
 import { supabase } from '../lib/supabase.js';
 import OrAnime from './OrAnime.jsx';
 import { urlPublique } from '../lib/chemins.js';
+import { useAmis } from '../lib/amis.js';
 
 // La bourse du joueur, sous les écrans (ordinateur) : l’or et les cristaux, à égalité. Relue à chaque changement d'écran (après un achat,
 // une récompense…), au retour sur l'onglet, et toutes les minutes.
@@ -69,6 +70,8 @@ const ICONES = {
   boutique: <><path d="M9 3h6l-1.6 3.2h-2.8z" /><path d="M10.4 6.2C7 8.5 4.5 12.3 4.5 15.6 4.5 18.9 7 21 10 21h4c3 0 5.5-2.1 5.5-5.4 0-3.3-2.5-7.1-5.9-9.4" /><path d="M13.6 12.2c-.4-.6-1-.9-1.7-.9-1 0-1.8.6-1.8 1.4 0 1.9 3.8 1.1 3.8 3 0 .8-.9 1.5-2 1.5-.8 0-1.5-.4-1.9-1M12 10.3v1M12 17.2v1" /></>,
   // un coffre au trésor (la Caverne aux Trésors)
   caverne: <><path d="M3.5 10.5a8.5 5.5 0 0 1 17 0V20h-17z" /><path d="M3.5 10.5h17M3.5 14h17" /><path d="M10.5 12.5h3v3.5h-3z" /><path d="M8 6v4.5M16 6v4.5" /></>,
+  // deux compagnons, épaule contre épaule
+  amis: <><circle cx="9" cy="8" r="3.2" /><path d="M3 20a6 6 0 0 1 12 0" /><circle cx="16.5" cy="9" r="2.6" /><path d="M15.5 14.2A5 5 0 0 1 21 19" /></>,
   // une balance
   marche: <><path d="M12 3v18M7 21h10" /><path d="M4 7h16" /><path d="M6 7l-3 7a3 3 0 0 0 6 0zM18 7l-3 7a3 3 0 0 0 6 0z" /></>,
   // un heaume
@@ -124,6 +127,7 @@ const PAGES = [
   { icone: 'boutique', libelle: 'Boutique', chemin: '/boutique', place: 4 },
   { icone: 'caverne', libelle: 'Caverne', chemin: '/caverne' },
   { icone: 'marche', libelle: 'Marché', chemin: '/marche' },
+  { icone: 'amis', libelle: 'Amis', chemin: '/amis' },
   { icone: 'pass', libelle: 'Pass de saison', chemin: '/pass' },
   { icone: 'succes', libelle: 'Succès', chemin: '/succes' },
   { icone: 'catalogue', libelle: 'Toutes les cartes', chemin: '/toutes-les-cartes' },
@@ -133,13 +137,14 @@ const PARAMETRES = { icone: 'reglages', libelle: 'Paramètres', chemin: '/parame
 const DANS_LE_MENU = [...PAGES.filter((p) => typeof p.place !== 'number' && p.place !== 'profil'), PARAMETRES];
 
 
-// Un écran de la barre ; l'écran en cours devient une plaque rouge sang
-function Entree({ icone, libelle, chemin, actif, place }) {
+// Un écran de la barre ; l'écran en cours devient une plaque rouge sang ; nb : une pastille (ce qui t'y attend)
+function Entree({ icone, libelle, chemin, actif, place, nb = 0 }) {
   return (
     <Link to={chemin} className={`barre-entree${actif ? ' est-actif' : ''}`} data-place={place ?? 'menu'}
-      title={libelle} aria-label={libelle} aria-current={actif ? 'page' : undefined}>
+      title={nb ? `${libelle} (${nb} en attente)` : libelle} aria-label={nb ? `${libelle}, ${nb} en attente` : libelle} aria-current={actif ? 'page' : undefined}>
       <Icone nom={icone} />
       <span className="barre-entree__nom">{libelle}</span>
+      {nb > 0 && <span className="barre-entree__nb" aria-hidden="true">{nb}</span>}
     </Link>
   );
 }
@@ -168,6 +173,7 @@ export default function BarreLaterale() {
   const { pathname } = useLocation();
   const barre = useRef(null);
   useBordDeLaBarre(barre);
+  const amisEnAttente = useAmis(joueur?.discord_id ?? null);
   return (
     <nav className="barre" aria-label="Navigation" ref={barre}>
       {FOND}
@@ -200,7 +206,7 @@ export default function BarreLaterale() {
 
       <div className="barre__entrees">
         {PAGES.map((p) => (
-          <Entree key={p.chemin} {...p} actif={pathname === p.chemin || (p.actifSur ?? []).includes(pathname)} />
+          <Entree key={p.chemin} {...p} actif={pathname === p.chemin || (p.actifSur ?? []).includes(pathname)} nb={p.chemin === '/amis' ? amisEnAttente : 0} />
         ))}
         <Entree {...PARAMETRES} place="menu" actif={pathname === PARAMETRES.chemin} />
         <a className="barre-entree" href={NOCTHEMAR_SITE} data-place="menu" title="Retour au site Nocthémar" aria-label="Retour au site Nocthémar">

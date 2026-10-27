@@ -35,6 +35,7 @@ export const FEUILLES = {
   boutique: liste(['cartes-jeu', 'carte-infos', 'booster', 'boutique-vitrine', 'boutique-accueil', 'badges-caverne']),
   caverne: liste(['caverne', 'badges-caverne']),
   marche: liste(['cartes-jeu', 'carte-infos', 'marche', 'marche-echanges']),
+  amis: liste(['amis']),
   pass: liste(['cartes-jeu', 'carte-infos', 'pass']),
   profil: liste(['cartes-jeu', 'carte-infos', 'succes-badges', 'profil-heros']),
   parametres: liste(['parametres']),

@@ -20,6 +20,7 @@ const Succes = lazy(() => import('./pages/Succes.jsx'));
 const Boutique = lazy(() => import('./pages/Boutique.jsx'));
 const Caverne = lazy(() => import('./pages/Caverne.jsx'));
 const Marche = lazy(() => import('./pages/Marche.jsx'));
+const Amis = lazy(() => import('./pages/Amis.jsx'));
 const Pass = lazy(() => import('./pages/Pass.jsx'));
 const Profil = lazy(() => import('./pages/Profil.jsx'));
 const Parametres = lazy(() => import('./pages/Parametres.jsx'));
@@ -42,6 +43,7 @@ export default function App() {
             <Route path="/boutique" element={<Boutique />} />
             <Route path="/caverne" element={<Caverne />} />
             <Route path="/marche" element={<Marche />} />
+            <Route path="/amis" element={<Amis />} />
             <Route path="/pass" element={<Pass />} />
             <Route path="/profil" element={<Profil />} />
             <Route path="/parametres" element={<Parametres />} />

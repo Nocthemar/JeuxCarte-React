@@ -1,0 +1,130 @@
+/* =====================================================================
+   L'écran des amis (pages/Amis.jsx), dans le style Nocthémar (comme le Conseil du MJ) :
+   le ciel de Nocthémar derrière, des plaques de pierre taillée à facettes, l'ivoire pour le texte,
+   un seul accent, le rouge sang (bouton principal, défi reçu). Les portraits dans un hexagone.
+   ===================================================================== */
+body.page-amis {
+  --ivoire: #ece4d2;
+  --ivoire-doux: #b9b2a2;
+  --gris: #878d98;
+  --pierre-1: #1d212b;
+  --pierre-2: #13161d;
+  --filet: rgba(236,228,210,.13);
+  --filet-fort: rgba(236,228,210,.32);
+  --sang: #9b2730;
+  --sang-vif: #c23d48;
+  --sang-sombre: #5e1419;
+  --vert: #7fcf9b;
+  --taille: polygon(14px 0, calc(100% - 14px) 0, 100% 14px, 100% calc(100% - 14px), calc(100% - 14px) 100%, 14px 100%, 0 calc(100% - 14px), 0 14px);
+  --taille-petite: polygon(7px 0, calc(100% - 7px) 0, 100% 7px, 100% calc(100% - 7px), calc(100% - 7px) 100%, 7px 100%, 0 calc(100% - 7px), 0 7px);
+  --hexagone: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+  --facettes:
+    linear-gradient(118deg, rgba(255,255,255,.045) 0 18%, transparent 18.2%),
+    linear-gradient(64deg, transparent 0 62%, rgba(255,255,255,.025) 62.2% 80%, transparent 80.2%),
+    linear-gradient(205deg, transparent 0 58%, rgba(0,0,0,.28) 58.2%),
+    linear-gradient(180deg, var(--pierre-1), var(--pierre-2));
+  background:
+    linear-gradient(180deg, rgba(6,8,13,.55), rgba(6,8,13,.86) 60%, rgba(6,8,13,.95)),
+    url("/img/Fond/Profil_fond.png") center top / cover no-repeat fixed,
+    #07080c;
+  color: var(--ivoire);
+}
+
+.amis { max-width: 1100px; margin: 0 auto; padding: 30px 28px 70px; font-family: "EB Garamond","EB Garamond Repli", serif; font-size: 1.04rem; }
+.amis h1, .amis h2 { margin: 0; font-family: "Cinzel","Cinzel Repli", serif; font-weight: 700; color: var(--ivoire); }
+.amis-vide { margin: 6px 0; color: var(--gris); font-style: italic; list-style: none; }
+
+/* ---------- L'en-tête ---------- */
+.amis-entete { margin-bottom: 26px; }
+.amis-entete span { display: block; margin-bottom: 6px; font-family: "Cinzel","Cinzel Repli", serif; font-size: .7rem; letter-spacing: .45em; text-transform: uppercase; color: var(--gris); }
+.amis-entete h1 { font-size: clamp(1.7rem, 3vw, 2.6rem); letter-spacing: .03em; text-shadow: 0 6px 30px rgba(0,0,0,.9); }
+.amis-entete p { margin: 8px 0 0; color: var(--ivoire-doux); }
+
+/* ---------- Les plaques de pierre ---------- */
+/* (les <section> du site ont une largeur maximale et des marges : pas ici) */
+.amis section { max-width: none; margin: 0; border-bottom: 0; }
+.amis-bloc {
+  margin-bottom: 18px !important; padding: 20px 22px 22px;
+  clip-path: var(--taille); background: var(--facettes); box-shadow: inset 0 0 0 1px var(--filet), inset 0 1px 0 rgba(255,255,255,.06);
+}
+.amis-bloc h2 {
+  display: flex; align-items: center; gap: 10px; margin-bottom: 14px; padding-bottom: 12px; border-bottom: 1px solid var(--filet);
+  font-size: .8rem; letter-spacing: .2em; text-transform: uppercase; color: var(--ivoire-doux);
+}
+.amis-bloc h2 small { padding: 2px 9px; font-size: .72rem; letter-spacing: .05em; color: var(--ivoire); clip-path: var(--taille-petite); background: rgba(236,228,210,.1); }
+.amis-bloc--defis { box-shadow: inset 0 0 0 1px rgba(194,61,72,.55), inset 0 0 40px rgba(155,39,48,.25); }
+.amis-bloc--defis h2 { color: var(--sang-vif); border-color: rgba(194,61,72,.3); }
+
+/* ---------- Les portraits ---------- */
+.amis-portrait {
+  display: grid; place-items: center; flex: none; width: 44px; height: 50px; overflow: hidden;
+  clip-path: var(--hexagone); background: linear-gradient(160deg, #3a3f4b, #191c24);
+  font-family: "Cinzel","Cinzel Repli", serif; font-weight: 700; font-size: 1.1rem; color: var(--ivoire-doux); text-transform: uppercase;
+}
+.amis-portrait img { width: 100%; height: 100%; object-fit: cover; }
+.amis-portrait--grand { width: 74px; height: 84px; font-size: 1.8rem; }
+
+/* ---------- Les lignes (défis, demandes, recherche) ---------- */
+.amis-lignes { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.amis-lignes--recherche { margin-top: 12px; }
+.amis-ligne {
+  display: flex; align-items: center; gap: 12px; padding: 8px 12px;
+  clip-path: var(--taille-petite); background: rgba(0,0,0,.25); box-shadow: inset 0 0 0 1px var(--filet);
+}
+.amis-ligne__texte { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--ivoire-doux); }
+.amis-ligne__texte b { color: var(--ivoire); font-weight: 600; }
+.amis-ligne__note { color: var(--gris); font-style: italic; font-size: .95rem; }
+.amis-ligne--defi { background: linear-gradient(90deg, rgba(155,39,48,.3), rgba(0,0,0,.25) 70%); }
+
+/* ---------- Le champ de recherche ---------- */
+.amis-champ {
+  width: 100%; box-sizing: border-box; padding: 12px 16px; border: 0; outline: none;
+  font: inherit; color: var(--ivoire);
+  clip-path: var(--taille-petite); background: rgba(0,0,0,.35); box-shadow: inset 0 0 0 1px var(--filet);
+}
+.amis-champ::placeholder { color: var(--gris); font-style: italic; }
+.amis-champ:focus { box-shadow: inset 0 0 0 1px var(--filet-fort); }
+
+/* ---------- Les boutons ---------- */
+.amis-btn {
+  display: inline-flex; align-items: center; justify-content: center; padding: 8px 16px; border: 0; cursor: pointer; text-decoration: none; white-space: nowrap;
+  font-family: "Cinzel","Cinzel Repli", serif; font-size: .7rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--ivoire-doux);
+  clip-path: var(--taille-petite);
+  background: linear-gradient(160deg, rgba(255,255,255,.06) 0 45%, transparent 45.2%), var(--pierre-1);
+  box-shadow: inset 0 0 0 1px var(--filet);
+  transition: color .2s ease, filter .2s ease;
+}
+.amis-btn:hover, .amis-btn:focus-visible { color: var(--ivoire); filter: brightness(1.3); outline: none; }
+.amis-btn--sang { color: #fff; background: linear-gradient(160deg, rgba(255,255,255,.14) 0 45%, transparent 45.2%), linear-gradient(180deg, var(--sang-vif), var(--sang) 55%, var(--sang-sombre)); }
+.amis-btn:disabled { opacity: .45; cursor: default; filter: none; }
+
+/* ---------- Mes amis : des cartes ---------- */
+.amis-cartes { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; margin: 0; padding: 0; list-style: none; }
+.amis-carte {
+  position: relative; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 20px 14px 14px; text-align: center;
+  clip-path: var(--taille); background: rgba(0,0,0,.28); box-shadow: inset 0 0 0 1px var(--filet);
+}
+.amis-carte.est-en-ligne .amis-portrait--grand { box-shadow: none; filter: drop-shadow(0 0 0 transparent); background: linear-gradient(160deg, #4a6a56, #1b2a22); }
+.amis-carte__nom { margin-top: 4px; font-family: "Cinzel","Cinzel Repli", serif; font-weight: 700; font-size: 1.02rem; color: var(--ivoire); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.amis-statut { font-size: .92rem; font-style: italic; color: var(--gris); }
+.amis-statut::before { content: ""; display: inline-block; width: 7px; height: 7px; margin-right: 6px; vertical-align: middle; transform: rotate(45deg); background: currentColor; opacity: .7; }
+.amis-statut--ligne { color: var(--vert); font-style: normal; }
+.amis-statut--duel { color: var(--sang-vif); font-style: normal; }
+.amis-carte__actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; margin-top: 10px; }
+.amis-btn--large { flex-basis: 100%; padding: 10px 16px; font-size: .76rem; }
+.amis-carte__retirer {
+  position: absolute; top: 8px; right: 12px; padding: 2px 4px; border: 0; background: none; cursor: pointer;
+  font: italic .82rem "EB Garamond","EB Garamond Repli", serif; color: var(--gris); opacity: 0; transition: opacity .2s ease, color .2s ease;
+}
+.amis-carte:hover .amis-carte__retirer, .amis-carte__retirer:focus-visible { opacity: 1; }
+.amis-carte__retirer:hover { color: var(--sang-vif); }
+
+/* ---------- Petit écran ---------- */
+@media (max-width: 700px) {
+  .amis { padding: 20px 14px 60px; }
+  .amis-bloc { padding: 16px 14px 18px; }
+  .amis-ligne { flex-wrap: wrap; }
+  .amis-ligne__texte { flex-basis: calc(100% - 60px); white-space: normal; }
+  .amis-carte__retirer { opacity: 1; }
+}
