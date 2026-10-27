@@ -201,7 +201,7 @@ body.page-boutique:has(.vitrine--accueil) {
 /* Ordinateur : le hall remplit tout l'écran, de la barre (--hud, son bord droit, mesuré par BarreLaterale.jsx)
    au bord droit et du titre au bas de la fenêtre, et la page ne défile plus. L'image est étirée à cette taille
    (les portes y sont posées en pourcentages, elles suivent ; leurs textes suivent --u, voir plus bas). Le titre
-   reste centré au-dessus, la bourse est posée au sol du hall ; les portes d'avant (hall étroit) gardent une marge. */
+   reste centré au-dessus, la bourse juste en dessous ; les portes d'avant (hall étroit) gardent une marge. */
 @media (min-width: 701px) {
   html:has(body.page-boutique .vitrine--accueil > .hall) { overflow: hidden; }
   body.page-boutique.has-rail:has(.vitrine--accueil > .hall) {
@@ -212,20 +212,13 @@ body.page-boutique:has(.vitrine--accueil) {
     display: flex; flex-direction: column;
     height: 100dvh; max-width: none; margin: 0; padding-left: 0; padding-right: 0; padding-bottom: 0;
   }
-  /* un en-tête bas, pour laisser la hauteur au hall : le titre seul, en plus petit */
+  /* un en-tête bas, pour laisser la hauteur au hall : le titre en plus petit, la bourse dessous */
   .page-boutique .vitrine--accueil:has(> .hall) { padding-top: 10px; }
   .page-boutique .vitrine--accueil:has(> .hall) > .vitrine-entete {
-    flex: none; flex-direction: row; justify-content: center; align-items: center; gap: 28px; margin-bottom: 10px;
+    flex: none; flex-direction: column; justify-content: center; align-items: center; gap: 8px; margin-bottom: 14px;
   }
+  .page-boutique .vitrine--accueil:has(> .hall) .bourse { padding-top: 5px; padding-bottom: 5px; }
   .page-boutique .vitrine--accueil:has(> .hall) .vitrine-entete h1 { margin: 0; font-size: clamp(1.4rem, 2.4vw, 2.2rem); }
-  /* la bourse, posée sur les dalles du hall (sous les niches : les 19 % du bas de l'image), au milieu */
-  @container vitrine (min-width: 820px) {
-    .page-boutique .vitrine--accueil:has(> .hall) .bourse {
-      position: absolute; z-index: 2; left: 50%; bottom: calc((100dvh - 70px) * .085);
-      translate: -50% 50%;
-      box-shadow: 0 14px 28px rgba(0,0,0,.7), 0 0 30px rgba(217,164,65,.12);
-    }
-  }
   @container vitrine (min-width: 820px) {
     .page-boutique .vitrine--accueil:has(> .hall) > .hall { flex: 1 1 0; min-height: 0; aspect-ratio: auto; box-shadow: none; }
   }
