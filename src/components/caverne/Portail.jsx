@@ -9,6 +9,7 @@
 //  donc tout reste à sa place à toute taille.
 //  Le portail prend la couleur du badge posé (argent, bleu, rouge, or : COULEURS) ; on y revient depuis la salle
 //  des jeux, le portail encore ouvert, et on le refranchit.
+//  Kaéliss (Kaeliss.jsx), sur les rochers à droite de l'arche, parle selon le moment.
 //  props : badges (caverne_badges_etat, ou { erreur }), surEtat(nouvel état), surEntree()
 //  Styles : styles/caverne-portail.css
 // =====================================================================
@@ -18,6 +19,7 @@ import { urlPublique } from '../../lib/chemins.js';
 import { useNotifier } from '../../lib/notification.js';
 import { accesOuvert, activerBadge, tempsRestant } from '../../lib/caverne/badges.js';
 import { niveauAnimationsChoisi } from '../../lib/preferences.js';
+import Kaeliss from './Kaeliss.jsx';
 
 const AVANCEE = 1500;   // ms : la vue avance dans le portail
 
@@ -78,6 +80,8 @@ export default function Portail({ badges, surEtat, surEntree }) {
   const [pose, setPose] = useState(badgeRetenu);  // le badge posé sur le socle (sa couleur est celle du portail)
   const [avance, setAvance] = useState(false);  // la vue avance dans le portail
   const [choix, setChoix] = useState(false);    // la bulle des badges, ouverte sur le socle
+  const [eveil, setEveil] = useState(false);    // un badge vient d'être posé (Kaéliss le remarque)
+  const [survole, setSurvole] = useState(false);  // la souris est sur le cœur du portail
   const [place, setPlace] = useState(placeRetenue);   // où est le socle (pixels de l'image)
   const glisse = useRef(null);                   // le glissement en cours : départ, échelle, a-t-il bougé
 
@@ -121,6 +125,7 @@ export default function Portail({ badges, surEtat, surEntree }) {
       setPose(COULEURS[x.id] ? x.id : '1mois');
       try { localStorage.setItem(CLE_BADGE, x.id); } catch { /* tant pis */ }
       setChoix(false);
+      setEveil(true);
       surEtat(r);
       notifier(`Badge ${r.active} posé : le portail s'ouvre pour ${tempsRestant(r.jusqu_a)}.`);
     } catch (e) {
@@ -128,6 +133,11 @@ export default function Portail({ badges, surEtat, surEntree }) {
     }
     setOccupe(false);
   }
+
+  // Le moment, pour Kaéliss
+  const situation = avance ? 'route' : badges.erreur ? 'erreur'
+    : allume ? (survole ? 'survol' : eveil ? 'eveil' : 'ouvert')
+      : choix ? 'choix' : miens.length ? 'avecBadge' : 'sansBadge';
 
   function entrer() {
     if (!allume || avance) return;
@@ -211,10 +221,13 @@ export default function Portail({ badges, surEtat, surEntree }) {
           </g>
         </svg>
         <button type="button" className="portail__entree" disabled={!allume || avance} onClick={entrer}
+          onPointerEnter={() => setSurvole(true)} onPointerLeave={() => setSurvole(false)}
           style={{ left: `${(CADRE.x / LARGEUR) * 100}%`, top: `${(CADRE.y / HAUTEUR) * 100}%`, width: `${(CADRE.l / LARGEUR) * 100}%`, height: `${(CADRE.h / HAUTEUR) * 100}%`, clipPath: `polygon(${CONTOUR})` }}
           aria-label={allume ? 'Franchir le portail' : 'Le portail est éteint'} title={allume ? 'Franchir le portail' : undefined} />
         {/* Le socle, posé dans le décor sur les marches, sous le portail (il suit l'image) : on le touche
             pour choisir son badge ; badge posé, il le garde et dit combien de temps le portail reste ouvert */}
+        {/* Kaéliss, debout sur les rochers à droite de l'arche : elle parle selon le moment */}
+        <Kaeliss situation={situation} details={{ temps: allume ? tempsRestant(badges.jusqu_a) : '' }} />
         <div className="portail__place" style={{ left: `${(place.x / LARGEUR) * 100}%`, top: `${(place.y / HAUTEUR) * 100}%` }}>
           {badges.erreur ? (
             <p className="portail__bulle portail__bulle--texte">La Caverne n&apos;est pas encore prête. Reviens un peu plus tard.</p>

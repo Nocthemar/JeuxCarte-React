@@ -148,9 +148,80 @@ button.portail__socle:hover, button.portail__socle:focus-visible, button.portail
 .portail__badge:hover:not(:disabled), .portail__badge:focus-visible { transform: translateY(-3px); filter: brightness(1.25) drop-shadow(0 0 8px rgba(194,61,72,.7)); outline: none; }
 .portail__badge:disabled { opacity: .5; cursor: default; }
 
+/* ---------- Kaéliss (components/caverne/Kaeliss.jsx) : debout à droite de l'arche, sa bulle à sa droite ----------
+   Son image flotte, se balance et respire ; un éclat de sang tourne autour d'elle.
+   Quand le portail l'appelle (survol), elle s'agite ; quand on le franchit, elle s'efface avec le décor. */
+.kaeliss {
+  /* dans le décor : ses pieds sur les rochers à droite de l'arche (x 1080, y 700 de l'image) */
+  position: absolute; left: 63.4%; bottom: 24.2%; z-index: 3;
+  display: flex; align-items: flex-end; gap: 6px; width: max-content;
+  pointer-events: none; transition: opacity .4s ease;
+}
+.portail.est-en-route .kaeliss { opacity: 0; transition-delay: .5s; }
+.kaeliss__corps {
+  position: relative; flex: none; width: max(110px, 8.6cqw); aspect-ratio: 2 / 3; padding: 0; border: 0; background: none; cursor: pointer; pointer-events: auto;
+  transition: transform .2s ease;
+}
+.kaeliss__corps:hover, .kaeliss__corps:focus-visible { transform: scale(1.05); outline: none; }
+.kaeliss__corps:active { transform: scale(.96); }
+/* son ombre sur l'eau, qui se resserre quand elle monte */
+.kaeliss__ombre {
+  position: absolute; left: 18%; right: 18%; bottom: -2%; height: 7%; border-radius: 50%;
+  background: radial-gradient(ellipse at center, rgba(0,0,0,.5), transparent 70%);
+  animation: kaeliss-ombre 3.2s ease-in-out infinite;
+}
+.kaeliss__flotte { position: absolute; inset: 0; animation: kaeliss-flotte 3.2s ease-in-out infinite; }
+/* elle se balance doucement depuis ses pieds, et respire */
+.kaeliss__image {
+  display: block; width: 100%; height: 100%; object-fit: contain; transform-origin: 50% 95%;
+  filter: drop-shadow(0 4px 8px rgba(0,0,0,.45));
+  animation: kaeliss-balance 5.2s ease-in-out infinite;
+}
+/* l'éclat de sang, en orbite autour d'elle */
+.kaeliss__eclat { position: absolute; left: 50%; top: 38%; width: 0; height: 0; animation: kaeliss-eclat 6s linear infinite; }
+.kaeliss__eclat i {
+  position: absolute; left: 62px; top: -7px; width: 9px; height: 14px;
+  clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+  background: linear-gradient(135deg, #ff8a94 0 40%, #d63848 40.5%);
+  filter: drop-shadow(0 0 4px rgba(240,80,96,.9));
+  animation: kaeliss-eclat 6s linear infinite reverse;
+}
+@keyframes kaeliss-flotte { 50% { transform: translateY(-8px); } }
+@keyframes kaeliss-ombre { 50% { transform: scaleX(.78); opacity: .6; } }
+@keyframes kaeliss-balance { 0%, 100% { transform: rotate(-1.5deg) scaleY(1); } 50% { transform: rotate(1.5deg) scaleY(1.012); } }
+@keyframes kaeliss-eclat { to { transform: rotate(360deg); } }
+/* le portail l'appelle : elle s'agite, l'éclat file */
+.kaeliss--survol .kaeliss__flotte { animation-duration: 1s; }
+.kaeliss--survol .kaeliss__eclat { animation-duration: 1.4s; }
+.kaeliss--eveil .kaeliss__image { animation: kaeliss-saut .8s ease 2; }
+@keyframes kaeliss-saut { 40% { transform: translateY(-16px) rotate(-4deg); } }
+
+/* la bulle : une plaque de pierre, une pointe vers elle, le liseré de la teinte du portail */
+.kaeliss__bulle {
+  position: relative; max-width: 300px; margin: 0 0 calc(max(110px, 8.6cqw) * .9); padding: 10px 14px 11px; pointer-events: auto;
+  font-size: 1rem; line-height: 1.4; color: var(--ivoire);
+  background: var(--facettes);
+  clip-path: polygon(14px 0, calc(100% - 8px) 0, 100% 8px, 100% calc(100% - 8px), calc(100% - 8px) 100%, 14px 100%, 14px calc(100% - 10px), 0 calc(100% - 4px), 14px calc(100% - 22px), 14px 8px);
+  padding-left: 26px;
+  box-shadow: inset 0 0 0 1px var(--filet-fort), inset 3px 0 0 color-mix(in srgb, var(--teinte, #c23d48) 80%, transparent);
+  animation: kaeliss-bulle .35s ease both;
+}
+.kaeliss__bulle b {
+  display: block; margin-bottom: 2px;
+  font-family: "Cinzel", "Cinzel Repli", serif; font-size: .64rem; font-weight: 700; letter-spacing: .2em; text-transform: uppercase;
+  color: color-mix(in srgb, var(--teinte, #c23d48) 70%, #fff);
+}
+@keyframes kaeliss-bulle { from { opacity: 0; transform: translateY(6px); } }
+
+@media (max-width: 560px) {
+  .kaeliss__bulle { font-size: .92rem; }
+}
+
 @media (prefers-reduced-motion: reduce) {
+  .kaeliss :is(.kaeliss__flotte, .kaeliss__ombre, .kaeliss__image, .kaeliss__eclat, .kaeliss__eclat i) { animation: none; }
   .portail.est-allume :is(.portail__tourbillon, .portail__pouls, .portail__halo) { animation: none; }
   .portail.est-allume :is(.portail__anneau, .portail__particule) { animation: none; opacity: 0; }
 }
 :root.anim-reduites .portail.est-allume :is(.portail__tourbillon, .portail__pouls, .portail__halo) { animation: none; }
 :root.anim-reduites .portail.est-allume :is(.portail__anneau, .portail__particule) { animation: none; opacity: 0; }
+:root.anim-reduites .kaeliss :is(.kaeliss__flotte, .kaeliss__ombre, .kaeliss__image, .kaeliss__eclat, .kaeliss__eclat i) { animation: none; }
