@@ -33,6 +33,17 @@
   letter-spacing: .06em;
 }
 .retour:hover { color: var(--accent); }
+/* « Refermer le grimoire / la roue » : une petite plaque de pierre aux coins coupés, l'ivoire, le rouge sang au survol */
+.retour.retour--bouton {
+  display: inline-flex; align-items: center; margin-left: 14px; padding: 8px 18px; border: 0; cursor: pointer;
+  font-family: "Cinzel","Cinzel Repli", serif; font-size: .78rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase;
+  color: #ece4d2;
+  clip-path: polygon(7px 0, calc(100% - 7px) 0, 100% 7px, 100% calc(100% - 7px), calc(100% - 7px) 100%, 7px 100%, 0 calc(100% - 7px), 0 7px);
+  background: linear-gradient(160deg, rgba(255,255,255,.07) 0 45%, transparent 45.2%), linear-gradient(180deg, #1d212b, #13161d);
+  box-shadow: inset 0 0 0 1px rgba(236,228,210,.2);
+  transition: box-shadow .2s ease, filter .2s ease;
+}
+.retour.retour--bouton:hover, .retour.retour--bouton:focus-visible { color: #fff; filter: brightness(1.2); box-shadow: inset 0 0 0 1px rgba(194,61,72,.7); outline: none; }
 
 .deck-aide,
 .grimoire__aide {

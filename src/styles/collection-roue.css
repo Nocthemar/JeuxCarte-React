@@ -1,7 +1,6 @@
 /* =====================================================================
-   Page collection : l'écran des deux choix
-   - le grimoire fermé (on l'ouvre pour voir ses cartes)
-   - la roue des apparences (JS/collection-roue.js)
+   Page collection : la roue des apparences (components/collection/Roue.jsx),
+   et l'écran des deux choix (en bas du fichier)
    ===================================================================== */
 .choix { padding-top: 8px; }
 .choix__titre {
@@ -32,123 +31,6 @@
   color: var(--texte);
 }
 .choix__aide { display: block; text-align: center; font-style: italic; color: var(--texte-doux); font-size: .92rem; }
-
-
-/* ---------- I. Le grimoire fermé ---------- */
-.choix-livre {
-  display: flex; flex-direction: column; align-items: center; gap: 10px;
-  padding: 18px 10px 10px;
-  border: 0; background: none; color: inherit;
-  cursor: pointer;
-}
-.choix-livre__livre {
-  position: relative;
-  display: block;
-  width: min(300px, 70vw); aspect-ratio: 3 / 4;
-  perspective: 1400px;
-}
-/* les pages, visibles sur la tranche quand la couverture s'entrouvre */
-.choix-livre__tranche {
-  position: absolute; inset: 2% 1% 2% 3%;
-  background: repeating-linear-gradient(90deg, #e9dcbd 0 2px, #cdb98f 2px 3px);
-  box-shadow: inset 0 0 18px rgba(80,50,20,.5);
-  border-radius: 2px 6px 6px 2px;
-}
-.choix-livre__couverture {
-  position: absolute; inset: 0;
-  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px;
-  border-radius: 3px 8px 8px 3px;
-  background:
-    radial-gradient(ellipse 60% 40% at 30% 15%, rgba(255,220,170,.08), transparent 70%),
-    radial-gradient(ellipse 120% 90% at 50% 50%, transparent 55%, rgba(0,0,0,.55) 100%),
-    linear-gradient(90deg, rgba(0,0,0,.45) 0 5%, transparent 9%),
-    linear-gradient(135deg, var(--cuir, #3a1d14) 0%, #2a130c 55%, var(--cuir-sombre, #1c0d08) 100%);
-  box-shadow: 0 26px 50px rgba(0,0,0,.7), inset 0 0 30px rgba(0,0,0,.6);
-  transform-origin: left center;
-  transition: transform .6s cubic-bezier(.3,.8,.3,1);
-}
-.choix-livre__cadre {
-  position: absolute; inset: 7% 8% 7% 11%;
-  border: 1px solid var(--dorure, rgba(214,172,108,.55));
-  outline: 1px solid rgba(214,172,108,.25); outline-offset: 5px;
-  pointer-events: none;
-}
-.choix-livre__embleme { font-size: 2.2rem; color: rgba(230,190,120,.85); text-shadow: 0 0 12px rgba(230,190,120,.4); }
-.choix-livre__nom {
-  text-align: center;
-  font-family: "Cinzel Decorative","Cinzel Decorative Repli", serif; font-weight: 700;
-  font-size: clamp(1.1rem, 2.4vw, 1.45rem); line-height: 1.25; letter-spacing: .06em;
-  color: #e6c98c;
-  text-shadow: 0 1px 0 #000, 0 0 10px rgba(230,190,120,.25);
-}
-.choix-livre__compte {
-  font-family: "Cinzel","Cinzel Repli", serif; font-size: .75rem; letter-spacing: .14em; text-transform: uppercase;
-  color: rgba(230,201,140,.7);
-}
-/* la couverture s'entrouvre au survol */
-.choix-livre:hover .choix-livre__couverture,
-.choix-livre:focus-visible .choix-livre__couverture { transform: rotateY(-24deg); }
-.choix-livre:focus-visible { outline: none; }
-.choix-livre:focus-visible .choix__libelle { text-decoration: underline; text-underline-offset: 4px; }
-
-/* Le livre ouvert : le grimoire arrive en s'ouvrant */
-.collection--ouverture .grimoire { animation: livre-ouverture .6s cubic-bezier(.2,.8,.3,1) both; }
-@keyframes livre-ouverture { from { opacity: 0; transform: perspective(1400px) rotateY(-18deg) scale(.94); } }
-/* « ← Refermer… », juste sous « ← Retour au profil » */
-.retour--bouton { display: block; margin: 0 0 10px; border: 0; background: none; padding: 0; cursor: pointer; text-align: left; }
-.retour--bouton[hidden] { display: none; }
-
-
-/* ---------- II. La roue fermée : un médaillon d'or ---------- */
-.choix-roue {
-  display: flex; flex-direction: column; align-items: center; gap: 10px;
-  padding: 18px 10px 10px;
-  border: 0; background: none; color: inherit;
-  cursor: pointer;
-}
-.medaillon {
-  position: relative;
-  display: block;
-  width: min(270px, 64vw); aspect-ratio: 1;
-  border-radius: 50%;
-  background:
-    radial-gradient(circle, transparent 0 30%, rgba(214,172,108,.55) 30.5% 31.2%, transparent 31.6%),
-    radial-gradient(circle, transparent 0 78%, rgba(214,172,108,.45) 78.5% 79.2%, transparent 79.6%),
-    radial-gradient(circle at 50% 38%, #2e2722, #120e0c 72%);
-  box-shadow: 0 26px 50px rgba(0,0,0,.7), inset 0 0 0 3px rgba(214,172,108,.55), inset 0 0 40px rgba(0,0,0,.8);
-  transition: rotate .8s cubic-bezier(.3,.8,.3,1);
-}
-.medaillon__rayons {
-  position: absolute; inset: 8%; border-radius: 50%;
-  background: repeating-conic-gradient(from 22.5deg, rgba(214,172,108,.18) 0 1.2deg, transparent 1.2deg 45deg);
-  -webkit-mask: radial-gradient(circle, transparent 0 34%, #000 35%); mask: radial-gradient(circle, transparent 0 34%, #000 35%);
-}
-.medaillon__signe {
-  position: absolute; left: 50%; top: 50%;
-  display: grid; place-items: center;
-  width: 20%; aspect-ratio: 1; margin: -10% 0 0 -10%;
-  border-radius: 50%;
-  background: radial-gradient(circle at 50% 35%, #3a322c, #17120f);
-  box-shadow: 0 4px 8px rgba(0,0,0,.6), inset 0 0 0 2px rgba(214,172,108,.4);
-  color: #e6c98c; font-size: clamp(.9rem, 2.4vw, 1.25rem);
-}
-.medaillon__signe--1 { transform: translateY(-140%); }
-.medaillon__signe--2 { transform: translateX(140%); }
-.medaillon__signe--3 { transform: translateY(140%); }
-.medaillon__signe--4 { transform: translateX(-140%); }
-.medaillon__coeur {
-  position: absolute; left: 50%; top: 50%; translate: -50% -50%;
-  font-size: clamp(1.6rem, 4vw, 2.2rem); color: #f0c873; text-shadow: 0 0 14px rgba(240,200,115,.45);
-}
-/* Côte à côte : la roue est centrée sur la hauteur du livre (les deux titres restent alignés en bas) */
-@media (min-width: 861px) {
-  .medaillon { margin-bottom: calc((min(300px, 70vw) * 4 / 3 - min(270px, 64vw)) / 2); }
-}
-/* la roue tourne d'un quart au survol */
-.choix-roue:hover .medaillon,
-.choix-roue:focus-visible .medaillon { rotate: 90deg; }
-.choix-roue:focus-visible { outline: none; }
-.choix-roue:focus-visible .choix__libelle { text-decoration: underline; text-underline-offset: 4px; }
 
 
 /* ---------- La roue ouverte : en grand, au centre de la page ---------- */
@@ -363,23 +245,295 @@
 .apercu-roue--vide { color: rgba(214,172,108,.6); font-size: 1.4rem; }
 
 @media (prefers-reduced-motion: reduce) {
-  .roue__disque, .roue__objet, .roue__jeton, .choix-livre__couverture, .medaillon,
+  .roue__disque, .roue__objet, .roue__jeton,
   .roue-categorie, .roue-categories__curseur { transition: none; }
   .collection--ouverture .grimoire, .vue-roue--ouverture .roue { animation: none; }
 }
 
-/* Lien vers les échanges, sous les deux choix */
-.choix__echanges {
-  display: block; width: fit-content;
-  margin: 30px auto 0;
-  padding: 8px 20px;
-  border: 1px solid var(--bord);
-  color: var(--texte);
-  font-family: "Cinzel","Cinzel Repli", serif; font-size: .85rem; letter-spacing: .1em; text-transform: uppercase;
-  text-decoration: none;
-  transition: border-color .2s ease, color .2s ease;
-}
-.choix__echanges:hover, .choix__echanges:focus-visible { border-color: var(--accent); color: var(--accent); }
 
-/* « Échanger avec un joueur » : un lien vers les échanges du Marché */
-a.choix__echanges { display: flex; align-items: center; gap: 8px; text-decoration: none; }
+/* =====================================================================
+   L'écran des deux choix, dans le style Nocthémar : le grimoire et le cercle des apparences, en grand,
+   posés côte à côte sur la nuit du jeu, leur nom dessous. L'ivoire pour le texte, un seul accent, le rouge sang.
+   - Le grimoire : un tome en 3D. Au survol il pivote vers soi et sa couverture s'entrebâille ; au clic
+     (.est-ouvert) il se tourne de face et sa couverture s'ouvre en grand sur la première page, où ses cartes
+     sont rangées dans leurs pochettes ; puis on entre dans le grimoire (Collection.jsx, OUVERTURE).
+   - Le cercle : une couronne de fer, quatre quartiers, le plateau choisi au cœur ; il tourne au survol.
+   ===================================================================== */
+body.page-collection:has(#choix) {
+  background:
+    radial-gradient(ellipse 70% 55% at 50% 0%, rgba(155,39,48,.13), transparent 70%),
+    linear-gradient(180deg, rgba(6,8,13,.55), rgba(6,8,13,.88) 55%, rgba(6,8,13,.97)),
+    url("/img/Fond/Profil_fond.png") center top / cover no-repeat fixed,
+    #07080c;
+}
+.choix {
+  --ivoire: #ece4d2; --ivoire-doux: #b9b2a2; --gris: #878d98;
+  --pierre-1: #1d212b; --pierre-2: #13161d;
+  --filet: rgba(236,228,210,.13); --filet-fort: rgba(236,228,210,.3);
+  --sang: #9b2730; --sang-vif: #c23d48; --sang-sombre: #5e1419;
+  --taille-petite: polygon(8px 0, calc(100% - 8px) 0, 100% 8px, 100% calc(100% - 8px), calc(100% - 8px) 100%, 8px 100%, 0 calc(100% - 8px), 0 8px);
+  max-width: 1000px; margin: 0 auto; padding-top: 4px;
+}
+.choix__entete { margin-bottom: 20px; text-align: center; }
+.choix__entete span { display: block; margin-bottom: 8px; font-family: "Cinzel","Cinzel Repli", serif; font-size: .7rem; letter-spacing: .5em; text-transform: uppercase; color: var(--gris); }
+.choix .choix__titre {
+  margin: 0; font-family: "Cinzel","Cinzel Repli", serif; font-weight: 700; font-size: clamp(2rem, 4.4vw, 3.3rem); letter-spacing: .08em;
+  color: var(--ivoire); text-shadow: 0 6px 30px rgba(0,0,0,.9);
+}
+.choix .choix__titre::after { content: ""; display: block; width: 200px; height: 1px; margin: 14px auto 0; background: linear-gradient(90deg, transparent, var(--sang-vif), transparent); }
+
+.choix .choix__grille { max-width: none; gap: 30px; align-items: end; }
+
+/* ---------- Un objet (le grimoire, le cercle), son nom dessous ---------- */
+.choix-objet {
+  position: relative; display: flex; flex-direction: column; align-items: center; gap: 8px;
+  padding: 34px 10px 10px; border: 0; background: none; cursor: pointer; color: var(--ivoire); font: inherit;
+}
+/* la lumière qui tombe sur l'objet, et son socle */
+.choix-objet::before {
+  content: ""; position: absolute; inset: 0 0 60px; z-index: -1; pointer-events: none;
+  background:
+    radial-gradient(ellipse 42% 60% at 50% 0%, rgba(236,228,210,.1), transparent 70%),
+    radial-gradient(ellipse 40% 9% at 50% 93%, rgba(155,39,48,.32), transparent 72%);
+  transition: opacity .4s ease;
+  opacity: .75;
+}
+.choix-objet:hover::before, .choix-objet:focus-visible::before { opacity: 1; }
+.choix-objet:focus-visible { outline: none; }
+.choix-objet:disabled { cursor: default; }
+.choix .choix__libelle {
+  margin-top: 26px; font-family: "Cinzel","Cinzel Repli", serif; font-weight: 700; font-size: 1.25rem; letter-spacing: .12em; text-transform: uppercase;
+  text-align: center; color: var(--ivoire); transition: color .25s ease;
+}
+.choix-objet:hover .choix__libelle, .choix-objet:focus-visible .choix__libelle { color: #fff; }
+.choix .choix__libelle::after { content: ""; display: block; width: 0; height: 2px; margin: 8px auto 0; background: var(--sang-vif); transition: width .35s ease; }
+.choix-objet:hover .choix__libelle::after, .choix-objet:focus-visible .choix__libelle::after { width: 60px; }
+.choix .choix__aide { text-align: center; font-size: 1rem; font-style: italic; color: var(--gris); }
+
+/* ---------- I. Le grimoire : un tome en 3D (--w, --h : la couverture ; --e : l'épaisseur) ---------- */
+.tome {
+  --w: 216px; --h: 290px; --e: 54px;
+  position: relative; width: var(--w); height: var(--h);
+  perspective: 1000px;
+}
+/* l'ombre sur le socle */
+.tome::after {
+  content: ""; position: absolute; left: -8%; right: -30%; bottom: -26px; height: 32px; z-index: -1;
+  background: radial-gradient(ellipse at center, rgba(0,0,0,.75), transparent 70%);
+  transition: transform .6s ease, opacity .6s ease;
+}
+.tome__livre {
+  position: absolute; inset: 0; transform-style: preserve-3d;
+  transform: rotateX(-8deg) rotateY(-26deg);
+  transition: transform .8s cubic-bezier(.3,1.2,.4,1);
+}
+.tome__face { position: absolute; backface-visibility: hidden; }
+
+/* La première page, sous la couverture : six pochettes, ses cartes les plus rares */
+.tome__page {
+  position: absolute; inset: 6px 6px 6px 4px; box-sizing: border-box;
+  display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(2, 1fr); gap: 8px; padding: 16px 14px;
+  transform: translateZ(calc(var(--e) / 2 - 3px));
+  background:
+    radial-gradient(ellipse 80% 70% at 50% 45%, transparent 55%, rgba(90,66,30,.25)),
+    linear-gradient(90deg, rgba(60,44,20,.3), transparent 9%),
+    linear-gradient(180deg, #ece2ca, #d9cbaa);
+}
+.tome__pochette {
+  position: relative; min-height: 0; border-radius: 3px;
+  background: rgba(60,44,20,.1); box-shadow: inset 0 0 0 1px rgba(90,66,30,.25);
+}
+.tome__pochette img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 2px 2px rgba(0,0,0,.35)); }
+
+/* La couverture : elle pivote sur le dos ; dehors le cuir et sa gemme, dedans la doublure */
+.tome__couverture {
+  position: absolute; inset: 0; transform-style: preserve-3d; transform-origin: 0 50%;
+  transform: translateZ(calc(var(--e) / 2)) rotateY(0deg);
+  transition: transform 1s cubic-bezier(.45,.05,.3,1);
+}
+.tome__face--avant {
+  inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
+  background:
+    /* les coins de fer */
+    linear-gradient(135deg, #9aa0ac 0 17px, #5d626d 17px 25px, transparent 25.5px) 0 0 / 50% 50% no-repeat,
+    linear-gradient(225deg, #9aa0ac 0 17px, #5d626d 17px 25px, transparent 25.5px) 100% 0 / 50% 50% no-repeat,
+    linear-gradient(45deg, #6f7480 0 17px, #43474f 17px 25px, transparent 25.5px) 0 100% / 50% 50% no-repeat,
+    linear-gradient(315deg, #6f7480 0 17px, #43474f 17px 25px, transparent 25.5px) 100% 100% / 50% 50% no-repeat,
+    /* le cuir noir, en facettes franches */
+    linear-gradient(125deg, rgba(255,255,255,.075) 0 24%, transparent 24.3%),
+    linear-gradient(55deg, transparent 0 60%, rgba(255,255,255,.035) 60.3% 78%, transparent 78.3%),
+    linear-gradient(200deg, transparent 0 52%, rgba(0,0,0,.35) 52.3%),
+    linear-gradient(160deg, #2b2f39, #14161c);
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,.6), inset 5px 0 0 rgba(0,0,0,.35);
+}
+/* le filet ivoire, deux fois, aux coins coupés */
+.tome__face--avant::before, .tome__face--avant::after {
+  content: ""; position: absolute; pointer-events: none;
+  clip-path: polygon(16px 0, calc(100% - 16px) 0, 100% 16px, 100% calc(100% - 16px), calc(100% - 16px) 100%, 16px 100%, 0 calc(100% - 16px), 0 16px);
+}
+.tome__face--avant::before { inset: 17px; box-shadow: inset 0 0 0 1px rgba(236,228,210,.42); }
+.tome__face--avant::after { inset: 23px; box-shadow: inset 0 0 0 1px rgba(236,228,210,.16); }
+.tome__titre, .tome__sous-titre { position: relative; font-family: "Cinzel","Cinzel Repli", serif; font-weight: 700; text-transform: uppercase; color: #e6dcc4; text-shadow: 0 1px 0 rgba(0,0,0,.8); }
+.tome__titre { font-size: 1.22rem; letter-spacing: .2em; }
+.tome__sous-titre { font-size: .72rem; letter-spacing: .36em; color: #b9b2a2; }
+/* la lueur de la gemme (derrière elle), qui s'allume au survol */
+.tome__halo {
+  position: absolute; left: 50%; top: 50%; width: 200px; height: 200px; margin: -100px 0 0 -100px; pointer-events: none;
+  background: radial-gradient(circle, rgba(240,90,100,.75), rgba(194,61,72,.3) 35%, transparent 66%);
+  opacity: 0; transition: opacity .5s ease;
+}
+/* la gemme, dans sa monture de fer et d'ivoire */
+.tome__gemme {
+  position: relative; width: 74px; height: 85px; margin: 6px 0;
+  clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+  background: linear-gradient(160deg, #ece4d2, #8d8572 55%, #4a4e57);
+  transition: filter .5s ease;
+}
+.tome__gemme::before {
+  content: ""; position: absolute; inset: 6px;
+  clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+  background:
+    linear-gradient(150deg, rgba(255,255,255,.45) 0 22%, transparent 22.5%),
+    conic-gradient(from 30deg, #e46a74 0 60deg, #9b2730 60deg 120deg, #4a0f14 120deg 180deg, #6d1820 180deg 240deg, #c23d48 240deg 300deg, #f08a92 300deg 360deg);
+}
+.tome__gemme::after {
+  content: ""; position: absolute; inset: 27px 22px;
+  clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+  background: linear-gradient(170deg, #f5a2a9, #b8303b); opacity: .75;
+}
+/* le fermoir, au bord de la couverture */
+.tome__fermoir {
+  position: absolute; right: 0; top: 50%; width: 34px; height: 40px; margin-top: -20px;
+  clip-path: polygon(12px 0, 100% 0, 100% 100%, 12px 100%, 0 50%);
+  background:
+    radial-gradient(circle at 19px 50%, #d9cfb8 0 3.5px, #5d626d 4px 5px, transparent 5.5px),
+    linear-gradient(180deg, #8d93a0, #4a4e57 60%, #2c2f36);
+}
+/* l'envers de la couverture : une doublure rouge sang, son filet */
+.tome__face--doublure {
+  inset: 0; transform: rotateY(180deg);
+  background:
+    linear-gradient(125deg, rgba(255,255,255,.06) 0 30%, transparent 30.3%),
+    linear-gradient(180deg, #5e1419, #3a0c10);
+  box-shadow: inset 0 0 0 10px #1d2028, inset 0 0 0 11px rgba(236,228,210,.3);
+}
+
+/* le dos, à gauche */
+.tome__face--dos {
+  top: 0; left: calc(50% - var(--e) / 2); width: var(--e); height: 100%;
+  transform: rotateY(-90deg) translateZ(calc(var(--w) / 2));
+  background:
+    repeating-linear-gradient(180deg, transparent 0 50px, rgba(0,0,0,.45) 50px 55px, rgba(255,255,255,.08) 55px 57px, transparent 57px 70px),
+    linear-gradient(90deg, #1a1c22, #2b2f39 50%, #1a1c22);
+}
+/* la tranche des pages, à droite, un peu en retrait des couvertures */
+.tome__face--tranche {
+  top: 6px; left: calc(50% - (var(--e) - 6px) / 2); width: calc(var(--e) - 6px); height: calc(100% - 12px);
+  transform: rotateY(90deg) translateZ(calc(var(--w) / 2 - 5px));
+  background:
+    repeating-linear-gradient(90deg, transparent 0 2px, rgba(90,72,48,.18) 2px 3px),
+    linear-gradient(90deg, #b7a988, #ece2ca 30%, #e2d6ba 70%, #b3a582);
+  box-shadow: inset 0 0 12px rgba(60,44,20,.35);
+}
+/* le dessus des pages */
+.tome__face--haut {
+  top: calc(50% - (var(--e) - 6px) / 2); left: 4px; width: calc(100% - 10px); height: calc(var(--e) - 6px);
+  transform: rotateX(90deg) translateZ(calc(var(--h) / 2 - 5px));
+  background:
+    repeating-linear-gradient(180deg, transparent 0 2px, rgba(90,72,48,.16) 2px 3px),
+    linear-gradient(180deg, #c7b995, #efe6d0);
+}
+
+/* Au survol : il pivote vers soi, se soulève, la couverture s'entrebâille, la gemme s'allume */
+.choix-objet:hover .tome__livre, .choix-objet:focus-visible .tome__livre { transform: translateY(-10px) rotateX(-6deg) rotateY(-16deg); }
+.choix-objet:hover .tome__couverture, .choix-objet:focus-visible .tome__couverture { transform: translateZ(calc(var(--e) / 2)) rotateY(-16deg); }
+.choix-objet:hover .tome::after, .choix-objet:focus-visible .tome::after { transform: scale(.88); opacity: .75; }
+.choix-objet:hover .tome__gemme, .choix-objet:focus-visible .tome__gemme { filter: brightness(1.25) saturate(1.1); }
+.choix-objet:hover .tome__halo, .choix-objet:focus-visible .tome__halo { opacity: 1; }
+/* Au clic : il se tourne de face, s'approche, et sa couverture s'ouvre en grand sur ses cartes */
+.choix-objet.est-ouvert .tome__livre { transform: translate(14%, -14px) scale(1.12); transition-duration: 1s; }
+.choix-objet.est-ouvert .tome__couverture { transform: translateZ(calc(var(--e) / 2)) rotateY(-168deg); }
+.choix-objet.est-ouvert .tome__halo { opacity: 0; }
+.choix-objet.est-ouvert .tome::after { transform: translateX(-10%) scaleX(1.6); }
+.choix-objet.est-ouvert .choix__libelle, .choix-objet.est-ouvert .choix__aide { opacity: 0; transition: opacity .3s ease; }
+
+/* II. Le cercle des apparences : une couronne de fer crantée, un disque de pierre en quatre quartiers,
+   les noms des quatre sortes, le plateau choisi au cœur, un repère rouge sang en haut.
+   Au survol, la couronne et le disque tournent d'un quart de tour (les noms restent lisibles). */
+.cercle-clos {
+  --t: 270px;
+  position: relative; display: grid; place-items: center; width: var(--t); height: var(--t); margin-bottom: 10px;
+  filter: drop-shadow(0 20px 22px rgba(0,0,0,.7));
+}
+.cercle-clos__couronne, .cercle-clos__disque { position: absolute; border-radius: 50%; transition: transform .9s cubic-bezier(.3,1.2,.4,1); }
+.cercle-clos__couronne {
+  inset: 0;
+  background:
+    repeating-conic-gradient(from 0deg, rgba(0,0,0,.55) 0 1.2deg, transparent 1.2deg 15deg),
+    conic-gradient(from 200deg, #5a5f6b, #2a2e37, #4a4f5a, #1d2028, #5a5f6b);
+  -webkit-mask: radial-gradient(circle, transparent 0 calc(50% - 16px), #000 calc(50% - 15px));
+          mask: radial-gradient(circle, transparent 0 calc(50% - 16px), #000 calc(50% - 15px));
+}
+.cercle-clos__disque {
+  inset: 15px;
+  background:
+    radial-gradient(circle, transparent 0 30%, rgba(0,0,0,.35) 30.5% 31.5%, transparent 32%),
+    conic-gradient(from 45deg, #232733 0 25%, #1a1d26 25% 50%, #232733 50% 75%, #1a1d26 75%),
+    #1d212b;
+  box-shadow: inset 0 0 0 1px rgba(236,228,210,.18), inset 0 0 30px rgba(0,0,0,.6);
+}
+/* les quatre traits qui séparent les quartiers */
+.cercle-clos__disque::before {
+  content: ""; position: absolute; inset: 0; border-radius: 50%;
+  background:
+    linear-gradient(45deg, transparent calc(50% - .6px), rgba(236,228,210,.22) calc(50% - .6px) calc(50% + .6px), transparent calc(50% + .6px)),
+    linear-gradient(-45deg, transparent calc(50% - .6px), rgba(236,228,210,.22) calc(50% - .6px) calc(50% + .6px), transparent calc(50% + .6px));
+}
+.cercle-clos__nom {
+  position: absolute; z-index: 1;
+  font-family: "Cinzel","Cinzel Repli", serif; font-weight: 700; font-size: .62rem; letter-spacing: .18em; text-transform: uppercase; color: var(--ivoire-doux);
+}
+.cercle-clos__nom--0 { top: 21%; }
+.cercle-clos__nom--1 { right: 11%; }
+.cercle-clos__nom--2 { bottom: 21%; }
+.cercle-clos__nom--3 { left: 11%; }
+.cercle-clos__nom--1, .cercle-clos__nom--3 { writing-mode: vertical-rl; }
+.cercle-clos__nom--3 { transform: rotate(180deg); }
+/* le cœur : le plateau choisi, dans un médaillon cerclé d'ivoire */
+.cercle-clos__coeur {
+  position: relative; z-index: 2; width: 37%; aspect-ratio: 1; border-radius: 50%; overflow: hidden;
+  background: #0b0d13; box-shadow: 0 0 0 3px #d9cfb8, 0 0 0 5px #1a1d26, 0 6px 16px rgba(0,0,0,.7);
+}
+.cercle-clos__coeur img { width: 100%; height: 100%; object-fit: cover; scale: 1.15; }
+/* le repère, une pointe rouge sang qui mord sur la couronne */
+.cercle-clos__repere {
+  position: absolute; top: -8px; left: 50%; width: 18px; height: 26px; margin-left: -9px; z-index: 3;
+  background: linear-gradient(160deg, rgba(255,255,255,.2) 0 45%, transparent 45.3%), linear-gradient(180deg, var(--sang-vif), var(--sang-sombre));
+  clip-path: polygon(0 0, 100% 0, 100% 45%, 50% 100%, 0 45%);
+}
+.choix-objet:hover .cercle-clos__couronne, .choix-objet:focus-visible .cercle-clos__couronne { transform: rotate(90deg); }
+.choix-objet:hover .cercle-clos__disque, .choix-objet:focus-visible .cercle-clos__disque { transform: rotate(-90deg); }
+
+
+/* ---------- Les échanges : une plaque basse ---------- */
+.choix .choix__echanges {
+  display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 4px 20px;
+  width: auto; max-width: 760px; margin: 34px auto 0; padding: 16px 26px; border: 0;
+  clip-path: var(--taille-petite);
+  background: linear-gradient(118deg, rgba(255,255,255,.04) 0 22%, transparent 22.2%), linear-gradient(180deg, rgba(29,33,43,.92), rgba(19,22,29,.92));
+  box-shadow: inset 0 0 0 1px var(--filet);
+  text-decoration: none;
+  transition: box-shadow .25s ease, filter .25s ease;
+}
+.choix .choix__echanges span { font-family: "Cinzel","Cinzel Repli", serif; font-weight: 700; font-size: .9rem; letter-spacing: .14em; text-transform: uppercase; color: var(--ivoire); }
+.choix .choix__echanges small { font-family: "EB Garamond","EB Garamond Repli", serif; font-style: italic; font-size: .98rem; color: var(--gris); }
+.choix .choix__echanges:hover, .choix .choix__echanges:focus-visible { outline: none; filter: brightness(1.12); box-shadow: inset 0 0 0 1px rgba(194,61,72,.55); }
+
+@media (max-width: 860px) {
+  .tome { scale: .82; margin: -20px 0 -26px; }
+  .cercle-clos { --t: 220px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tome__livre, .tome__couverture, .tome__gemme, .tome__halo, .cercle-clos__couronne, .cercle-clos__disque { transition: none; }
+}
+:root.anim-reduites :is(.tome__livre, .tome__couverture, .tome__gemme, .tome__halo, .cercle-clos__couronne, .cercle-clos__disque) { transition: none; }

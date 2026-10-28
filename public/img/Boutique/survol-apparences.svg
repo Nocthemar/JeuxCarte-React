@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 513.96 766" preserveAspectRatio="none">
+<!-- Le survol d'une porte de la Boutique (styles/boutique-accueil.css) : la lueur qui suit les cadres dorés de Boutique_fond, coins coupés compris. -->
+<defs><filter id="f" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation="7"/></filter></defs>
+<g fill="none" stroke-linejoin="miter">
+<g stroke="#f3cf7c" stroke-width="16" opacity=".55" filter="url(#f)"><polygon points="47.1,206 468.1,206 492.1,230 492.1,725.5 468.1,749.5 47.1,749.5 23.1,725.5 23.1,230"/><polygon points="46.6,16.5 467.6,16.5 491.6,44.5 491.6,148 467.6,176 46.6,176 22.6,148 22.6,44.5"/></g>
+<g stroke="#ffe7ad" stroke-width="3" opacity=".9"><polygon points="47.1,206 468.1,206 492.1,230 492.1,725.5 468.1,749.5 47.1,749.5 23.1,725.5 23.1,230"/><polygon points="46.6,16.5 467.6,16.5 491.6,44.5 491.6,148 467.6,176 46.6,176 22.6,148 22.6,44.5"/></g>
+</g></svg>

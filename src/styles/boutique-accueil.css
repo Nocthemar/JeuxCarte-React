@@ -278,24 +278,41 @@ body.page-boutique:has(.vitrine--accueil .hall) {
     grid-row: 6; justify-self: center; margin-top: calc(.9 * var(--u));
     font-size: clamp(.6rem, calc(.95 * var(--u)), .95rem);
   }
-  /* La lumière de la niche (y 229 → 763 : à 26,24 % du haut de la porte) : douce, plus vive au survol */
+  /* La lumière de la niche (y 229 → 763 : à 26,24 % du haut de la porte) : douce, plus vive au survol,
+     aux coins coupés comme le cadre doré de l'image (--px : un pixel de l'image, en largeur) */
+  .page-boutique .vitrine--accueil .porte { --px: calc(100cqi / 1672); --py: calc(100cqb / 941); }
   .page-boutique .vitrine--accueil .porte::before {
     content: ""; display: block; position: absolute; inset: 26.24% 0 0; z-index: -1; pointer-events: none; opacity: 1;
+    --c: calc(18 * var(--px));
+    clip-path: polygon(var(--c) 0, calc(100% - var(--c)) 0, 100% var(--c), 100% calc(100% - var(--c)), calc(100% - var(--c)) 100%, var(--c) 100%, 0 calc(100% - var(--c)), 0 var(--c));
     background:
       radial-gradient(ellipse 70% 40% at 50% 100%, rgba(217,164,65,.16), transparent 70%),
       radial-gradient(ellipse 60% 50% at 50% 0, rgba(190,205,240,.06), transparent 70%);
-    box-shadow: inset 0 0 0 1px transparent;
-    transition: background .3s ease, box-shadow .3s ease;
+    box-shadow: none;
+    transition: background .35s ease;
   }
   .page-boutique .vitrine--accueil .porte:hover::before,
   .page-boutique .vitrine--accueil .porte:focus-visible::before {
     inset: 26.24% 0 0; opacity: 1;
     background:
-      radial-gradient(ellipse 80% 50% at 50% 100%, rgba(243,207,124,.32), transparent 70%),
-      radial-gradient(ellipse 70% 60% at 50% 0, rgba(243,207,124,.12), transparent 70%);
-    box-shadow: inset 0 0 0 2px rgba(243,207,124,.55), inset 0 0 40px rgba(217,164,65,.18);
+      radial-gradient(ellipse 80% 50% at 50% 100%, rgba(243,207,124,.3), transparent 70%),
+      radial-gradient(ellipse 70% 60% at 50% 0, rgba(243,207,124,.1), transparent 70%);
+    box-shadow: none;
   }
-  .page-boutique .vitrine--accueil .porte::after { inset: 26.24% 0 0; }
+  /* Au survol, les deux cadres dorés de la case (le cartouche et la niche) s'allument : un tracé posé exactement
+     sur eux (img/Boutique/survol-*.svg, dessiné aux mesures de l'image, de 28 px à gauche et à droite de la porte,
+     y 19 → 785), étiré comme l'image. Il remplace le reflet qui balaie (un rectangle, qui ne suivait pas les cases). */
+  :root .page-boutique .vitrine--accueil .hall .porte::after {
+    display: block; inset: calc(-20 * var(--py)) calc(-28 * var(--px)) calc(-22 * var(--py));
+    translate: none; z-index: 0;
+    background: var(--survol) center / 100% 100% no-repeat;
+    opacity: 0; transition: opacity .35s ease;
+  }
+  :root .page-boutique .vitrine--accueil .hall .porte:hover::after,
+  :root .page-boutique .vitrine--accueil .hall .porte:focus-visible::after { opacity: 1; translate: none; }
+  .page-boutique .vitrine--accueil .porte--boosters   { --survol: url("/img/Boutique/survol-boosters.svg"); }
+  .page-boutique .vitrine--accueil .porte--apparences { --survol: url("/img/Boutique/survol-apparences.svg"); }
+  .page-boutique .vitrine--accueil .porte--plateaux   { --survol: url("/img/Boutique/survol-plateaux.svg"); }
   .page-boutique .vitrine--accueil .porte__annonce { top: 28.5%; right: 5%; font-size: clamp(.55rem, calc(.85 * var(--u)), .8rem); }
   /* Les scènes, en grand dans la niche */
   .page-boutique .vitrine--accueil .scene::after { bottom: calc(1.6 * var(--u)); height: calc(2.4 * var(--u)); }

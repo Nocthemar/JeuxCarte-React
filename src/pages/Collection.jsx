@@ -1,6 +1,7 @@
 // =====================================================================
 //  Écran « Collection » (ancien collection.html + JS/collection.js + JS/collection-roue.js)
-//  Deux choix :
+//  Deux choix (le grimoire, un tome en 3D qui s'ouvre au clic sur ses cartes ; le cercle des apparences, le plateau
+//  choisi au cœur) :
 //  - ouvrir le grimoire : les cartes du joueur, rangées dans des pochettes, et le deck du profil
 //    (components/collection/VueGrimoire.jsx) ; #/collection?vue=grimoire l'ouvre d'office ;
 //  - ouvrir la roue des apparences : plateaux, thèmes, titres, bannières (components/collection/Roue.jsx) ;
@@ -16,6 +17,9 @@ import Roue from '../components/collection/Roue.jsx';
 import { supabase } from '../lib/supabase.js';
 import { useAuth, connexionDiscord } from '../lib/auth.js';
 import { useDeck } from '../lib/deck.js';
+import { urlPublique } from '../lib/chemins.js';
+import { RARETES, rareteDe } from '../data/affichage.js';
+import { niveauAnimationsChoisi } from '../lib/preferences.js';
 
 const VUES = {
   grimoire: { fermer: '← Refermer le grimoire' },
@@ -23,6 +27,11 @@ const VUES = {
 };
 // Les colonnes de players qui disent ce qui est équipé
 const CHAMP = { banner: 'banner_item_id', title: 'title_item_id', theme: 'theme_item_id' };
+
+// Les sortes d'apparences, dans l'ordre de la roue
+const SORTES = [['plateau', 'plateaux'], ['theme', 'thèmes'], ['title', 'titres'], ['banner', 'bannières']];
+const RANG_RARETE = Object.keys(RARETES);
+const OUVERTURE = 1100;   // ms : la couverture du grimoire s'ouvre, puis on entre dedans
 
 // « Bannière « Les Veines » » -> « Les Veines »
 const nomCourt = (nom) => String(nom ?? '').replace(/^(bannière|thème|titre)\s*«\s*(.+?)\s*»$/i, '$2');
@@ -74,6 +83,7 @@ export default function Collection() {
   const [equipes, setEquipes] = useState({ pour: null });   // ce qui a été équipé depuis l'ouverture
   const [anime, setAnime] = useState(false);                // le grimoire / la roue s'ouvre avec une animation
   const [ouverte, setOuverte] = useState(null);             // la carte affichée en grand
+  const [livreOuvert, setLivreOuvert] = useState(false);    // la couverture du grimoire est en train de s'ouvrir
   const deck = useDeck(discordId);
   const boutonLivre = useRef(null);
   const boutonRoue = useRef(null);
@@ -108,6 +118,13 @@ export default function Collection() {
     setParams({ vue: nom }, { replace: true });
     scrollTo(0, 0);
   };
+  // Le grimoire : sa couverture s'ouvre d'abord (sauf animations coupées), puis on entre dedans
+  const ouvrirLivre = () => {
+    const sansAnimation = niveauAnimationsChoisi() === 'coupees' || matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (sansAnimation) { ouvrir('grimoire'); return; }
+    setLivreOuvert(true);
+    setTimeout(() => { setLivreOuvert(false); ouvrir('grimoire'); }, OUVERTURE);
+  };
   const fermer = () => {
     const nom = vue;
     setParams({}, { replace: true });
@@ -116,8 +133,13 @@ export default function Collection() {
   };
 
   const nbCartes = d?.cartes?.size ?? 0;
-  const nbApparences = d?.apparences ? Object.values(d.apparences.objets).reduce((t, l) => t + l.length, 0) : null;
   const pret = !!d && !d.erreur && !!deck.deck;
+  const nbDeck = deck.deck?.ids.filter(Boolean).length ?? 0;
+  // L'écran de choix montre ses cartes les plus rares (sur la première page du grimoire) et le plateau choisi (au cœur du cercle)
+  const vitrine = d?.cartes ? [...d.cartes.values()].map((c) => c.carte).filter((c) => c.image)
+    .sort((x, y) => RANG_RARETE.indexOf(rareteDe(y)) - RANG_RARETE.indexOf(rareteDe(x))).slice(0, 6) : [];
+  const plateaux = d?.apparences?.objets.plateau ?? [];
+  const plateauVitrine = (plateaux.find((p) => p.id === (equipesActuels?.plateau ?? null)) ?? plateaux[0])?.image ?? null;
 
   return (
     <Page id="collection" classes="page-profil page-collection" titre="Collection" braises>
@@ -141,44 +163,66 @@ export default function Collection() {
           </section>
         )}
 
-        {/* Deux choix : ouvrir le grimoire (les cartes), ou tourner la roue des apparences */}
+        {/* Deux choix : le grimoire (il s'ouvre quand on le touche, vers ses cartes) et le cercle des apparences */}
         {pret && !vue && (
           <section id="choix" className="choix">
-            <h1 className="choix__titre">Ta collection</h1>
+            <header className="choix__entete">
+              <span>Ce que tu as rassemblé</span>
+              <h1 className="choix__titre">Ta collection</h1>
+            </header>
             <div className="choix__grille">
-              {/* I. Le grimoire, fermé : on l'ouvre pour voir ses cartes */}
-              <button type="button" className="choix-livre" id="btn-ouvrir-livre" aria-describedby="livre-aide" ref={boutonLivre} onClick={() => ouvrir('grimoire')}>
-                <span className="choix-livre__livre" aria-hidden="true">
-                  <span className="choix-livre__tranche" />
-                  <span className="choix-livre__couverture">
-                    <span className="choix-livre__cadre" />
-                    <span className="choix-livre__embleme">✦</span>
-                    <span className="choix-livre__nom">Grimoire<br />des cartes</span>
-                    <span className="choix-livre__compte" id="livre-compte">{nbCartes} carte{nbCartes > 1 ? 's' : ''}</span>
+              {/* I. Le grimoire : un tome en 3D ; au clic, la couverture s'ouvre sur la première page et ses cartes */}
+              <button type="button" className={`choix-objet${livreOuvert ? ' est-ouvert' : ''}`} id="btn-ouvrir-livre" aria-describedby="livre-aide"
+                ref={boutonLivre} onClick={ouvrirLivre} disabled={livreOuvert}>
+                <span className="tome" aria-hidden="true">
+                  <span className="tome__livre">
+                    {/* la première page, sous la couverture : des pochettes avec ses cartes */}
+                    <span className="tome__page">
+                      {Array.from({ length: 6 }, (_, i) => (
+                        <span key={i} className="tome__pochette">
+                          {vitrine[i] && <img src={urlPublique(vitrine[i].image)} alt="" draggable="false" />}
+                        </span>
+                      ))}
+                    </span>
+                    <span className="tome__couverture">
+                      <span className="tome__face tome__face--avant">
+                        <span className="tome__halo" />
+                        <span className="tome__titre">Grimoire</span>
+                        <span className="tome__gemme" />
+                        <span className="tome__sous-titre">des cartes</span>
+                        <span className="tome__fermoir" />
+                      </span>
+                      <span className="tome__face tome__face--doublure" />
+                    </span>
+                    <span className="tome__face tome__face--dos" />
+                    <span className="tome__face tome__face--tranche" />
+                    <span className="tome__face tome__face--haut" />
                   </span>
                 </span>
                 <span className="choix__libelle">Ouvrir le grimoire</span>
-                <small className="choix__aide" id="livre-aide">Tes cartes collectionnées et ton deck</small>
+                <small className="choix__aide" id="livre-aide">{nbCartes} carte{nbCartes > 1 ? 's' : ''} · {nbDeck} dans le deck</small>
               </button>
 
-              {/* II. La roue des apparences, fermée : on l'ouvre pour la faire tourner en grand */}
-              <button type="button" className="choix-roue" id="btn-ouvrir-roue" aria-describedby="roue-medaillon-aide" ref={boutonRoue} onClick={() => ouvrir('roue')}>
-                <span className="medaillon" aria-hidden="true">
-                  <span className="medaillon__rayons" />
-                  <span className="medaillon__signe medaillon__signe--1">▣</span>
-                  <span className="medaillon__signe medaillon__signe--2">◐</span>
-                  <span className="medaillon__signe medaillon__signe--3">❝</span>
-                  <span className="medaillon__signe medaillon__signe--4">⚑</span>
-                  <span className="medaillon__coeur">✦</span>
+              {/* II. Le cercle des apparences : quatre quartiers, le plateau choisi au cœur ; la couronne tourne au survol */}
+              <button type="button" className="choix-objet" id="btn-ouvrir-roue" aria-describedby="roue-medaillon-aide" ref={boutonRoue} onClick={() => ouvrir('roue')}>
+                <span className="cercle-clos" aria-hidden="true">
+                  <span className="cercle-clos__couronne" />
+                  <span className="cercle-clos__disque" />
+                  {SORTES.map(([kind, nom], i) => <span key={kind} className={`cercle-clos__nom cercle-clos__nom--${i}`}>{nom}</span>)}
+                  <span className="cercle-clos__coeur">{plateauVitrine && <img src={urlPublique(plateauVitrine)} alt="" draggable="false" />}</span>
+                  <span className="cercle-clos__repere" />
                 </span>
                 <span className="choix__libelle">La roue des apparences</span>
                 <small className="choix__aide" id="roue-medaillon-aide">
-                  Plateaux, thèmes, titres et bannières : <span id="roue-compte">{nbApparences == null ? '…' : `${nbApparences} objet${nbApparences > 1 ? 's' : ''}`}</span>
+                  {SORTES.map(([kind, nom]) => `${d.apparences?.objets[kind].length ?? '…'} ${nom}`).join(' · ')}
                 </small>
               </button>
             </div>
             {/* Les échanges entre joueurs (contrats à sceaux) sont sur l'écran Marché */}
-            <Link className="choix__echanges" to="/marche?onglet=echanges">⇄ Échanger avec un joueur</Link>
+            <Link className="choix__echanges" to="/marche?onglet=echanges">
+              <span>Échanger avec un joueur</span>
+              <small>Propose un échange de cartes sur le Marché</small>
+            </Link>
           </section>
         )}
 

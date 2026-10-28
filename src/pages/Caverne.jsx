@@ -8,17 +8,18 @@
 //  sont dans lib/caverne/caverne.js, branché sur le décor (components/caverne/SalleDesJeux.jsx) une fois la
 //  bourse du joueur lue.
 //  On y entre depuis la barre latérale. Elle est scellée : sans badge activé (lib/caverne/badges.js),
-//  la page montre la porte scellée, les badges du joueur à activer et le chemin de la Boutique.
+//  on arrive devant le portail (components/caverne/Portail.jsx) : on y pose un badge, il s'allume, on le
+//  franchit, et la salle des jeux s'ouvre. Avec un badge déjà actif, on entre directement ; on peut revenir au
+//  portail (encore ouvert) depuis le hall.
 // =====================================================================
 import { useEffect, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
 import Page from '../components/Page.jsx';
 import { supabase } from '../lib/supabase.js';
 import { useAuth } from '../lib/auth.js';
 import { useNotifier } from '../lib/notification.js';
 import { monterCaverne } from '../lib/caverne/caverne.js';
 import { lireBadges, accesOuvert, tempsRestant } from '../lib/caverne/badges.js';
-import BadgesCaverne from '../components/BadgesCaverne.jsx';
+import Portail from '../components/caverne/Portail.jsx';
 import SalleDesJeux from '../components/caverne/SalleDesJeux.jsx';
 
 // Une fonction du serveur : sa réponse, ou une erreur avec le message à montrer
@@ -44,15 +45,18 @@ export default function Caverne() {
   const [bourse, setBourse] = useState(null);
   const [badges, setBadges] = useState(null);   // caverne_badges_etat, ou { erreur }
   const [maintenant, setMaintenant] = useState(() => Date.now());
+  const [entre, setEntre] = useState(false);     // le portail est franchi (ou le badge était déjà actif)
 
-  // La bourse du joueur, lue une fois ; ensuite, chaque réponse du serveur la donne
+  // La bourse du joueur, lue à l'arrivée (et relue en revenant du portail) ; ensuite, chaque réponse du serveur la donne
+  const lireBourse = (actif = () => true) => supabase.from('wallets').select('balance, cristaux').eq('discord_id', discordId).maybeSingle()
+    .then(({ data }) => { if (actif()) setBourse({ or: data?.balance ?? 0, cristaux: data?.cristaux ?? 0 }); });
   useEffect(() => {
     if (!discordId) return undefined;
     let actif = true;
-    supabase.from('wallets').select('balance, cristaux').eq('discord_id', discordId).maybeSingle()
-      .then(({ data }) => { if (actif) setBourse({ or: data?.balance ?? 0, cristaux: data?.cristaux ?? 0 }); });
-    lireBadges().then((e) => { if (actif) setBadges(e); }).catch((e) => { if (actif) setBadges({ erreur: e.message }); });
+    lireBourse(() => actif);
+    lireBadges().then((e) => { if (!actif) return; setBadges(e); if (accesOuvert(e)) setEntre(true); }).catch((e) => { if (actif) setBadges({ erreur: e.message }); });
     return () => { actif = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [discordId]);
   // Le temps qui reste (chaque minute)
   useEffect(() => {
@@ -60,9 +64,10 @@ export default function Caverne() {
     return () => clearInterval(t);
   }, []);
 
-  // La Caverne est scellée tant qu'aucun badge n'est activé (le serveur le revérifie à chaque partie)
+  // La Caverne est scellée tant qu'aucun badge n'est activé (le serveur le revérifie à chaque partie) ;
+  // on y entre en franchissant le portail
   const ouverte = accesOuvert(badges);
-  const pret = bourse !== null && ouverte;
+  const pret = bourse !== null && ouverte && entre;
   useEffect(() => {
     if (!pret || !racine.current) return undefined;
     return monterCaverne(racine.current, { serveur: SERVEUR, notifier, bourse });
@@ -74,24 +79,8 @@ export default function Caverne() {
     <Page id="caverne" classes="page-caverne" titre="La Caverne aux Trésors">
       <div className="caverne" ref={racine}>
         <canvas id="bg" />
-        {badges && !ouverte && (
-          <section className="caverne-porte">
-            <h1>La Caverne est scellée</h1>
-            {badges.erreur ? <p className="caverne-porte__texte">La Caverne n&apos;est pas encore prête. Reviens un peu plus tard.</p> : (
-              <>
-                <p className="caverne-porte__texte">
-                  Seul un badge brise le sceau, pour le temps écrit dessus.
-                  {badges.badges.some((x) => x.nombre > 0) ? ' Active l\'un des tiens pour descendre.' : ' Tu n\'en as aucun pour l\'instant.'}
-                </p>
-                {badges.badges.some((x) => x.nombre > 0) && (
-                  <BadgesCaverne etat={{ ...badges, badges: badges.badges.filter((x) => x.nombre > 0) }} surEtat={setBadges} />
-                )}
-                <Link className="caverne-porte__lien" to="/boutique?echoppe=boosters">Acheter un badge à la Boutique →</Link>
-              </>
-            )}
-          </section>
-        )}
-        {pret && <SalleDesJeux temps={tempsRestant(badges.jusqu_a, maintenant)} />}
+        {badges && !(ouverte && entre) && <Portail badges={badges} surEtat={setBadges} surEntree={() => { setBourse(null); lireBourse(); setEntre(true); }} />}
+        {pret && <SalleDesJeux temps={tempsRestant(badges.jusqu_a, maintenant)} surPortail={() => setEntre(false)} />}
       </div>
     </Page>
   );

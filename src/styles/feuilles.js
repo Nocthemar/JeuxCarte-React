@@ -33,7 +33,7 @@ export const FEUILLES = {
   cartes: liste(['cartes-jeu', 'carte-infos', 'toutes-les-cartes']),
   succes: liste(['cartes-jeu', 'carte-infos', 'succes-badges', 'succes']),
   boutique: liste(['cartes-jeu', 'carte-infos', 'booster', 'boutique-vitrine', 'boutique-accueil', 'badges-caverne']),
-  caverne: liste(['caverne', 'badges-caverne']),
+  caverne: liste(['caverne', 'caverne-portail']),
   marche: liste(['cartes-jeu', 'carte-infos', 'marche', 'marche-echanges']),
   amis: liste(['amis']),
   pass: liste(['cartes-jeu', 'carte-infos', 'pass']),

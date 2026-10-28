@@ -1,0 +1,156 @@
+/* =====================================================================
+   Le portail de la Caverne (components/caverne/Portail.jsx) : l'arche sur la mer en plein écran,
+   le socle du badge sur ses marches. Éteint : l'arche vide. Allumé : un puits de lumière rouge sang et ivoire
+   remplit l'arche (il naît au centre) : un tourbillon y tourne, des anneaux et des particules y sont aspirés,
+   ses bords sont dans l'ombre et un liseré brille au ras de la pierre ; sa lueur se mêle au décor (pierres,
+   marches, reflet ondulant sur la mer). Franchi (.est-en-route) : la vue avance dans l'arche jusqu'à la lumière, puis la salle des jeux.
+   La scène garde les proportions de l'image (1913 × 822) et couvre l'écran ; le centre de l'arche est à
+   941 × 380 (49,19 % × 46,23 %).
+   ===================================================================== */
+.portail {
+  position: absolute; inset: 0; z-index: 3; overflow: hidden; container-type: size;
+  background: #0b2a66;
+}
+/* (pas la <section> générique du site : ni largeur maximale, ni marges) */
+.caverne .portail { max-width: none; margin: 0; padding: 0; border: 0; }
+.portail__scene {
+  position: absolute; left: 50%; top: 50%;
+  width: max(100cqw, calc(100cqh * 1913 / 822)); aspect-ratio: 1913 / 822;
+  translate: -50% -50%;
+  transform-origin: 49.19% 46.23%;
+}
+.portail__fond { display: block; width: 100%; height: 100%; pointer-events: none; }
+.portail__lumiere, .portail__eclairage { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
+/* la lueur sur le décor se mêle à l'image (elle éclaire les pierres au lieu de les recouvrir) */
+.portail__eclairage { mix-blend-mode: screen; opacity: 0; transition: opacity 1.8s ease .4s; }
+.portail.est-allume .portail__eclairage { opacity: 1; }
+.portail.est-allume .portail__halo { animation: portail-respire 4s ease-in-out infinite; }
+@keyframes portail-respire { 50% { opacity: .75; } }
+
+/* Le portail : éteint, puis il naît au centre de l'arche */
+.portail__voile, .portail__tourbillon, .portail__pouls, .portail__anneau { transform-box: view-box; transform-origin: 941px 380px; }
+.portail__voile { opacity: 0; transform: scale(.15); transition: opacity 1.2s ease, transform 1.4s cubic-bezier(.2,.9,.3,1); }
+.portail__bord { opacity: 0; transition: opacity 1.6s ease .3s; }
+.portail.est-allume .portail__voile { opacity: 1; transform: scale(1); }
+.portail.est-allume .portail__bord { opacity: 1; }
+.portail.est-allume .portail__tourbillon { animation: portail-tourne 26s linear infinite; }
+.portail.est-allume .portail__pouls { animation: portail-pouls 3.2s ease-in-out infinite; }
+@keyframes portail-tourne { to { transform: rotate(-360deg); } }
+@keyframes portail-pouls { 0%, 100% { opacity: .3; transform: scale(.85); } 50% { opacity: .65; transform: scale(1.25); } }
+/* les anneaux : du pourtour vers le cœur, de plus en plus petits */
+.portail__anneau { opacity: 0; }
+.portail.est-allume .portail__anneau { animation: portail-anneau 4s cubic-bezier(.5,0,.9,.6) infinite; }
+@keyframes portail-anneau {
+  0% { opacity: 0; transform: scale(1.1); }
+  25% { opacity: .55; }
+  100% { opacity: 0; transform: scale(.05); }
+}
+/* les particules : du pourtour (--dx, --dy) vers le cœur */
+.portail__particule { opacity: 0; transform-box: view-box; }
+.portail.est-allume .portail__particule { animation: portail-particule 4s cubic-bezier(.5,0,.9,.7) infinite; }
+@keyframes portail-particule {
+  0% { opacity: 0; transform: translate(var(--dx), var(--dy)); }
+  20% { opacity: .9; }
+  100% { opacity: 0; transform: translate(0, 0); }
+}
+
+/* Le cœur de l'arche, qu'on touche pour entrer (allumé seulement) */
+.portail__entree { position: absolute; padding: 0; border: 0; background: transparent; cursor: default; }
+.portail.est-allume .portail__entree:not(:disabled) { cursor: pointer; }
+.portail__entree:focus-visible { outline: none; }
+.portail__scene:has(.portail__entree:not(:disabled):is(:hover, :focus-visible)) .portail__voile { filter: brightness(1.18); }
+.portail__scene:has(.portail__entree:not(:disabled):is(:hover, :focus-visible)) .portail__bord { opacity: 1; }
+
+/* Franchir : la vue avance dans l'arche, la lumière emplit l'écran */
+/* (pour que ce soit fluide : la scène est agrandie par la carte graphique, sans filtre par-dessus ;
+   le portail continue de tourner pendant le passage) */
+.portail.est-en-route .portail__scene { will-change: transform; animation: portail-avance 1.5s cubic-bezier(.55,0,.8,.35) forwards; }
+@keyframes portail-avance {
+  to { transform: scale(7); }
+}
+.portail__eclair {
+  position: absolute; inset: 0; z-index: 2; pointer-events: none; opacity: 0;
+  /* aux couleurs du badge posé (--c0 … --c4 : celles du cœur du portail, Portail.jsx) */
+  background: radial-gradient(circle at 50% 47%, var(--c0), var(--c1) 30%, var(--c2) 70%, var(--c4));
+}
+.portail.est-en-route .portail__eclair { animation: portail-eclair 1.5s ease-in forwards; }
+@keyframes portail-eclair { 0%, 45% { opacity: 0; } 100% { opacity: 1; } }
+
+/* ---------- Le socle, dans le décor : sur les marches, sous l'arche ----------
+   Placé aux mesures de l'image (Portail.jsx, SOCLE : centre x 944, haut y 655 ; le joueur peut le faire glisser),
+   à la taille d'un badge (150 × 80 px de l'image) : il suit l'image à toute taille d'écran, et la vue l'emporte
+   quand on franchit le portail. */
+.portail__scene { container-type: inline-size; }
+.portail__place {
+  position: absolute; z-index: 2; translate: -50% 0;
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+}
+.portail__socle {
+  display: grid; place-items: center; width: max(112px, 7.85cqw); aspect-ratio: 15 / 8; padding: 0; border: 0;
+  clip-path: var(--taille-petite);
+  background:
+    linear-gradient(135deg, rgba(255,255,255,.09) 0 30%, transparent 30.3%),
+    linear-gradient(180deg, #2c303a, #121419);
+  box-shadow: inset 0 0 0 1px var(--filet-fort), inset 0 0 0 7px #191c23, inset 0 0 0 8px rgba(236,228,210,.2), inset 0 6px 14px rgba(0,0,0,.7);
+  filter: drop-shadow(0 8px 10px rgba(0,0,0,.6));
+  cursor: grab; touch-action: none;
+  transition: filter .2s ease, box-shadow .2s ease;
+}
+.portail__socle:active { cursor: grabbing; }
+button.portail__socle:hover, button.portail__socle:focus-visible, button.portail__socle[aria-expanded="true"] {
+  outline: none; filter: drop-shadow(0 8px 10px rgba(0,0,0,.6)) brightness(1.25);
+  box-shadow: inset 0 0 0 1px rgba(194,61,72,.85), inset 0 0 0 7px #191c23, inset 0 0 0 8px rgba(194,61,72,.4), inset 0 6px 14px rgba(0,0,0,.7);
+}
+.portail__socle span { font-family: "Cinzel","Cinzel Repli", serif; font-size: max(.55rem, .5cqw); font-weight: 700; letter-spacing: .16em; text-transform: uppercase; color: var(--ivoire-doux); }
+.portail__socle.est-pose {
+  box-shadow: inset 0 0 0 1px var(--teinte), inset 0 0 0 7px #15171d, inset 0 0 22px color-mix(in srgb, var(--teinte) 70%, transparent);
+  animation: portail-socle 1s ease both;
+}
+.portail__socle img { width: 94%; height: 88%; object-fit: cover; filter: drop-shadow(0 0 8px color-mix(in srgb, var(--teinte) 60%, transparent)); }
+.portail__sceau { width: 22%; aspect-ratio: 30 / 34; clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%); background: var(--teinte); }
+@keyframes portail-socle { from { filter: brightness(2.2); } }
+.portail__legende {
+  margin: 0; padding: 3px 12px; white-space: nowrap;
+  font-size: .95rem; color: var(--ivoire-doux);
+  background: rgba(10,12,18,.72); clip-path: var(--taille-petite);
+}
+.portail__legende b { color: var(--ivoire); }
+.portail.est-en-route .portail__place { opacity: 0; transition: opacity .3s ease; }
+
+/* La bulle de choix, au-dessus du socle */
+.portail__bulle {
+  position: absolute; bottom: calc(100% + 12px); left: 50%; translate: -50% 0;
+  width: max-content; max-width: min(460px, 86vw); margin: 0; padding: 12px 14px;
+  clip-path: var(--taille);
+  background: var(--facettes);
+  box-shadow: inset 0 0 0 1px var(--filet-fort);
+  animation: portail-bulle .25s ease both;
+}
+@keyframes portail-bulle { from { opacity: 0; transform: translateY(6px); } }
+.portail__bulle--texte { margin: 0; font-size: 1rem; color: var(--ivoire-doux); text-align: center; }
+.portail__bulle--texte a { color: var(--ivoire); text-decoration: none; border-bottom: 1px solid rgba(194,61,72,.75); }
+.portail__bulle--texte a:hover, .portail__bulle--texte a:focus-visible { color: #fff; border-color: #c23d48; outline: none; }
+/* (un message seul, sans bulle autour, quand la Caverne n'est pas prête) */
+.portail__place > .portail__bulle--texte { position: static; translate: none; }
+
+/* les badges qu'on peut poser : leurs plaques, à toucher */
+.portail__badges { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
+.portail__badge {
+  position: relative; padding: 0; border: 0; background: none; cursor: pointer;
+  transition: transform .2s ease, filter .2s ease;
+}
+.portail__badge img { display: block; width: 132px; height: 62px; object-fit: cover; }
+.portail__badge span {
+  position: absolute; right: 2px; top: 0; padding: 0 5px;
+  font-family: "Cinzel","Cinzel Repli", serif; font-size: .64rem; font-weight: 700; color: #fff;
+  background: #9b2730; clip-path: var(--taille-petite);
+}
+.portail__badge:hover:not(:disabled), .portail__badge:focus-visible { transform: translateY(-3px); filter: brightness(1.25) drop-shadow(0 0 8px rgba(194,61,72,.7)); outline: none; }
+.portail__badge:disabled { opacity: .5; cursor: default; }
+
+@media (prefers-reduced-motion: reduce) {
+  .portail.est-allume :is(.portail__tourbillon, .portail__pouls, .portail__halo) { animation: none; }
+  .portail.est-allume :is(.portail__anneau, .portail__particule) { animation: none; opacity: 0; }
+}
+:root.anim-reduites .portail.est-allume :is(.portail__tourbillon, .portail__pouls, .portail__halo) { animation: none; }
+:root.anim-reduites .portail.est-allume :is(.portail__anneau, .portail__particule) { animation: none; opacity: 0; }

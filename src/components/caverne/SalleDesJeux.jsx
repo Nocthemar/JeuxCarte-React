@@ -3,7 +3,7 @@
 //  (« ← La Caverne » et le jeu ouvert, bourses, temps restant, son), et la scène de chaque jeu avec sa barre
 //  de mise. Ce n'est que le décor : lib/caverne/caverne.js s'y branche (par les id) et anime tout ; choisir
 //  une carte du hall « clique » l'onglet du jeu, que le script écoute. Styles : styles/caverne.css.
-//  props : temps (le temps d'accès qui reste, en mots)
+//  props : temps (le temps d'accès qui reste, en mots), surPortail() : revenir au portail (bouton du hall)
 // =====================================================================
 import { useRef, useState } from 'react';
 
@@ -14,7 +14,7 @@ const JEUX = [
   { g: 3, image: 'lac', nom: 'Le Lac des Esprits', sous: 'Écoute la tension de la ligne', texte: 'Une prise invisible mord à ta ligne. Seule sa tension trahit ce qu\'elle est.' },
 ];
 
-export default function SalleDesJeux({ temps }) {
+export default function SalleDesJeux({ temps, surPortail }) {
   const [jeu, setJeu] = useState(null);   // le jeu ouvert, ou null : le hall
   const onglets = useRef(null);
   const choisir = (g) => { onglets.current.querySelector(`.tab[data-g="${g}"]`).click(); setJeu(g); };
@@ -26,6 +26,7 @@ export default function SalleDesJeux({ temps }) {
       {/* Le hall : les quatre jeux, une carte chacun (toujours là, caché pendant un jeu : ses images restent chargées) */}
       <section className="cav-hall" hidden={jeu !== null} aria-labelledby="cav-hall-titre">
         <header className="cav-hall__tete">
+          {surPortail && <button type="button" className="cav-portail" onClick={surPortail}><span aria-hidden="true">←</span> Retour au portail</button>}
           <span>Nocthémar</span>
           <h1 id="cav-hall-titre">La Caverne aux Trésors</h1>
           <p>Quatre jeux, une seule règle : savoir s&apos;arrêter à temps.</p>
