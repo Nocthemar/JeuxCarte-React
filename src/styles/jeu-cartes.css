@@ -3118,9 +3118,7 @@ body.avec-conseils.page-jeu .tg-tapis > .centre__consigne:empty { display: none;
 
 
 /* =====================================================================
-   Téléphone : le duel se joue couché (paysage). JS/jeu-cartes.js (passerEnPaysage) demande le
-   plein écran et verrouille l'orientation quand le navigateur l'accepte ; sinon, en portrait,
-   l'écran « Tourne ton téléphone » ci-dessous.
+   Téléphone couché (paysage), si le joueur le tourne : le portrait est dans src/telephone/styles/duel.css.
    Téléphone couché = paysage peu haut (moins de 520 px) : tout est resserré pour tenir dans la hauteur.
    ===================================================================== */
 @media (orientation: landscape) and (max-height: 520px) {
@@ -3193,33 +3191,7 @@ body.avec-conseils.page-jeu .tg-tapis > .centre__consigne:empty { display: none;
   .en-duel .banniere { font-size: .9em; }
 }
 
-/* Portrait, pendant un duel : on invite à tourner le téléphone (élément .tourne-telephone de jeu-cartes.html) */
-.tourne-telephone { display: none; }
-@media (orientation: portrait) and (max-width: 600px) {
-  .en-duel .tourne-telephone {
-    position: fixed; inset: 0; z-index: 9999;
-    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px;
-    padding: 30px;
-    text-align: center;
-    background: radial-gradient(ellipse at 50% 40%, rgba(217,164,65,.16), transparent 60%), #0b0d12;
-    color: var(--gris);
-    font-size: 1.05rem; font-style: italic;
-  }
-  .tourne-telephone strong {
-    font-family: "Cinzel","Cinzel Repli", serif; font-size: 1.3rem; font-style: normal; letter-spacing: .08em;
-    color: #f3cf7c;
-  }
-  /* Un téléphone qui bascule à l'horizontale */
-  .tourne-telephone__icone {
-    width: 46px; height: 78px; margin-bottom: 12px;
-    border: 3px solid #f3cf7c; border-radius: 9px;
-    box-shadow: 0 0 22px rgba(217,164,65,.35), inset 0 -8px 0 -5px #f3cf7c;
-    animation: tourne-telephone 2.4s ease-in-out infinite;
-  }
-  .en-duel .table { visibility: hidden; }
-}
-@keyframes tourne-telephone { 0%, 25% { rotate: 0deg; } 55%, 85% { rotate: -90deg; } 100% { rotate: 0deg; } }
-@media (prefers-reduced-motion: reduce) { .tourne-telephone__icone { animation: none; rotate: -90deg; } }
+/* Portrait (téléphone tenu droit) : le plateau est réarrangé dans src/telephone/styles/duel.css */
 
 /* =====================================================================
    Le panneau du duel, en haut à droite (refait le 25/10/2026, remplace les réglages plus haut) :

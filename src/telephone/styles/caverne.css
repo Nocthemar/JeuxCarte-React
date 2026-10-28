@@ -1,0 +1,13 @@
+/* La Caverne, sur téléphone : l'image de chaque jeu tient dans sa scène (sinon elle recouvre le nom du jeu) */
+@media (max-width: 700px) {
+  .caverne .cav-carte__scene { height: 120px; overflow: hidden; }
+  .caverne .cav-carte__scene img { max-height: 112px; max-width: 70%; }
+}
+@media (max-width: 700px) {
+  /* Le Dragon : le butin entre la tête du dragon et le trésor (et plus sur le tas d'or) */
+  .caverne #dHud { top: 33%; bottom: auto; }
+  /* Les Bourses : des compteurs plus bas, et une grille qui s'arrête au-dessus des commandes */
+  .caverne .stat { padding: 4px 6px; }
+  .caverne .stat .lbl { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .caverne .grid { --gs: min(92cqw, calc(100cqh - 120px), 500px); }
+}

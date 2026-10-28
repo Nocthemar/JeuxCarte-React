@@ -1,0 +1,5 @@
+/* Connexion, sur téléphone : les liens « Créer un compte », « Mot de passe oublié » faciles à toucher */
+@media (max-width: 700px) {
+  .connexion a, .connexion button:not([type="submit"]) { min-height: 44px; }
+  .connexion__liens a, .connexion__liens button { display: inline-flex; align-items: center; padding: 0 6px; }
+}

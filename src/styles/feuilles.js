@@ -44,12 +44,23 @@ export const FEUILLES = {
   connexion: [...DEBUT, 'connexion', ...FIN],
 };
 
+// Le téléphone (src/telephone/, voir son LISEZ-MOI.md) : chaque écran charge EN DERNIER la feuille commune
+// telephone/styles/commun.css, puis la sienne (telephone/styles/<id de l'écran>.css) si elle existe.
+// Ainsi les règles pour téléphone l'emportent sur celles de l'ordinateur, et tout ce qui touche au
+// téléphone se trouve au même endroit.
+const telephone = import.meta.glob('../telephone/styles/*.css', { query: '?inline', import: 'default' });
+const feuilleTelephone = (nom) => telephone[`../telephone/styles/${nom}.css`];
+const listeComplete = (id) => [
+  ...FEUILLES[id].map((nom) => [nom, fichiers[`./${nom}.css`]]),
+  ...['commun', id].filter((nom) => feuilleTelephone(nom)).map((nom) => [`telephone/${nom}`, feuilleTelephone(nom)]),
+];
+
 // Les feuilles d'un écran, dans l'ordre : [nom, texte][] (une promesse, gardée : chaque écran ne les
 // télécharge qu'une fois). Page.jsx l'attend avant d'afficher l'écran.
 const enCache = new Map();
 export function chargerFeuilles(id) {
   if (!enCache.has(id)) {
-    enCache.set(id, Promise.all(FEUILLES[id].map(async (nom) => [nom, depuisLeJeu((await fichiers[`./${nom}.css`]?.()) ?? '')])));
+    enCache.set(id, Promise.all(listeComplete(id).map(async ([nom, charger]) => [nom, depuisLeJeu((await charger?.()) ?? '')])));
   }
   return enCache.get(id);
 }

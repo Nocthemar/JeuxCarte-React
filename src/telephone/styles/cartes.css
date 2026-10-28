@@ -1,0 +1,4 @@
+/* Toutes les cartes, sur téléphone : les filtres assez hauts pour le doigt */
+@media (max-width: 700px) {
+  .catalogue button { min-height: 40px; }
+}

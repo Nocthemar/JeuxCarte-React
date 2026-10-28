@@ -27,25 +27,23 @@ import { CLES, lirePref, ecrirePref } from '../lib/preferences.js';
 import { jouerSon, basculerMuet, estMuet, lireVolume, reglerVolume, musiqueAuPremierGeste } from '../lib/son.js';
 
 // ---------------------------------------------------------------------
-//  Téléphone : le duel se joue couché (paysage), en plein écran, comme un jeu.
-//  Le navigateur n'accepte le plein écran et le verrouillage de l'orientation qu'après un geste du
-//  joueur (le clic sur « Engager le duel ») et pas partout (iPhone : non) : sinon l'écran
-//  « Tourne ton téléphone » invite à le faire soi-même.
+//  Téléphone : le duel passe en plein écran, comme un jeu (plus de barres du navigateur). Il se joue tenu
+//  droit (portrait : src/telephone/styles/duel.css) ou couché, au choix du joueur : l'orientation n'est plus
+//  verrouillée. Le navigateur n'accepte le plein écran qu'après un geste du joueur (« Engager le duel »)
+//  et pas partout (iPhone : non).
 // ---------------------------------------------------------------------
 const estTelephone = () => matchMedia('(pointer: coarse) and (max-width: 940px), (pointer: coarse) and (max-height: 520px)').matches;
 let pleinEcranAuto = false;
-async function passerEnPaysage() {
+async function passerEnPleinEcran() {
   if (!estTelephone()) return;
   try {
     if (!document.fullscreenElement) {
       await document.documentElement.requestFullscreen({ navigationUI: 'hide' });
       pleinEcranAuto = true;
     }
-    await screen.orientation?.lock?.('landscape');
-  } catch { /* refusé ou pas disponible : l'écran « Tourne ton téléphone » prend le relais */ }
+  } catch { /* refusé ou pas disponible : le duel reste dans la page */ }
 }
-function quitterPaysage() {
-  try { screen.orientation?.unlock?.(); } catch { /* rien à déverrouiller */ }
+function quitterPleinEcran() {
   if (pleinEcranAuto && document.fullscreenElement) document.exitFullscreen().catch(() => {});
   pleinEcranAuto = false;
 }
@@ -96,13 +94,13 @@ export default function Duel() {
 
   const lancer = (cartes, difficulte) => {
     setDuel((d) => ({ cartes, difficulte, catalogue: donnees.catalogue ?? [], n: (d?.n ?? 0) + 1 }));
-    passerEnPaysage();
+    passerEnPleinEcran();
     scrollTo(0, 0);
   };
-  const retourMenu = () => { setDuel(null); quitterPaysage(); scrollTo(0, 0); };
+  const retourMenu = () => { setDuel(null); quitterPleinEcran(); scrollTo(0, 0); };
   // Un duel en ligne commence (lancé par l'hôte quand les deux sont prêts)
   const nDuelLigne = duelLigne?.n;
-  useEffect(() => { if (nDuelLigne) { passerEnPaysage(); scrollTo(0, 0); } }, [nDuelLigne]);
+  useEffect(() => { if (nDuelLigne) { passerEnPleinEcran(); scrollTo(0, 0); } }, [nDuelLigne]);
 
   const basculerPleinEcran = async () => {
     try {
@@ -160,11 +158,11 @@ export default function Duel() {
         {idHistoire ? (duelHistoire && (
           <DuelSolo key={`h${nHistoire}`} config={duelHistoire} outils={outils}
             surRejouer={() => setNHistoire((n) => n + 1)}
-            surMenu={() => { quitterPaysage(); naviguer(`/histoire?chapitre=${encodeURIComponent(histoire.chapitre.id)}`, { viewTransition: true }); }} />
+            surMenu={() => { quitterPleinEcran(); naviguer(`/histoire?chapitre=${encodeURIComponent(histoire.chapitre.id)}`, { viewTransition: true }); }} />
         )) : duelLigne ? (
           <DuelEnLigne key={`l${duelLigne.n}`} duel={duelLigne} ligne={ligne} salon={ligne.salon} outils={outils}
-            surRevanche={() => { ligne.revenir(); quitterPaysage(); scrollTo(0, 0); }}
-            surQuitter={() => { ligne.quitter(); quitterPaysage(); scrollTo(0, 0); }} />
+            surRevanche={() => { ligne.revenir(); quitterPleinEcran(); scrollTo(0, 0); }}
+            surQuitter={() => { ligne.quitter(); quitterPleinEcran(); scrollTo(0, 0); }} />
         ) : duel
           ? <DuelSolo key={duel.n} config={duel} outils={outils}
               surRejouer={() => lancer(duel.cartes, duel.difficulte)} surMenu={retourMenu} />
@@ -174,12 +172,6 @@ export default function Duel() {
       <Regles ouverte={regles} surFermeture={() => setRegles(false)} />
       <Infobulle />
 
-      {/* Téléphone en portrait pendant un duel : invitation à le tourner (styles/jeu-cartes.css) */}
-      <div className="tourne-telephone" aria-hidden="true">
-        <span className="tourne-telephone__icone" />
-        <strong>Tourne ton téléphone</strong>
-        <span>Le Duel des Couronnes se joue à l’horizontale.</span>
-      </div>
     </Page>
   );
 }

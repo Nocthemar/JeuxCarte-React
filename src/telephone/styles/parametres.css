@@ -1,0 +1,7 @@
+/* Paramètres, sur téléphone : des curseurs de volume faciles à attraper au doigt
+   (la piste reste fine à l'œil, mais la zone à toucher fait 32 px ; le bouton du curseur est plus gros) */
+@media (max-width: 700px) {
+  .reglage input[type="range"] { height: 32px; background-clip: content-box; padding: 13px 0; box-sizing: border-box; }
+  .reglage input[type="range"]::-webkit-slider-thumb { width: 26px; height: 26px; }
+  .reglage input[type="range"]::-moz-range-thumb { width: 26px; height: 26px; }
+}

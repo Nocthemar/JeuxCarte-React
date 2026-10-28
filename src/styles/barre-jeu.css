@@ -735,3 +735,43 @@
 }
 @media (min-width: 701px) and (max-width: 1100px) { .barre .barre-entree__nb { position: absolute; top: 2px; right: 8px; margin: 0; min-width: 16px; height: 16px; padding: 0 4px; font-size: .58rem; } }
 @media (max-width: 700px) { .barre .barre-entree__nb { position: absolute; top: 4px; right: 18%; margin: 0; } }
+
+/* =====================================================================
+   Écrans peu hauts (portables, navigateur avec ses barres d'outils, Windows zoomé à 125 %…) :
+   la barre se resserre par paliers pour que les écrans et la bourse tiennent toujours sans se chevaucher.
+   En dernier recours, la liste des écrans défile (sans barre de défilement visible).
+   ===================================================================== */
+@media (min-width: 701px) {
+  .barre .barre__entrees { overflow-y: auto; overflow-x: hidden; scrollbar-width: none; }
+  .barre .barre__entrees::-webkit-scrollbar { display: none; }
+}
+@media (min-width: 701px) and (max-height: 900px) {
+  .barre.barre { padding-top: 16px; padding-bottom: 10px; }
+  .barre .barre__medaillon { width: 80px; height: 80px; margin-bottom: 8px; }
+  .barre .barre__tete { margin-bottom: 8px; }
+  .barre__sous-titre, .barre .barre__pied-signature { display: none; }
+  .barre__ornement-ligne { margin-top: 6px; }
+  .barre .barre-entree { min-height: 30px; letter-spacing: .07em; }
+  .barre__mj { width: 30px; height: 34px; right: -6px; }
+  .barre__mj .barre-ico, .barre__mj .barre-ico svg { width: 15px; height: 15px; }
+  .barre .barre-entree .barre-ico { width: 28px; height: 28px; }
+  .barre .barre-entree .barre-ico svg { width: 16px; height: 16px; }
+  /* la bourse sur une seule ligne : l'or, puis les cristaux */
+  .barre .barre__bourse { grid-template-columns: 34px auto 34px auto; gap: 0 8px; margin-top: 8px; padding: 4px 8px; }
+  .barre__bourse-or, .barre__bourse-cristal { width: 34px; height: 32px; }
+  .barre__bourse .barre__bourse-cristal img { height: 28px; }
+  .barre__bourse-texte b { font-size: .95rem; }
+  .barre__bourse-texte small { font-size: .62rem; }
+}
+@media (min-width: 701px) and (max-height: 680px) {
+  .barre.barre { padding-top: 10px; }
+  .barre .barre__medaillon { width: 56px; height: 56px; margin-bottom: 4px; }
+  .barre .barre__tete { margin-bottom: 4px; }
+  .barre__ornement-ligne { display: none; }
+  .barre .barre-entree { min-height: 27px; font-size: .68rem; }
+  .barre__mj { width: 24px; height: 27px; right: -8px; bottom: -4px; }
+  .barre__mj .barre-ico, .barre__mj .barre-ico svg { width: 12px; height: 12px; }
+  .barre .barre-entree .barre-ico { width: 24px; height: 24px; }
+  .barre .barre-entree .barre-ico svg { width: 14px; height: 14px; }
+  .barre__bourse-texte small { display: none; }
+}

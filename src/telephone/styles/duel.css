@@ -1,0 +1,120 @@
+/* =====================================================================
+   Le Duel sur téléphone tenu droit (portrait). Choix du 28/10/2026 : on joue debout, comme sur une
+   appli de cartes. De haut en bas, sur un seul écran (rien ne défile) :
+     1. l'adversaire : son héros, son énergie, sa main (dos) ; les outils du duel à droite ;
+     2. la table : on zoome sur le centre du plateau (l'arène et ses 10 emplacements), les bords
+        de l'image (décor, piles peintes dans les coins) sortent de l'écran ; les Grimoires et
+        Tombeaux sont reposés de chaque côté du cercle « N » ;
+     3. toi : ton énergie, tes actions, ton héros ;
+     4. les boutons du tour, à portée de pouce ;
+     5. ta main, en éventail au bas de l'écran ; une carte touchée se lève et grossit.
+   Couché (paysage), les règles d'avant s'appliquent toujours (styles/jeu-cartes.css).
+   ===================================================================== */
+@media (max-width: 700px) and (orientation: portrait) {
+  body.en-duel {
+    --zoom-plateau: 1.85;    /* le plateau fait 1,85 fois la largeur de l'écran : on n'en voit que le centre */
+    --main-l: 22vw;          /* largeur d'une carte de la main */
+    overflow: hidden;
+  }
+  body.en-duel .table { height: 100dvh; min-height: 0; margin: 0; padding: 0; }
+  body.en-duel .table__plateau {
+    display: flex !important; flex-direction: column; align-items: stretch;
+    height: 100dvh; margin: 0; overflow: hidden; box-sizing: border-box;
+    padding: env(safe-area-inset-top, 0px) 0 0 !important;
+  }
+
+  /* ---------- 1. L'adversaire ---------- */
+  body.en-duel .tg-haut {
+    order: 1; flex: none;
+    display: grid !important; grid-template-columns: auto 1fr; grid-template-rows: auto auto; align-items: center;
+    gap: 2px 10px; margin: 0 !important; padding: 6px 112px 2px 10px !important;
+    min-height: 0;
+  }
+  body.en-duel .tg-haut .tg-heros { grid-row: 1 / 3; grid-column: 1; margin: 0; zoom: .72; }
+  body.en-duel .tg-haut .tg-infos { grid-row: 1; grid-column: 2; justify-self: start; margin: 0; }
+  body.en-duel .tg-haut .main-adverse { grid-row: 2; grid-column: 2; justify-self: start; position: relative; inset: auto; height: 34px; margin: 0; transform: none; }
+  body.en-duel .tg-haut .main-adverse .dos { width: 22px; height: 32px; }
+
+  /* les outils du duel (règles, conseils, plein écran, abandon, son) : en haut à droite */
+  body.en-duel .historique {
+    position: fixed; top: calc(6px + env(safe-area-inset-top, 0px)); right: 6px; left: auto; bottom: auto; z-index: 8;
+    width: 104px; max-height: none; margin: 0; padding: 0;
+    background: none; box-shadow: none; clip-path: none; border: 0;
+  }
+  body.en-duel .historique__titre, body.en-duel .historique__liste, body.en-duel .terrain-duel { display: none; }
+  body.en-duel .historique__outils { position: static; margin: 0; padding: 0; border: 0; background: none; }
+  body.en-duel .historique__boutons { grid-template-columns: repeat(4, 1fr); gap: 3px; }
+  body.en-duel .historique .btn-outil { height: 24px; min-height: 0; padding: 0; }
+  body.en-duel .historique .btn-outil svg { width: 14px; height: 14px; }
+  body.en-duel .volume { display: none; }
+
+  /* ---------- 2. La table : le centre du plateau, en grand ---------- */
+  body.en-duel .tg-table {
+    order: 2; flex: 1 1 auto; min-height: 0;
+    position: relative; display: grid !important; grid-template-rows: minmax(0, 1fr) auto; justify-items: center; align-items: center;
+    width: 100% !important; margin: 0 !important; overflow: hidden;
+  }
+  body.en-duel .tg-lumiere { display: none; }
+  body.en-duel .tg-perspective {
+    flex: none;
+    width: calc(100vw * var(--zoom-plateau)) !important; max-width: none !important;
+    margin: 0 !important; perspective: none;
+  }
+  body.en-duel .tg-bord { transform: none !important; }
+  /* Grimoires et Tombeaux : de chaque côté du cercle « N », entre les deux rangées */
+  body.en-duel .tg-bord .plateau-pile--adverse { left: 27.5% !important; top: 47.5% !important; }
+  body.en-duel .tg-bord .tombeau--adverse     { left: 32.5% !important; top: 47.5% !important; }
+  body.en-duel .tg-bord .tombeau--joueur      { left: 62.5% !important; top: 47.5% !important; }
+  body.en-duel .tg-bord .plateau-pile--joueur { left: 67.5% !important; top: 47.5% !important; }
+  /* la consigne du tour (avec les conseils) : une ligne sous ta rangée, en petit */
+  body.en-duel .tg-tapis > .centre__consigne {
+    left: 50% !important; right: auto !important; top: 82% !important; bottom: auto !important; translate: -50% 0 !important;
+    width: 44cqw !important; max-width: none !important; margin: 0 !important; padding: 3px 8px !important;
+    font-size: .68rem !important; line-height: 1.25 !important; text-align: center;
+  }
+
+  /* ---------- 3. Toi : énergie, actions, héros ---------- */
+  body.en-duel .tg-bas {
+    order: 3; flex: none;
+    position: relative !important; inset: auto !important;
+    display: flex !important; align-items: center; justify-content: space-between; gap: 10px;
+    margin: 0 !important; padding: 2px 10px !important;
+    background: none !important; box-shadow: none !important; clip-path: none !important;
+  }
+  body.en-duel .tg-bas::before, body.en-duel .tg-bas::after { display: none !important; }
+  body.en-duel .tg-bas .tg-pile { display: none; }
+  body.en-duel .tg-bas .tg-energie { display: flex; align-items: center; gap: 8px; margin: 0; }
+  body.en-duel .tg-bas .orbe { width: 44px; height: 44px; }
+  body.en-duel .tg-bas .tg-heros { margin: 0; zoom: .72; }
+
+  /* ---------- 4. Les boutons du tour (sous la table, sur une ligne : ils sont dans .tg-table) ---------- */
+  body.en-duel .tg-cote {
+    grid-row: 2; justify-self: stretch;
+    position: relative !important; inset: auto !important; translate: none !important; z-index: 4;
+    display: grid !important; grid-template-columns: 1.4fr; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 5px;
+    width: auto !important; margin: 0 !important; padding: 4px 8px !important;
+  }
+  body.en-duel .tg-cote .btn-fin, body.en-duel .tg-cote .btn-destin, body.en-duel .tg-cote .btn-action {
+    min-width: 0 !important; width: 100% !important; min-height: 44px !important; margin: 0 !important;
+    padding: 4px 4px !important; font-size: .7rem !important; letter-spacing: .02em !important; white-space: normal;
+  }
+  body.en-duel .tg-cote small { display: none !important; }
+  body.en-duel .tg-cote .btn-destin svg { width: 16px; height: 16px; }
+  body.en-duel .tg-cote__petits { display: contents !important; }
+  body.en-duel .tg-cote .btn-action[hidden] { display: none !important; }
+
+  /* ---------- 5. Ta main ---------- */
+  body.en-duel .main {
+    order: 5; flex: none;
+    position: relative !important; inset: auto !important;
+    --carte-l: var(--main-l);
+    display: flex; justify-content: center; align-items: flex-end;
+    height: calc(var(--main-l) * 1.5 * .8); min-height: 0 !important;
+    margin: 0 !important; padding: 0 8px calc(env(safe-area-inset-bottom, 0px)) !important;
+    overflow: visible !important;
+  }
+  body.en-duel .main .dc-carte { --carte-l: var(--main-l); flex: none; }
+  body.en-duel .main .dc-carte + .dc-carte { margin-left: calc(var(--main-l) * -0.32) !important; }
+  body.en-duel .main .dc-carte:hover, body.en-duel .main .dc-carte:focus-visible,
+  body.en-duel .main .dc-carte.est-choisie { translate: 0 calc(var(--main-l) * -0.75) !important; scale: 1.5 !important; z-index: 9 !important; }
+}
