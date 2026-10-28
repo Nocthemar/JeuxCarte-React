@@ -6,7 +6,7 @@
 //  au duel, puis à la revanche (lib/duel/useLigne.js).
 //
 //  Le plateau choisi par le joueur (acheté en boutique) devient une classe du <body> : plateau-hiver…
-//  Pour en essayer un : #/duel?saison=hiver (printemps, ete, automne, cristaux).
+//  Pour en essayer un : #/duel?saison=hiver (printemps, ete, automne, cristaux, flamme, plage).
 // =====================================================================
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';

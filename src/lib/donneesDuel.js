@@ -12,7 +12,7 @@ import { supabase } from './supabase.js';
 import { uniteDepuisCarte, objetDepuisNom } from '../moteur/index.js';
 
 // Les plateaux que le CSS sait afficher (classe plateau-… sur <body>)
-export const PLATEAUX = ['defaut', 'automne', 'ete', 'hiver', 'printemps', 'cristaux'];
+export const PLATEAUX = ['defaut', 'automne', 'ete', 'hiver', 'printemps', 'cristaux', 'flamme', 'plage'];
 
 // Seulement les vraies cartes illustrées (pas la carte d'exemple)
 const jouable = (c) => c?.image && c.description !== "Carte d'exemple";

@@ -145,7 +145,11 @@ insert into public.plateaux (id, nom, description, prix, image, miniature, ordre
   ('hiver',     'Arène de l''Hiver',       'L''arène de pierre prise dans la neige et les cristaux de glace.',
     500, 'img/Plateaux de carte/plateau-hiver.webp',     'img/Plateaux de carte/plateau-hiver-mini.webp',     4),
   ('cristaux',  'Arène des Cristaux d''Or', 'L''arène fissurée, hérissée de cristaux d''or et parcourue de brume dorée.',
-    750, 'img/Plateaux de carte/plateau-cristaux.webp',  'img/Plateaux de carte/plateau-cristaux-mini.webp',  5)
+    750, 'img/Plateaux de carte/plateau-cristaux.webp',  'img/Plateaux de carte/plateau-cristaux-mini.webp',  5),
+  ('flamme',    'Arène des Flammes',      'L''arène de pierre fendue de lave, au cœur d''un volcan.',
+    600, 'img/Plateaux de carte/plateau-flamme.webp',    'img/Plateaux de carte/plateau-flamme-mini.webp',    6),
+  ('plage',     'Arène du Lagon',         'L''arène de sable et de pierre, au milieu d''un lagon turquoise.',
+    600, 'img/Plateaux de carte/plateau-plage.webp',     'img/Plateaux de carte/plateau-plage-mini.webp',     7)
 on conflict (id) do update set nom = excluded.nom, description = excluded.description, prix = excluded.prix,
   image = excluded.image, miniature = excluded.miniature, ordre = excluded.ordre;
 

@@ -2194,6 +2194,8 @@ body.en-duel { overflow: hidden; padding: 0 !important; }
 /* Plateau par défaut (sans plateau choisi) : l'arène de pierre ; les saisons sont la même arène, décorée */
 .page-jeu.plateau-defaut    .tg-bord { background-image: url("/img/Plateaux%20de%20carte/plateau-defaut.webp"); }
 .page-jeu.plateau-cristaux  .tg-bord { background-image: url("/img/Plateaux%20de%20carte/plateau-cristaux.webp"); }
+.page-jeu.plateau-flamme    .tg-bord { background-image: url("/img/Plateaux%20de%20carte/plateau-flamme.webp"); }
+.page-jeu.plateau-plage     .tg-bord { background-image: url("/img/Plateaux%20de%20carte/plateau-plage.webp"); }
 
 /* Les troupes, sur les emplacements peints */
 .page-jeu .tg-bord .terrain {
