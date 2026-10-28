@@ -76,7 +76,21 @@ export default function SalleDesJeux({ temps, surPortail }) {
           <img className="cav-salle__fond" src={urlPublique('img/Fond/Caverne.webp')} alt="" draggable="false" />
           <header className="cav-hall__tete">
             <span>Nocthémar</span>
-            <h1 id="cav-hall-titre">La Caverne aux Trésors</h1>
+            {/* le titre suit la courbe du mur du fond (un arc de cercle, plus bas au milieu) ; le texte réel reste lisible
+                par les lecteurs d'écran */}
+            <h1 id="cav-hall-titre">
+              <span className="cav-hall__lu">La Caverne aux Trésors</span>
+              <svg className="cav-hall__arc" viewBox="0 0 1000 170" aria-hidden="true">
+                <defs>
+                  <linearGradient id="cav-titre-or" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0" stopColor="#fff4d8" /><stop offset=".4" stopColor="#f0cf86" />
+                    <stop offset=".65" stopColor="#c5933f" /><stop offset="1" stopColor="#8c6326" />
+                  </linearGradient>
+                  <path id="cav-titre-courbe" d="M 60 60 A 2600 2600 0 0 0 940 60" />
+                </defs>
+                <text><textPath href="#cav-titre-courbe" startOffset="50%" textAnchor="middle">La Caverne aux Trésors</textPath></text>
+              </svg>
+            </h1>
             <p>Quatre portes, quatre jeux. Une seule règle : savoir s&apos;arrêter à temps.</p>
           </header>
           {PORTES.map((p) => (

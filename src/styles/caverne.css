@@ -449,3 +449,13 @@
 }
 /* (le portail : son cadre de pierre monte plus haut que l'arche dorée ; le nom se pose au-dessus de ce cadre) */
 .caverne .cav-porte:first-of-type .cav-gravure { bottom: calc(100% + 3.2cqw); }
+
+/* Le grand titre en arc (28/10/2026) : sans les losanges ; le texte suit la courbe du mur (SVG textPath, SalleDesJeux.jsx) */
+.caverne .cav-hall__tete h1::after { content: none; }
+.caverne .cav-hall__tete h1 { background: none; -webkit-background-clip: border-box; background-clip: border-box; margin: 0; font-size: inherit; }
+.caverne .cav-hall__lu { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.caverne .cav-hall__arc { display: block; width: 100%; height: auto; overflow: visible; margin-top: -.6cqw; }
+.caverne .cav-hall__arc text {
+  font-family: "Cinzel", "Cinzel Repli", serif; font-size: 52px; font-weight: 700; letter-spacing: 3px; font-variant: small-caps;
+  fill: url(#cav-titre-or);
+}
