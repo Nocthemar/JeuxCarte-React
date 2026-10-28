@@ -248,60 +248,107 @@
 .caverne #fx { position: fixed; inset: 0; pointer-events: none; z-index: 50; }
 .caverne #flashv { position: fixed; inset: 0; pointer-events: none; z-index: 40; opacity: 0; transition: opacity .35s; }
 
-/* ---------- Le hall d'entrée : les quatre jeux en grandes cartes ---------- */
+/* ---------- Le hall d'entrée : la salle aux six portes (img/Fond/Caverne.webp, 1912 × 823) ----------
+   L'image garde ses proportions et couvre l'écran ; si elle est plus large que lui, la salle défile de côté
+   (molette ou glisser ; elle s'ouvre face au mur du fond).
+   Les portes y sont posées aux mesures de l'image (SalleDesJeux.jsx, PORTES) ; au survol, la porte
+   s'illumine de la teinte de son jeu, sa plaque s'éclaire, sa lumière tombe sur les marches. */
 .caverne .cav-hall {
-  position: absolute; inset: 0; z-index: 4; overflow-y: auto;
-  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 34px;
-  padding: 90px 28px 40px; max-width: none; margin: 0; border: 0;   /* (pas le <section> du site : index.css) */
-  background: radial-gradient(ellipse 70% 60% at 50% 45%, rgba(10,8,6,.15), rgba(4,4,6,.75));
+  position: absolute; inset: 0; z-index: 4; overflow: auto hidden; container-type: size;
+  max-width: none; margin: 0; padding: 0; border: 0;   /* (pas le <section> du site : index.css) */
+  background: radial-gradient(ellipse 80% 60% at 50% 40%, #1b1e26, #08090c 75%);
+  scrollbar-width: thin; scrollbar-color: rgba(236,228,210,.25) transparent;
 }
 .caverne .cav-hall[hidden] { display: none; }
 .caverne:has(.cav-hall:not([hidden])) .jeux { visibility: hidden; }
-.caverne .cav-hall__tete { text-align: center; }
-/* « ← Retour au portail » : en haut à gauche du hall, comme « ← La Caverne » pendant un jeu */
-.caverne .cav-portail {
-  position: absolute; top: 22px; left: 24px; z-index: 2; padding: 10px 16px; border: 0; cursor: pointer; white-space: nowrap;
-  font-family: "Cinzel", "Cinzel Repli", serif; font-size: .7rem; font-weight: 700; letter-spacing: .16em; text-transform: uppercase;
-  color: var(--ivoire); clip-path: polygon(10px 0, 100% 0, 100% 100%, 10px 100%, 0 50%);
-  background: rgba(10,12,17,.82); box-shadow: inset 0 0 0 1px var(--filet-fort);
-  transition: filter .2s ease;
+.caverne .cav-salle {
+  position: relative; top: 50%; translate: 0 -50%; container-type: inline-size;
+  width: max(100cqw, calc(100cqh * 1912 / 823)); aspect-ratio: 1912 / 823;
 }
-.caverne .cav-portail:hover, .caverne .cav-portail:focus-visible { filter: brightness(1.4); outline: none; }
-.caverne .cav-hall__tete span { display: block; font-family: "Cinzel", "Cinzel Repli", serif; font-size: .7rem; letter-spacing: .5em; text-transform: uppercase; color: var(--gris); }
-.caverne .cav-hall__tete h1 { margin: 8px 0 10px; font-family: "Cinzel", "Cinzel Repli", serif; font-size: clamp(1.8rem, 3.6vw, 3rem); font-weight: 700; letter-spacing: .04em; color: var(--ivoire); text-shadow: 0 6px 30px rgba(0,0,0,.9); }
-.caverne .cav-hall__tete p { margin: 0 auto; max-width: none; font-size: 1.15rem; font-style: italic; color: var(--ivoire-doux); }
-.caverne .cav-hall__jeux { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 22px; width: min(100%, 1240px); }
+.caverne .cav-salle__fond { display: block; width: 100%; height: 100%; pointer-events: none; }
 
-/* une carte : une stèle taillée, pointe en bas ; la teinte de son jeu, en facettes */
-.caverne .cav-carte {
-  --teinte: 200,168,106;
-  position: relative; display: flex; flex-direction: column; align-items: center; gap: 6px;
-  min-height: 400px; padding: 26px 22px 54px; border: 0; cursor: pointer; text-align: center; color: var(--ivoire);
-  clip-path: polygon(14px 0, calc(100% - 14px) 0, 100% 14px, 100% calc(100% - 36px), 50% 100%, 0 calc(100% - 36px), 0 14px);
+/* le titre, sur le grand mur du fond, entre les deux piliers */
+.caverne .cav-hall__tete {
+  position: absolute; left: 50%; top: 20%; width: 17%; translate: -50% 0; text-align: center; pointer-events: none;
+}
+.caverne .cav-hall__tete span { display: block; font-family: "Cinzel", "Cinzel Repli", serif; font-size: max(.55rem, .55cqw); letter-spacing: .45em; text-transform: uppercase; color: var(--gris); }
+.caverne .cav-hall__tete h1 { margin: .5em 0; font-family: "Cinzel", "Cinzel Repli", serif; font-size: max(1.1rem, 1.85cqw); font-weight: 700; line-height: 1.15; letter-spacing: .04em; color: var(--ivoire); text-shadow: 0 4px 24px rgba(0,0,0,.95); }
+.caverne .cav-hall__tete p { margin: 0; font-size: max(.8rem, .82cqw); font-style: italic; line-height: 1.4; color: var(--ivoire-doux); text-shadow: 0 2px 10px rgba(0,0,0,.9); }
+
+/* une porte : son ouverture (le bouton, découpé à sa forme), sa plaque au-dessus, sa lumière au sol */
+.caverne .cav-porte { position: absolute; --teinte: 236,228,210; }
+.caverne .cav-porte__ouverture {
+  position: absolute; inset: 0; padding: 0; border: 0; background: transparent; cursor: pointer;
+}
+.caverne .cav-porte__ouverture:focus-visible { outline: none; }
+/* la lumière qui s'allume dans la porte : mêlée au bois (on voit encore ses planches) */
+.caverne .cav-porte__lueur {
+  position: absolute; inset: 0; mix-blend-mode: screen; opacity: 0;
   background:
-    linear-gradient(118deg, rgba(255,255,255,.07) 0 26%, transparent 26.2%),
-    linear-gradient(64deg, transparent 0 58%, rgba(255,255,255,.035) 58.2% 78%, transparent 78.2%),
-    linear-gradient(205deg, transparent 0 55%, rgba(0,0,0,.35) 55.2%),
-    radial-gradient(ellipse 90% 55% at 50% 30%, rgba(var(--teinte),.38), transparent 70%),
-    linear-gradient(180deg, #1d1f27, #0c0d11);
-  box-shadow: inset 0 0 0 1px rgba(var(--teinte),.35);
-  transition: transform .25s cubic-bezier(.2,.8,.3,1), filter .25s ease;
+    radial-gradient(ellipse 55% 35% at 50% 99%, rgba(255,255,255,.4), transparent 70%),
+    radial-gradient(ellipse 75% 50% at 50% 100%, rgba(var(--teinte),.85), transparent 78%),
+    radial-gradient(ellipse 85% 75% at 50% 45%, rgba(var(--teinte),.45), transparent 82%),
+    linear-gradient(180deg, rgba(var(--teinte),.12), rgba(var(--teinte),.3));
+  transition: opacity .35s ease;
 }
-.caverne .cav-carte--0 { --teinte: 201,89,46; }
-.caverne .cav-carte--1 { --teinte: 200,168,106; }
-.caverne .cav-carte--2 { --teinte: 184,52,62; }
-.caverne .cav-carte--3 { --teinte: 79,179,171; }
-.caverne .cav-carte:hover, .caverne .cav-carte:focus-visible { transform: translateY(-6px); filter: brightness(1.15); outline: none; }
-.caverne .cav-carte__scene { display: grid; place-items: center; width: 100%; height: 170px; margin-bottom: 8px; }
-.caverne .cav-carte__scene img { max-width: 78%; max-height: 160px; object-fit: contain; filter: drop-shadow(0 14px 18px rgba(0,0,0,.75)) drop-shadow(0 0 22px rgba(var(--teinte),.35)); transition: transform .25s ease; }
-.caverne .cav-carte:hover .cav-carte__scene img { transform: scale(1.06) translateY(-4px); }
-.caverne .cav-carte__nom { font-family: "Cinzel", "Cinzel Repli", serif; font-size: 1.18rem; font-weight: 700; letter-spacing: .04em; line-height: 1.2; }
-.caverne .cav-carte__sous { font-size: 1rem; font-style: italic; color: rgb(var(--teinte)); }
-.caverne .cav-carte__texte { margin-top: 8px; font-size: 1rem; line-height: 1.4; color: var(--ivoire-doux); }
-.caverne .cav-carte__entrer {
-  margin-top: auto; padding-top: 16px;
-  font-family: "Cinzel", "Cinzel Repli", serif; font-size: .74rem; font-weight: 700; letter-spacing: .2em; text-transform: uppercase; color: var(--ivoire);
+.caverne .cav-porte__ouverture:is(:hover, :focus-visible) .cav-porte__lueur { opacity: 1; }
+/* la lumière qui tombe sur les marches */
+.caverne .cav-porte__sol {
+  position: absolute; left: -40%; right: -40%; top: 92%; height: 22%; pointer-events: none; mix-blend-mode: screen; opacity: 0;
+  background: radial-gradient(ellipse at 50% 20%, rgba(var(--teinte),.6), transparent 70%);
+  transition: opacity .35s ease;
 }
+.caverne .cav-porte:has(.cav-porte__ouverture:is(:hover, :focus-visible)) .cav-porte__sol { opacity: 1; }
+/* la plaque, scellée dans le mur au-dessus de la porte : un encadrement de pierre en relief (arête claire en haut,
+   ombre en bas), et dedans la dalle en retrait (ombre portée en haut du creux, arête éclairée en bas), où le nom
+   est gravé et incrusté d'or. Elle suit la courbe du mur (--incline). Au survol, la lumière de la porte l'atteint :
+   la dalle et le nom prennent sa teinte, et la phrase du jeu apparaît, gravée dessous. */
+.caverne .cav-porte__plaque {
+  position: absolute; left: 50%; bottom: calc(100% + 1cqw); translate: -50% 0; z-index: 1;
+  width: max-content; max-width: 250%; padding: .32em; pointer-events: none;
+  transform: perspective(40cqw) rotateY(var(--incline, 0deg));
+  clip-path: polygon(.75em 0, calc(100% - .75em) 0, 100% .75em, 100% calc(100% - .75em), calc(100% - .75em) 100%, .75em 100%, 0 calc(100% - .75em), 0 .75em);
+  background:
+    linear-gradient(125deg, rgba(255,255,255,.08) 0 30%, transparent 30.3%),
+    linear-gradient(205deg, transparent 0 58%, rgba(0,0,0,.3) 58.3%),
+    linear-gradient(180deg, #5a5e69, #3a3d47 60%, #2d3038);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.22), inset 0 -2px 2px rgba(0,0,0,.55), inset 1px 0 0 rgba(255,255,255,.08), inset -1px 0 0 rgba(0,0,0,.35);
+}
+.caverne .cav-porte__face {
+  display: flex; flex-direction: column; align-items: center; padding: .5em 1.05em .45em; text-align: center; text-wrap: balance;
+  clip-path: polygon(.5em 0, calc(100% - .5em) 0, 100% .5em, 100% calc(100% - .5em), calc(100% - .5em) 100%, .5em 100%, 0 calc(100% - .5em), 0 .5em);
+  background:
+    linear-gradient(118deg, rgba(255,255,255,.04) 0 32%, transparent 32.3%),
+    linear-gradient(60deg, transparent 0 62%, rgba(255,255,255,.025) 62.3% 82%, transparent 82.3%),
+    linear-gradient(180deg, #2a2d35, #22252c);
+  /* le creux : l'ombre du rebord en haut et à gauche, l'arête éclairée en bas */
+  box-shadow: inset 0 5px 7px rgba(0,0,0,.75), inset 4px 0 5px rgba(0,0,0,.4), inset -2px 0 3px rgba(0,0,0,.25), inset 0 -1px 0 rgba(255,236,205,.14);
+  transition: box-shadow .35s ease;
+}
+.caverne .cav-porte__plaque b {
+  font-family: "Cinzel", "Cinzel Repli", serif; font-size: max(.6rem, .7cqw); font-weight: 700; letter-spacing: .12em; line-height: 1.3; text-transform: uppercase;
+  color: rgba(206,165,92,.95);
+  text-shadow: 0 -1px 0 rgba(0,0,0,.9), 0 1px 0 rgba(255,232,190,.2), 0 0 .5em rgba(214,172,96,.15);
+  transition: color .35s ease, text-shadow .35s ease;
+}
+.caverne .cav-porte__plaque small {
+  max-height: 0; opacity: 0; overflow: hidden;
+  font-size: max(.58rem, .6cqw); font-style: italic; letter-spacing: .03em;
+  color: rgba(225,214,190,.85); text-shadow: 0 -1px 0 rgba(0,0,0,.85), 0 1px 0 rgba(255,232,190,.12);
+  transition: max-height .3s ease, opacity .3s ease, margin .3s ease;
+}
+.caverne .cav-porte:has(.cav-porte__ouverture:is(:hover, :focus-visible)) .cav-porte__face {
+  box-shadow: inset 0 5px 7px rgba(0,0,0,.75), inset 4px 0 5px rgba(0,0,0,.4), inset -2px 0 3px rgba(0,0,0,.25), inset 0 -1px 0 rgba(255,236,205,.14), inset 0 0 1.4em rgba(var(--teinte),.35);
+}
+.caverne .cav-porte:has(.cav-porte__ouverture:is(:hover, :focus-visible)) .cav-porte__plaque b {
+  color: rgb(var(--teinte));
+  text-shadow: 0 -1px 0 rgba(0,0,0,.9), 0 1px 0 rgba(255,232,190,.28), 0 0 .5em rgba(var(--teinte),.7);
+}
+.caverne .cav-porte:has(.cav-porte__ouverture:is(:hover, :focus-visible)) .cav-porte__plaque small { max-height: 3em; opacity: 1; margin-top: .25em; }
+/* la porte scellée : rien ne s'allume, sa plaque reste grise */
+.caverne .cav-porte.est-scellee .cav-porte__ouverture { cursor: not-allowed; }
+.caverne .cav-porte.est-scellee .cav-porte__plaque { opacity: .55; }
+
 
 /* l'en-tête pendant un jeu : « ← La Caverne », puis le jeu ouvert ; dans le hall, rien à gauche */
 .caverne .tabs--hall { visibility: hidden; }
@@ -352,10 +399,6 @@
 @media (max-width: 700px) {
   .caverne { left: 0; bottom: 80px; }
 }
-@media (max-width: 1100px) { .caverne .cav-hall__jeux { grid-template-columns: repeat(2, minmax(0, 1fr)); } .caverne .cav-hall { justify-content: flex-start; } }
 @media (max-width: 560px) {
-  .caverne .cav-hall__jeux { grid-template-columns: 1fr; }
-  .caverne .cav-carte { min-height: 0; padding-bottom: 46px; }
-  .caverne .cav-carte__scene { height: 110px; }
   .caverne .cav-retour { padding: 8px 10px; font-size: .6rem; margin-right: 6px; }
 }

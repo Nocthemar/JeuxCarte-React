@@ -1,11 +1,13 @@
 // =====================================================================
-//  La salle des jeux de la Caverne aux Trésors : le hall d'entrée (les quatre jeux en grandes cartes), l'en-tête
+//  La salle des jeux de la Caverne aux Trésors : le hall d'entrée (la salle aux six portes, img/Fond/Caverne.webp :
+//  quatre portes mènent aux quatre jeux, celle de gauche au portail, celle de droite est scellée), l'en-tête
 //  (« ← La Caverne » et le jeu ouvert, bourses, temps restant, son), et la scène de chaque jeu avec sa barre
-//  de mise. Ce n'est que le décor : lib/caverne/caverne.js s'y branche (par les id) et anime tout ; choisir
-//  une carte du hall « clique » l'onglet du jeu, que le script écoute. Styles : styles/caverne.css.
-//  props : temps (le temps d'accès qui reste, en mots), surPortail() : revenir au portail (bouton du hall)
+//  de mise. Ce n'est que le décor : lib/caverne/caverne.js s'y branche (par les id) et anime tout ; passer
+//  une porte du hall « clique » l'onglet du jeu, que le script écoute. Styles : styles/caverne.css.
+//  props : temps (le temps d'accès qui reste, en mots), surPortail() : revenir au portail (la porte de gauche du hall)
 // =====================================================================
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { urlPublique } from '../../lib/chemins.js';
 
 const JEUX = [
   { g: 0, image: 's3', nom: 'Le Dragon Dormant', sous: 'Vole l\'or avant son réveil', texte: 'Le butin grossit tant que le dragon dort. Fuis avant que ses yeux ne s\'ouvrent.' },
@@ -14,32 +16,76 @@ const JEUX = [
   { g: 3, image: 'lac', nom: 'Le Lac des Esprits', sous: 'Écoute la tension de la ligne', texte: 'Une prise invisible mord à ta ligne. Seule sa tension trahit ce qu\'elle est.' },
 ];
 
+// Les six portes de la salle, de gauche à droite : l'ouverture de chacune en pixels de l'image (1912 × 823),
+// et ce qu'elle ouvre (un jeu, le portail, ou rien), avec la teinte de sa lumière (r, v, b) et l'inclinaison du mur
+// où elle est percée (le mur est courbe : la plaque scellée au-dessus suit le mur)
+const PORTES = [
+  { cle: 'portail', nom: 'Le portail', sous: 'Revenir à l\'arche', teinte: '236,228,210', incline: 34, pts: [[47, 443], [47, 215], [62, 178], [92, 140], [122, 175], [137, 215], [137, 443]] },
+  { g: 0, teinte: '214,96,48', incline: 22, pts: [[326, 452], [326, 272], [340, 240], [369, 212], [398, 240], [412, 272], [412, 452]] },
+  { g: 1, teinte: '214,176,104', incline: 10, pts: [[598, 458], [598, 305], [612, 272], [640, 245], [668, 272], [682, 305], [682, 458]] },
+  { g: 2, teinte: '200,58,70', incline: -10, pts: [[1232, 458], [1232, 305], [1246, 272], [1277, 243], [1306, 272], [1322, 305], [1322, 458]] },
+  { g: 3, teinte: '79,190,180', incline: -22, pts: [[1497, 455], [1497, 275], [1512, 240], [1539, 210], [1566, 240], [1582, 275], [1582, 455]] },
+  { cle: 'scellee', nom: 'Porte scellée', sous: 'Elle ne s\'ouvre pas encore', teinte: '140,146,160', incline: -34, pts: [[1762, 442], [1762, 215], [1777, 178], [1802, 145], [1830, 178], [1857, 215], [1857, 442]] },
+].map((p) => {
+  const xs = p.pts.map(([x]) => x), ys = p.pts.map(([, y]) => y);
+  const x = Math.min(...xs), y = Math.min(...ys), l = Math.max(...xs) - x, h = Math.max(...ys) - y;
+  return {
+    ...p, ...(p.g !== undefined ? { nom: JEUX[p.g].nom, sous: JEUX[p.g].sous } : {}),
+    place: { left: `${(x / 1912) * 100}%`, top: `${(y / 823) * 100}%`, width: `${(l / 1912) * 100}%`, height: `${(h / 823) * 100}%` },
+    forme: `polygon(${p.pts.map(([px, py]) => `${(((px - x) / l) * 100).toFixed(1)}% ${(((py - y) / h) * 100).toFixed(1)}%`).join(', ')})`,
+  };
+});
+
 export default function SalleDesJeux({ temps, surPortail }) {
   const [jeu, setJeu] = useState(null);   // le jeu ouvert, ou null : le hall
   const onglets = useRef(null);
   const choisir = (g) => { onglets.current.querySelector(`.tab[data-g="${g}"]`).click(); setJeu(g); };
   // pas de retour au hall pendant une partie (le script verrouille alors les onglets)
   const auHall = () => { if (!onglets.current.classList.contains('lock')) setJeu(null); };
+  // Si la salle est plus large que l'écran, elle défile de côté (la molette aussi) : on commence au milieu,
+  // face au mur du fond
+  const salle = useRef(null);
+  useEffect(() => {
+    const el = salle.current;
+    if (!el) return undefined;
+    // (recentrée à chaque changement de taille, tant que le joueur ne l'a pas fait défiler lui-même)
+    let bouge = false;
+    const centrer = () => { if (!bouge) el.scrollLeft = (el.scrollWidth - el.clientWidth) / 2; };
+    const taille = new ResizeObserver(centrer);
+    taille.observe(el);
+    taille.observe(el.querySelector('.cav-salle'));
+    const main = () => { bouge = true; };
+    const roue = (e) => { bouge = true; if (Math.abs(e.deltaY) > Math.abs(e.deltaX) && el.scrollWidth > el.clientWidth) { el.scrollLeft += e.deltaY; e.preventDefault(); } };
+    el.addEventListener('wheel', roue, { passive: false });
+    el.addEventListener('pointerdown', main);
+    el.addEventListener('touchstart', main, { passive: true });
+    return () => { taille.disconnect(); el.removeEventListener('wheel', roue); el.removeEventListener('pointerdown', main); el.removeEventListener('touchstart', main); };
+  }, []);
+  const passer = (p) => {
+    if (p.g !== undefined) choisir(p.g);
+    else if (p.cle === 'portail') surPortail?.();
+  };
 
   return (
     <>
-      {/* Le hall : les quatre jeux, une carte chacun (toujours là, caché pendant un jeu : ses images restent chargées) */}
-      <section className="cav-hall" hidden={jeu !== null} aria-labelledby="cav-hall-titre">
-        <header className="cav-hall__tete">
-          {surPortail && <button type="button" className="cav-portail" onClick={surPortail}><span aria-hidden="true">←</span> Retour au portail</button>}
-          <span>Nocthémar</span>
-          <h1 id="cav-hall-titre">La Caverne aux Trésors</h1>
-          <p>Quatre jeux, une seule règle : savoir s&apos;arrêter à temps.</p>
-        </header>
-        <div className="cav-hall__jeux">
-          {JEUX.map((j) => (
-            <button key={j.g} type="button" className={`cav-carte cav-carte--${j.g}`} onClick={() => choisir(j.g)}>
-              <span className="cav-carte__scene"><img data-k={j.image} alt="" /></span>
-              <span className="cav-carte__nom">{j.nom}</span>
-              <span className="cav-carte__sous">{j.sous}</span>
-              <span className="cav-carte__texte">{j.texte}</span>
-              <span className="cav-carte__entrer">Entrer <span aria-hidden="true">→</span></span>
-            </button>
+      {/* Le hall : la salle aux six portes (toujours là, cachée pendant un jeu) */}
+      <section className="cav-hall" hidden={jeu !== null} aria-labelledby="cav-hall-titre" ref={salle}>
+        <div className="cav-salle">
+          <img className="cav-salle__fond" src={urlPublique('img/Fond/Caverne.webp')} alt="" draggable="false" />
+          <header className="cav-hall__tete">
+            <span>Nocthémar</span>
+            <h1 id="cav-hall-titre">La Caverne aux Trésors</h1>
+            <p>Quatre portes, quatre jeux. Une seule règle : savoir s&apos;arrêter à temps.</p>
+          </header>
+          {PORTES.map((p) => (
+            <div key={p.cle ?? p.g} className={`cav-porte${p.cle === 'scellee' ? ' est-scellee' : ''}`} style={{ ...p.place, '--teinte': p.teinte, '--incline': `${p.incline}deg` }}>
+              <button type="button" className="cav-porte__ouverture" style={{ clipPath: p.forme }} disabled={p.cle === 'scellee'}
+                onClick={() => passer(p)} aria-label={`${p.nom} : ${p.sous}`}>
+                <span className="cav-porte__lueur" />
+              </button>
+              <span className="cav-porte__plaque" aria-hidden="true"><span className="cav-porte__face"><b>{p.nom}</b><small>{p.sous}</small></span></span>
+              <span className="cav-porte__sol" aria-hidden="true" />
+            </div>
           ))}
         </div>
       </section>

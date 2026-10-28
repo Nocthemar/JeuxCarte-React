@@ -4,8 +4,8 @@
    remplit l'arche (il naît au centre) : un tourbillon y tourne, des anneaux et des particules y sont aspirés,
    ses bords sont dans l'ombre et un liseré brille au ras de la pierre ; sa lueur se mêle au décor (pierres,
    marches, reflet ondulant sur la mer). Franchi (.est-en-route) : la vue avance dans l'arche jusqu'à la lumière, puis la salle des jeux.
-   La scène garde les proportions de l'image (1913 × 822) et couvre l'écran ; le centre de l'arche est à
-   941 × 380 (49,19 % × 46,23 %).
+   La scène garde les proportions de l'image (1704 × 923) et couvre l'écran ; le centre de l'arche est à
+   848 × 380 (49,77 % × 41,17 %).
    ===================================================================== */
 .portail {
   position: absolute; inset: 0; z-index: 3; overflow: hidden; container-type: size;
@@ -15,9 +15,9 @@
 .caverne .portail { max-width: none; margin: 0; padding: 0; border: 0; }
 .portail__scene {
   position: absolute; left: 50%; top: 50%;
-  width: max(100cqw, calc(100cqh * 1913 / 822)); aspect-ratio: 1913 / 822;
+  width: max(100cqw, calc(100cqh * 1704 / 923)); aspect-ratio: 1704 / 923;
   translate: -50% -50%;
-  transform-origin: 49.19% 46.23%;
+  transform-origin: 49.77% 41.17%;
 }
 .portail__fond { display: block; width: 100%; height: 100%; pointer-events: none; }
 .portail__lumiere, .portail__eclairage { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
@@ -28,7 +28,7 @@
 @keyframes portail-respire { 50% { opacity: .75; } }
 
 /* Le portail : éteint, puis il naît au centre de l'arche */
-.portail__voile, .portail__tourbillon, .portail__pouls, .portail__anneau { transform-box: view-box; transform-origin: 941px 380px; }
+.portail__voile, .portail__tourbillon, .portail__pouls, .portail__anneau { transform-box: view-box; transform-origin: 848px 380px; }
 .portail__voile { opacity: 0; transform: scale(.15); transition: opacity 1.2s ease, transform 1.4s cubic-bezier(.2,.9,.3,1); }
 .portail__bord { opacity: 0; transition: opacity 1.6s ease .3s; }
 .portail.est-allume .portail__voile { opacity: 1; transform: scale(1); }
@@ -77,7 +77,7 @@
 @keyframes portail-eclair { 0%, 45% { opacity: 0; } 100% { opacity: 1; } }
 
 /* ---------- Le socle, dans le décor : sur les marches, sous l'arche ----------
-   Placé aux mesures de l'image (Portail.jsx, SOCLE : centre x 944, haut y 655 ; le joueur peut le faire glisser),
+   Placé aux mesures de l'image (Portail.jsx, SOCLE : centre x 852, haut y 688 ; le joueur peut le faire glisser),
    à la taille d'un badge (150 × 80 px de l'image) : il suit l'image à toute taille d'écran, et la vue l'emporte
    quand on franchit le portail. */
 .portail__scene { container-type: inline-size; }
@@ -86,7 +86,7 @@
   display: flex; flex-direction: column; align-items: center; gap: 8px;
 }
 .portail__socle {
-  display: grid; place-items: center; width: max(112px, 7.85cqw); aspect-ratio: 15 / 8; padding: 0; border: 0;
+  display: grid; place-items: center; width: max(112px, 8.8cqw); aspect-ratio: 15 / 8; padding: 0; border: 0;
   clip-path: var(--taille-petite);
   background:
     linear-gradient(135deg, rgba(255,255,255,.09) 0 30%, transparent 30.3%),

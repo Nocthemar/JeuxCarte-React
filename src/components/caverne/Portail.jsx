@@ -3,7 +3,7 @@
 //  L'arche de pierre sur la mer (img/Fond/LaPorte.webp), en plein écran ; sur les marches, sous l'arche, le socle :
 //  on le touche pour choisir un badge à poser (lib/caverne/badges.js) ; on peut aussi le faire glisser ailleurs. Badge posé : le portail s'allume. Un clic au milieu de l'arche :
 //  la vue avance dans le portail, puis surEntree() mène à la salle des jeux.
-//  La lumière est dessinée en SVG aux mesures de l'image (1913 × 822) : dans l'arche, un puits de lumière
+//  La lumière est dessinée en SVG aux mesures de l'image (LARGEUR × HAUTEUR : 1704 × 923) : dans l'arche, un puits de lumière
 //  (tourbillon, anneaux aspirés, particules, bords dans l'ombre) ; sur le décor, sa lueur mêlée à l'image
 //  (pierres, marches, reflet sur la mer). La scène garde les proportions de l'image et couvre l'écran,
 //  donc tout reste à sa place à toute taille.
@@ -23,17 +23,17 @@ const AVANCEE = 1500;   // ms : la vue avance dans le portail
 
 // L'ouverture de l'arche, en pixels de l'image (tracée sur LaPorte.png : tout ce qui n'est pas de la pierre,
 // depuis le centre de l'arche, jusqu'aux marches)
-const ARCHE = 'M958 131 L971 140 L983 146 L994 155 L1004 163 L1015 173 L1024 182 L1032 191 L1040 200 L1048 209'
-  + 'L1054 221 L1059 230 L1064 239 L1068 251 L1074 261 L1077 276 L1073 290 L1074 304 L1081 315 L1082 545'
-  + 'L1072 550 L1072 572 L1067 585 L1051 590 L1040 597 L1028 604 L1006 611 L985 618 L940 619 L878 616 L860 611'
-  + 'L846 605 L830 597 L820 589 L810 580 L810 545 L801 532 L801 320 L802 304 L805 289 L811 274 L817 259'
-  + 'L822 247 L827 237 L831 227 L836 217 L843 207 L851 198 L859 190 L867 181 L877 172 L887 163 L896 157'
-  + 'L905 151 L914 145 L925 139 L938 133 L945 129 Z';
-const CENTRE = { x: 941, y: 380 };
+const ARCHE = 'M871 135 L881 147 L897 159 L912 171 L924 183 L934 195 L945 207 L956 219 L962 231 L971 243 L975 255'
+  + ' L980 275 L982 300 L986 320 L987 420 L989 440 L989 560 L985 580 L976 592 L950 602 L931 615 L908 621'
+  + ' L852 624 L760 620 L747 612 L734 600 L726 585 L728 560 L722 540 L721 440 L713 427 L708 422 L708 330'
+  + ' L709 300 L710 270 L714 255 L722 243 L735 231 L745 219 L757 207 L770 195 L783 183 L795 171 L811 159'
+  + ' L829 147 L847 135 L859 130 Z';
+const LARGEUR = 1704, HAUTEUR = 923;   // l'image, en pixels
+const CENTRE = { x: 848, y: 380 };
 // Le socle : sa place de départ (sur l'eau, au pied des marches), en pixels de l'image ; le joueur peut le
 // faire glisser ailleurs, et sa place est retenue dans ce navigateur
-const SOCLE = { x: 944, y: 655 };
-const CLE_SOCLE = 'caverne-socle';
+const SOCLE = { x: 852, y: 688 };
+const CLE_SOCLE = 'caverne-socle-2';   // (2 : la place se mesure sur la nouvelle image)
 // Les couleurs du portail, celles du badge posé (le dernier posé est retenu dans ce navigateur)
 const COULEURS = {
   '24h': { coeur: ['#ffffff', '#e6ebf3', '#aab5c7', '#4f596b', '#161a22'], halo: '#cdd7e8', bras: '#f4f7fc', bord: '#e8eef8', ombre: '#07090d' },
@@ -54,7 +54,7 @@ function placeRetenue() {
   return SOCLE;
 }
 // Le cadre de l'arche (pour le bouton qu'on touche), et son contour en % de ce cadre
-const CADRE = { x: 799, y: 127, l: 285, h: 494 };
+const CADRE = { x: 706, y: 128, l: 285, h: 498 };
 const CONTOUR = ARCHE.replace(/[MLZ]/g, ' ').trim().split(/\s+/).reduce((t, v, i, a) => (i % 2 ? t : [...t,
   `${(((+v - CADRE.x) / CADRE.l) * 100).toFixed(1)}% ${(((+a[i + 1] - CADRE.y) / CADRE.h) * 100).toFixed(1)}%`]), []).join(', ');
 // Le tourbillon : cinq bras en spirale autour du centre (en cercle : il tourne, puis il est étiré comme l'arche)
@@ -85,7 +85,7 @@ export default function Portail({ badges, surEtat, surEntree }) {
   const tenir = (e) => {
     if (e.button !== 0 || avance) return;
     const scene = e.currentTarget.closest('.portail__scene').getBoundingClientRect();
-    glisse.current = { x: e.clientX, y: e.clientY, depart: place, echelle: 1913 / scene.width, bouge: false };
+    glisse.current = { x: e.clientX, y: e.clientY, depart: place, echelle: LARGEUR / scene.width, bouge: false };
     e.currentTarget.setPointerCapture(e.pointerId);
   };
   const suivre = (e) => {
@@ -96,8 +96,8 @@ export default function Portail({ badges, surEtat, surEntree }) {
     g.bouge = true;
     setChoix(false);
     setPlace({
-      x: Math.min(1853, Math.max(60, g.depart.x + dx * g.echelle)),
-      y: Math.min(760, Math.max(40, g.depart.y + dy * g.echelle)),
+      x: Math.min(LARGEUR - 60, Math.max(60, g.depart.x + dx * g.echelle)),
+      y: Math.min(HAUTEUR - 62, Math.max(40, g.depart.y + dy * g.echelle)),
     });
   };
   const lacher = () => {
@@ -141,7 +141,7 @@ export default function Portail({ badges, surEtat, surEntree }) {
       <div className="portail__scene">
         <img className="portail__fond" src={urlPublique('img/Fond/LaPorte.webp')} alt="" draggable="false" />
         {/* La lumière du portail sur le décor (mêlée à l'image : les pierres et la mer rougeoient) */}
-        <svg className="portail__eclairage" viewBox="0 0 1913 822" aria-hidden="true">
+        <svg className="portail__eclairage" viewBox={`0 0 ${LARGEUR} ${HAUTEUR}`} aria-hidden="true">
           <defs>
             <radialGradient id="portail-halo" cx={CENTRE.x} cy={CENTRE.y} r="200" gradientUnits="userSpaceOnUse" gradientTransform={`translate(${CENTRE.x} ${CENTRE.y}) scale(1 1.75) translate(${-CENTRE.x} ${-CENTRE.y})`}>
               <stop offset=".45" stopColor={teinte.halo} stopOpacity=".75" />
@@ -159,16 +159,16 @@ export default function Portail({ badges, surEtat, surEntree }) {
               <feGaussianBlur stdDeviation="3" />
             </filter>
           </defs>
-          <rect className="portail__halo" width="1913" height="822" fill="url(#portail-halo)" />
-          <ellipse className="portail__marches" cx={CENTRE.x} cy="636" rx="210" ry="34" fill={teinte.halo} opacity=".55" filter="url(#portail-flou-eclairage)" />
+          <rect className="portail__halo" width={LARGEUR} height={HAUTEUR} fill="url(#portail-halo)" />
+          <ellipse className="portail__marches" cx={CENTRE.x} cy="652" rx="210" ry="34" fill={teinte.halo} opacity=".55" filter="url(#portail-flou-eclairage)" />
           {/* le reflet sur la mer, qui ondule */}
           <g className="portail__onde" filter="url(#portail-vague)">
-            <rect x={CENTRE.x - 95} y="688" width="190" height="134" fill="url(#portail-reflet)" />
+            <rect x={CENTRE.x - 95} y="705" width="190" height="218" fill="url(#portail-reflet)" />
           </g>
         </svg>
 
         {/* Le portail lui-même, dans l'ouverture de l'arche */}
-        <svg className="portail__lumiere" viewBox="0 0 1913 822" aria-hidden="true">
+        <svg className="portail__lumiere" viewBox={`0 0 ${LARGEUR} ${HAUTEUR}`} aria-hidden="true">
           <defs>
             <clipPath id="portail-arche"><path d={ARCHE} /></clipPath>
             {/* le fond : un puits de lumière, clair au cœur, sombre vers les bords (allongé comme l'arche) */}
@@ -185,7 +185,7 @@ export default function Portail({ badges, surEtat, surEntree }) {
             </filter>
           </defs>
           <g className="portail__voile" clipPath="url(#portail-arche)">
-            <rect width="1913" height="822" fill="url(#portail-coeur)" />
+            <rect width={LARGEUR} height={HAUTEUR} fill="url(#portail-coeur)" />
             <g transform={`translate(${CENTRE.x} ${CENTRE.y}) scale(1 1.75) translate(${-CENTRE.x} ${-CENTRE.y})`}>
               <g className="portail__tourbillon" filter="url(#portail-remous)">
                 {BRAS.map((p, i) => <path key={i} d={p} fill="none" stroke={teinte.bras} strokeWidth={i % 2 ? 6 : 10} strokeLinecap="round" opacity={i % 2 ? 0.28 : 0.4} />)}
@@ -211,11 +211,11 @@ export default function Portail({ badges, surEtat, surEntree }) {
           </g>
         </svg>
         <button type="button" className="portail__entree" disabled={!allume || avance} onClick={entrer}
-          style={{ left: `${(CADRE.x / 1913) * 100}%`, top: `${(CADRE.y / 822) * 100}%`, width: `${(CADRE.l / 1913) * 100}%`, height: `${(CADRE.h / 822) * 100}%`, clipPath: `polygon(${CONTOUR})` }}
+          style={{ left: `${(CADRE.x / LARGEUR) * 100}%`, top: `${(CADRE.y / HAUTEUR) * 100}%`, width: `${(CADRE.l / LARGEUR) * 100}%`, height: `${(CADRE.h / HAUTEUR) * 100}%`, clipPath: `polygon(${CONTOUR})` }}
           aria-label={allume ? 'Franchir le portail' : 'Le portail est éteint'} title={allume ? 'Franchir le portail' : undefined} />
         {/* Le socle, posé dans le décor sur les marches, sous le portail (il suit l'image) : on le touche
             pour choisir son badge ; badge posé, il le garde et dit combien de temps le portail reste ouvert */}
-        <div className="portail__place" style={{ left: `${(place.x / 1913) * 100}%`, top: `${(place.y / 822) * 100}%` }}>
+        <div className="portail__place" style={{ left: `${(place.x / LARGEUR) * 100}%`, top: `${(place.y / HAUTEUR) * 100}%` }}>
           {badges.erreur ? (
             <p className="portail__bulle portail__bulle--texte">La Caverne n&apos;est pas encore prête. Reviens un peu plus tard.</p>
           ) : allume ? (
