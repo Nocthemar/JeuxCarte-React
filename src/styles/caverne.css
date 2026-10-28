@@ -248,13 +248,13 @@
 .caverne #fx { position: fixed; inset: 0; pointer-events: none; z-index: 50; }
 .caverne #flashv { position: fixed; inset: 0; pointer-events: none; z-index: 40; opacity: 0; transition: opacity .35s; }
 
-/* ---------- Le hall d'entrée : la salle aux six portes (img/Fond/Caverne.webp, 1912 × 823) ----------
+/* ---------- Le hall d'entrée : la salle aux cinq portes (img/Fond/Caverne.webp, 1910 × 823) ----------
    L'image garde ses proportions et couvre l'écran ; si elle est plus large que lui, la salle défile de côté
    (molette ou glisser ; elle s'ouvre face au mur du fond).
    Les portes y sont posées aux mesures de l'image (SalleDesJeux.jsx, PORTES) ; au survol, la porte
    s'illumine de la teinte de son jeu, sa plaque s'éclaire, sa lumière tombe sur les marches. */
 .caverne .cav-hall {
-  position: absolute; inset: 0; z-index: 4; overflow: auto hidden; container-type: size;
+  position: absolute; inset: 0; z-index: 4; overflow: clip; container-type: size;
   max-width: none; margin: 0; padding: 0; border: 0;   /* (pas le <section> du site : index.css) */
   background: radial-gradient(ellipse 80% 60% at 50% 40%, #1b1e26, #08090c 75%);
   scrollbar-width: thin; scrollbar-color: rgba(236,228,210,.25) transparent;
@@ -262,18 +262,22 @@
 .caverne .cav-hall[hidden] { display: none; }
 .caverne:has(.cav-hall:not([hidden])) .jeux { visibility: hidden; }
 .caverne .cav-salle {
-  position: relative; top: 50%; translate: 0 -50%; container-type: inline-size;
-  width: max(100cqw, calc(100cqh * 1912 / 823)); aspect-ratio: 1912 / 823;
+  position: absolute; left: 50%; top: 0; translate: -50% 0; container-type: inline-size;
+  /* Ordinateur : toute la page, de la barre au bord droit et du haut en bas, sans défiler. L'image est un peu plus
+     allongée qu'un écran : on rogne au plus 4 % de chaque côté (les portes des bords, à 6 % et 94 %, restent entières),
+     et le reste de l'écart est rattrapé en la serrant un peu en largeur (les portes, placées en %, la suivent).
+     (Téléphone : elle couvre la hauteur et défile de côté, src/telephone/styles/caverne.css) */
+  width: max(100cqw, min(calc(100cqh * 1910 / 823), calc(100cqw / .92))); height: 108cqh;   /* (108 % : la salle un peu plus bas ; le bord du bassin, en bas, sort de l'écran) */
 }
-.caverne .cav-salle__fond { display: block; width: 100%; height: 100%; pointer-events: none; }
+.caverne .cav-salle__fond { display: block; width: 100%; height: 100%; object-fit: fill; pointer-events: none; }
 
-/* le titre, sur le grand mur du fond, entre les deux piliers */
+/* le titre, en haut du mur du fond, au-dessus de la porte du milieu */
 .caverne .cav-hall__tete {
-  position: absolute; left: 50%; top: 20%; width: 17%; translate: -50% 0; text-align: center; pointer-events: none;
+  position: absolute; left: 50%; top: 1.5%; width: 44%; translate: -50% 0; text-align: center; pointer-events: none;
 }
 .caverne .cav-hall__tete span { display: block; font-family: "Cinzel", "Cinzel Repli", serif; font-size: max(.55rem, .55cqw); letter-spacing: .45em; text-transform: uppercase; color: var(--gris); }
-.caverne .cav-hall__tete h1 { margin: .5em 0; font-family: "Cinzel", "Cinzel Repli", serif; font-size: max(1.1rem, 1.85cqw); font-weight: 700; line-height: 1.15; letter-spacing: .04em; color: var(--ivoire); text-shadow: 0 4px 24px rgba(0,0,0,.95); }
-.caverne .cav-hall__tete p { margin: 0; font-size: max(.8rem, .82cqw); font-style: italic; line-height: 1.4; color: var(--ivoire-doux); text-shadow: 0 2px 10px rgba(0,0,0,.9); }
+.caverne .cav-hall__tete h1 { margin: .3em 0 0; font-family: "Cinzel", "Cinzel Repli", serif; font-size: max(1.1rem, 1.7cqw); font-weight: 700; line-height: 1.15; letter-spacing: .04em; color: var(--ivoire); text-shadow: 0 4px 24px rgba(0,0,0,.95); }
+.caverne .cav-hall__tete p { display: none; margin: 0; font-size: max(.8rem, .82cqw); font-style: italic; line-height: 1.4; color: var(--ivoire-doux); text-shadow: 0 2px 10px rgba(0,0,0,.9); }
 
 /* une porte : son ouverture (le bouton, découpé à sa forme), sa plaque au-dessus, sa lumière au sol */
 .caverne .cav-porte { position: absolute; --teinte: 236,228,210; }
@@ -299,55 +303,7 @@
   transition: opacity .35s ease;
 }
 .caverne .cav-porte:has(.cav-porte__ouverture:is(:hover, :focus-visible)) .cav-porte__sol { opacity: 1; }
-/* la plaque, scellée dans le mur au-dessus de la porte : un encadrement de pierre en relief (arête claire en haut,
-   ombre en bas), et dedans la dalle en retrait (ombre portée en haut du creux, arête éclairée en bas), où le nom
-   est gravé et incrusté d'or. Elle suit la courbe du mur (--incline). Au survol, la lumière de la porte l'atteint :
-   la dalle et le nom prennent sa teinte, et la phrase du jeu apparaît, gravée dessous. */
-.caverne .cav-porte__plaque {
-  position: absolute; left: 50%; bottom: calc(100% + 1cqw); translate: -50% 0; z-index: 1;
-  width: max-content; max-width: 250%; padding: .32em; pointer-events: none;
-  transform: perspective(40cqw) rotateY(var(--incline, 0deg));
-  clip-path: polygon(.75em 0, calc(100% - .75em) 0, 100% .75em, 100% calc(100% - .75em), calc(100% - .75em) 100%, .75em 100%, 0 calc(100% - .75em), 0 .75em);
-  background:
-    linear-gradient(125deg, rgba(255,255,255,.08) 0 30%, transparent 30.3%),
-    linear-gradient(205deg, transparent 0 58%, rgba(0,0,0,.3) 58.3%),
-    linear-gradient(180deg, #5a5e69, #3a3d47 60%, #2d3038);
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.22), inset 0 -2px 2px rgba(0,0,0,.55), inset 1px 0 0 rgba(255,255,255,.08), inset -1px 0 0 rgba(0,0,0,.35);
-}
-.caverne .cav-porte__face {
-  display: flex; flex-direction: column; align-items: center; padding: .5em 1.05em .45em; text-align: center; text-wrap: balance;
-  clip-path: polygon(.5em 0, calc(100% - .5em) 0, 100% .5em, 100% calc(100% - .5em), calc(100% - .5em) 100%, .5em 100%, 0 calc(100% - .5em), 0 .5em);
-  background:
-    linear-gradient(118deg, rgba(255,255,255,.04) 0 32%, transparent 32.3%),
-    linear-gradient(60deg, transparent 0 62%, rgba(255,255,255,.025) 62.3% 82%, transparent 82.3%),
-    linear-gradient(180deg, #2a2d35, #22252c);
-  /* le creux : l'ombre du rebord en haut et à gauche, l'arête éclairée en bas */
-  box-shadow: inset 0 5px 7px rgba(0,0,0,.75), inset 4px 0 5px rgba(0,0,0,.4), inset -2px 0 3px rgba(0,0,0,.25), inset 0 -1px 0 rgba(255,236,205,.14);
-  transition: box-shadow .35s ease;
-}
-.caverne .cav-porte__plaque b {
-  font-family: "Cinzel", "Cinzel Repli", serif; font-size: max(.6rem, .7cqw); font-weight: 700; letter-spacing: .12em; line-height: 1.3; text-transform: uppercase;
-  color: rgba(206,165,92,.95);
-  text-shadow: 0 -1px 0 rgba(0,0,0,.9), 0 1px 0 rgba(255,232,190,.2), 0 0 .5em rgba(214,172,96,.15);
-  transition: color .35s ease, text-shadow .35s ease;
-}
-.caverne .cav-porte__plaque small {
-  max-height: 0; opacity: 0; overflow: hidden;
-  font-size: max(.58rem, .6cqw); font-style: italic; letter-spacing: .03em;
-  color: rgba(225,214,190,.85); text-shadow: 0 -1px 0 rgba(0,0,0,.85), 0 1px 0 rgba(255,232,190,.12);
-  transition: max-height .3s ease, opacity .3s ease, margin .3s ease;
-}
-.caverne .cav-porte:has(.cav-porte__ouverture:is(:hover, :focus-visible)) .cav-porte__face {
-  box-shadow: inset 0 5px 7px rgba(0,0,0,.75), inset 4px 0 5px rgba(0,0,0,.4), inset -2px 0 3px rgba(0,0,0,.25), inset 0 -1px 0 rgba(255,236,205,.14), inset 0 0 1.4em rgba(var(--teinte),.35);
-}
-.caverne .cav-porte:has(.cav-porte__ouverture:is(:hover, :focus-visible)) .cav-porte__plaque b {
-  color: rgb(var(--teinte));
-  text-shadow: 0 -1px 0 rgba(0,0,0,.9), 0 1px 0 rgba(255,232,190,.28), 0 0 .5em rgba(var(--teinte),.7);
-}
-.caverne .cav-porte:has(.cav-porte__ouverture:is(:hover, :focus-visible)) .cav-porte__plaque small { max-height: 3em; opacity: 1; margin-top: .25em; }
 /* la porte scellée : rien ne s'allume, sa plaque reste grise */
-.caverne .cav-porte.est-scellee .cav-porte__ouverture { cursor: not-allowed; }
-.caverne .cav-porte.est-scellee .cav-porte__plaque { opacity: .55; }
 
 
 /* l'en-tête pendant un jeu : « ← La Caverne », puis le jeu ouvert ; dans le hall, rien à gauche */
@@ -402,3 +358,94 @@
 @media (max-width: 560px) {
   .caverne .cav-retour { padding: 8px 10px; font-size: .6rem; margin-right: 6px; }
 }
+
+/* =====================================================================
+   Les titres du hall, habillés (28/10/2026)
+   - le grand titre : « Nocthémar » entre deux filets, le nom en or martelé (dégradé ivoire → or → bronze, arête
+     sombre gravée, halo chaud derrière), un filet à trois losanges dessous ;
+   - les plaques des portes : suspendues au mur par deux chaînettes de bronze, comme des enseignes.
+   ===================================================================== */
+.caverne .cav-hall__tete { top: 1.2%; }
+.caverne .cav-hall__tete::before {   /* le halo chaud derrière le titre */
+  content: ''; position: absolute; left: 50%; top: 55%; width: 70%; height: 140%; translate: -50% -50%; z-index: -1;
+  background: radial-gradient(ellipse at center, rgba(214,160,80,.18), transparent 70%);
+}
+.caverne .cav-hall__tete span {
+  display: flex; align-items: center; justify-content: center; gap: 1em;
+  font-size: max(.58rem, .58cqw); letter-spacing: .5em; color: rgba(214,176,104,.75);
+}
+.caverne .cav-hall__tete span::before, .caverne .cav-hall__tete span::after {
+  content: ''; width: 5em; height: 1px; background: linear-gradient(90deg, transparent, rgba(214,176,104,.75));
+}
+.caverne .cav-hall__tete span::after { background: linear-gradient(90deg, rgba(214,176,104,.75), transparent); }
+.caverne .cav-hall__tete h1 {
+  margin: .2em 0 0; font-size: max(1.2rem, 1.95cqw); letter-spacing: .08em; font-variant: small-caps;
+  background: linear-gradient(180deg, #fff4d8 0%, #f0cf86 38%, #c5933f 62%, #8c6326 100%);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+  text-shadow: none;
+  filter: drop-shadow(0 -1px 0 rgba(0,0,0,.9)) drop-shadow(0 2px 1px rgba(0,0,0,.9)) drop-shadow(0 0 1.2em rgba(214,160,80,.35));
+}
+/* le filet à trois losanges */
+.caverne .cav-hall__tete h1::after {
+  content: ''; display: block; width: 14em; max-width: 100%; height: .62em; margin: .25em auto 0;
+  font-size: .5em;
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 40 10%27%3E%3Cpath d=%27M20 0 25 5 20 10 15 5z%27 fill=%27%23e2c27e%27/%3E%3Cpath d=%27M8 2.5 10.5 5 8 7.5 5.5 5z M32 2.5 34.5 5 32 7.5 29.5 5z%27 fill=%27%23b8903f%27/%3E%3C/svg%3E") center / 4em 1em no-repeat,
+    linear-gradient(90deg, transparent, rgba(214,176,104,.8) 25%, transparent 36%, transparent 64%, rgba(214,176,104,.8) 75%, transparent) center / 100% 1px no-repeat;
+}
+
+/* le grand titre ne doit pas passer sous les bourses (en haut à droite) : sur un hall de moins de 1500 px de large,
+   il descend sous la barre du haut */
+.caverne .cav-hall { container-name: hall; }
+@container hall (max-width: 1500px) {
+  .caverne .cav-hall__tete { top: 6%; }
+  .caverne .cav-hall__tete h1 { font-size: max(.95rem, 1.6cqw); }
+  .caverne .cav-hall__tete span, .caverne .cav-hall__tete h1::after { display: none; }   /* (le médaillon des Bourses est juste dessous) */
+}
+
+/* le grand titre : sans les filets (seulement les losanges sous le nom) */
+.caverne .cav-hall__tete span::before, .caverne .cav-hall__tete span::after { content: none; }
+.caverne .cav-hall__tete h1::after {
+  background: url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 40 10%27%3E%3Cpath d=%27M20 0 25 5 20 10 15 5z%27 fill=%27%23e2c27e%27/%3E%3Cpath d=%27M8 2.5 10.5 5 8 7.5 5.5 5z M32 2.5 34.5 5 32 7.5 29.5 5z%27 fill=%27%23b8903f%27/%3E%3C/svg%3E") center / 4em 1em no-repeat;
+}
+@container hall (max-width: 1200px) { .caverne .cav-hall__tete { display: none; } }   /* (plus la place : les bourses le couvriraient) */
+
+/* =====================================================================
+   Les noms des jeux, gravés dans la pierre au-dessus de chaque arche (28/10/2026) : pas d'objet ajouté, le mur
+   porte l'inscription. Lettres creusées (ombre en haut, arête éclairée en bas) et incrustées du même or que les
+   veines et les cadres de l'image ; elles suivent la courbe du mur (--incline). Au survol, l'or s'allume comme les
+   veines, de la couleur du jeu, et la phrase du jeu apparaît, gravée plus petit.
+   ===================================================================== */
+.caverne .cav-gravure {
+  position: absolute; left: var(--pointe, 50%); bottom: calc(100% + 1.4cqw); translate: -50% 0; z-index: 2; pointer-events: none;
+  display: flex; flex-direction: column; align-items: center; width: max-content; text-align: center;
+  font-size: max(.6rem, .78cqw);
+  transform: perspective(40cqw) rotateY(var(--incline, 0deg));
+}
+.caverne .cav-gravure b {
+  font-family: "Cinzel", "Cinzel Repli", serif; font-size: 1em; font-weight: 700; letter-spacing: .22em; text-transform: uppercase; white-space: nowrap;
+  background: linear-gradient(180deg, #6b4a1c 0%, #c9953f 35%, #f1cf7f 55%, #a8772e 80%, #5a3d16 100%);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+  /* creusée : l'ombre du bord haut de l'entaille, l'arête du bas qui accroche la lumière, la lueur des veines */
+  filter: drop-shadow(0 -1px 0 rgba(0,0,0,.95)) drop-shadow(0 1px 0 rgba(255,222,160,.22)) drop-shadow(0 0 .35em rgba(220,150,60,.45));
+  transition: filter .35s ease;
+}
+.caverne .cav-gravure small {
+  max-height: 0; opacity: 0; overflow: hidden; margin-top: 0;
+  font-family: "Cinzel", "Cinzel Repli", serif; font-size: .72em; letter-spacing: .12em; white-space: nowrap;
+  color: rgba(214,190,140,.85); text-shadow: 0 -1px 0 rgba(0,0,0,.9), 0 1px 0 rgba(255,222,160,.15);
+  transition: max-height .3s ease, opacity .3s ease, margin .3s ease;
+}
+.caverne .cav-porte:has(.cav-porte__ouverture:is(:hover, :focus-visible)) .cav-gravure b {
+  filter: drop-shadow(0 -1px 0 rgba(0,0,0,.95)) drop-shadow(0 1px 0 rgba(255,222,160,.3)) drop-shadow(0 0 .5em rgba(var(--teinte),.95)) drop-shadow(0 0 1.2em rgba(var(--teinte),.55));
+}
+.caverne .cav-porte:has(.cav-porte__ouverture:is(:hover, :focus-visible)) .cav-gravure small { max-height: 2em; opacity: 1; margin-top: .35em; }
+/* (le Lac, au bord droit de l'écran : son nom s'aligne sur le bord droit de sa porte) */
+.caverne .cav-porte--bord:last-of-type .cav-gravure { left: auto; right: 0; translate: 0 0; align-items: flex-end; text-align: right; }
+@container hall (max-width: 1500px) {
+  /* (plus étroit : au-dessus de sa porte, le nom du Lac passerait sous les bourses ; il est doré sur le haut du battant) */
+  .caverne .cav-porte--bord:last-of-type .cav-gravure { bottom: auto; top: 30%; left: var(--pointe, 50%); right: auto; translate: -50% 0; align-items: center; text-align: center; font-size: max(.55rem, .62cqw); }
+  .caverne .cav-porte--bord:last-of-type .cav-gravure b { letter-spacing: .12em; }
+}
+/* (le portail : son cadre de pierre monte plus haut que l'arche dorée ; le nom se pose au-dessus de ce cadre) */
+.caverne .cav-porte:first-of-type .cav-gravure { bottom: calc(100% + 3.2cqw); }

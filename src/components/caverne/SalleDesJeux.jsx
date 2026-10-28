@@ -1,6 +1,6 @@
 // =====================================================================
-//  La salle des jeux de la Caverne aux Trésors : le hall d'entrée (la salle aux six portes, img/Fond/Caverne.webp :
-//  quatre portes mènent aux quatre jeux, celle de gauche au portail, celle de droite est scellée), l'en-tête
+//  La salle des jeux de la Caverne aux Trésors : le hall d'entrée (la salle aux cinq portes, img/Fond/Caverne.webp :
+//  celle de gauche ramène au portail, les quatre autres mènent aux quatre jeux), l'en-tête
 //  (« ← La Caverne » et le jeu ouvert, bourses, temps restant, son), et la scène de chaque jeu avec sa barre
 //  de mise. Ce n'est que le décor : lib/caverne/caverne.js s'y branche (par les id) et anime tout ; passer
 //  une porte du hall « clique » l'onglet du jeu, que le script écoute. Styles : styles/caverne.css.
@@ -16,22 +16,24 @@ const JEUX = [
   { g: 3, image: 'lac', nom: 'Le Lac des Esprits', sous: 'Écoute la tension de la ligne', texte: 'Une prise invisible mord à ta ligne. Seule sa tension trahit ce qu\'elle est.' },
 ];
 
-// Les six portes de la salle, de gauche à droite : l'ouverture de chacune en pixels de l'image (1912 × 823),
-// et ce qu'elle ouvre (un jeu, le portail, ou rien), avec la teinte de sa lumière (r, v, b) et l'inclinaison du mur
+// Les cinq portes de la salle, de gauche à droite : l'ouverture de chacune en pixels de l'image (1910 × 823),
+// et ce qu'elle ouvre (un jeu, ou le portail), avec la teinte de sa lumière (r, v, b) et l'inclinaison du mur
 // où elle est percée (le mur est courbe : la plaque scellée au-dessus suit le mur)
 const PORTES = [
-  { cle: 'portail', nom: 'Le portail', sous: 'Revenir à l\'arche', teinte: '236,228,210', incline: 34, pts: [[47, 443], [47, 215], [62, 178], [92, 140], [122, 175], [137, 215], [137, 443]] },
-  { g: 0, teinte: '214,96,48', incline: 22, pts: [[326, 452], [326, 272], [340, 240], [369, 212], [398, 240], [412, 272], [412, 452]] },
-  { g: 1, teinte: '214,176,104', incline: 10, pts: [[598, 458], [598, 305], [612, 272], [640, 245], [668, 272], [682, 305], [682, 458]] },
-  { g: 2, teinte: '200,58,70', incline: -10, pts: [[1232, 458], [1232, 305], [1246, 272], [1277, 243], [1306, 272], [1322, 305], [1322, 458]] },
-  { g: 3, teinte: '79,190,180', incline: -22, pts: [[1497, 455], [1497, 275], [1512, 240], [1539, 210], [1566, 240], [1582, 275], [1582, 455]] },
-  { cle: 'scellee', nom: 'Porte scellée', sous: 'Elle ne s\'ouvre pas encore', teinte: '140,146,160', incline: -34, pts: [[1762, 442], [1762, 215], [1777, 178], [1802, 145], [1830, 178], [1857, 215], [1857, 442]] },
+  { cle: 'portail', nom: 'Le portail', sous: 'Revenir à l\'arche', teinte: '236,228,210', incline: 30, pts: [[117, 415], [118, 200], [130, 160], [165, 120], [211, 94], [235, 135], [250, 180], [254, 215], [254, 415]] },
+  { g: 0, teinte: '214,96,48', incline: 16, pts: [[487, 420], [487, 255], [500, 225], [530, 190], [562, 170], [595, 200], [615, 235], [622, 265], [622, 420]] },
+  { g: 1, teinte: '214,176,104', incline: 0, pts: [[884, 425], [884, 277], [898, 240], [920, 215], [950, 194], [980, 215], [1002, 240], [1016, 277], [1016, 425]] },
+  { g: 2, teinte: '200,58,70', incline: -16, pts: [[1267, 420], [1267, 265], [1280, 230], [1305, 192], [1335, 167], [1368, 195], [1390, 225], [1403, 250], [1403, 420]] },
+  { g: 3, bord: true, teinte: '79,190,180', incline: -30, pts: [[1640, 415], [1638, 210], [1650, 160], [1670, 120], [1696, 93], [1740, 120], [1770, 160], [1790, 215], [1792, 415]] },
 ].map((p) => {
   const xs = p.pts.map(([x]) => x), ys = p.pts.map(([, y]) => y);
   const x = Math.min(...xs), y = Math.min(...ys), l = Math.max(...xs) - x, h = Math.max(...ys) - y;
+  // la pointe de l'arche (le point le plus haut) : le nom gravé se centre dessus (le mur est vu de biais)
+  const pointe = p.pts.reduce((m, q) => (q[1] < m[1] ? q : m));
   return {
-    ...p, ...(p.g !== undefined ? { nom: JEUX[p.g].nom, sous: JEUX[p.g].sous } : {}),
-    place: { left: `${(x / 1912) * 100}%`, top: `${(y / 823) * 100}%`, width: `${(l / 1912) * 100}%`, height: `${(h / 823) * 100}%` },
+    ...p, ...(p.g !== undefined ? { nom: JEUX[p.g].nom, sous: JEUX[p.g].sous, image: JEUX[p.g].image } : {}),
+    pointe: `${(((pointe[0] - x) / l) * 100).toFixed(1)}%`,
+    place: { left: `${(x / 1910) * 100}%`, top: `${(y / 823) * 100}%`, width: `${(l / 1910) * 100}%`, height: `${(h / 823) * 100}%` },
     forme: `polygon(${p.pts.map(([px, py]) => `${(((px - x) / l) * 100).toFixed(1)}% ${(((py - y) / h) * 100).toFixed(1)}%`).join(', ')})`,
   };
 });
@@ -68,7 +70,7 @@ export default function SalleDesJeux({ temps, surPortail }) {
 
   return (
     <>
-      {/* Le hall : la salle aux six portes (toujours là, cachée pendant un jeu) */}
+      {/* Le hall : la salle aux cinq portes (toujours là, cachée pendant un jeu) */}
       <section className="cav-hall" hidden={jeu !== null} aria-labelledby="cav-hall-titre" ref={salle}>
         <div className="cav-salle">
           <img className="cav-salle__fond" src={urlPublique('img/Fond/Caverne.webp')} alt="" draggable="false" />
@@ -78,12 +80,13 @@ export default function SalleDesJeux({ temps, surPortail }) {
             <p>Quatre portes, quatre jeux. Une seule règle : savoir s&apos;arrêter à temps.</p>
           </header>
           {PORTES.map((p) => (
-            <div key={p.cle ?? p.g} className={`cav-porte${p.cle === 'scellee' ? ' est-scellee' : ''}`} style={{ ...p.place, '--teinte': p.teinte, '--incline': `${p.incline}deg` }}>
-              <button type="button" className="cav-porte__ouverture" style={{ clipPath: p.forme }} disabled={p.cle === 'scellee'}
+            <div key={p.cle ?? p.g} className={`cav-porte${p.bord ? ' cav-porte--bord' : ''}`} style={{ ...p.place, '--pointe': p.pointe, '--teinte': p.teinte, '--incline': `${p.incline}deg` }}>
+              <button type="button" className="cav-porte__ouverture" style={{ clipPath: p.forme }}
                 onClick={() => passer(p)} aria-label={`${p.nom} : ${p.sous}`}>
                 <span className="cav-porte__lueur" />
               </button>
-              <span className="cav-porte__plaque" aria-hidden="true"><span className="cav-porte__face"><b>{p.nom}</b><small>{p.sous}</small></span></span>
+              {/* le nom du jeu, gravé dans la pierre au-dessus de l'arche */}
+              <span className="cav-gravure" aria-hidden="true"><b>{p.nom}</b><small>{p.sous}</small></span>
               <span className="cav-porte__sol" aria-hidden="true" />
             </div>
           ))}
