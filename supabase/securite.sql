@@ -140,7 +140,8 @@ create trigger creer_profil_joueur
   after insert on auth.users
   for each row execute function public.creer_profil_joueur();
 
--- L'avatar suit Discord, mais seulement une image de Discord (le joueur peut réécrire ses métadonnées)
+-- L'avatar suit Discord, mais seulement une image de Discord (le joueur peut réécrire ses métadonnées) ; avatars.sql
+-- redéfinit la même fonction
 create or replace function public.maj_avatar_joueur()
 returns trigger
 language plpgsql
@@ -154,8 +155,11 @@ begin
      or v_avatar is null or v_avatar !~ '^https://cdn\.discordapp\.com/' then
     return new;
   end if;
-  update players set avatar_url = v_avatar
-  where user_id = new.id and fournisseur is distinct from 'email' and avatar_url is distinct from v_avatar;
+  -- (sauf si le joueur a choisi son propre portrait : avatar_perso, avatars.sql ; lu sans en dépendre, la colonne
+  -- n'existe qu'après avatars.sql)
+  update players p set avatar_url = v_avatar
+  where p.user_id = new.id and p.fournisseur is distinct from 'email' and p.avatar_url is distinct from v_avatar
+    and coalesce((to_jsonb(p) ->> 'avatar_perso')::boolean, false) = false;
   return new;
 end;
 $$;

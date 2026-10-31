@@ -7,7 +7,7 @@
 | `erreurs.sql` | les DEUX projets (dev et vrai jeu) | Le journal des erreurs du jeu (table `erreurs_jeu`, déjà dans `schema.sql`, partie 15) |
 | `exporter-depuis-ancien.sql` | ANCIEN projet (lecture seule) | Partie A : comparer les tables du site ; partie B : copier les vraies données de référence |
 | `securite.sql` | les DEUX projets, après `schema.sql` | La sécurité (audit d'octobre 2026) : profils, duels arbitrés, salons, limites de débit, journal… |
-| `avatars.sql` | les DEUX projets, après `securite.sql` | Le portrait des comptes e-mail : le stockage « avatars » (image choisie par le joueur) et changer_avatar |
+| `avatars.sql` | les DEUX projets, après `securite.sql` | Le portrait choisi par le joueur (comptes e-mail ET Discord) : le stockage « avatars », changer_avatar ; un portrait choisi n’est plus remplacé par celui de Discord (à relancer depuis le 31/10/2026) |
 | `succes.sql` | les DEUX projets, après `caverne.sql` et `amis.sql` | Les succès façon jeu vidéo : secrets masqués par le serveur, récompenses en cristaux, catégories Caverne / Multijoueur / Secrets |
 | `caverne.sql` | les DEUX projets, après `securite.sql` | La Caverne aux Trésors (#/caverne) : les mises en or ou en cristaux, le hasard et les gains, tenus par le serveur |
 | `verifier-securite.sql` | les DEUX projets (lecture seule) | Vérifie les droits, les triggers, et si la faille de prise de contrôle a déjà servi |

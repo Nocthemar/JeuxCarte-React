@@ -1,5 +1,5 @@
 // =====================================================================
-//  Le portrait des comptes e-mail (supabase/avatars.sql) : une image choisie sur l'appareil du joueur.
+//  Le portrait choisi par le joueur, e-mail ou Discord (supabase/avatars.sql) : une image choisie sur l'appareil du joueur.
 //  Elle est recadrée en carré au centre et réduite à 256 px dans le navigateur (le fichier d'origine,
 //  ses dimensions et ses informations cachées, comme le lieu de la photo, ne partent jamais),
 //  déposée dans le stockage « avatars » (dossier du joueur), puis mise sur son profil par changer_avatar.
@@ -53,7 +53,7 @@ export async function changerPortrait(discordId, fichier) {
   return url;
 }
 
-// Retirer son portrait
+// Retirer son portrait (un compte Discord reprend celui de Discord)
 export async function retirerPortrait(discordId) {
   const { error } = await supabase.rpc('changer_avatar', { p_url: null });
   if (error) throw new Error(error.message || 'Impossible de retirer ton portrait.');
