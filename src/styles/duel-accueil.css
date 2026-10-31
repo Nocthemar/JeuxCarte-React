@@ -605,10 +605,12 @@
   justify-content: flex-end;
   padding: 0 28px 96px;
   transform-origin: 50% 0;
-  transition: flex-grow .6s cubic-bezier(.2,.8,.3,1), filter .45s ease;
+  /* (sans ombre portée : recalculée à chaque image pendant que la bannière s'élargit, elle faisait ramer) */
+  filter: none;
+  transition: flex-grow .6s cubic-bezier(.2,.8,.3,1);
 }
 /* l'illustration : pleine hauteur, la nuit en bas pour le titre, un léger voile en haut pour l'emblème */
-.hall-bannieres .hall-mode__image { transition: transform 1.2s cubic-bezier(.2,.8,.3,1), filter .45s ease; }
+.hall-bannieres .hall-mode__image { transition: transform 1.2s cubic-bezier(.2,.8,.3,1), opacity .45s ease; will-change: transform; }
 .hall-bannieres .hall-mode__image::after {
   background:
     linear-gradient(180deg, rgba(10,16,29,.7), transparent 20%),
@@ -634,11 +636,11 @@
 .hall-bannieres .hall-mode__texte { margin-top: 8px; }
 
 /* au survol : la bannière s'élargit et se balance, les autres s'effacent */
-.hall-bannieres .hall-mode:hover, .hall-bannieres .hall-mode:focus-visible { flex-grow: 1.55; transform: none; animation: hall-balance 3.2s ease-in-out infinite; }
-.hall-bannieres .hall-mode:hover .hall-mode__image, .hall-bannieres .hall-mode:focus-visible .hall-mode__image { transform: scale(1.06); filter: saturate(1) brightness(.95); }
+.hall-bannieres .hall-mode:hover, .hall-bannieres .hall-mode:focus-visible { flex-grow: 1.55; transform: none; animation: hall-balance 1.8s ease-in-out; }
+.hall-bannieres .hall-mode:hover .hall-mode__image, .hall-bannieres .hall-mode:focus-visible .hall-mode__image { transform: scale(1.06); }
 .hall-bannieres .hall-mode:hover .hall-mode__titre::after, .hall-bannieres .hall-mode:focus-visible .hall-mode__titre::after { width: 150px; }
-.hall-bannieres:has(.hall-mode:hover) .hall-mode:not(:hover) { filter: brightness(.55) saturate(.6) drop-shadow(0 16px 26px rgba(0,0,0,.65)); }
-@keyframes hall-balance { 0%, 100% { rotate: -.45deg; } 50% { rotate: .45deg; } }
+.hall-bannieres:has(.hall-mode:hover) .hall-mode:not(:hover) .hall-mode__image { opacity: .4; }   /* (l'opacité : sans filtre, légère) */
+@keyframes hall-balance { 0%, 100% { rotate: 0deg; } 30% { rotate: -.5deg; } 70% { rotate: .35deg; } }
 /* la phrase n'apparaît qu'au survol (sur un écran tactile, elle reste là) */
 @media (hover: hover) {
   .hall-bannieres .hall-mode__texte { max-height: 0; margin-top: 0; opacity: 0; overflow: hidden; transition: max-height .5s ease, margin .5s ease, opacity .4s ease; }

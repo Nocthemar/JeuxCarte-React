@@ -716,14 +716,18 @@
      à droite de la barre ;
    - les fonds posés sur body::before (Profil) commencent eux aussi au bord de la barre. */
 @media (min-width: 701px) {
-  body.has-rail::after {
-    left: var(--hud, 0px);
-    z-index: -2; opacity: 1; mix-blend-mode: normal;
-    background: inherit;
-    background-attachment: scroll;
-  }
+  body.has-rail::after { left: var(--hud, 0px); }
   body.has-rail::before { left: var(--hud, 0px); }
 }
+/* Fluidité : le fond de chaque écran (souvent « fixed ») est recopié dans ce calque fixe, que le navigateur compose
+   une fois pour toutes ; le body, lui, ne garde plus de fond « fixed » (qui redessine toute la page, et le flou de
+   la barre en verre fumé, à chaque défilement). Sur ordinateur comme sur téléphone. */
+body.has-rail::after {
+  z-index: -2; opacity: 1; mix-blend-mode: normal;
+  background: inherit;
+  background-attachment: scroll;
+}
+body.has-rail { background-attachment: scroll !important; }
 
 /* La pastille d'une entrée (Amis : demandes et défis qui t'attendent) : rouge sang, à droite du nom ;
    quand la barre ne montre que les icônes, posée sur le coin de l'icône */
