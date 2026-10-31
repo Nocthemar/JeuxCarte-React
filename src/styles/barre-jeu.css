@@ -781,3 +781,96 @@
   .barre .barre-entree { letter-spacing: .05em; gap: 12px; }
   .barre .barre-entree__nom { white-space: nowrap; }
 }
+
+/* =====================================================================
+   Le HUD en verre fumé (ordinateur) : un panneau flottant transparent et flouté, posé sur le fond de l'écran
+   (qui passe désormais derrière lui) ; coins adoucis, plus de traits entre les rangées, l'écran en cours
+   éclairé d'un halo d'or doux avec un trait d'or à gauche. Toujours Cinzel, ivoire et or vieilli.
+   ===================================================================== */
+@media (min-width: 701px) {
+  .barre.barre {
+    top: 12px; bottom: 12px; left: 12px; width: 236px;
+    border-radius: 18px;
+    background:
+      radial-gradient(ellipse 120% 24% at 50% 0%, rgba(213,191,146,.10), transparent 70%),
+      linear-gradient(180deg, rgba(14,18,28,.62), rgba(10,13,20,.42) 55%, rgba(10,13,20,.58));
+    -webkit-backdrop-filter: blur(16px) saturate(1.15);
+    backdrop-filter: blur(16px) saturate(1.15);
+    border: 1px solid rgba(213,191,146,.16);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.05), 0 18px 44px rgba(0,0,0,.45);
+  }
+  .barre.barre::before, .barre.barre::after { display: none; }
+  body.has-rail, body.has-rail.has-rail { padding-left: 276px; }
+  /* le fond de l'écran passe derrière la barre (elle est transparente) */
+  body.has-rail::after, body.has-rail::before { left: 0; }
+
+  /* le portrait : un seul anneau d'or fin, un halo doux */
+  .barre .barre__portrait {
+    box-shadow: 0 0 0 2px rgba(10,13,20,.8), 0 0 0 3.5px rgba(213,191,146,.85), 0 0 22px rgba(213,191,146,.2), 0 10px 24px rgba(0,0,0,.5);
+  }
+  .barre__ornement-ligne { width: 120px; opacity: .7; }
+
+  /* les écrans : des rangées arrondies, sans traits, un peu d'air entre elles */
+  .barre .barre__entrees { padding: 0 12px; gap: 2px; }
+  .barre .barre-entree {
+    flex: 0 1 46px; padding-left: 10px;
+    border: 0; border-radius: 12px;
+    color: rgba(236,227,207,.82);
+    transition: background .25s ease, color .25s ease;
+  }
+  .barre .barre-entree:not(.est-actif)::before { display: none; }
+  .barre .barre-ico {
+    border: 0; border-radius: 10px;
+    background: rgba(255,255,255,.045);
+    color: rgba(233,220,189,.85);
+    transition: background .25s ease, color .25s ease, box-shadow .25s ease;
+  }
+  .barre .barre-entree:not(.est-actif):hover, .barre .barre-entree:not(.est-actif):focus-visible {
+    background: rgba(255,255,255,.055); color: #fff;
+  }
+  .barre .barre-entree:not(.est-actif):hover .barre-ico, .barre .barre-entree:not(.est-actif):focus-visible .barre-ico {
+    border-color: transparent; background: rgba(213,191,146,.14); color: #f3e6c7; box-shadow: none;
+  }
+
+  /* l'écran en cours : un halo d'or doux, un trait d'or lumineux à gauche (plus de plaque à pointes) */
+  .barre .barre-entree.est-actif {
+    margin: 0; padding-left: 10px;
+    font-size: inherit; color: #fff6e4;
+    clip-path: none; filter: none;
+    background: linear-gradient(90deg, rgba(213,191,146,.22), rgba(213,191,146,.06) 70%, transparent);
+    box-shadow: inset 0 0 0 1px rgba(213,191,146,.18);
+  }
+  .barre .barre-entree.est-actif::before {
+    display: block; content: ""; position: absolute; inset: auto; left: -12px; top: 22%; bottom: 22%; width: 3px;
+    border-radius: 0 3px 3px 0; clip-path: none;
+    background: linear-gradient(180deg, #f1e1b8, #c8a86a);
+    box-shadow: 0 0 10px rgba(213,191,146,.7);
+  }
+  .barre .barre-entree.est-actif::after { display: none; }
+  .barre .barre-entree.est-actif .barre-ico {
+    background: linear-gradient(160deg, #e9d7ae, #b39a6c); color: #141820; filter: none;
+    box-shadow: 0 0 12px rgba(213,191,146,.35);
+  }
+
+  /* la bourse : une petite carte de verre */
+  .barre .barre__bourse {
+    margin: 12px 12px 0; padding: 8px 10px;
+    border: 0; border-radius: 14px;
+    background: rgba(255,255,255,.045);
+    box-shadow: inset 0 0 0 1px rgba(213,191,146,.12);
+  }
+  .barre .barre__pied-signature { opacity: .75; }
+}
+/* téléphone : la barre du bas et le menu « Plus » en verre fumé, eux aussi */
+@media (max-width: 700px) {
+  .barre, .barre-menu {
+    border-radius: 18px;
+    background: linear-gradient(180deg, rgba(14,18,28,.68), rgba(10,13,20,.55));
+    -webkit-backdrop-filter: blur(16px) saturate(1.15);
+    backdrop-filter: blur(16px) saturate(1.15);
+    box-shadow: inset 0 0 0 1px rgba(213,191,146,.18), 0 12px 32px rgba(0,0,0,.5);
+  }
+  .barre-menu__item { border-radius: 12px; background: rgba(255,255,255,.045); }
+  .barre-menu__item.est-actif { background: linear-gradient(160deg, rgba(213,191,146,.28), rgba(213,191,146,.08)); color: #fff6e4; }
+  .barre-entree.est-actif { clip-path: none; border-radius: 12px; background: rgba(213,191,146,.2); }
+}
