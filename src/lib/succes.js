@@ -31,49 +31,37 @@ function htmlBadge(s, taille = '') {
   </span>`;
 }
 
-// L'animation « Succès débloqué » : plein écran, différente selon la rareté.
-// Se ferme seule (plus longue pour les plus rares) ou au clic / Échap. Renvoie une promesse.
-export function celebrerSucces(s, { recompense = s?.recompense ?? 0 } = {}) {
+// La notification « Succès débloqué » : une plaque courte en haut à droite. Elle ne bloque rien (on continue à
+// jouer dessous), prend la couleur de la rareté, et s'efface seule (un peu plus tard pour les plus rares) ou au
+// clic. Plusieurs à la suite s'empilent. prete : le succès est atteint mais pas encore réclamé (la plaque mène
+// alors à l'écran Succès). Renvoie une promesse résolue tout de suite (rien n'attend la plaque).
+export function celebrerSucces(s, { recompense = s?.recompense ?? 0, cristaux = s?.cristaux ?? 0, prete = false } = {}) {
   const r = rareteSucces(s);
-  const { nom, duree, etincelles } = RARETES_SUCCES[r];
-  const reduit = animationsReduites();
-
-  const fond = document.createElement('div');
-  fond.className = `succes-obtenu succes-obtenu--${r}${reduit ? ' succes-obtenu--sobre' : ''}`;
-  fond.setAttribute('role', 'dialog');
-  fond.setAttribute('aria-modal', 'true');
-  fond.setAttribute('aria-label', `Succès débloqué : ${s?.nom ?? ''}`);
-  const eclats = reduit ? '' : Array.from({ length: etincelles }, (_, i) => {
-    const a = (360 / etincelles) * i + Math.random() * 14;
-    const d = 140 + Math.random() * 160;
-    return `<i style="--a:${a.toFixed(0)}deg;--d:${d.toFixed(0)}px;--t:${(Math.random() * .35).toFixed(2)}s"></i>`;
-  }).join('');
-  fond.innerHTML = `
-    <div class="succes-obtenu__rayons" aria-hidden="true"></div>
-    <div class="succes-obtenu__onde" aria-hidden="true"></div>
-    <div class="succes-obtenu__onde succes-obtenu__onde--2" aria-hidden="true"></div>
-    <div class="succes-obtenu__eclats" aria-hidden="true">${eclats}</div>
-    <div class="succes-obtenu__contenu">
-      <span class="succes-obtenu__sur">Succès débloqué · ${nom}</span>
-      <div class="succes-obtenu__badge">${htmlBadge(s, 'geant')}</div>
-      <h2 class="succes-obtenu__nom">${esc(s?.nom ?? '')}</h2>
-      <p class="succes-obtenu__desc">${esc(s?.description ?? '')}</p>
-      ${recompense ? `<p class="succes-obtenu__or"><img src="${esc(urlPublique('img/Equipement/Or-icone.webp'))}" alt=""> +${Number(recompense).toLocaleString('fr-FR')} or</p>` : ''}
-      ${s?.pourcentage != null ? `<p class="succes-obtenu__pct">Obtenu par ${pourcentageTexte(s.pourcentage)} des joueurs</p>` : ''}
+  const { nom, duree } = RARETES_SUCCES[r];
+  let pile = document.getElementById('succes-notifs');
+  if (!pile) {
+    pile = document.createElement('div');
+    pile.id = 'succes-notifs';
+    pile.setAttribute('aria-live', 'polite');
+    document.body.append(pile);
+  }
+  const piece = esc(urlPublique('img/Equipement/Or-icone.webp'));
+  const cristal = esc(urlPublique('img/OR/cristal.webp'));
+  const gains = (recompense ? `<span><img src="${piece}" alt=""> +${Number(recompense).toLocaleString('fr-FR')}</span>` : '')
+    + (cristaux ? `<span><img src="${cristal}" alt=""> +${Number(cristaux).toLocaleString('fr-FR')}</span>` : '');
+  const plaque = document.createElement(prete ? 'a' : 'div');
+  plaque.className = `succes-notif succes-notif--${r}${animationsReduites() ? ' succes-notif--sobre' : ''}`;
+  if (prete) plaque.href = '#/succes';
+  plaque.innerHTML = `
+    <div class="succes-notif__badge">${htmlBadge(s)}</div>
+    <div class="succes-notif__texte">
+      <span class="succes-notif__sur">Succès débloqué · ${nom}</span>
+      <b class="succes-notif__nom">${esc(s?.nom ?? '')}</b>
+      ${gains || prete ? `<span class="succes-notif__gains">${gains}${prete ? '<small>à réclamer</small>' : ''}</span>` : ''}
     </div>`;
-
-  return new Promise((fini) => {
-    let minuterie;
-    const fermer = () => {
-      clearTimeout(minuterie);
-      document.removeEventListener('keydown', clavier);
-      fond.classList.add('est-fermee');
-      setTimeout(() => { fond.remove(); fini(); }, reduit ? 0 : 320);
-    };
-    const clavier = (e) => { if (e.key === 'Escape' || e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fermer(); } };
-    fond.addEventListener('click', fermer, { once: true });
-    document.addEventListener('keydown', clavier);
-    document.body.append(fond);
-    minuterie = setTimeout(fermer, reduit ? 1800 : duree);
-  });
+  const fermer = () => { plaque.classList.add('est-fermee'); setTimeout(() => plaque.remove(), 300); };
+  plaque.addEventListener('click', fermer);
+  pile.append(plaque);
+  setTimeout(fermer, Math.max(4200, duree + 1400));
+  return Promise.resolve();
 }

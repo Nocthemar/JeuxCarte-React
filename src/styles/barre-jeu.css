@@ -775,3 +775,9 @@
   .barre .barre-entree .barre-ico svg { width: 14px; height: 14px; }
   .barre__bourse-texte small { display: none; }
 }
+
+/* Les noms des écrans : un peu moins espacés, pour que les plus longs (« Toutes les cartes ») ne touchent pas le bord */
+@media (min-width: 1101px) {
+  .barre .barre-entree { letter-spacing: .05em; gap: 12px; }
+  .barre .barre-entree__nom { white-space: nowrap; }
+}

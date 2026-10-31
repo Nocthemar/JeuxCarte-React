@@ -17,6 +17,7 @@ import { useNotifier } from '../lib/notification.js';
 import { amis, vuIlYa } from '../lib/amis.js';
 import { nouveauCode } from '../lib/salon.js';
 import { retenirHote } from '../lib/ligne.js';
+import Chargement from '../components/Chargement.jsx';
 
 const RELIRE = 20000;   // ms
 
@@ -98,7 +99,7 @@ export default function PageAmis() {
           {e && <p>{enLigne} en ligne sur {e.amis.length}</p>}
         </header>
 
-        {!etat ? <p className="amis-vide">Chargement…</p>
+        {!etat ? <Chargement texte="Tes compagnons arrivent…" />
           : etat.erreur ? <p className="amis-vide">Les amis ne sont pas encore prêts (supabase/amis.sql est-il lancé ?).</p> : (
             <>
               {/* Les défis reçus : en premier, ils n'attendent pas */}

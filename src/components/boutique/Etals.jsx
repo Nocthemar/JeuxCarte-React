@@ -13,6 +13,7 @@ import { Article, BoutonAchat, Pastilles, Piece } from './Article.jsx';
 import { supabase } from '../../lib/supabase.js';
 import { useNotifier } from '../../lib/notification.js';
 import { urlPublique } from '../../lib/chemins.js';
+import Chargement from '../Chargement.jsx';
 
 // Recharge des données quand la clé change ; null pendant le premier chargement
 function useCharger(charger, cles) {
@@ -48,7 +49,7 @@ export function ArmoireProfil({ moi, solde, possedes, version, rafraichir }) {
   const acheter = useAcheter(rafraichir);
   return (
     <div id="profil" className="etal">
-      {!d ? <p className="vide">Chargement…</p>
+      {!d ? <Chargement texte="Le marchand ouvre son étal…" />
         : d.erreur ? <p className="vide">Impossible de charger la boutique.</p>
           : !d.items.length ? <p className="vide">Rien à vendre pour l&apos;instant.</p>
             : d.items.map((item) => (
@@ -92,7 +93,7 @@ export function AtelierPlateaux({ moi, solde, version, rafraichir }) {
   };
   return (
     <div id="plateaux" className="etal etal--plateaux">
-      {!d ? <p className="vide">Chargement…</p>
+      {!d ? <Chargement texte="Le marchand ouvre son étal…" />
         : !d.liste.length ? <p className="vide">Aucun plateau en vente pour le moment.</p>
           : d.liste.map((p) => {
             const possede = d.possedes.has(p.id);

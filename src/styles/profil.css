@@ -31,7 +31,7 @@
   background: #2b4a63;
 }
 
-/* Ciel de Nocthémar (img/Fond/Profil_fond.png, déjà sombre : voile léger), fixe derrière les affiches,
+/* Ciel de Nocthémar (img/Fond/Profil_fond.webp, déjà sombre : voile léger), fixe derrière les affiches,
    avec un léger assombrissement des bords pour que les affiches ressortent.
    Calque fixe plutôt que background-attachment: fixed (qui redessine tout le fond à chaque
    défilement et saccade, surtout sur téléphone) ; il remplace le vignettage commun de body::before. */
@@ -41,7 +41,7 @@ body.page-fiche::before,
   background:
     linear-gradient(rgba(8,12,20,.25), rgba(8,12,20,.25)),   /* voile sombre sur tout le paysage (plus foncé : augmenter .25) */
     radial-gradient(ellipse 110% 90% at 50% 40%, transparent 55%, rgba(8,12,20,.45) 100%),
-    url("/img/Fond/Profil_fond.png") center / cover no-repeat,
+    url("/img/Fond/Profil_fond.webp") center / cover no-repeat,
     #0b1024;
 }
 

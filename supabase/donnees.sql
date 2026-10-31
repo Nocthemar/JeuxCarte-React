@@ -262,8 +262,8 @@ insert into public.succes (id, categorie, nom, description, icone, mesure, objec
   ('champion',          'Duels', 'Champion des arènes', 'Remporte 50 duels.',                                 '⚔',  'victoires',         50,  400,  12, 'epique'),
   ('legende-vivante',   'Duels', 'Légende vivante',     'Remporte 100 duels.',                                '⚔',  'victoires',        100,  800,  13, 'legendaire'),
   ('chasseur-ombre',    'Duels', 'Chasseur d''Ombre',   'Bats l''Ombre 10 fois.',                             '🌑', 'victoires_ia',      10,  150,  14, 'rare'),
-  ('premier-rival',     'Duels', 'Premier rival',       'Bats un autre joueur en ligne.',                     '🤝', 'victoires_joueurs',  1,  100,  15, 'commun'),
-  ('terreur-salons',    'Duels', 'Terreur des salons',  'Bats 10 joueurs en ligne.',                          '🤝', 'victoires_joueurs', 10,  300,  16, 'epique'),
+  ('premier-rival',     'Multijoueur', 'Premier rival',       'Bats un autre joueur en ligne.',                     '🤝', 'victoires_joueurs',  1,  100,  15, 'commun'),
+  ('terreur-salons',    'Multijoueur', 'Terreur des salons',  'Bats 10 joueurs en ligne.',                          '🤝', 'victoires_joueurs', 10,  300,  16, 'epique'),
   -- Classé
   ('classe-1',          'Classé', 'Entrée dans l''arène', 'Remporte une partie classée.',                     '🏆', 'classe_victoires',   1,  100,  20, 'commun'),
   ('classe-10',         'Classé', 'Gladiateur',           'Remporte 10 parties classées.',                    '🏆', 'classe_victoires',  10,  300,  21, 'epique'),

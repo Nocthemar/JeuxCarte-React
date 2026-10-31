@@ -13,6 +13,7 @@ import { supabase } from '../../lib/supabase.js';
 import { useNotifier } from '../../lib/notification.js';
 import { ouvrirBoosterAnime, COULEURS_RARETE } from '../../lib/booster.js';
 import { urlPublique } from '../../lib/chemins.js';
+import Chargement from '../Chargement.jsx';
 
 const NOMS_RARETE = { commune: 'Commune', eveillee: 'Éveillée', mythique: 'Mythique', legendaire: 'Légendaire', transcendante: 'Transcendante' };
 const DELAI_GRATUIT = 600;   // secondes, comme dans le SQL
@@ -82,7 +83,7 @@ export default function Boosters({ moi, solde, version, rafraichir }) {
     return () => clearInterval(t);
   }, []);
 
-  if (!d) return <div id="boosters" className="etal etal--boosters"><p className="vide">Chargement…</p></div>;
+  if (!d) return <div id="boosters" className="etal etal--boosters"><Chargement texte="Le marchand déballe ses boosters…" /></div>;
   const details = () => new Map([...d.cartes.values()].flat().map((c) => [c.name, c]));
 
   const acheter = async (b) => {

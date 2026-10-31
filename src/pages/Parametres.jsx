@@ -272,6 +272,7 @@ export default function Parametres() {
     <Page id="parametres" classes="page-profil page-parametres" titre="Paramètres">
       <main className="profil-wrap reglages">
         <header className="reglages-entete">
+          <span className="reglages-entete__sur">Duel des Couronnes</span>
           <h1>Paramètres</h1>
           <p>Réglés pour ce navigateur : ils s’appliquent à toutes les pages du jeu.</p>
         </header>

@@ -189,3 +189,71 @@
   .succ__btn { animation: none; }
   .succes-page__jauge span, .succ__jauge span { transition: none; }
 }
+
+/* =====================================================================
+   (30/10/2026) Pourcentage, derniers obtenus, onglets par catégorie, filtre et recherche, secrets, cristaux
+   ===================================================================== */
+.succes-page__pct {
+  margin-left: 10px; padding: 2px 10px; vertical-align: middle;
+  font-size: .8rem; letter-spacing: .06em; color: #1a1410; background: linear-gradient(180deg, var(--or-vif), #c08d33);
+  clip-path: polygon(6px 0, calc(100% - 6px) 0, 100% 50%, calc(100% - 6px) 100%, 6px 100%, 0 50%);
+}
+
+/* les derniers obtenus : une rangée de badges */
+.succes-recents { margin: 0 auto 22px; text-align: center; }
+.succes-recents__titre { display: block; margin-bottom: 10px; font-family: "Cinzel","Cinzel Repli", serif; font-size: .7rem; letter-spacing: .26em; text-transform: uppercase; color: var(--texte-doux); }
+.succes-recents__liste { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px 22px; }
+.succes-recents__un { display: inline-flex; align-items: center; gap: 8px; }
+.succes-recents__un b { font-family: "Cinzel","Cinzel Repli", serif; font-size: .8rem; color: var(--texte); }
+.succes-recents__un .badge-succes { width: 34px; height: 38px; }
+
+/* les onglets (catégories) et les filtres */
+.succes-outils { position: sticky; top: 0; z-index: 3; margin: 0 -8px 18px; padding: 10px 8px; background: linear-gradient(180deg, rgba(9,11,16,.95), rgba(9,11,16,.85)); backdrop-filter: blur(4px); }
+.succes-onglets { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+.succes-onglet {
+  padding: 7px 14px; border: 0; cursor: pointer;
+  font-family: "Cinzel","Cinzel Repli", serif; font-size: .74rem; font-weight: 700; letter-spacing: .08em;
+  color: var(--texte-doux); background: rgba(255,255,255,.04); box-shadow: inset 0 0 0 1px var(--trait);
+  clip-path: polygon(6px 0, calc(100% - 6px) 0, 100% 6px, 100% calc(100% - 6px), calc(100% - 6px) 100%, 6px 100%, 0 calc(100% - 6px), 0 6px);
+  transition: color .15s, background .15s;
+}
+.succes-onglet small { margin-left: 4px; font-size: .68rem; color: var(--or); font-variant-numeric: tabular-nums; }
+.succes-onglet:hover { color: var(--texte); background: rgba(216,185,120,.1); }
+.succes-onglet.est-actif { color: #1a1410; background: linear-gradient(180deg, var(--or-vif), #c08d33); box-shadow: none; }
+.succes-onglet.est-actif small { color: #3b2a12; }
+.succes-filtres { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 10px; margin-top: 10px; }
+.succes-filtres__choix { display: inline-flex; box-shadow: inset 0 0 0 1px var(--trait); }
+.succes-filtres__choix button {
+  padding: 6px 12px; border: 0; background: none; cursor: pointer;
+  font-family: "Cinzel","Cinzel Repli", serif; font-size: .7rem; letter-spacing: .06em; color: var(--texte-doux);
+}
+.succes-filtres__choix button + button { box-shadow: inset 1px 0 0 var(--trait); }
+.succes-filtres__choix button.est-actif { color: var(--texte); background: rgba(216,185,120,.18); }
+.succes-filtres__recherche {
+  width: min(260px, 100%); padding: 7px 12px; border: 0; color: var(--texte);
+  background: rgba(0,0,0,.35); box-shadow: inset 0 0 0 1px var(--trait); font: inherit; font-size: .9rem;
+}
+.succes-filtres__recherche:focus { outline: none; box-shadow: inset 0 0 0 1px var(--or); }
+
+/* un succès secret encore caché : un médaillon voilé, un texte d'indice */
+.succ.est-secret { background: linear-gradient(90deg, rgba(120,90,180,.08), transparent 60%); }
+.succ.est-secret .succ__nom { font-style: italic; letter-spacing: .08em; color: rgba(200,190,230,.8); }
+.succ.est-secret .succ__desc { font-style: italic; color: rgba(200,190,230,.7); }
+.succ__compte--secret { color: #b8a6e0; letter-spacing: .14em; text-transform: uppercase; }
+/* la récompense en cristaux */
+.succ__cristaux { color: #b9caff; }
+
+@media (max-width: 700px) {
+  .succes-outils { position: static; }
+  .succes-onglets { flex-wrap: nowrap; justify-content: flex-start; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+  .succes-onglet { flex: none; min-height: 40px; }
+  .succes-filtres__choix button { min-height: 40px; }
+}
+/* (pas le <section> générique du site : index.css lui donne de grandes marges) */
+.succes-page section.succes-recents, .succes-page section.vitrine-succes { padding-left: 0; padding-right: 0; border-bottom: 0; max-width: none; }
+.succes-page section.succes-recents { padding: 0; margin-top: 0; }
+.succes-page section.vitrine-succes { margin-bottom: 22px; }
+.succes-page__tout { width: auto; white-space: nowrap; }
+.succes-page section.succes-cat { padding: 0; max-width: none; border-bottom: 0; margin-top: 26px; }
+.succes-page section.vitrine-succes { padding: 18px 20px 14px; border-bottom: 1px solid var(--trait); }
+@media (max-width: 560px) { .succes-page__tout { white-space: normal; max-width: 100%; } }

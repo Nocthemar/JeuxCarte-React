@@ -5,7 +5,7 @@
 
 // Les deux monnaies du jeu : mise minimale et maximale, mises rapides, image
 export const MONNAIES = {
-  or: { min: 10, max: 1000, rapides: [10, 25, 50, 100, 250], nom: 'pièces', image: 'img/Caverne/piece.png', mise: 25 },
+  or: { min: 10, max: 1000, rapides: [10, 25, 50, 100, 250], nom: 'pièces', image: 'img/Caverne/piece.webp', mise: 25 },
   cristaux: { min: 5, max: 250, rapides: [5, 10, 25, 50, 100], nom: 'cristaux', image: 'img/OR/cristal.webp', mise: 10 },
 };
 

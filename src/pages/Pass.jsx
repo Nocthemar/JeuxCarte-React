@@ -6,6 +6,8 @@
 //    premium qui s'illumine case par case.
 //  Tout est vérifié côté serveur : palier atteint, déjà réclamé, solde.
 //  L'XP se gagne dans le jeu (fin de duel, mode Histoire). Les boosters gagnés s'ouvrent dans la Boutique.
+//  (31/10/2026) La progression de la saison en %, la prochaine récompense, « Tout récupérer », un éclat sur chaque
+//  récompense récupérée, et « Palier N atteint ! » au retour sur l'écran après avoir gagné un palier.
 // =====================================================================
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import Page from '../components/Page.jsx';
@@ -147,6 +149,16 @@ function Fete({ saison, dispo, surFermeture }) {
   );
 }
 
+// Le nom court d'une récompense (« 150 or », « Booster des Cendres », « Carte légendaire »…)
+function nomCourt(p, catalogue) {
+  const v = p.valeur ?? {};
+  if (p.type_recompense === 'or') return `${nombre(v.montant)} or`;
+  if (p.type_recompense === 'booster') return `${catalogue?.boosters.get(v.booster ?? 'cendres')?.nom ?? 'Booster'}${(v.quantite ?? 1) > 1 ? ` ×${v.quantite}` : ''}`;
+  if (p.type_recompense === 'carte_rarete') return `Carte ${(RARETES[v.rarete] ?? 'rare').toLowerCase()}`;
+  if (p.type_recompense === 'badge_caverne') return `Badge de la Caverne : ${badgeDuPass(v.nom)?.nom ?? v.nom}`;
+  return v.nom ?? TYPES[p.type_recompense];
+}
+
 const PrixPremium = ({ prix }) => <span className="btn-premium__prix"><img src={urlPublique(PIECE)} alt="" /> {nombre(prix)}</span>;
 
 export default function Pass() {
@@ -210,8 +222,21 @@ export default function Pass() {
     return 'disponible';
   };
 
-  const reclamer = async (numero, nomPiste) => {
+  // L'éclat d'une récompense récupérée : elle monte, s'illumine et retombe
+  const eclat = (numero, nomPiste) => {
+    const el = piste.current?.querySelector(`[data-palier="${numero}"] .recompense--${nomPiste}`);
+    if (!el || animationsReduites()) return;
+    el.animate([
+      { transform: 'none', filter: 'none' },
+      { transform: 'translateY(-8px) scale(1.06)', filter: 'brightness(1.8) saturate(1.3)', offset: 0.35 },
+      { transform: 'none', filter: 'none' },
+    ], { duration: 650, easing: 'cubic-bezier(.2,.9,.3,1.2)' });
+  };
+
+  const reclamer = async (numero, nomPiste, { silencieux = false } = {}) => {
     const { data, error } = await supabase.rpc('pass_reclamer', { p_numero: numero, p_piste: nomPiste });
+    if (!error) { eclat(numero, nomPiste); jouerSon('cloche'); }
+    if (silencieux) return !error;
     if (error) notifier(error.message || 'Impossible de réclamer cette récompense.', 'erreur');
     else if (data.type === 'or') notifier(`+${nombre(data.or)} or ajoutés à ta bourse.`);
     else if (data.type === 'booster') notifier(`${data.quantite > 1 ? `${data.quantite} × ` : ''}« ${data.nom} » ajouté : ouvre-le dans la Boutique !`);
@@ -228,7 +253,37 @@ export default function Pass() {
       notifier(`Badge de la Caverne « ${badgeDuPass(data.nom)?.nom ?? data.nom} » obtenu : active-le quand tu veux, à la Boutique ou devant la Caverne.`);
     } else notifier(`${TYPES[data.type]} « ${data.nom} » obtenu.`);
     setVersion((v) => v + 1);
+    return !error;
   };
+
+  // Tout récupérer : chaque récompense disponible, l'une après l'autre (le serveur revérifie chacune)
+  const [toutEnCours, setToutEnCours] = useState(false);
+  const disponibles = !saison || !c ? [] : Array.from({ length: saison.nb_paliers }, (_, k) => k + 1)
+    .flatMap((i) => ['gratuite', 'premium'].filter((n) => d.paliers.has(`${i}-${n}`) && etatRecompense(i, n) === 'disponible').map((n) => [i, n]));
+  const toutRecuperer = async () => {
+    setToutEnCours(true);
+    let n = 0;
+    for (const [i, nomPiste] of disponibles) { if (await reclamer(i, nomPiste, { silencieux: true })) n += 1; await new Promise((r) => setTimeout(r, 120)); }
+    setToutEnCours(false);
+    setVersion((v) => v + 1);
+    notifier(n ? `${n} récompense${n > 1 ? 's' : ''} récupérée${n > 1 ? 's' : ''} : l'or est dans ta bourse, les boosters dans la Boutique, les cartes dans ta collection.` : 'Rien n\'a pu être récupéré : réessaie dans un instant.', n ? 'ok' : 'erreur');
+  };
+
+  // « Palier N atteint ! » : au retour sur l'écran, si le joueur a gagné des paliers depuis sa dernière visite
+  // (le dernier palier vu est gardé dans le navigateur ; la bannière s'efface seule, styles/pass.css)
+  const cleVu = saison && discordId ? `pass-palier-${saison.id}-${discordId}` : null;
+  const [palierVu] = useState(() => new Map());
+  if (cleVu && c && !palierVu.has(cleVu)) {
+    let avant = null;
+    try { avant = localStorage.getItem(cleVu); } catch { /* stockage indisponible */ }
+    palierVu.set(cleVu, avant === null ? palierActuel : Number(avant));
+  }
+  const nouveauPalier = cleVu && c && palierActuel > (palierVu.get(cleVu) ?? palierActuel) ? palierActuel : null;
+  useEffect(() => {
+    if (!cleVu || !c) return;
+    try { localStorage.setItem(cleVu, String(palierActuel)); } catch { /* stockage indisponible */ }
+  }, [cleVu, c, palierActuel]);
+  useEffect(() => { if (nouveauPalier !== null) jouerSon('fanfare'); }, [nouveauPalier]);
 
   // Débloquer la piste premium : le premier clic demande confirmation (pas de fenêtre du navigateur),
   // le second achète. Évite de dépenser l'or par un clic de travers.
@@ -267,6 +322,9 @@ export default function Pass() {
   const titre = saison ? `${saison.nom} — Pass de saison` : 'Pass de saison';
   const dansPalier = saison ? (palierActuel >= saison.nb_paliers ? saison.xp_par_palier : xp % saison.xp_par_palier) : 0;
   const manque = saison && c ? saison.prix_premium - c.solde : 0;
+  const pctSaison = saison ? Math.round((palierActuel / saison.nb_paliers) * 100) : 0;
+  const prochain = saison && palierActuel < saison.nb_paliers ? palierActuel + 1 : null;
+  const prochaine = prochain ? (d.paliers.get(`${prochain}-gratuite`) ?? (c?.prog.premium ? d.paliers.get(`${prochain}-premium`) : null)) : null;
 
   return (
     <Page id="pass" classes="page-profil page-pass" titre={titre}>
@@ -274,7 +332,7 @@ export default function Pass() {
         {/* En-tête : nom de la saison et compte à rebours */}
         <header className="pass-entete">
           <span className="pass-entete__sur">Pass de saison</span>
-          <h1 id="saison-nom">{!d ? 'Chargement…' : saison ? saison.nom : 'Pass de saison'}</h1>
+          <h1 id="saison-nom">{!d ? 'Pass de saison' : saison ? saison.nom : 'Pass de saison'}</h1>
           {saison ? <Rebours fin={saison.date_fin} /> : <p className="pass-rebours" id="rebours" aria-live="off" />}
         </header>
 
@@ -297,9 +355,9 @@ export default function Pass() {
             {/* Palier actuel, barre d'XP, piste premium */}
             <section className="pass-tableau">
               <div className="pass-niveau">
-                <div className="pass-niveau__blason" aria-hidden="true"><span id="palier-actuel">{palierActuel}</span></div>
+                <div className={`pass-niveau__blason${nouveauPalier !== null ? ' est-nouveau' : ''}`} aria-hidden="true"><span id="palier-actuel">{palierActuel}</span></div>
                 <div className="pass-niveau__infos">
-                  <span className="pass-niveau__libelle">Palier <strong id="palier-texte">{palierActuel}</strong> / <span id="palier-max">{saison.nb_paliers}</span></span>
+                  <span className="pass-niveau__libelle">Palier <strong id="palier-texte">{palierActuel}</strong> / <span id="palier-max">{saison.nb_paliers}</span> <span className="pass-niveau__saison">· {pctSaison} % de la saison</span></span>
                   <div className="pass-barre" role="progressbar" id="barre-xp" aria-valuemin="0" aria-valuemax={saison.xp_par_palier} aria-valuenow={dansPalier} aria-label="XP vers le palier suivant">
                     <span className="pass-barre__remplie" id="barre-remplie" style={{ width: `${(dansPalier / saison.xp_par_palier) * 100}%` }} />
                   </div>
@@ -308,6 +366,7 @@ export default function Pass() {
                       ? `Pass terminé : ${nombre(xp)} XP`
                       : `${nombre(dansPalier)} / ${nombre(saison.xp_par_palier)} XP vers le palier ${palierActuel + 1}`}
                   </span>
+                  {prochaine && <span className="pass-niveau__prochaine">Prochaine récompense : <b>{nomCourt(prochaine, d.catalogue)}</b></span>}
                 </div>
                 {/* Comment gagner de l'XP : une bulle qui s'ouvre par-dessus la page */}
                 <details className="pass-aide">
@@ -337,6 +396,17 @@ export default function Pass() {
                 </div>
               )}
             </section>
+
+            {nouveauPalier !== null && (
+              <p className="pass-palier-atteint" role="status">Palier {nouveauPalier} atteint !</p>
+            )}
+            {disponibles.length > 1 && (
+              <div className="pass-tout">
+                <button type="button" className="btn-tout-recuperer" disabled={toutEnCours} onClick={toutRecuperer}>
+                  {toutEnCours ? 'Récupération…' : `Tout récupérer (${disponibles.length})`}
+                </button>
+              </div>
+            )}
 
             {/* La piste : gratuite en haut, premium en bas (défile horizontalement) */}
             <section className="pass-piste" aria-label="Récompenses du pass">

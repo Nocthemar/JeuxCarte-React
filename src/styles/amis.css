@@ -22,7 +22,7 @@ body.page-amis {
   background:
     radial-gradient(ellipse 70% 50% at 50% 0%, rgba(155,39,48,.12), transparent 70%),
     linear-gradient(180deg, rgba(6,8,13,.6), rgba(6,8,13,.9) 50%, rgba(6,8,13,.97)),
-    url("/img/Fond/multijoueur_fond.png") center top / cover no-repeat fixed,
+    url("/img/Fond/multijoueur_fond.webp") center top / cover no-repeat fixed,
     #07080c;
   color: var(--ivoire);
 }

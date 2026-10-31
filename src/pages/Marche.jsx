@@ -63,6 +63,7 @@ export default function Marche() {
     <Page id="marche" classes="page-profil page-marche" titre="Marché">
       <main className="profil-wrap marche-page">
         <header className="marche-entete">
+          <span className="marche-entete__sur">Les étals de Nocthémar</span>
           <h1>Le Marché</h1>
           <p>Achète et vends des cartes, ou échange directement avec un joueur sous contrat scellé.</p>
           <p className="marche-entete__bourse" id="bourse" hidden={!c}>Ta bourse : <b id="solde">{nombre(c?.solde)}</b> or</p>

@@ -18,6 +18,7 @@ import { useAuth, connexionDiscord, deconnexion } from '../lib/auth.js';
 import { supabase } from '../lib/supabase.js';
 import OrAnime from './OrAnime.jsx';
 import { urlPublique } from '../lib/chemins.js';
+import { prechargerEcran } from '../lib/ecrans.js';
 import { useAmis } from '../lib/amis.js';
 
 // La bourse du joueur, sous les écrans (ordinateur) : l’or et les cristaux, à égalité. Relue à chaque changement d'écran (après un achat,
@@ -141,6 +142,7 @@ const DANS_LE_MENU = [...PAGES.filter((p) => typeof p.place !== 'number' && p.pl
 function Entree({ icone, libelle, chemin, actif, place, nb = 0 }) {
   return (
     <Link to={chemin} className={`barre-entree${actif ? ' est-actif' : ''}`} data-place={place ?? 'menu'}
+      onPointerEnter={() => prechargerEcran(chemin)} onFocus={() => prechargerEcran(chemin)} onTouchStart={() => prechargerEcran(chemin)}
       title={nb ? `${libelle} (${nb} en attente)` : libelle} aria-label={nb ? `${libelle}, ${nb} en attente` : libelle} aria-current={actif ? 'page' : undefined}>
       <Icone nom={icone} />
       <span className="barre-entree__nom">{libelle}</span>

@@ -1,0 +1,43 @@
+/* =====================================================================
+   La notification « Succès débloqué » (lib/succes.js, celebrerSucces) : une plaque de pierre en haut à droite,
+   liseré de la couleur de la rareté, le badge, le nom, ce qu'il rapporte. Courte, elle ne bloque rien.
+   Chargée par tous les écrans (styles/feuilles.js, DEBUT).
+   ===================================================================== */
+#succes-notifs {
+  position: fixed; top: 18px; right: 18px; z-index: 900;
+  display: flex; flex-direction: column; align-items: flex-end; gap: 10px; pointer-events: none;
+}
+.succes-notif {
+  --c: #c9cfd9; --c2: rgba(201,207,217,.25);
+  pointer-events: auto; cursor: pointer; text-decoration: none;
+  display: flex; align-items: center; gap: 12px; width: min(340px, calc(100vw - 36px)); padding: 10px 16px 10px 10px;
+  clip-path: polygon(10px 0, calc(100% - 10px) 0, 100% 10px, 100% calc(100% - 10px), calc(100% - 10px) 100%, 10px 100%, 0 calc(100% - 10px), 0 10px);
+  background:
+    linear-gradient(118deg, rgba(255,255,255,.05) 0 30%, transparent 30.3%),
+    linear-gradient(180deg, #1f232c, #13151b);
+  box-shadow: inset 0 0 0 1px var(--c), inset 0 0 26px var(--c2);
+  color: #ece4d2;
+  animation: succes-notif-entree .45s cubic-bezier(.2,.9,.3,1.15) both;
+}
+.succes-notif--rare       { --c: #6fb2ff; --c2: rgba(80,160,255,.22); }
+.succes-notif--epique     { --c: #b77cf0; --c2: rgba(170,90,240,.25); }
+.succes-notif--legendaire { --c: #f0c873; --c2: rgba(240,200,115,.28); }
+.succes-notif.est-fermee { animation: succes-notif-sortie .3s ease-in both; }
+.succes-notif__badge { flex: none; }
+.succes-notif__badge .badge-succes { width: 48px; height: 54px; }
+.succes-notif__texte { display: flex; flex-direction: column; min-width: 0; gap: 2px; }
+.succes-notif__sur { font-family: "Cinzel", "Cinzel Repli", serif; font-size: .62rem; font-weight: 700; letter-spacing: .2em; text-transform: uppercase; color: var(--c); }
+.succes-notif__nom { font-family: "Cinzel", "Cinzel Repli", serif; font-size: .95rem; font-weight: 700; line-height: 1.2; color: #f3ead6; }
+.succes-notif__gains { display: flex; align-items: center; gap: 10px; font-size: .85rem; color: #e9cf8f; font-variant-numeric: tabular-nums; }
+.succes-notif__gains span { display: inline-flex; align-items: center; gap: 4px; }
+.succes-notif__gains img { width: 16px; height: 16px; object-fit: contain; }
+.succes-notif__gains small { font-style: italic; color: #b9b2a2; }
+@keyframes succes-notif-entree { from { opacity: 0; transform: translateX(40px); } 60% { box-shadow: inset 0 0 0 1px var(--c), inset 0 0 40px var(--c), 0 0 30px var(--c2); } }
+@keyframes succes-notif-sortie { to { opacity: 0; transform: translateX(30px); } }
+.succes-notif--sobre, .succes-notif--sobre.est-fermee { animation-duration: .01s; }
+@media (prefers-reduced-motion: reduce) { .succes-notif, .succes-notif.est-fermee { animation-duration: .01s; } }
+/* téléphone : en haut, sur toute la largeur */
+@media (max-width: 700px) {
+  #succes-notifs { top: calc(10px + env(safe-area-inset-top, 0px)); right: 10px; left: 10px; align-items: stretch; }
+  .succes-notif { width: auto; }
+}

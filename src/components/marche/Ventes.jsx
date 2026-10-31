@@ -13,6 +13,7 @@ import { supabase } from '../../lib/supabase.js';
 import { useNotifier } from '../../lib/notification.js';
 import { RARETES, VEINES } from '../../data/affichage.js';
 import { JOURS_VENTE, PRIX_CONSEILLE, nombre, veineDe } from '../../lib/marche.js';
+import Chargement from '../Chargement.jsx';
 
 // Par paquets de 100 : une longue liste ne tient pas dans l'adresse d'une seule requête
 const paquets = (liste) => Array.from({ length: Math.ceil(liste.length / 100) }, (_, i) => liste.slice(i * 100, i * 100 + 100));
@@ -190,7 +191,7 @@ export default function Ventes({ moi, solde, mesCartes, protegee, version, rafra
       </div>
 
       <div className="marche-liste" id="marche-liste">
-        {!d ? <p className="marche-vide">Chargement…</p>
+        {!d ? <Chargement texte="Les vendeurs installent leurs étals…" />
           : d.erreur ? <p className="marche-vide">{d.erreur}</p>
             : !liste.length ? <p className="marche-vide">{d.ventes.length ? 'Aucune carte ne correspond à ces filtres.' : 'Aucune carte en vente pour l’instant. Sois le premier à en proposer une !'}</p>
               : liste.map((v) => {

@@ -18,8 +18,8 @@ import {
 import { facettes, eclat, pointes, melange, hasard } from './decor.js';
 
 const IMAGES = {
-  piege: 'img/Caverne/piege.svg', pont: 'img/Caverne/pont.svg', lac: 'img/Caverne/lac.svg', coin: 'img/Caverne/piece.png', gem: MONNAIES.cristaux.image,
-  s1: 'img/Caverne/tas-1.png', s2: 'img/Caverne/tas-2.png', s3: 'img/Caverne/tas-3.png', bag: 'img/Caverne/bourse.png',
+  piege: 'img/Caverne/piege.svg', pont: 'img/Caverne/pont.svg', lac: 'img/Caverne/lac.svg', coin: 'img/Caverne/piece.webp', gem: MONNAIES.cristaux.image,
+  s1: 'img/Caverne/tas-1.webp', s2: 'img/Caverne/tas-2.webp', s3: 'img/Caverne/tas-3.webp', bag: 'img/Caverne/bourse.webp',
 };
 
 export function monterCaverne(racine, { serveur, notifier, bourse }) {

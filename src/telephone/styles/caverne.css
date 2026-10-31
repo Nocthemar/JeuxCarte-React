@@ -14,7 +14,7 @@
 @media (max-width: 700px) {
   /* Le hall : l'image couvre la hauteur de l'écran et la salle défile de côté (sinon elle serait minuscule) */
   .caverne .cav-hall { overflow: auto hidden; }
-  .caverne .cav-salle { position: relative; left: 0; translate: none; width: calc(100cqh * 1910 / 823); }
+  .caverne .cav-salle { position: relative; left: 0; translate: none; width: calc(100cqh * 1672 / 941); }
 }
 @media (max-width: 700px) {
   .caverne .cav-hall__tete { display: none; }   /* (il passerait sous la barre du haut ; les plaques nomment les portes) */

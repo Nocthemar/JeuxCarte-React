@@ -260,7 +260,10 @@ function PanneauLigne({ joueur, ligne, cache }) {
           <button type="button" className={`btn-dc classe__chercher${classe.recherche ? '' : ' btn-dc--ambre'}`} id="btn-chercher" onClick={chercher}>
             {classe.recherche ? 'Annuler la recherche' : 'Rechercher une partie'}
           </button>
-          <p className="classe__etat" aria-live="polite">{classe.texte}</p>
+          {/* pendant la recherche : le losange du jeu tourne à côté du chrono */}
+          <p className={`classe__etat${classe.recherche ? ' chargement-jeu' : ''}`} aria-live="polite">
+            {classe.recherche && <span className="chargement-jeu__rune" aria-hidden="true"><i /></span>}{classe.texte}
+          </p>
         </div>
       </div>
 
@@ -367,12 +370,14 @@ export default function Menu({ joueur, donnees, ligne, surRegles, surJouer }) {
             <span className="hall-mode__embleme"><Svg>{ICONE_EPEE}<path d="M9.5 17.5L21 6V3h-3L6.5 14.5" /><path d="M11 19l-6-6" /><path d="M8 16l-4 4" /><path d="M5 21l-2-2" /></Svg></span>
             <span className="hall-mode__titre">Contre l&apos;Ombre</span>
             <span className="hall-mode__texte">Seul, face à l&apos;IA du Codex</span>
+            <span className="hall-mode__infos">1 joueur · XP du Pass, or</span>
           </button>
           <button type="button" className={`hall-mode hall-mode--ligne${mode === 'ligne' ? ' est-actif' : ''}`} role="tab" aria-selected={mode === 'ligne'} onClick={() => setMode('ligne')}>
             <span className="hall-mode__image" aria-hidden="true" />
             <span className="hall-mode__embleme"><Svg>{ICONE_EPEE}<path d="M9.5 17.5L21 6V3h-3L6.5 14.5" /><path d="M11 19l-6-6" /><path d="M8 16l-4 4" /><path d="M5 21l-2-2" /></Svg></span>
             <span className="hall-mode__titre">En ligne</span>
             <span className="hall-mode__texte">Classé 1v1 ou 2v2, ou partie privée entre amis</span>
+            <span className="hall-mode__infos">2 ou 4 joueurs · XP du Pass, rang</span>
           </button>
           {/* Mode Histoire : un autre écran, la carte des chapitres */}
           <Link className="hall-mode hall-mode--histoire" to="/histoire" viewTransition>
@@ -380,6 +385,7 @@ export default function Menu({ joueur, donnees, ligne, surRegles, surJouer }) {
             <span className="hall-mode__embleme"><Svg><path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3z" /><path d="M9 3v15M15 6v15" /></Svg></span>
             <span className="hall-mode__titre">Histoire</span>
             <span className="hall-mode__texte">La campagne, pays après pays</span>
+            <span className="hall-mode__infos">1 joueur · or, XP, cartes</span>
           </Link>
         </div>
 

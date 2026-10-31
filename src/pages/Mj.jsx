@@ -30,7 +30,7 @@ const IMG = {
   or: 'img/Equipement/Or-icone.webp',
   cristal: 'img/OR/cristal.webp',
   booster: 'img/Booster/Booster.webp',
-  caverne: 'img/Caverne/tas-3.png',
+  caverne: 'img/Caverne/tas-3.webp',
 };
 const Image = ({ cle, className = 'mj-ico' }) => <img className={className} src={urlPublique(IMG[cle])} alt="" />;
 

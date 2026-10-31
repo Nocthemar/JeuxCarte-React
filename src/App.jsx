@@ -8,23 +8,24 @@ import { lazy } from 'react';
 import { HashRouter, Navigate, Route, Routes } from 'react-router-dom';
 import Layout from './components/Layout.jsx';
 import RoutePrivee from './components/RoutePrivee.jsx';
+import { CODE } from './lib/ecrans.js';
 
 // Chaque écran est chargé seulement quand on l'ouvre (lazy) : le premier chargement du jeu est plus léger.
 // Suspense : ce qui s'affiche le temps qu'il arrive (rien : la page garde son fond).
-const Connexion = lazy(() => import('./pages/Connexion.jsx'));
-const Duel = lazy(() => import('./pages/Duel.jsx'));
-const Histoire = lazy(() => import('./pages/Histoire.jsx'));
-const Collection = lazy(() => import('./pages/Collection.jsx'));
-const ToutesLesCartes = lazy(() => import('./pages/ToutesLesCartes.jsx'));
-const Succes = lazy(() => import('./pages/Succes.jsx'));
-const Boutique = lazy(() => import('./pages/Boutique.jsx'));
-const Caverne = lazy(() => import('./pages/Caverne.jsx'));
-const Marche = lazy(() => import('./pages/Marche.jsx'));
-const Amis = lazy(() => import('./pages/Amis.jsx'));
-const Pass = lazy(() => import('./pages/Pass.jsx'));
-const Profil = lazy(() => import('./pages/Profil.jsx'));
-const Parametres = lazy(() => import('./pages/Parametres.jsx'));
-const Mj = lazy(() => import('./pages/Mj.jsx'));
+const Connexion = lazy(CODE.connexion);
+const Duel = lazy(CODE.duel);
+const Histoire = lazy(CODE.histoire);
+const Collection = lazy(CODE.collection);
+const ToutesLesCartes = lazy(CODE.cartes);
+const Succes = lazy(CODE.succes);
+const Boutique = lazy(CODE.boutique);
+const Caverne = lazy(CODE.caverne);
+const Marche = lazy(CODE.marche);
+const Amis = lazy(CODE.amis);
+const Pass = lazy(CODE.pass);
+const Profil = lazy(CODE.profil);
+const Parametres = lazy(CODE.parametres);
+const Mj = lazy(CODE.mj);
 
 export default function App() {
   return (

@@ -16,24 +16,21 @@ const JEUX = [
   { g: 3, image: 'lac', nom: 'Le Lac des Esprits', sous: 'Écoute la tension de la ligne', texte: 'Une prise invisible mord à ta ligne. Seule sa tension trahit ce qu\'elle est.' },
 ];
 
-// Les cinq portes de la salle, de gauche à droite : l'ouverture de chacune en pixels de l'image (1910 × 823),
-// et ce qu'elle ouvre (un jeu, ou le portail), avec la teinte de sa lumière (r, v, b) et l'inclinaison du mur
-// où elle est percée (le mur est courbe : la plaque scellée au-dessus suit le mur)
+// Les cinq portes de la salle, de gauche à droite : l'ouverture de chacune en pixels de l'image (IMAGE),
+// et ce qu'elle ouvre (un jeu, ou le portail), avec la teinte de sa lumière (r, v, b)
+const IMAGE = { l: 1672, h: 941 };
 const PORTES = [
-  { cle: 'portail', nom: 'Le portail', sous: 'Revenir à l\'arche', teinte: '236,228,210', incline: 30, pts: [[117, 415], [118, 200], [130, 160], [165, 120], [211, 94], [235, 135], [250, 180], [254, 215], [254, 415]] },
-  { g: 0, teinte: '214,96,48', incline: 16, pts: [[487, 420], [487, 255], [500, 225], [530, 190], [562, 170], [595, 200], [615, 235], [622, 265], [622, 420]] },
-  { g: 1, teinte: '214,176,104', incline: 0, pts: [[884, 425], [884, 277], [898, 240], [920, 215], [950, 194], [980, 215], [1002, 240], [1016, 277], [1016, 425]] },
-  { g: 2, teinte: '200,58,70', incline: -16, pts: [[1267, 420], [1267, 265], [1280, 230], [1305, 192], [1335, 167], [1368, 195], [1390, 225], [1403, 250], [1403, 420]] },
-  { g: 3, bord: true, teinte: '79,190,180', incline: -30, pts: [[1640, 415], [1638, 210], [1650, 160], [1670, 120], [1696, 93], [1740, 120], [1770, 160], [1790, 215], [1792, 415]] },
+  { cle: 'portail', nom: 'Le portail', sous: 'Revenir à l\'arche', teinte: '236,228,210', pts: [[88, 520], [88, 255], [100, 215], [125, 185], [165, 163], [205, 185], [232, 215], [243, 255], [243, 520]] },
+  { g: 0, teinte: '214,96,48', pts: [[420, 532], [420, 320], [432, 285], [457, 258], [494, 238], [530, 258], [555, 285], [567, 320], [567, 532]] },
+  { g: 1, teinte: '214,176,104', pts: [[757, 538], [757, 335], [770, 300], [797, 272], [835, 252], [873, 272], [900, 300], [913, 335], [913, 538]] },
+  { g: 2, teinte: '200,58,70', pts: [[1107, 532], [1107, 320], [1119, 285], [1143, 258], [1177, 238], [1213, 258], [1239, 285], [1251, 320], [1251, 532]] },
+  { g: 3, teinte: '79,190,180', pts: [[1427, 520], [1427, 255], [1438, 215], [1465, 185], [1507, 163], [1548, 185], [1575, 215], [1588, 255], [1588, 520]] },
 ].map((p) => {
   const xs = p.pts.map(([x]) => x), ys = p.pts.map(([, y]) => y);
   const x = Math.min(...xs), y = Math.min(...ys), l = Math.max(...xs) - x, h = Math.max(...ys) - y;
-  // la pointe de l'arche (le point le plus haut) : le nom gravé se centre dessus (le mur est vu de biais)
-  const pointe = p.pts.reduce((m, q) => (q[1] < m[1] ? q : m));
   return {
     ...p, ...(p.g !== undefined ? { nom: JEUX[p.g].nom, sous: JEUX[p.g].sous, image: JEUX[p.g].image } : {}),
-    pointe: `${(((pointe[0] - x) / l) * 100).toFixed(1)}%`,
-    place: { left: `${(x / 1910) * 100}%`, top: `${(y / 823) * 100}%`, width: `${(l / 1910) * 100}%`, height: `${(h / 823) * 100}%` },
+    place: { left: `${(x / IMAGE.l) * 100}%`, top: `${(y / IMAGE.h) * 100}%`, width: `${(l / IMAGE.l) * 100}%`, height: `${(h / IMAGE.h) * 100}%` },
     forme: `polygon(${p.pts.map(([px, py]) => `${(((px - x) / l) * 100).toFixed(1)}% ${(((py - y) / h) * 100).toFixed(1)}%`).join(', ')})`,
   };
 });
@@ -75,31 +72,36 @@ export default function SalleDesJeux({ temps, surPortail }) {
         <div className="cav-salle">
           <img className="cav-salle__fond" src={urlPublique('img/Fond/Caverne.webp')} alt="" draggable="false" />
           <header className="cav-hall__tete">
-            <span>Nocthémar</span>
-            {/* le titre suit la courbe du mur du fond (un arc de cercle, plus bas au milieu) ; le texte réel reste lisible
-                par les lecteurs d'écran */}
+            {/* le titre, sur deux lignes en or, en haut du mur du fond ; le texte réel reste lisible par les lecteurs d'écran */}
             <h1 id="cav-hall-titre">
               <span className="cav-hall__lu">La Caverne aux Trésors</span>
-              <svg className="cav-hall__arc" viewBox="0 0 1000 170" aria-hidden="true">
+              <svg className="cav-hall__titre" viewBox="0 0 300 120" aria-hidden="true">
                 <defs>
                   <linearGradient id="cav-titre-or" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="0" stopColor="#fff4d8" /><stop offset=".4" stopColor="#f0cf86" />
                     <stop offset=".65" stopColor="#c5933f" /><stop offset="1" stopColor="#8c6326" />
                   </linearGradient>
-                  <path id="cav-titre-courbe" d="M 60 60 A 2600 2600 0 0 0 940 60" />
+                  {/* l'ondulation de l'eau, pour les noms posés sur le bassin (caverne.css, .cav-gravure) */}
+                  <filter id="cav-onde" x="-10%" y="-40%" width="120%" height="180%">
+                    <feTurbulence type="fractalNoise" baseFrequency="0.006 0.11" numOctaves="1" seed="4">
+                      <animate attributeName="baseFrequency" dur="7s" repeatCount="indefinite" values="0.006 0.11;0.008 0.13;0.006 0.11" />
+                    </feTurbulence>
+                    <feDisplacementMap in="SourceGraphic" scale="3" xChannelSelector="R" yChannelSelector="G" />
+                  </filter>
                 </defs>
-                <text><textPath href="#cav-titre-courbe" startOffset="50%" textAnchor="middle">La Caverne aux Trésors</textPath></text>
+                <text x="150" y="50" fontSize="50" textLength="270" lengthAdjust="spacingAndGlyphs">La Caverne</text>
+                <text x="150" y="104" fontSize="40" textLength="210" lengthAdjust="spacingAndGlyphs">aux Trésors</text>
               </svg>
             </h1>
             <p>Quatre portes, quatre jeux. Une seule règle : savoir s&apos;arrêter à temps.</p>
           </header>
           {PORTES.map((p) => (
-            <div key={p.cle ?? p.g} className={`cav-porte${p.bord ? ' cav-porte--bord' : ''}`} style={{ ...p.place, '--pointe': p.pointe, '--teinte': p.teinte, '--incline': `${p.incline}deg` }}>
+            <div key={p.cle ?? p.g} className="cav-porte" style={{ ...p.place, '--teinte': p.teinte }}>
+              {/* la lumière derrière la porte (hors du bouton : voir caverne.css) */}
+              <span className="cav-porte__lueur" style={{ clipPath: p.forme }} aria-hidden="true" />
               <button type="button" className="cav-porte__ouverture" style={{ clipPath: p.forme }}
-                onClick={() => passer(p)} aria-label={`${p.nom} : ${p.sous}`}>
-                <span className="cav-porte__lueur" />
-              </button>
-              {/* le nom du jeu, gravé dans la pierre au-dessus de l'arche */}
+                onClick={() => passer(p)} aria-label={`${p.nom} : ${p.sous}`} />
+              {/* le nom du jeu, en lettres d'or sur l'eau, devant les marches */}
               <span className="cav-gravure" aria-hidden="true"><b>{p.nom}</b><small>{p.sous}</small></span>
               <span className="cav-porte__sol" aria-hidden="true" />
             </div>

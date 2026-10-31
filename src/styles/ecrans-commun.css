@@ -1,0 +1,69 @@
+/* =====================================================================
+   Commun à tous les écrans du jeu (chargée après les feuilles de chaque écran, styles/feuilles.js) :
+   - un seul style d'en-tête : le sur-titre (petites capitales or, espacées), le titre (Cinzel ivoire),
+     la phrase d'introduction (italique, discrète) ; mêmes tailles et mêmes marges partout ;
+   - le ciel de Nocthémar (img/Fond/Profil_fond.webp) derrière les écrans qui n'avaient qu'un fond uni.
+   Les écrans à décor propre (Duel, Boutique, Caverne, Amis, Profil, Collection) gardent le leur.
+   ===================================================================== */
+:root {
+  --entete-or: #cfae6c;
+  --entete-ivoire: #ece4d2;
+  --entete-doux: #b9b2a2;
+}
+
+/* ---------- Le ciel de Nocthémar ---------- */
+body.page-succes, body.page-histoire, body.page-parametres, body.page-pass {
+  background:
+    linear-gradient(180deg, rgba(6,8,13,.55), rgba(6,8,13,.86) 60%, rgba(6,8,13,.95)),
+    url("/img/Fond/Profil_fond.webp") center top / cover no-repeat fixed,
+    #07080c;
+}
+
+/* ---------- L'en-tête des écrans ---------- */
+.choix__entete, .catalogue__tete, .marche-entete, .amis-entete, .succes-page__tete, .histoire-tete, .reglages-entete {
+  text-align: center;
+}
+/* le sur-titre */
+.choix__entete > span:first-child, .catalogue__sur, .marche-entete__sur, .amis-entete > span:first-child,
+.succes-page__sur, .histoire-tete__sur, .reglages-entete__sur, .pass-entete__sur {
+  display: block; margin: 0 0 .45rem;
+  font-family: "Cinzel", "Cinzel Repli", serif; font-size: .74rem; font-weight: 700;
+  letter-spacing: .32em; text-transform: uppercase; color: var(--entete-or);
+}
+.catalogue__sur::before, .catalogue__sur::after, .succes-page__sur::before, .succes-page__sur::after { content: none !important; }
+/* le titre */
+.choix__titre, .catalogue__titre, .marche-entete h1, .amis-entete h1, .succes-page__titre, .histoire-tete h1, .reglages-entete h1 {
+  margin: 0 0 .5rem;
+  font-family: "Cinzel", "Cinzel Repli", serif; font-weight: 700; font-size: clamp(1.9rem, 3.2vw, 2.7rem);
+  line-height: 1.12; letter-spacing: .03em;
+  color: var(--entete-ivoire); text-shadow: 0 4px 26px rgba(0,0,0,.85);
+  background: none; -webkit-background-clip: border-box; background-clip: border-box; filter: none;
+}
+/* la phrase d'introduction */
+.marche-entete > p, .catalogue__tete > p, .succes-page__tete > p, .histoire-tete > p:not(.histoire-tete__sur), .reglages-entete > p, .amis-entete > p {
+  max-width: 62ch; margin: 0 auto; font-size: 1rem; line-height: 1.5; font-style: italic; color: var(--entete-doux);
+}
+
+/* ---------- Le chargement (components/Chargement.jsx) : un losange qui tourne, un texte court ---------- */
+.chargement-jeu {
+  display: flex; align-items: center; justify-content: center; gap: 12px; margin: 28px auto; padding: 0;
+  font-style: italic; color: var(--entete-doux);
+  animation: chargement-apparait .3s ease .25s both;   /* (rien pendant 250 ms : un chargement rapide ne montre rien) */
+}
+.chargement-jeu__rune { position: relative; display: inline-block; width: 22px; height: 22px; }
+.chargement-jeu__rune::before, .chargement-jeu__rune i {
+  content: ''; position: absolute; inset: 3px; rotate: 45deg; border: 1.5px solid var(--entete-or);
+  animation: chargement-tourne 1.6s cubic-bezier(.6,.1,.4,.9) infinite;
+}
+.chargement-jeu__rune i { inset: 7px; background: var(--entete-or); border: 0; animation-direction: reverse; animation-duration: 2.4s; }
+@keyframes chargement-tourne { to { rotate: 405deg; } }
+@keyframes chargement-apparait { from { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .chargement-jeu__rune::before, .chargement-jeu__rune i { animation: none; } }
+
+/* ---------- Les modes de jeu (accueil du Duel) : joueurs et récompenses, en petites capitales ---------- */
+.hall-mode__infos {
+  position: relative; display: block; margin-top: .35em;
+  font-family: "Cinzel", "Cinzel Repli", serif; font-size: .64rem; font-weight: 700; letter-spacing: .14em; text-transform: uppercase;
+  color: var(--entete-or); text-shadow: 0 1px 3px rgba(0,0,0,.9);
+}
+.classe__etat.chargement-jeu { margin: 10px auto 0; animation: none; }

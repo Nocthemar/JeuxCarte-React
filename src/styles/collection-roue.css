@@ -263,7 +263,7 @@ body.page-collection:has(#choix) {
   background:
     radial-gradient(ellipse 70% 55% at 50% 0%, rgba(155,39,48,.13), transparent 70%),
     linear-gradient(180deg, rgba(6,8,13,.55), rgba(6,8,13,.88) 55%, rgba(6,8,13,.97)),
-    url("/img/Fond/Profil_fond.png") center top / cover no-repeat fixed,
+    url("/img/Fond/Profil_fond.webp") center top / cover no-repeat fixed,
     #07080c;
 }
 .choix {

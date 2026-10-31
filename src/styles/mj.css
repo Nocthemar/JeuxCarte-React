@@ -26,7 +26,7 @@ body.page-mj {
     linear-gradient(180deg, var(--pierre-1), var(--pierre-2));
   background:
     linear-gradient(180deg, rgba(6,8,13,.55), rgba(6,8,13,.86) 60%, rgba(6,8,13,.95)),
-    url("/img/Fond/Profil_fond.png") center top / cover no-repeat fixed,
+    url("/img/Fond/Profil_fond.webp") center top / cover no-repeat fixed,
     #07080c;
   color: var(--ivoire);
 }

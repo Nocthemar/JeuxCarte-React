@@ -17,13 +17,13 @@ const fichiers = import.meta.glob('./*.css', { query: '?inline', import: 'defaul
 const depuisLeJeu = (css) => css.replace(/url\((['"]?)\/(?!\/)/g, `url($1${import.meta.env.BASE_URL}`);
 
 // Avant les styles de la page : chargés par toutes les pages
-const DEBUT = ['polices', 'index', 'compte'];
+const DEBUT = ['polices', 'index', 'compte', 'succes-badges', 'notifications-jeu'];
 // Après : le thème de jour, puis la barre latérale (ajoutée en dernier par l'ancien barre-laterale.js)
 const FIN = ['theme-jour'];
 const RAIL = ['barre-jeu'];
 
 const liste = (page, { transitions = false } = {}) => [
-  ...DEBUT, ...page, ...FIN, ...(transitions ? ['transitions-pages'] : []), ...RAIL,
+  ...DEBUT, ...page, 'ecrans-commun', ...FIN, ...(transitions ? ['transitions-pages'] : []), ...RAIL,
 ];
 
 export const FEUILLES = {
@@ -31,13 +31,13 @@ export const FEUILLES = {
   histoire: liste(['cartes-jeu', 'carte-infos', 'histoire'], { transitions: true }),
   collection: liste(['cartes-jeu', 'carte-infos', 'collection', 'collection-roue', 'collection-doublons']),
   cartes: liste(['cartes-jeu', 'carte-infos', 'toutes-les-cartes']),
-  succes: liste(['cartes-jeu', 'carte-infos', 'succes-badges', 'succes']),
+  succes: liste(['cartes-jeu', 'carte-infos', 'succes']),
   boutique: liste(['cartes-jeu', 'carte-infos', 'booster', 'boutique-vitrine', 'boutique-accueil', 'badges-caverne']),
   caverne: liste(['caverne', 'caverne-portail']),
   marche: liste(['cartes-jeu', 'carte-infos', 'marche', 'marche-echanges']),
   amis: liste(['amis']),
   pass: liste(['cartes-jeu', 'carte-infos', 'pass']),
-  profil: liste(['cartes-jeu', 'carte-infos', 'succes-badges', 'profil-heros']),
+  profil: liste(['cartes-jeu', 'carte-infos', 'profil-heros']),
   parametres: liste(['parametres']),
   mj: liste(['mj']),
   // L'écran de connexion : sans la barre latérale

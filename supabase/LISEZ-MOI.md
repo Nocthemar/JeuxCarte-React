@@ -8,6 +8,7 @@
 | `exporter-depuis-ancien.sql` | ANCIEN projet (lecture seule) | Partie A : comparer les tables du site ; partie B : copier les vraies données de référence |
 | `securite.sql` | les DEUX projets, après `schema.sql` | La sécurité (audit d'octobre 2026) : profils, duels arbitrés, salons, limites de débit, journal… |
 | `avatars.sql` | les DEUX projets, après `securite.sql` | Le portrait des comptes e-mail : le stockage « avatars » (image choisie par le joueur) et changer_avatar |
+| `succes.sql` | les DEUX projets, après `caverne.sql` et `amis.sql` | Les succès façon jeu vidéo : secrets masqués par le serveur, récompenses en cristaux, catégories Caverne / Multijoueur / Secrets |
 | `caverne.sql` | les DEUX projets, après `securite.sql` | La Caverne aux Trésors (#/caverne) : les mises en or ou en cristaux, le hasard et les gains, tenus par le serveur |
 | `verifier-securite.sql` | les DEUX projets (lecture seule) | Vérifie les droits, les triggers, et si la faille de prise de contrôle a déjà servi |
 | `functions/arbitre/index.js` | Edge Function des DEUX projets | L'arbitre des duels contre l'Ombre et du mode Histoire (construit par `npm run arbitre`) |

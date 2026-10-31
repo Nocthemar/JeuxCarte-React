@@ -4,7 +4,10 @@
 //    épique, légendaire) et le pourcentage de joueurs qui l'ont obtenu, comme sur Steam ;
 //  - « Réclamer » donne l'or (reclamer_succes, qui revérifie l'objectif) et joue l'animation de la rareté ;
 //    « Tout réclamer » les enchaîne ;
-//  - la vitrine : jusqu'à 3 succès obtenus épinglés comme badges sur le profil (choisir_vitrine_succes).
+//  - la vitrine : jusqu'à 3 succès obtenus épinglés comme badges sur le profil (choisir_vitrine_succes) ;
+//  - (30/10/2026) le pourcentage de complétion, les derniers succès obtenus, des onglets par catégorie avec
+//    leur compteur, un filtre (tous, à réclamer, en cours, obtenus) et une recherche ; les succès secrets
+//    arrivent masqués par le serveur (supabase/succes.sql) ; récompenses en or et en cristaux.
 // =====================================================================
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
@@ -17,11 +20,14 @@ import { urlPublique } from '../lib/chemins.js';
 import { RARETES_SUCCES, pourcentageTexte, celebrerSucces } from '../lib/succes.js';
 import { badgeDuPass } from '../lib/caverne/badges.js';
 
-const ORDRE_CATEGORIES = ['Duels', 'Classé', 'Collection', 'Boosters', 'Histoire', 'Marché'];
+const ORDRE_CATEGORIES = ['Duels', 'Multijoueur', 'Classé', 'Collection', 'Boosters', 'Histoire', 'Caverne', 'Marché', 'Secrets'];
+const FILTRES = [['tous', 'Tous'], ['prets', 'À réclamer'], ['encours', 'En cours'], ['obtenus', 'Obtenus']];
+const garde = { tous: () => true, prets: (s) => s.atteint && !s.reclame, encours: (s) => !s.atteint, obtenus: (s) => s.reclame };
 const VITRINE_MAX = 3;
 const nombre = (n) => Number(n).toLocaleString('fr-FR');
 const pret = (s) => s.atteint && !s.reclame;
 const Or = () => <img src={urlPublique('img/Equipement/Or-icone.webp')} alt="" />;
+const Cristal = () => <img src={urlPublique('img/OR/cristal.webp')} alt="" />;
 
 // Un succès de la liste
 function Succes({ s, vitrinePleine, surReclamer, surEpingler }) {
@@ -32,7 +38,7 @@ function Succes({ s, vitrinePleine, surReclamer, surEpingler }) {
   const epingle = !!s.vitrine;
   const plein = !epingle && vitrinePleine;
   return (
-    <article className={`succ succ--${s.rarete} ${etat}`}>
+    <article className={`succ succ--${s.rarete} ${etat}${s.cache ? ' est-secret' : ''}`}>
       <Badge s={s} />
       <div className="succ__corps">
         <h3 className="succ__nom">{s.nom}</h3>
@@ -45,6 +51,7 @@ function Succes({ s, vitrinePleine, surReclamer, surEpingler }) {
       </div>
       <div className="succ__droite">
         {s.recompense > 0 && <span className="succ__or"><Or /> {nombre(s.recompense)}</span>}
+        {s.cristaux > 0 && <span className="succ__or succ__cristaux"><Cristal /> {nombre(s.cristaux)}</span>}
         {s.badge_caverne && <span className="succ__badge-caverne" title="Badge de la Caverne aux Trésors">+ badge {badgeDuPass(s.badge_caverne)?.nom ?? s.badge_caverne}</span>}
         {s.reclame ? (
           <button type="button" className={`succ__epingle${epingle ? ' est-epingle' : ''}`} data-epingler={s.id} aria-pressed={epingle}
@@ -53,6 +60,8 @@ function Succes({ s, vitrinePleine, surReclamer, surEpingler }) {
           </button>
         ) : s.atteint ? (
           <button type="button" className="succ__btn" data-reclamer={s.id} disabled={envoi} onClick={() => agir(surReclamer)}>Réclamer</button>
+        ) : s.cache ? (
+          <span className="succ__compte succ__compte--secret">Secret</span>
         ) : (
           <span className="succ__compte">{nombre(s.progression)} / {nombre(s.objectif)}</span>
         )}
@@ -67,6 +76,9 @@ export default function PageSucces() {
   const discordId = joueur?.discord_id ?? null;
   const [donnees, setDonnees] = useState({ pour: null });   // { pour, succes } ou { pour, erreur }
   const [toutEnCours, setToutEnCours] = useState(false);
+  const [onglet, setOnglet] = useState('tout');
+  const [filtre, setFiltre] = useState('tous');
+  const [recherche, setRecherche] = useState('');
 
   useEffect(() => {
     if (!discordId) return undefined;
@@ -96,16 +108,16 @@ export default function PageSucces() {
     const s = succes.find((x) => x.id === id);
     majSucces((liste) => liste.map((x) => (x.id === id
       ? { ...x, reclame: true, reclame_le: new Date().toISOString(), pourcentage: data?.pourcentage ?? x.pourcentage } : x)));
-    await celebrerSucces({ ...s, ...data });
+    celebrerSucces({ ...s, ...data });
     if (s?.badge_caverne) notifier(`Badge de la Caverne « ${badgeDuPass(s.badge_caverne)?.nom ?? s.badge_caverne} » obtenu : active-le quand tu veux, à la Boutique ou devant la Caverne.`);
-    return data?.recompense ?? 0;
+    return { or: data?.recompense ?? 0, cristaux: data?.cristaux ?? 0 };
   };
   const toutReclamer = async () => {
     setToutEnCours(true);
-    let total = 0;
-    for (const s of succes.filter(pret)) total += await reclamer(s.id);
+    let or = 0, cristaux = 0;
+    for (const s of succes.filter(pret)) { const g = await reclamer(s.id); or += g.or; cristaux += g.cristaux; }
     setToutEnCours(false);
-    if (total) notifier(`Succès réclamés : +${nombre(total)} or !`);
+    if (or || cristaux) notifier(`Succès réclamés : ${[or && `+${nombre(or)} or`, cristaux && `+${nombre(cristaux)} cristaux`].filter(Boolean).join(' · ')} !`);
   };
 
   // Épingle ou retire un badge de la vitrine du profil
@@ -122,8 +134,14 @@ export default function PageSucces() {
   const categories = [...new Set(succes.map((s) => s.categorie))]
     .sort((a, b) => (ORDRE_CATEGORIES.indexOf(a) + 1 || 99) - (ORDRE_CATEGORIES.indexOf(b) + 1 || 99));
   const atteints = succes.filter((s) => s.atteint).length;
+  const pctGlobal = succes.length ? Math.round((atteints / succes.length) * 100) : 0;
+  const recents = succes.filter((s) => s.reclame && s.reclame_le).sort((a, b) => b.reclame_le.localeCompare(a.reclame_le)).slice(0, 4);
+  const mot = recherche.trim().toLowerCase();
+  const visibles = succes.filter((s) => (onglet === 'tout' || s.categorie === onglet) && garde[filtre](s)
+    && (!mot || `${s.nom} ${s.description}`.toLowerCase().includes(mot)));
   const prets = succes.filter(pret);
   const orPret = prets.reduce((t, s) => t + s.recompense, 0);
+  const cristauxPrets = prets.reduce((t, s) => t + (s.cristaux ?? 0), 0);
   const affiche = !!d?.succes;
 
   return (
@@ -136,10 +154,10 @@ export default function PageSucces() {
           <p className="succes-page__intro">Chaque exploit accompli dans le jeu est gravé ici. Réclame l&apos;or de ceux que tu as débloqués.</p>
           {affiche && (
             <div className="succes-page__progression" id="progression">
-              <div className="succes-page__compte"><strong id="nb-atteints">{atteints}</strong> / <span id="nb-total">{succes.length}</span> <small>succès débloqués</small></div>
+              <div className="succes-page__compte"><strong id="nb-atteints">{atteints}</strong> / <span id="nb-total">{succes.length}</span> <small>succès débloqués</small> <b className="succes-page__pct">{pctGlobal} %</b></div>
               <div className="succes-page__jauge" aria-hidden="true"><span id="jauge" style={{ width: `${succes.length ? (atteints / succes.length) * 100 : 0}%` }} /></div>
               <button type="button" className="succes-page__tout" id="btn-tout" hidden={prets.length < 2} disabled={toutEnCours} onClick={toutReclamer}>
-                Tout réclamer ({prets.length} succès · {nombre(orPret)} or)
+                Tout réclamer ({prets.length} succès · {nombre(orPret)} or{cristauxPrets ? ` · ${nombre(cristauxPrets)} cristaux` : ''})
               </button>
             </div>
           )}
@@ -177,15 +195,52 @@ export default function PageSucces() {
           </section>
         )}
 
-        {/* Les succès, par catégorie */}
+        {/* Les derniers succès obtenus */}
+        {recents.length > 0 && (
+          <section className="succes-recents" aria-label="Derniers succès obtenus">
+            <span className="succes-recents__titre">Derniers obtenus</span>
+            <div className="succes-recents__liste">
+              {recents.map((s) => (
+                <span key={s.id} className="succes-recents__un" title={s.description}><Badge s={s} /><b>{s.nom}</b></span>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* Les succès : onglets par catégorie (avec leur compteur), filtre et recherche */}
+        {affiche && (
+          <div className="succes-outils">
+            <nav className="succes-onglets" aria-label="Catégories">
+              {[['tout', 'Tous', succes], ...categories.map((c) => [c, c, succes.filter((s) => s.categorie === c)])].map(([cle, nom, liste]) => (
+                <button key={cle} type="button" className={`succes-onglet${onglet === cle ? ' est-actif' : ''}`} aria-pressed={onglet === cle} onClick={() => setOnglet(cle)}>
+                  {nom} <small>{liste.filter((s) => s.atteint).length}/{liste.length}</small>
+                </button>
+              ))}
+            </nav>
+            <div className="succes-filtres">
+              <div className="succes-filtres__choix" role="group" aria-label="Afficher">
+                {FILTRES.map(([cle, nom]) => (
+                  <button key={cle} type="button" className={filtre === cle ? 'est-actif' : ''} aria-pressed={filtre === cle} onClick={() => setFiltre(cle)}>
+                    {nom}{cle === 'prets' && prets.length > 0 ? ` (${prets.length})` : ''}
+                  </button>
+                ))}
+              </div>
+              <input type="search" className="succes-filtres__recherche" placeholder="Chercher un succès…" value={recherche}
+                onChange={(e) => setRecherche(e.target.value)} aria-label="Chercher un succès" />
+            </div>
+          </div>
+        )}
+
         <div id="liste" className="succes-page__liste">
           {joueur && !d && <p className="vide">Les hauts faits se dévoilent…</p>}
           {d?.erreur && <p className="vide">Les succès ne sont pas encore disponibles.</p>}
-          {affiche && (categories.length ? categories.map((c) => {
-            const liste = succes.filter((s) => s.categorie === c);
+          {affiche && (visibles.length ? (onglet === 'tout' ? categories : [onglet]).map((c) => {
+            const liste = visibles.filter((s) => s.categorie === c);
+            if (!liste.length) return null;
+            const tous = succes.filter((s) => s.categorie === c);
             return (
               <section key={c} className="succes-cat">
-                <h2 className="succes-cat__titre">{c} <small>{liste.filter((s) => s.atteint).length} / {liste.length}</small></h2>
+                <h2 className="succes-cat__titre">{c} <small>{tous.filter((s) => s.atteint).length} / {tous.length}</small></h2>
                 <div className="succes-cat__liste">
                   {liste.map((s) => (
                     <Succes key={s.id} s={s} vitrinePleine={vitrine.length >= VITRINE_MAX}
@@ -194,7 +249,7 @@ export default function PageSucces() {
                 </div>
               </section>
             );
-          }) : <p className="vide">Aucun succès pour le moment.</p>)}
+          }) : <p className="vide">{succes.length ? 'Aucun succès ne correspond.' : 'Aucun succès pour le moment.'}</p>)}
         </div>
       </main>
     </Page>

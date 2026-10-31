@@ -9,12 +9,13 @@ import Authentification from './Authentification.jsx';
 import BarreLaterale from './BarreLaterale.jsx';
 import FiletErreur from './FiletErreur.jsx';
 import MiseAJour from './MiseAJour.jsx';
+import GuetteurSucces from './GuetteurSucces.jsx';
 import { useAuth, joueurPret } from '../lib/auth.js';
 
 // La barre latérale : seulement dans le jeu (pas sur l'écran de connexion)
 function Barre() {
   const auth = useAuth();
-  return joueurPret(auth) ? <BarreLaterale /> : null;
+  return joueurPret(auth) ? <><BarreLaterale /><GuetteurSucces discordId={auth.joueur.discord_id} /></> : null;
 }
 
 export default function Layout() {
