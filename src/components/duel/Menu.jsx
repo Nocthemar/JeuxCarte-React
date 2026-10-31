@@ -21,6 +21,7 @@ import { estHote, lienInvitation, palierDe, classeAbsent } from '../../lib/ligne
 import { useNotifier } from '../../lib/notification.js';
 import { animationsReduites } from '../../lib/preferences.js';
 import { jouerSon } from '../../lib/son.js';
+import { prechargerEcran } from '../../lib/ecrans.js';
 
 const CLE_DIFFICULTE = 'duel-couronnes-difficulte';
 const lireDifficulte = () => { try { const d = localStorage.getItem(CLE_DIFFICULTE); return DIFFICULTES[d] ? d : 'normal'; } catch { return 'normal'; } };
@@ -386,6 +387,14 @@ export default function Menu({ joueur, donnees, ligne, surRegles, surJouer }) {
             <span className="hall-mode__titre">Histoire</span>
             <span className="hall-mode__texte">La campagne, pays après pays</span>
             <span className="hall-mode__infos">1 joueur · or, XP, cartes</span>
+          </Link>
+          {/* Gemmes du Codex : un autre écran (pages/Gemmes.jsx) */}
+          <Link className="hall-mode hall-mode--gemmes" to="/gemmes" viewTransition onPointerEnter={() => prechargerEcran('/gemmes')} onFocus={() => prechargerEcran('/gemmes')}>
+            <span className="hall-mode__image" aria-hidden="true" />
+            <span className="hall-mode__embleme"><Svg><path d="M12 3l8 6-8 12-8-12z" /><path d="M4 9h16M9 9l3 12 3-12M8 3.5L9 9M16 3.5L15 9" /></Svg></span>
+            <span className="hall-mode__titre">Gemmes</span>
+            <span className="hall-mode__texte">Aligne les gemmes, charge tes cartes, abats l’adversaire</span>
+            <span className="hall-mode__infos">1 ou 2 joueurs · Ombre ou ami</span>
           </Link>
         </div>
 

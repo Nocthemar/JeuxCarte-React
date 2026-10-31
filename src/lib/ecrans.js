@@ -8,6 +8,7 @@ import { chargerFeuilles } from '../styles/feuilles.js';
 export const CODE = {
   connexion: () => import('../pages/Connexion.jsx'),
   duel: () => import('../pages/Duel.jsx'),
+  gemmes: () => import('../pages/Gemmes.jsx'),
   histoire: () => import('../pages/Histoire.jsx'),
   collection: () => import('../pages/Collection.jsx'),
   cartes: () => import('../pages/ToutesLesCartes.jsx'),
@@ -24,7 +25,7 @@ export const CODE = {
 
 // L'adresse d'un écran -> l'id de son code et de ses feuilles
 const PAR_CHEMIN = {
-  '/connexion': 'connexion', '/duel': 'duel', '/histoire': 'histoire', '/collection': 'collection',
+  '/connexion': 'connexion', '/duel': 'duel', '/gemmes': 'gemmes', '/histoire': 'histoire', '/collection': 'collection',
   '/toutes-les-cartes': 'cartes', '/succes': 'succes', '/boutique': 'boutique', '/caverne': 'caverne',
   '/marche': 'marche', '/amis': 'amis', '/pass': 'pass', '/profil': 'profil', '/parametres': 'parametres', '/mj': 'mj',
 };

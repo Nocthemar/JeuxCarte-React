@@ -1,0 +1,29 @@
+/* =====================================================================
+   Téléphone — les Gemmes du Codex (pages/Gemmes.jsx) : tenu droit, l'adversaire en haut (une ligne),
+   la grille au milieu sur toute la largeur, le joueur en bas ; l'accueil sur une colonne.
+   ===================================================================== */
+@media (max-width: 700px) {
+  .gm-accueil { padding-top: 12px; }
+  .gm-modes { flex-direction: column; align-items: stretch; }
+  .gm-mode { min-width: 0; }
+  .gm-places { gap: 8px; }
+  .gm-place { padding: 8px 6px 10px; }
+  .gm-place__effet { display: none; }
+  .gm-reserve { grid-template-columns: repeat(auto-fill, minmax(76px, 1fr)); max-height: 260px; }
+
+  .gm-table { display: flex; flex-direction: column; gap: 8px; padding: 4px 0; }
+  .gm-combattant { padding: 10px; gap: 8px; }
+  .gm-combattant--gauche { order: 1; }
+  .gm-centre { order: 2; align-self: stretch; width: 100%; }
+  .gm-combattant--droite { order: 3; }
+  .gm-combattant__tete { grid-template-columns: 38px 1fr; }
+  .gm-combattant__portrait { width: 38px; height: 38px; font-size: 1.1rem; }
+  /* l'adversaire : seulement l'essentiel */
+  .gm-combattant--gauche .gm-carte__etat { display: none; }
+  .gm-carte { padding: 5px 6px; }
+  .gm-carte__nom { font-size: .68rem; }
+  .gm-bandeau { padding: 6px 6px 6px 10px; gap: 8px; }
+  .gm-bandeau__tour { display: none; }
+  .gm-bandeau, .gm-grille { width: 100cqi; }
+  .gm-flottant { font-size: 1.3rem; }
+}

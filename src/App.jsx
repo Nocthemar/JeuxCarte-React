@@ -14,6 +14,7 @@ import { CODE } from './lib/ecrans.js';
 // Suspense : ce qui s'affiche le temps qu'il arrive (rien : la page garde son fond).
 const Connexion = lazy(CODE.connexion);
 const Duel = lazy(CODE.duel);
+const Gemmes = lazy(CODE.gemmes);
 const Histoire = lazy(CODE.histoire);
 const Collection = lazy(CODE.collection);
 const ToutesLesCartes = lazy(CODE.cartes);
@@ -37,6 +38,7 @@ export default function App() {
           <Route path="/mot-de-passe" element={<Connexion nouveauMotDePasse />} />
           <Route element={<RoutePrivee />}>
             <Route path="/duel" element={<Duel />} />
+            <Route path="/gemmes" element={<Gemmes />} />
             <Route path="/histoire" element={<Histoire />} />
             <Route path="/collection" element={<Collection />} />
             <Route path="/toutes-les-cartes" element={<ToutesLesCartes />} />

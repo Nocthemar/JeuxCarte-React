@@ -29,6 +29,7 @@ const liste = (page, { transitions = false } = {}) => [
 export const FEUILLES = {
   duel: liste(['carte-infos', 'jeu-cartes', 'duel-spectacle', 'duel-accueil'], { transitions: true }),
   histoire: liste(['cartes-jeu', 'carte-infos', 'histoire'], { transitions: true }),
+  gemmes: liste(['gemmes'], { transitions: true }),
   collection: liste(['cartes-jeu', 'carte-infos', 'collection', 'collection-roue', 'collection-doublons']),
   cartes: liste(['cartes-jeu', 'carte-infos', 'toutes-les-cartes']),
   succes: liste(['cartes-jeu', 'carte-infos', 'succes']),

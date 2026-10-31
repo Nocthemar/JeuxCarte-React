@@ -1,0 +1,420 @@
+/* =====================================================================
+   Les Gemmes du Codex (pages/Gemmes.jsx, components/gemmes/*) :
+   l'accueil (les trois cartes, la difficulté, le salon), puis la table : l'adversaire à gauche,
+   la grille au milieu, le joueur à droite. Charbon, pierre et ivoire ; l'or vieilli pour les cadres ;
+   la couleur vient des gemmes seules (Sang, Ambre, Azur).
+   ===================================================================== */
+body.page-gemmes {
+  --or: #c8a86a;
+  --or-pale: #e3cf9f;
+  --ivoire: #ece4d2;
+  --ivoire-doux: #b9b2a2;
+  --charbon: #141312;
+  --pierre: #1d1b19;
+  --sang: #c2414c;
+  --ambre: #d9ab4a;
+  --azur: #6c9fe0;
+  --taille: polygon(10px 0, calc(100% - 10px) 0, 100% 10px, 100% calc(100% - 10px), calc(100% - 10px) 100%, 10px 100%, 0 calc(100% - 10px), 0 10px);
+  background:
+    radial-gradient(ellipse 70% 60% at 50% 45%, rgba(40,34,28,.35), transparent 70%),
+    linear-gradient(180deg, rgba(8,7,6,.78), rgba(8,7,6,.94)),
+    url("/img/Plateaux de carte/plateau-cristaux.webp") center / cover no-repeat fixed,
+    #0b0a09;
+  color: var(--ivoire);
+}
+.gm-cache { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+/* ---------- Les boutons ---------- */
+.gm-bouton {
+  padding: .55em 1.1em; border: 1px solid rgba(200,168,106,.45); clip-path: var(--taille);
+  background: linear-gradient(180deg, #24211d, #171513); color: var(--ivoire);
+  font-family: "Cinzel", "Cinzel Repli", serif; font-size: .82rem; font-weight: 700; letter-spacing: .08em;
+  cursor: pointer; transition: filter .2s ease, transform .2s ease;
+}
+.gm-bouton:hover:not(:disabled), .gm-bouton:focus-visible { filter: brightness(1.25); outline: none; }
+.gm-bouton:disabled { opacity: .45; cursor: not-allowed; }
+.gm-bouton--or { background: linear-gradient(180deg, #d8b977, #9c7a3c); color: #1a140b; border-color: #e3cf9f; }
+
+/* =====================================================================
+   L'accueil
+   ===================================================================== */
+.gm-accueil { max-width: 1220px; margin: 0 auto; padding: 26px 0 40px; }
+.gm-entete { text-align: center; margin-bottom: 22px; }
+.gm-entete__sur { display: block; margin-bottom: .45rem; font-family: "Cinzel", "Cinzel Repli", serif; font-size: .74rem; font-weight: 700; letter-spacing: .32em; text-transform: uppercase; color: #cfae6c; }
+.gm-entete h1 { margin: 0 0 .5rem; font-family: "Cinzel", "Cinzel Repli", serif; font-size: clamp(1.9rem, 3.2vw, 2.7rem); color: var(--ivoire); text-shadow: 0 4px 26px rgba(0,0,0,.85); }
+.gm-entete p { max-width: 62ch; margin: 0 auto; font-style: italic; color: var(--ivoire-doux); }
+
+.gm-modes { display: flex; justify-content: center; gap: 14px; margin-bottom: 22px; }
+.gm-mode {
+  display: grid; gap: 2px; min-width: 230px; padding: 12px 22px; clip-path: var(--taille); cursor: pointer;
+  border: 1px solid rgba(200,168,106,.3); background: rgba(20,19,18,.85); color: var(--ivoire-doux); text-align: center;
+  transition: background .2s ease, color .2s ease;
+}
+.gm-mode strong { font-family: "Cinzel", "Cinzel Repli", serif; font-size: 1rem; color: var(--ivoire); letter-spacing: .04em; }
+.gm-mode span { font-style: italic; font-size: .9rem; }
+.gm-mode.est-actif { background: linear-gradient(180deg, rgba(200,168,106,.22), rgba(20,19,18,.9)); border-color: var(--or-pale); color: var(--ivoire); }
+.gm-mode:focus-visible { outline: 2px solid var(--or-pale); outline-offset: 2px; }
+
+.gm-accueil__corps { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 20px; align-items: start; }
+.gm-bloc { padding: 18px 20px 20px; clip-path: var(--taille); background: rgba(20,19,18,.88); border: 1px solid rgba(200,168,106,.25); }
+.gm-bloc h2 { margin: 0 0 14px; font-family: "Cinzel", "Cinzel Repli", serif; font-size: 1.05rem; letter-spacing: .12em; text-transform: uppercase; color: var(--or-pale); }
+.gm-bloc__note { margin: 10px 0 16px; font-style: italic; font-size: .92rem; color: var(--ivoire-doux); min-height: 2.6em; }
+
+/* Les trois emplacements */
+.gm-places { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.gm-place {
+  --teinte: var(--sang);
+  position: relative; display: grid; justify-items: center; gap: 4px; padding: 12px 10px 14px;
+  clip-path: var(--taille); cursor: pointer; text-align: center; color: var(--ivoire);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--teinte) 16%, #191715), #121110);
+  border: 1px solid color-mix(in srgb, var(--teinte) 45%, transparent);
+  transition: transform .25s ease, box-shadow .25s ease;
+}
+.gm-place--ambre { --teinte: var(--ambre); }
+.gm-place--azur { --teinte: var(--azur); }
+.gm-place.est-choisie { transform: translateY(-3px); box-shadow: inset 0 0 0 2px var(--teinte), inset 0 0 30px color-mix(in srgb, var(--teinte) 30%, transparent); }
+.gm-place:disabled { cursor: default; }
+.gm-place__gemme { width: 30px; height: 30px; }
+.gm-place__couleur { font-family: "Cinzel", "Cinzel Repli", serif; font-size: .78rem; letter-spacing: .2em; text-transform: uppercase; color: var(--teinte); }
+.gm-place__image { width: 100%; max-width: 150px; aspect-ratio: 5 / 7; margin: 4px 0; background: #0d0c0b center / cover no-repeat; border: 1px solid rgba(200,168,106,.35); }
+.gm-place__nom { font-family: "Cinzel", "Cinzel Repli", serif; font-size: .9rem; }
+.gm-place__force { font-size: .78rem; color: var(--or-pale); }
+.gm-place__effet { font-size: .78rem; font-style: italic; color: var(--ivoire-doux); }
+.gm-choix__aide { margin: 14px 0 10px; font-size: .9rem; font-style: italic; color: var(--ivoire-doux); }
+
+/* La réserve : la collection */
+.gm-reserve {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 10px;
+  max-height: 330px; overflow-y: auto; margin: 0; padding: 4px 4px 4px 0; list-style: none;
+  scrollbar-width: thin; scrollbar-color: rgba(200,168,106,.4) transparent;
+}
+.gm-mini {
+  --teinte: transparent;
+  position: relative; display: grid; gap: 4px; width: 100%; padding: 4px; cursor: pointer;
+  border: 1px solid rgba(200,168,106,.2); background: #151412; color: var(--ivoire);
+  transition: transform .2s ease, border-color .2s ease;
+}
+.gm-mini:hover:not(:disabled), .gm-mini:focus-visible { transform: translateY(-3px); border-color: var(--or-pale); outline: none; }
+.gm-mini--legendaire { border-color: rgba(227,207,159,.55); }
+.gm-mini--transcendante { border-color: rgba(190,160,255,.6); }
+.gm-mini--sang { --teinte: var(--sang); } .gm-mini--ambre { --teinte: var(--ambre); } .gm-mini--azur { --teinte: var(--azur); }
+.gm-mini.est-prise { border-color: var(--teinte); box-shadow: 0 0 0 1px var(--teinte), 0 0 14px color-mix(in srgb, var(--teinte) 45%, transparent); }
+.gm-mini__image { aspect-ratio: 5 / 7; background: #0d0c0b center / cover no-repeat; }
+.gm-mini__nom { font-size: .72rem; line-height: 1.15; text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gm-mini__pretee { position: absolute; top: 6px; left: 6px; padding: 1px 5px; font-size: .62rem; background: rgba(0,0,0,.75); color: var(--or-pale); }
+.gm-mini__gemme { position: absolute; top: 2px; right: 2px; width: 22px; height: 22px; filter: drop-shadow(0 2px 3px rgba(0,0,0,.8)); }
+
+/* La difficulté, le lancement */
+.gm-difficultes { display: flex; gap: 8px; }
+.gm-difficulte {
+  flex: 1; padding: 9px 4px; cursor: pointer; clip-path: var(--taille);
+  border: 1px solid rgba(200,168,106,.3); background: #181614; color: var(--ivoire-doux);
+  font-family: "Cinzel", "Cinzel Repli", serif; font-size: .8rem; letter-spacing: .06em;
+}
+.gm-difficulte.est-choisie { background: linear-gradient(180deg, rgba(155,39,48,.5), rgba(60,16,20,.9)); border-color: #c2414c; color: #fff2dc; }
+.gm-engager {
+  width: 100%; padding: 15px; border: 0; cursor: pointer; clip-path: var(--taille);
+  background: linear-gradient(180deg, #b9343f, #6a171e); color: #fff2dc;
+  font-family: "Cinzel", "Cinzel Repli", serif; font-size: 1.05rem; font-weight: 700; letter-spacing: .14em; text-transform: uppercase;
+  box-shadow: inset 0 0 0 1px rgba(227,207,159,.5);
+  transition: filter .2s ease, transform .2s ease;
+}
+.gm-engager:hover:not(:disabled), .gm-engager:focus-visible { filter: brightness(1.15); transform: translateY(-2px); outline: none; }
+.gm-engager:disabled { filter: grayscale(.7) brightness(.6); cursor: not-allowed; }
+.gm-regles { margin-top: 18px; font-size: .9rem; color: var(--ivoire-doux); }
+.gm-regles summary { cursor: pointer; font-family: "Cinzel", "Cinzel Repli", serif; color: var(--or-pale); letter-spacing: .08em; }
+.gm-regles ul { margin: 10px 0 0; padding-left: 18px; display: grid; gap: 6px; line-height: 1.4; }
+.gm-txt--sang { color: var(--sang); } .gm-txt--ambre { color: var(--ambre); } .gm-txt--azur { color: var(--azur); }
+.gm-retour { text-align: center; margin-top: 20px; }
+.gm-retour a { color: var(--ivoire-doux); font-style: italic; }
+
+/* Contre un ami */
+.gm-ami p { margin: 0 0 12px; font-size: .92rem; font-style: italic; color: var(--ivoire-doux); }
+.gm-ami__actions { display: grid; gap: 10px; }
+.gm-ami__code { display: flex; gap: 8px; }
+.gm-ami__code input {
+  flex: 1; min-width: 0; padding: 8px 10px; border: 1px solid rgba(200,168,106,.35); background: #0f0e0d; color: var(--ivoire);
+  font-family: "Cinzel", "Cinzel Repli", serif; letter-spacing: .3em; text-transform: uppercase;
+}
+.gm-ami__tete { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+.gm-ami__tete span { flex: 1; font-family: "Cinzel", "Cinzel Repli", serif; }
+.gm-ami__tete strong { color: var(--or-pale); letter-spacing: .2em; }
+.gm-ami__joueurs { display: grid; gap: 8px; margin-bottom: 10px; }
+.gm-ami__joueur { display: grid; grid-template-columns: 34px 1fr auto; align-items: center; gap: 10px; padding: 7px 10px; background: #171513; border: 1px solid rgba(200,168,106,.2); }
+.gm-ami__joueur img, .gm-ami__avatar { width: 34px; height: 34px; border-radius: 50%; object-fit: cover; display: grid; place-items: center; background: #26231f; color: var(--or-pale); }
+.gm-ami__joueur small { font-style: italic; color: var(--ivoire-doux); }
+.gm-ami__joueur.est-pret { border-color: rgba(120,190,120,.5); }
+.gm-ami__joueur.est-pret small { color: #9fd49f; }
+.gm-ami__etat { min-height: 1.4em; }
+.gm-ami--salon > .gm-bouton { width: 100%; padding: 12px; }
+
+/* =====================================================================
+   La table
+   ===================================================================== */
+.gm-table {
+  display: grid; grid-template-columns: minmax(190px, 260px) minmax(0, 1fr) minmax(190px, 260px);
+  align-items: center; gap: clamp(12px, 2vw, 28px);
+  max-width: 1400px; min-height: calc(100vh - 20px); margin: 0 auto; padding: 10px 0;
+}
+.gm-table.est-secouee { animation: gm-secousse .4s cubic-bezier(.36,.07,.19,.97); }
+@keyframes gm-secousse {
+  10%, 90% { transform: translate(-2px, 1px); }
+  20%, 80% { transform: translate(4px, -2px); }
+  30%, 50%, 70% { transform: translate(-6px, 2px); }
+  40%, 60% { transform: translate(6px, -1px); }
+}
+.gm-centre { container-type: inline-size; display: grid; justify-items: center; gap: 10px; min-width: 0; }
+
+/* Le bandeau au-dessus de la grille */
+.gm-bandeau {
+  display: flex; align-items: center; gap: 14px; width: min(100cqi, calc(100vh - 160px), 680px);
+  padding: 8px 10px 8px 16px; clip-path: var(--taille);
+  background: rgba(18,17,15,.9); border: 1px solid rgba(200,168,106,.3);
+}
+.gm-bandeau__tour { font-family: "Cinzel", "Cinzel Repli", serif; font-size: .8rem; letter-spacing: .2em; text-transform: uppercase; color: var(--or); }
+.gm-bandeau__qui { flex: 1; font-style: italic; color: var(--ivoire); }
+.gm-quitter { background: none; border: 0; color: var(--ivoire-doux); font-style: italic; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+.gm-quitter:hover { color: var(--ivoire); }
+
+/* La grille : un plateau de pierre sombre, cases à peine marquées */
+.gm-grille {
+  --n: 8;
+  position: relative; width: min(100cqi, calc(100vh - 160px), 680px); aspect-ratio: 1;
+  padding: 0; touch-action: none; user-select: none;
+  background:
+    repeating-conic-gradient(rgba(255,255,255,.028) 0 25%, transparent 0 50%) 0 0 / calc(200% / var(--n)) calc(200% / var(--n)),
+    linear-gradient(160deg, #1e1c19, #121110);
+  box-shadow: 0 0 0 1px rgba(200,168,106,.55), 0 0 0 6px #0e0d0c, 0 0 0 7px rgba(200,168,106,.25), 0 24px 60px rgba(0,0,0,.75), inset 0 0 60px rgba(0,0,0,.6);
+  overflow: hidden;
+}
+.gm-grille::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none; transition: box-shadow .4s ease;
+}
+.gm-grille.est-mon-tour::after { box-shadow: inset 0 0 0 2px rgba(227,207,159,.45), inset 0 0 40px rgba(200,168,106,.12); }
+
+/* Une gemme : placée par sa case ; elle glisse (échange, chute) d'une case à l'autre */
+.gm-gemme {
+  position: absolute; left: calc(var(--x) * 100% / var(--n)); top: calc(var(--y) * 100% / var(--n));
+  display: grid; box-sizing: border-box; width: calc(100% / var(--n)); height: calc(100% / var(--n)); padding: calc(8% / var(--n));
+  border: 0; background: none; cursor: pointer;
+  transition: left .22s cubic-bezier(.3,.7,.4,1), top .3s cubic-bezier(.5,0,.75,.2);
+  -webkit-tap-highlight-color: transparent;
+}
+.gm-gemme__svg { display: block; width: 100%; height: 100%; overflow: visible; filter: drop-shadow(0 3px 3px rgba(0,0,0,.6)); transition: transform .18s ease, filter .18s ease; }
+.est-mon-tour .gm-gemme:hover .gm-gemme__svg { transform: scale(1.08); filter: drop-shadow(0 3px 3px rgba(0,0,0,.6)) brightness(1.15); }
+.gm-gemme:focus-visible { outline: 2px solid var(--or-pale); outline-offset: -3px; }
+.gm-gemme.est-choisie .gm-gemme__svg { transform: scale(1.14); animation: gm-choisie 1s ease-in-out infinite; }
+@keyframes gm-choisie { 50% { filter: drop-shadow(0 0 8px rgba(255,240,200,.85)) brightness(1.25); } }
+.gm-gemme.est-indice .gm-gemme__svg { animation: gm-indice 1.3s ease-in-out infinite; }
+@keyframes gm-indice { 0%, 100% { transform: none; } 50% { transform: scale(1.12) rotate(-6deg); filter: drop-shadow(0 0 6px rgba(227,207,159,.7)); } }
+/* les nouvelles tombent d'au-dessus de la grille */
+.gm-gemme.est-neuve { animation: gm-tombe calc(.18s + var(--chute) * .05s) cubic-bezier(.5,0,.75,.2) both; }
+@keyframes gm-tombe { from { transform: translateY(calc(var(--chute) * -100%)); } }
+/* elles éclatent : un flash, puis plus rien */
+.gm-gemme.est-eclatee { pointer-events: none; }
+.gm-gemme.est-eclatee .gm-gemme__svg { animation: gm-eclate .3s ease-in forwards; }
+@keyframes gm-eclate {
+  0% { transform: scale(1); filter: brightness(1); }
+  35% { transform: scale(1.3); filter: brightness(2.2) drop-shadow(0 0 12px #fff); }
+  100% { transform: scale(.2) rotate(25deg); opacity: 0; }
+}
+
+/* Les éclats : six facettes qui partent dans tous les sens */
+.gm-eclat {
+  position: absolute; left: calc((var(--x) + .5) * 100% / var(--n)); top: calc((var(--y) + .5) * 100% / var(--n));
+  width: 0; height: 0; pointer-events: none; z-index: 3;
+}
+.gm-eclat i {
+  position: absolute; width: 9px; height: 9px; margin: -4.5px; background: var(--c, #fff);
+  clip-path: polygon(50% 0, 100% 60%, 30% 100%);
+  animation: gm-eclat .55s cubic-bezier(.2,.7,.4,1) forwards;
+}
+.gm-eclat--sang { --c: #ff8a92; } .gm-eclat--ambre { --c: #ffe29b; } .gm-eclat--azur { --c: #b5d8ff; }
+.gm-eclat--os { --c: #f1ead8; } .gm-eclat--pierre { --c: #9d978e; }
+.gm-eclat i:nth-child(1) { --dx: 34px; --dy: -22px; } .gm-eclat i:nth-child(2) { --dx: -30px; --dy: -28px; }
+.gm-eclat i:nth-child(3) { --dx: 6px; --dy: -40px; } .gm-eclat i:nth-child(4) { --dx: 30px; --dy: 22px; }
+.gm-eclat i:nth-child(5) { --dx: -34px; --dy: 16px; } .gm-eclat i:nth-child(6) { --dx: -4px; --dy: 36px; }
+@keyframes gm-eclat { to { transform: translate(var(--dx), var(--dy)) rotate(220deg) scale(.3); opacity: 0; } }
+
+/* Les annonces au centre de la grille (le tour, les chaînes) */
+.gm-banniere {
+  position: absolute; left: 0; right: 0; top: 50%; z-index: 6; translate: 0 -50%;
+  padding: 14px 10px; text-align: center; pointer-events: none;
+  font-family: "Cinzel", "Cinzel Repli", serif; font-size: clamp(1.1rem, 4cqi, 1.9rem); font-weight: 700; letter-spacing: .12em;
+  color: var(--ivoire); text-shadow: 0 2px 14px rgba(0,0,0,.9);
+  background: linear-gradient(90deg, transparent, rgba(10,9,8,.88) 18%, rgba(10,9,8,.88) 82%, transparent);
+  border-block: 1px solid rgba(200,168,106,.45);
+  animation: gm-banniere .95s cubic-bezier(.2,.8,.3,1) both;
+}
+@keyframes gm-banniere {
+  0% { opacity: 0; transform: scaleX(.4); letter-spacing: .5em; }
+  25%, 75% { opacity: 1; transform: none; }
+  100% { opacity: 0; transform: translateY(-10px); }
+}
+.gm-banniere--moi { color: #f3e3bd; border-color: rgba(227,207,159,.8); }
+.gm-banniere--autre { color: #e7b9bd; border-color: rgba(194,65,76,.6); }
+.gm-banniere--chaine {
+  top: 18%; background: none; border: 0; font-size: clamp(1.4rem, 6cqi, 2.6rem); color: var(--or-pale);
+  text-shadow: 0 0 18px rgba(227,207,159,.6), 0 3px 10px rgba(0,0,0,.9);
+  animation: gm-chaine .7s cubic-bezier(.2,1.4,.4,1) both;
+}
+@keyframes gm-chaine { from { opacity: 0; transform: scale(2.2) rotate(-6deg); } }
+.gm-banniere--info { font-size: clamp(.9rem, 2.6cqi, 1.2rem); animation-duration: 1.1s; }
+
+/* La carte déclenchée : elle surgit au-dessus de la grille, dans la lumière de sa couleur */
+.gm-activation {
+  --teinte: var(--sang);
+  position: absolute; inset: 0; z-index: 7; display: grid; place-content: center; justify-items: center; gap: 6px;
+  pointer-events: none;
+  background: radial-gradient(circle at 50% 46%, color-mix(in srgb, var(--teinte) 45%, transparent), rgba(5,5,5,.75) 62%);
+  animation: gm-voile 1.55s ease both;
+}
+.gm-activation--ambre { --teinte: var(--ambre); } .gm-activation--azur { --teinte: var(--azur); }
+@keyframes gm-voile { 0% { opacity: 0; } 12%, 80% { opacity: 1; } 100% { opacity: 0; } }
+.gm-activation__carte {
+  width: min(38cqi, 210px); aspect-ratio: 5 / 7; background: #111 center / cover no-repeat;
+  box-shadow: 0 0 0 2px var(--or-pale), 0 0 0 6px #0b0a09, 0 0 0 7px var(--teinte), 0 0 60px var(--teinte);
+  animation: gm-surgit 1.55s cubic-bezier(.2,.9,.3,1) both;
+}
+.gm-activation--gauche .gm-activation__carte { --depuis: -60cqi; } .gm-activation--droite .gm-activation__carte { --depuis: 60cqi; }
+@keyframes gm-surgit {
+  0% { transform: translateX(var(--depuis)) rotate(-14deg) scale(.5); opacity: 0; }
+  30% { transform: rotate(0) scale(1.05); opacity: 1; }
+  45% { transform: scale(1); }
+  62% { transform: scale(1.12); filter: brightness(1.6); }
+  85% { transform: scale(1); opacity: 1; }
+  100% { transform: translateX(calc(var(--depuis) * -1)) scale(.6); opacity: 0; }
+}
+.gm-activation__nom { margin-top: 16px; font-family: "Cinzel", "Cinzel Repli", serif; font-size: 1.3rem; font-weight: 700; color: var(--ivoire); text-shadow: 0 2px 10px #000; animation: gm-texte 1.55s ease both; }
+.gm-activation__effet { font-style: italic; color: var(--or-pale); text-shadow: 0 2px 8px #000; animation: gm-texte 1.55s ease both; }
+@keyframes gm-texte { 0%, 20% { opacity: 0; transform: translateY(8px); } 35%, 80% { opacity: 1; transform: none; } 100% { opacity: 0; } }
+
+/* La fin de la partie */
+.gm-fin {
+  position: absolute; inset: 0; z-index: 8; display: grid; place-content: center; justify-items: center; gap: 8px; padding: 20px; text-align: center;
+  background: radial-gradient(circle, rgba(15,13,11,.86), rgba(5,5,5,.95));
+  animation: gm-fin-voile .6s ease both;
+}
+@keyframes gm-fin-voile { from { opacity: 0; } }
+.gm-fin__sur { font-family: "Cinzel", "Cinzel Repli", serif; font-size: .78rem; letter-spacing: .3em; text-transform: uppercase; color: var(--or); }
+.gm-fin__titre { font-family: "Cinzel", "Cinzel Repli", serif; font-size: clamp(2.2rem, 10cqi, 4rem); letter-spacing: .1em; animation: gm-fin-titre .9s cubic-bezier(.2,1.3,.4,1) .15s both; }
+.gm-fin--victoire .gm-fin__titre { color: var(--or-pale); text-shadow: 0 0 30px rgba(227,207,159,.55); }
+.gm-fin--defaite .gm-fin__titre { color: #d8858c; text-shadow: 0 0 30px rgba(155,39,48,.6); }
+@keyframes gm-fin-titre { from { opacity: 0; transform: scale(1.8); letter-spacing: .5em; } }
+.gm-fin__texte { font-style: italic; color: var(--ivoire-doux); }
+.gm-fin__boutons { display: flex; gap: 10px; margin-top: 10px; }
+.gm-alerte { position: fixed; left: 50%; bottom: 18px; z-index: 30; translate: -50% 0; margin: 0; padding: 10px 18px; background: rgba(15,14,12,.95); border: 1px solid rgba(200,168,106,.45); font-style: italic; }
+
+/* ---------- Un combattant ---------- */
+.gm-combattant {
+  position: relative; display: grid; gap: 12px; padding: 16px 14px;
+  clip-path: var(--taille); background: linear-gradient(180deg, rgba(26,24,21,.94), rgba(15,14,12,.94));
+  border: 1px solid rgba(200,168,106,.22);
+  transition: box-shadow .4s ease, border-color .4s ease;
+}
+.gm-combattant.est-actif { border-color: rgba(227,207,159,.6); box-shadow: inset 0 0 40px rgba(200,168,106,.12); }
+.gm-combattant.est-touche { animation: gm-touche .42s ease; }
+@keyframes gm-touche { 0%, 100% { transform: none; } 25% { transform: translateX(-7px); filter: brightness(1.6) saturate(.4) sepia(.6) hue-rotate(-30deg); } 60% { transform: translateX(5px); } }
+.gm-combattant__tete { display: grid; grid-template-columns: 52px 1fr; grid-template-rows: auto auto; align-items: center; column-gap: 12px; }
+.gm-combattant__portrait {
+  grid-row: span 2; width: 52px; height: 52px; display: grid; place-items: center; overflow: hidden;
+  clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+  background: linear-gradient(135deg, #3a332a, #1a1714); color: var(--or-pale);
+  font-family: "Cinzel", "Cinzel Repli", serif; font-size: 1.4rem;
+}
+.gm-combattant--gauche .gm-combattant__portrait { background: linear-gradient(135deg, #4a1218, #140a0b); color: #e7b9bd; }
+.gm-combattant__portrait img { width: 100%; height: 100%; object-fit: cover; }
+.gm-combattant__nom { font-family: "Cinzel", "Cinzel Repli", serif; font-weight: 700; font-size: 1rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gm-combattant__tour { font-size: .78rem; font-style: italic; color: var(--or-pale); min-height: 1.1em; }
+.gm-combattant.est-actif .gm-combattant__tour::before { content: "◆ "; font-style: normal; font-size: .6rem; vertical-align: middle; animation: gm-pulse 1.2s ease-in-out infinite; display: inline-block; }
+@keyframes gm-pulse { 50% { opacity: .3; } }
+
+/* Les PV : la barre, et sa traîne qui suit plus lentement */
+.gm-pv { position: relative; height: 22px; background: #0b0a09; box-shadow: inset 0 0 0 1px rgba(200,168,106,.4); }
+.gm-pv__barre, .gm-pv__traine { position: absolute; inset: 2px; transform-origin: left; transform: scaleX(var(--part)); }
+.gm-pv__traine { background: #e8d9b8; transition: transform .9s ease .35s; }
+.gm-pv__barre { background: linear-gradient(180deg, #c8484f, #7a1d23); transition: transform .25s ease; }
+.gm-combattant--droite .gm-pv__barre { background: linear-gradient(180deg, #5fae7a, #2c6040); }
+.gm-pv__texte { position: absolute; inset: 0; display: grid; place-items: center; font-size: .78rem; font-weight: 700; letter-spacing: .06em; text-shadow: 0 1px 3px #000; }
+.gm-flottant {
+  position: absolute; left: 50%; top: -30px; z-index: 4; translate: -50% 0; pointer-events: none;
+  font-family: "Cinzel", "Cinzel Repli", serif; font-size: 1.7rem; font-weight: 700; color: #fff; -webkit-text-stroke: 1px rgba(0,0,0,.6);
+  text-shadow: 0 2px 10px rgba(0,0,0,.9);
+  animation: gm-flotte 1.4s cubic-bezier(.2,.8,.3,1) forwards;
+}
+.gm-flottant--sang { color: #ff7b85; } .gm-flottant--ambre { color: #ffd77a; } .gm-flottant--azur { color: #9ccaff; }
+.gm-flottant--soin { color: #8fe0a6; left: 22%; }
+@keyframes gm-flotte {
+  0% { opacity: 0; transform: translateY(14px) scale(.6); }
+  18% { opacity: 1; transform: translateY(-6px) scale(1.25); }
+  35% { transform: translateY(-12px) scale(1); }
+  100% { opacity: 0; transform: translateY(-46px); }
+}
+
+/* Les échanges restants : trois losanges */
+.gm-echanges { display: flex; gap: 6px; min-height: 12px; }
+.gm-echanges i { width: 11px; height: 11px; rotate: 45deg; border: 1px solid var(--or); transition: background .25s ease, box-shadow .25s ease; }
+.gm-echanges i.est-plein { background: var(--or-pale); box-shadow: 0 0 8px rgba(227,207,159,.6); }
+
+/* Les trois cartes et leurs jauges */
+.gm-cartes { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.gm-carte {
+  --teinte: var(--sang);
+  position: relative; display: grid; grid-template-columns: 46px 1fr; grid-template-rows: auto auto auto; column-gap: 10px; row-gap: 3px; align-items: center;
+  width: 100%; padding: 7px 9px 7px 7px; text-align: left; cursor: default; color: var(--ivoire);
+  background: linear-gradient(90deg, color-mix(in srgb, var(--teinte) 14%, #171513), #131210);
+  border: 1px solid color-mix(in srgb, var(--teinte) 30%, transparent);
+  transition: transform .25s ease, box-shadow .3s ease;
+}
+.gm-carte--ambre { --teinte: var(--ambre); } .gm-carte--azur { --teinte: var(--azur); }
+.gm-carte__image { grid-row: span 3; width: 46px; aspect-ratio: 5 / 7; background: #0c0b0a center / cover no-repeat; border: 1px solid rgba(200,168,106,.35); }
+.gm-carte__gemme { position: absolute; left: 33px; top: 3px; width: 20px; height: 20px; filter: drop-shadow(0 1px 2px #000); }
+.gm-carte__nom { font-family: "Cinzel", "Cinzel Repli", serif; font-size: .8rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gm-carte__jauge { position: relative; height: 8px; background: #0a0909; box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--teinte) 40%, transparent); overflow: hidden; }
+.gm-carte__jauge i {
+  position: absolute; inset: 1px; transform-origin: left; transform: scaleX(var(--part));
+  background: linear-gradient(90deg, color-mix(in srgb, var(--teinte) 60%, #000), var(--teinte));
+  transition: transform .4s cubic-bezier(.2,.8,.3,1);
+}
+.gm-carte__etat { font-size: .72rem; color: var(--ivoire-doux); }
+.gm-carte.est-pleine { box-shadow: 0 0 0 1px var(--teinte), 0 0 18px color-mix(in srgb, var(--teinte) 55%, transparent); }
+.gm-carte.est-pleine .gm-carte__jauge i { animation: gm-jauge 1.1s linear infinite; background: linear-gradient(90deg, var(--teinte), #fff6, var(--teinte)) 0 0 / 200% 100%; }
+@keyframes gm-jauge { to { background-position: -200% 0; } }
+.gm-carte.est-pleine .gm-carte__etat { color: var(--teinte); font-weight: 700; letter-spacing: .06em; }
+.gm-carte.est-pleine:not(:disabled) { cursor: pointer; animation: gm-appel 1.4s ease-in-out infinite; }
+.gm-carte.est-pleine:not(:disabled):hover { transform: translateX(-4px) scale(1.03); }
+.gm-combattant--gauche .gm-carte.est-pleine:not(:disabled):hover { transform: translateX(4px) scale(1.03); }
+@keyframes gm-appel { 50% { box-shadow: 0 0 0 1px var(--teinte), 0 0 30px color-mix(in srgb, var(--teinte) 85%, transparent); } }
+.gm-carte.est-declenchee { animation: gm-declenchee .6s ease; }
+@keyframes gm-declenchee { 40% { transform: scale(1.08); filter: brightness(2); } }
+
+/* ---------- Écrans moyens : les deux combattants au-dessus de la grille ---------- */
+@media (max-width: 1100px) {
+  .gm-table { grid-template-columns: 1fr 1fr; align-items: start; min-height: 0; }
+  .gm-centre { grid-column: 1 / -1; grid-row: 2; }
+  .gm-bandeau, .gm-grille { width: min(100cqi, 680px); }
+  .gm-cartes { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .gm-carte { grid-template-columns: 1fr; }
+  .gm-carte__image { display: none; }
+  .gm-carte__gemme { position: static; }
+  .gm-accueil__corps { grid-template-columns: 1fr; }
+}
+
+/* ---------- Animations coupées (Paramètres) ou système en mouvement réduit ---------- */
+.anim-reduites .gm-gemme, .anim-reduites .gm-gemme__svg, .anim-reduites .gm-pv__traine { transition: none; }
+.anim-reduites .gm-gemme.est-neuve, .anim-reduites .gm-eclat, .anim-reduites .gm-table.est-secouee, .anim-reduites .gm-combattant.est-touche { animation: none; }
+@media (prefers-reduced-motion: reduce) {
+  .gm-table.est-secouee, .gm-combattant.est-touche, .gm-gemme.est-choisie .gm-gemme__svg, .gm-gemme.est-indice .gm-gemme__svg { animation: none; }
+}
+
+/* La jauge qui se charge (les gemmes alignées) : la carte s'éclaire, un « +n » s'envole */
+.gm-carte.est-chargee { animation: gm-chargee .6s ease; }
+@keyframes gm-chargee { 30% { box-shadow: 0 0 0 1px var(--teinte), 0 0 22px color-mix(in srgb, var(--teinte) 70%, transparent); filter: brightness(1.3); } }
+.gm-carte__plus {
+  position: absolute; right: 10px; bottom: 2px; pointer-events: none;
+  font-family: "Cinzel", "Cinzel Repli", serif; font-weight: 700; font-size: 1.05rem; color: var(--teinte);
+  text-shadow: 0 0 10px color-mix(in srgb, var(--teinte) 80%, transparent), 0 2px 4px #000;
+  animation: gm-plus .9s cubic-bezier(.2,.8,.3,1) forwards;
+}
+@keyframes gm-plus { 0% { opacity: 0; transform: translateY(8px) scale(.6); } 25% { opacity: 1; transform: scale(1.2); } 100% { opacity: 0; transform: translateY(-16px); } }
+.anim-reduites .gm-carte.est-chargee, .anim-reduites .gm-carte__plus { animation: none; }
