@@ -165,6 +165,10 @@ body.page-gemmes {
   30%, 50%, 70% { transform: translate(-6px, 2px); }
   40%, 60% { transform: translate(6px, -1px); }
 }
+/* Le joueur à gauche, l'adversaire à droite (sur téléphone : l'adversaire en haut, telephone/styles/gemmes.css) */
+.gm-combattant--droite { grid-column: 1; grid-row: 1; }
+.gm-centre { grid-column: 2; grid-row: 1; }
+.gm-combattant--gauche { grid-column: 3; grid-row: 1; }
 .gm-centre { container-type: inline-size; display: grid; justify-items: center; gap: 10px; min-width: 0; }
 
 /* Le bandeau au-dessus de la grille : un filet d'or, le numéro du tour, qui joue, « Fin du tour » */
@@ -306,7 +310,8 @@ body.page-gemmes {
   filter: drop-shadow(0 0 3px var(--teinte)) drop-shadow(0 0 40px var(--teinte));
   animation: gm-surgit 1.55s cubic-bezier(.2,.9,.3,1) both;
 }
-.gm-activation--gauche .gm-activation__carte { --depuis: -60cqi; } .gm-activation--droite .gm-activation__carte { --depuis: 60cqi; }
+/* (la carte arrive du côté de celui qui la lance : le joueur, « droite » dans le code, est affiché à gauche) */
+.gm-activation--gauche .gm-activation__carte { --depuis: 60cqi; } .gm-activation--droite .gm-activation__carte { --depuis: -60cqi; }
 @keyframes gm-surgit {
   0% { transform: translateX(var(--depuis)) rotate(-14deg) scale(.5); opacity: 0; }
   30% { transform: rotate(0) scale(1.05); opacity: 1; }
@@ -496,6 +501,7 @@ body.page-gemmes {
 @media (max-width: 1100px) {
   .gm-table { grid-template-columns: 1fr 1fr; align-items: start; min-height: 0; }
   .gm-centre { grid-column: 1 / -1; grid-row: 2; }
+  .gm-combattant--gauche { grid-column: 2; }
   .gm-grille { width: min(100cqi - 20px, 680px); }
   .gm-carte__ligne { flex-wrap: wrap; justify-content: center; row-gap: 2px; }
   .gm-carte__etat { flex-basis: 100%; text-align: center; }
