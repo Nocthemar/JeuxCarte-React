@@ -24,6 +24,10 @@
   .gm-carte__nom { font-size: .68rem; }
   .gm-bandeau { padding: 6px 6px 6px 10px; gap: 8px; }
   .gm-bandeau__tour { display: none; }
-  .gm-bandeau, .gm-grille { width: 100cqi; }
+  .gm-bandeau { width: 100cqi; }
+  .gm-cadre { padding: 6px; }
+  .gm-grille { width: calc(100cqi - 12px); }
+  .gm-carte__image { height: 58px; }
+  .gm-coins i { width: 18px; height: 18px; }
   .gm-flottant { font-size: 1.3rem; }
 }

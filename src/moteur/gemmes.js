@@ -6,15 +6,18 @@
 //    (un échange qui n'aligne rien est refusé et ne compte pas). 3 échanges par tour au plus (2 au tout premier
 //    tour, pour que celui qui commence n'ait pas trop d'avance) ;
 //    on peut finir son tour plus tôt.
-//  - Les gemmes ne frappent pas : chaque combattant a 3 cartes, une par couleur (Sang, Ambre, Azur), et
-//    aligner une couleur charge la jauge de SA carte de cette couleur. Plus on en aligne, plus ça charge :
-//    4 gemmes = 4 parts de jauge, 3 gemmes = 3. L'Os et la Pierre ne chargent rien (ils préparent les chaînes).
+//  - Une gemme par rareté, de la couleur de la rareté dans tout le jeu : Commune (gris), Éveillée (vert),
+//    Mythique (bleu), Légendaire (rouge), Transcendante (or).
+//  - Les gemmes ne frappent pas : chaque combattant a 3 cartes de sa collection, et aligner des gemmes
+//    d'une rareté charge la jauge de SA carte de cette rareté (l'Ombre, elle, a pour chaque carte une gemme
+//    tirée au hasard ; deux cartes de la même gemme : la première, puis le surplus va à la suivante).
+//    Plus on en aligne, plus ça charge : 4 gemmes = 4 parts de jauge, 3 gemmes = 3. Les gemmes d'une rareté qu'on n'a pas
+//    ne chargent rien pour soi (mais peut-être pour l'adversaire).
 //  - Les gemmes tombent, de nouvelles arrivent du haut : les alignements en chaîne chargent plus
 //    (+25 % par maillon), sans coûter d'échange.
 //  - Jauge pleine : on appuie sur la carte pour lancer son attaque sur l'adversaire (gratuitement, pendant
-//    son tour). C'est la SEULE façon de lui faire perdre des PV. Sa force dépend de sa rareté, et chaque
-//    couleur attaque à sa façon : Sang frappe fort (jauge longue), Ambre frappe et rend un échange,
-//    Azur frappe moins mais soigne (jauge courte).
+//    son tour). C'est la SEULE façon de lui faire perdre des PV. Tout dépend de la rareté (RARETE) :
+//    plus la carte est rare, plus sa jauge est longue et plus son pouvoir frappe fort.
 //  - La partie s'arrête quand un combattant tombe à 0 PV.
 //
 //  Le hasard vient d'une graine (moteur/hasard.js) : même graine + mêmes actions = même partie.
@@ -25,17 +28,17 @@ import { hasard, nouvelleGraine } from './hasard.js';
 export const TAILLE = 8;
 export const PV_DEPART = 220;
 export const ECHANGES_PAR_TOUR = 3;
-// Les sortes de gemmes : les trois couleurs (dans cet ordre), puis les deux neutres
-export const COULEURS = ['sang', 'ambre', 'azur'];
-export const SORTES = [...COULEURS, 'os', 'pierre'];
-// jauge : les gemmes à aligner pour remplir la jauge de la carte de cette couleur
-export const COULEUR = {
-  sang: { nom: 'Sang', jauge: 18, effet: 'Attaque lourde : une fois et demie sa force.' },
-  ambre: { nom: 'Ambre', jauge: 14, effet: 'Attaque, et rend un échange ce tour-ci.' },
-  azur: { nom: 'Azur', jauge: 10, effet: 'Attaque légère (trois quarts de sa force), et soigne la moitié de sa force.' },
+// Les sortes de gemmes : une par rareté, de la plus commune à la plus rare
+export const SORTES = ['commune', 'eveillee', 'mythique', 'legendaire', 'transcendante'];
+// Selon la rareté de la carte : jauge (gemmes à aligner pour la remplir), et son pouvoir une fois pleine
+// (degats à l'adversaire, soin pour soi, échanges rendus ce tour-ci)
+export const RARETE = {
+  commune: { nom: 'Commune', jauge: 8, degats: 16, soin: 0, echange: 0 },
+  eveillee: { nom: 'Éveillée', jauge: 10, degats: 18, soin: 10, echange: 0 },
+  mythique: { nom: 'Mythique', jauge: 12, degats: 25, soin: 0, echange: 1 },
+  legendaire: { nom: 'Légendaire', jauge: 15, degats: 36, soin: 0, echange: 0 },
+  transcendante: { nom: 'Transcendante', jauge: 18, degats: 42, soin: 8, echange: 1 },
 };
-// La force d'une carte déclenchée, selon sa rareté
-export const FORCE = { commune: 24, eveillee: 28, mythique: 32, legendaire: 38, transcendante: 45 };
 const BONUS_CHAINE = 0.25;
 
 const ligneDe = (i) => Math.floor(i / TAILLE);
@@ -102,18 +105,20 @@ function remplir(etat) {
 
 // ---------------------------------------------------------------------
 //  La partie
-//  combattants : [{ nom, cartes: [{ n, image, rarete } ×3, dans l'ordre des COULEURS] }, …] (0 : celui qui commence)
+//  combattants : [{ nom, cartes: [{ n, image, rarete, gemme? } ×3] }, …] (0 : celui qui commence)
+//  Une carte de la partie : { n, image, rarete, gemme, jauge, max } : sa gemme (celle qui la charge) est celle de
+//  sa rareté, sauf si on en donne une autre (les cartes de l'Ombre : tirées au hasard, choix.js cartesOmbre)
 // ---------------------------------------------------------------------
 export function nouvellePartie(combattants, graine = nouvelleGraine()) {
   const etat = {
     graine: graine >>> 0, prochain: 0, tour: 1, actif: 0, echanges: ECHANGES_PAR_TOUR - 1, fin: null, grille: null,
     joueurs: combattants.map(({ nom, cartes }) => ({
       nom, pv: PV_DEPART, pvMax: PV_DEPART,
-      cartes: COULEURS.map((couleur, k) => ({
-        n: cartes[k]?.n ?? 'Carte', image: cartes[k]?.image ?? null,
-        rarete: FORCE[cartes[k]?.rarete] ? cartes[k].rarete : 'commune',
-        couleur, jauge: 0, max: COULEUR[couleur].jauge,
-      })),
+      cartes: [0, 1, 2].map((k) => {
+        const rarete = RARETE[cartes[k]?.rarete] ? cartes[k].rarete : 'commune';
+        const gemme = SORTES.includes(cartes[k]?.gemme) ? cartes[k].gemme : rarete;
+        return { n: cartes[k]?.n ?? 'Carte', image: cartes[k]?.image ?? null, rarete, gemme, jauge: 0, max: RARETE[rarete].jauge };
+      }),
     })),
   };
   etat.grille = remplir(etat);
@@ -132,8 +137,8 @@ const blesser = (etat, cible, n) => {
 };
 
 // Les alignements, les chutes et les chaînes après un échange. Renvoie les étapes, pour l'affichage :
-// { retirees: [id…], grille, chutes: { id: nombre de cases }, gains: { sorte: gemmes }, charges: { couleur: parts }, chaine }
-// Les gemmes ne blessent personne : elles chargent les jauges des cartes du combattant qui joue.
+// { retirees: [id…], grille, chutes: { id: nombre de cases }, gains: { sorte: gemmes }, charges: { k: parts }, chaine }
+// Les gemmes ne blessent personne : elles chargent les jauges des cartes (de leur rareté) du combattant qui joue.
 function resoudre(etat) {
   const etapes = [];
   const moi = etat.joueurs[etat.actif];
@@ -145,12 +150,18 @@ function resoudre(etat) {
       const sorte = SORTES[etat.grille[i].s];
       gains[sorte] = (gains[sorte] ?? 0) + 1;
     }
+    // Plusieurs cartes de la même rareté : la charge remplit la première, le surplus passe à la suivante
     const charges = {};
-    for (const couleur of COULEURS) {
-      if (!gains[couleur]) continue;
-      charges[couleur] = Math.round(gains[couleur] * (1 + BONUS_CHAINE * (chaine - 1)));
-      const carte = moi.cartes[COULEURS.indexOf(couleur)];
-      carte.jauge = Math.min(carte.max, carte.jauge + charges[couleur]);
+    for (const sorte of SORTES) {
+      if (!gains[sorte]) continue;
+      let reste = Math.round(gains[sorte] * (1 + BONUS_CHAINE * (chaine - 1)));
+      moi.cartes.forEach((carte, k) => {
+        if (carte.gemme !== sorte || !reste || carte.jauge >= carte.max) return;
+        const part = Math.min(reste, carte.max - carte.jauge);
+        carte.jauge += part;
+        charges[k] = part;
+        reste -= part;
+      });
     }
     const retirees = [...touchees].map((i) => etat.grille[i].id);
 
@@ -196,12 +207,15 @@ function passer(etat) {
   if (etat.actif === 0) etat.tour += 1;
 }
 
-// Ce que vaut une carte déclenchée : { degats, soin, echange }
+// Ce que vaut une carte déclenchée (selon sa rareté) : { degats, soin, echange }
 export function effetCarte(carte) {
-  const f = FORCE[carte.rarete] ?? FORCE.commune;
-  if (carte.couleur === 'sang') return { degats: Math.round(f * 1.5), soin: 0, echange: 0 };
-  if (carte.couleur === 'ambre') return { degats: f, soin: 0, echange: 1 };
-  return { degats: Math.round(f * 0.75), soin: Math.round(f / 2), echange: 0 };
+  const { degats, soin, echange } = RARETE[carte.rarete] ?? RARETE.commune;
+  return { degats, soin, echange };
+}
+// Le pouvoir en une phrase (l'écran du choix, les infobulles)
+export function textePouvoir(rarete) {
+  const { degats, soin, echange } = RARETE[rarete] ?? RARETE.commune;
+  return [`${degats} dégâts`, soin && `+${soin} PV`, echange && '+1 échange'].filter(Boolean).join(' · ');
 }
 
 // ---------------------------------------------------------------------
@@ -259,13 +273,14 @@ function valeurCoup(etat, qui, [a, b], profond) {
   const compter = (cases, poids) => {
     for (const i of cases) {
       const sorte = SORTES[g[i].s];
-      const k = COULEURS.indexOf(sorte);
-      if (k < 0) { v += 0.1 * poids; continue; }
-      // une gemme vaut la part d'attaque qu'elle charge (rien si la jauge est déjà pleine)
-      const c = moi.cartes[k];
-      if (c.jauge >= c.max) { v += 0.1 * poids; continue; }
-      const e = effetCarte(c);
-      v += ((10 * (e.degats + 0.6 * e.soin + 5 * e.echange)) / c.max) * (profond ? 1 + c.jauge / c.max : 1) * poids;
+      v += 0.1 * poids;
+      // une gemme vaut la part d'attaque qu'elle charge à chacune de ses cartes de cette rareté
+      // (rien pour une jauge déjà pleine)
+      for (const c of moi.cartes) {
+        if (c.gemme !== sorte || c.jauge >= c.max) continue;
+        const e = effetCarte(c);
+        v += ((10 * (e.degats + 0.6 * e.soin + 5 * e.echange)) / c.max) * (profond ? 1 + c.jauge / c.max : 1) * poids;
+      }
     }
   };
   compter(touchees, 1);

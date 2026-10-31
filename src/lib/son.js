@@ -229,70 +229,117 @@ export function reglerVolumeMusique(v) {
 
 
 // ---------------------------------------------------------------------
-//  L'ambiance musicale, générée : une nappe grave et lente (ré mineur, si bémol, do, la mineur),
-//  et de temps en temps une cloche lointaine. Elle démarre au premier geste du joueur
+//  L'ambiance musicale, générée : une harpe qui égrène lentement les accords d'une ballade médiévale
+//  (ré mineur, si bémol, fa, do), sur un fond de cordes très doux et une basse posée à chaque accord,
+//  le tout dans une salle de pierre (un écho long). Les notes sont tirées au hasard dans l'accord :
+//  la mélodie ne se répète jamais tout à fait. Elle démarre au premier geste du joueur
 //  (les navigateurs l'exigent) et suit le volume « musique ».
 // ---------------------------------------------------------------------
-const ACCORDS = [[146.83, 220, 293.66], [116.54, 174.61, 293.66], [130.81, 196, 329.63], [110, 164.81, 261.63]];
-const CLOCHES = [587.33, 698.46, 783.99, 880, 1046.5, 1174.66];   // ré mineur pentatonique, en haut
+const hz = (midi) => 440 * 2 ** ((midi - 69) / 12);
+// Les accords (notes MIDI) : la basse, puis les notes que la harpe peut jouer (deux octaves)
+const ACCORDS = [
+  { basse: 38, notes: [62, 65, 69, 74, 77, 81] },   // ré mineur
+  { basse: 34, notes: [62, 65, 70, 74, 77, 82] },   // si bémol
+  { basse: 41, notes: [60, 65, 69, 72, 77, 81] },   // fa
+  { basse: 36, notes: [60, 64, 67, 72, 76, 79] },   // do
+];
+const TEMPS = 0.62;          // durée d'une note de harpe (s)
+const NOTES_PAR_ACCORD = 12;
 let musique = null;
+
+// La salle de pierre : un écho long, fait d'un bruit qui s'éteint
+function salle() {
+  const duree = 3.2, n = Math.floor(ctx.sampleRate * duree);
+  const ir = ctx.createBuffer(2, n, ctx.sampleRate);
+  for (let c = 0; c < 2; c++) {
+    const d = ir.getChannelData(c);
+    for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / n) ** 2.6;
+  }
+  const echo = ctx.createConvolver();
+  echo.buffer = ir;
+  return echo;
+}
+
+// Une corde pincée : une attaque nette, puis la note qui s'éteint (deux harmoniques)
+function harpe(sortieMusique, t, freq, force) {
+  [[freq, 'triangle', 0.09], [freq * 2, 'sine', 0.025]].forEach(([f, type, crete]) => {
+    const o = ctx.createOscillator();
+    o.type = type; o.frequency.value = f;
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(crete * force, t + 0.008);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 2.4);
+    o.connect(g).connect(sortieMusique);
+    o.start(t); o.stop(t + 2.5);
+  });
+}
+
+// Une note tenue (les cordes, la basse) : montée lente, tenue, extinction lente
+function tenue(sortieMusique, t, freq, duree, crete, type = 'sine') {
+  const o = ctx.createOscillator();
+  o.type = type; o.frequency.value = freq;
+  const g = ctx.createGain();
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(crete, t + duree * 0.35);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + duree * 1.15);
+  o.connect(g).connect(sortieMusique);
+  o.start(t); o.stop(t + duree * 1.2);
+}
 
 export function demarrerMusique() {
   if (musique || volMusique === 0 || !audio()) return;
-  const t0 = ctx.currentTime;
-  const nappe = ctx.createGain();
-  nappe.gain.setValueAtTime(0.0001, t0);
-  nappe.gain.exponentialRampToValueAtTime(0.11, t0 + 4);   // fondu d'entrée
-  const filtre = ctx.createBiquadFilter();
-  filtre.type = 'lowpass'; filtre.frequency.value = 900; filtre.Q.value = 0.3;
-  nappe.connect(filtre).connect(busMusique);
-  // trois voix, chacune avec deux oscillateurs légèrement désaccordés
-  const voix = ACCORDS[0].map((f) => {
-    const oscs = [['sine', 0], ['triangle', 4]].map(([type, decalage]) => {
-      const o = ctx.createOscillator();
-      o.type = type; o.frequency.value = f; o.detune.value = decalage;
-      const g = ctx.createGain(); g.gain.value = type === 'sine' ? 0.5 : 0.18;
-      o.connect(g).connect(nappe);
-      o.start(t0);
-      return o;
-    });
-    return oscs;
-  });
-  let i = 0;
-  const changerAccord = () => {
-    i = (i + 1) % ACCORDS.length;
-    const t = ctx.currentTime;
-    voix.forEach((oscs, v) => oscs.forEach((o) => o.frequency.setTargetAtTime(ACCORDS[i][v], t, 1.2)));
+  const t0 = ctx.currentTime + 0.1;
+  // fondu d'entrée, filtre doux, puis le son direct et l'écho de la salle
+  const fondu = ctx.createGain();
+  fondu.gain.setValueAtTime(0.0001, t0);
+  fondu.gain.exponentialRampToValueAtTime(0.9, t0 + 3);
+  const doux = ctx.createBiquadFilter();
+  doux.type = 'lowpass'; doux.frequency.value = 2600; doux.Q.value = 0.4;
+  const echo = salle();
+  const mouille = ctx.createGain(); mouille.gain.value = 0.55;
+  fondu.connect(doux);
+  doux.connect(busMusique);
+  doux.connect(echo).connect(mouille).connect(busMusique);
+
+  // On prévoit les notes un peu à l'avance (toutes les 250 ms), au temps près
+  let prochaine = t0, n = 0, precedente = 2;
+  const planifier = () => {
+    // (onglet en arrière-plan : le minuteur a pris du retard, on reprend maintenant au lieu de tout rattraper)
+    if (prochaine < ctx.currentTime) prochaine = ctx.currentTime + 0.05;
+    while (prochaine < ctx.currentTime + 0.6) {
+      const accord = ACCORDS[Math.floor(n / NOTES_PAR_ACCORD) % ACCORDS.length];
+      const k = n % NOTES_PAR_ACCORD;
+      if (k === 0) {
+        const duree = TEMPS * NOTES_PAR_ACCORD;
+        tenue(fondu, prochaine, hz(accord.basse), duree, 0.07);
+        // les cordes : la tierce et la quinte, très bas
+        tenue(fondu, prochaine, hz(accord.notes[0] - 12), duree, 0.018, 'triangle');
+        tenue(fondu, prochaine, hz(accord.notes[1] - 12), duree, 0.014, 'triangle');
+      }
+      // la harpe : souvent la note voisine de la précédente, parfois un saut, parfois un silence
+      if (k === 0 || Math.random() > 0.22) {
+        const pas = Math.random() < 0.7 ? (Math.random() < 0.5 ? -1 : 1) : Math.round((Math.random() - 0.5) * 6);
+        precedente = Math.min(accord.notes.length - 1, Math.max(0, precedente + pas));
+        const accent = k % 4 === 0 ? 1 : 0.7 + Math.random() * 0.2;
+        harpe(fondu, prochaine + (Math.random() - 0.5) * 0.02, hz(accord.notes[precedente]), accent);
+      }
+      prochaine += TEMPS * (k % 4 === 3 && Math.random() < 0.3 ? 1.5 : 1);   // un léger rubato
+      n += 1;
+    }
   };
-  const cloche = () => {
-    const t = ctx.currentTime;
-    const f = CLOCHES[Math.floor(Math.random() * CLOCHES.length)];
-    [[f, 0.05], [f * 2.01, 0.015]].forEach(([fr, crete]) => {
-      const o = ctx.createOscillator(); o.frequency.value = fr;
-      const g = ctx.createGain();
-      g.gain.setValueAtTime(0.0001, t);
-      g.gain.exponentialRampToValueAtTime(crete, t + 0.01);
-      g.gain.exponentialRampToValueAtTime(0.0001, t + 3.5);
-      o.connect(g).connect(busMusique);
-      o.start(t); o.stop(t + 3.6);
-    });
-  };
-  musique = {
-    nappe, voix,
-    accords: setInterval(changerAccord, 9000),
-    cloches: setInterval(() => { if (Math.random() < 0.6) cloche(); }, 4500),
-  };
+  planifier();
+  musique = { fondu, minuteur: setInterval(planifier, 250) };
 }
 
 export function arreterMusique() {
   if (!musique) return;
-  const { nappe, voix, accords, cloches } = musique;
+  const { fondu, minuteur } = musique;
   musique = null;
-  clearInterval(accords); clearInterval(cloches);
+  clearInterval(minuteur);
   const t = ctx.currentTime;
-  nappe.gain.cancelScheduledValues(t);
-  nappe.gain.setTargetAtTime(0.0001, t, 0.6);
-  voix.flat().forEach((o) => o.stop(t + 3));
+  fondu.gain.cancelScheduledValues(t);
+  fondu.gain.setTargetAtTime(0.0001, t, 0.6);
+  setTimeout(() => fondu.disconnect(), 4000);
 }
 
 // Lance la musique au premier geste du joueur sur la page (clic, touche)

@@ -58,7 +58,8 @@ export function useSalonGemmes({ joueur, cartes }) {
     const moi = dedans.find((x) => x.cle === s.cle);
     const autre = dedans.find((x) => x.cle !== s.cle);
     const roles = Math.random() < 0.5 ? ['hote', 'invite'] : ['invite', 'hote'];
-    const fiche = (x) => ({ nom: x.nom, avatar: x.avatar ?? null, cartes: (x.cartes ?? []).slice(0, 3) });
+    // (sans « gemme » : contre un ami, chaque carte se charge avec les gemmes de sa rareté)
+    const fiche = (x) => ({ nom: x.nom, avatar: x.avatar ?? null, cartes: (x.cartes ?? []).slice(0, 3).map(({ cle, n, image, rarete }) => ({ cle, n, image, rarete })) });
     const message = {
       t: 'debut', p, graine: nouvelleGraine(), roles,
       combattants: roles.map((r) => fiche(r === 'hote' ? moi : autre)),

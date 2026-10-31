@@ -10,17 +10,16 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Gemme, { DefsGemmes } from './Gemme.jsx';
 import {
-  nouvellePartie, appliquer, choixOmbre, coupsPossibles, effetCarte, voisins,
-  TAILLE, SORTES, COULEURS, COULEUR, ECHANGES_PAR_TOUR,
+  nouvellePartie, appliquer, choixOmbre, coupsPossibles, voisins,
+  TAILLE, SORTES, RARETE, ECHANGES_PAR_TOUR, textePouvoir,
 } from '../../moteur/gemmes.js';
-import { NOM_RARETE } from '../../lib/gemmes/choix.js';
 import { urlPublique } from '../../lib/chemins.js';
 import { duree } from '../../lib/preferences.js';
 import { jouerSon } from '../../lib/son.js';
 
 const attendre = (ms) => new Promise((ok) => setTimeout(ok, ms));
-const SON_COULEUR = { sang: 'griffe', ambre: 'forge', azur: 'eau' };
-const SON_CARTE = { sang: 'tonnerre', ambre: 'couronne', azur: 'magie' };
+const SON_RARETE = { commune: 'pose', eveillee: 'elan', mythique: 'eau', legendaire: 'griffe', transcendante: 'forge' };
+const SON_CARTE = { commune: 'choc', eveillee: 'soin', mythique: 'magie', legendaire: 'tonnerre', transcendante: 'couronne' };
 const vueDe = (etat) => ({
   grille: etat.grille.map(({ id, s }) => ({ id, s })),
   pv: etat.joueurs.map((j) => j.pv),
@@ -39,8 +38,9 @@ function Combattant({ j, cote, pv, jauges, actif, echanges, peutDeclencher, surD
         <span className="gm-combattant__portrait">
           {j.avatar ? <img src={j.avatar} alt="" /> : <span aria-hidden="true">{j.nom.slice(0, 1).toUpperCase()}</span>}
         </span>
+        <span className="gm-combattant__role">{cote === 'droite' ? 'Toi' : 'Adversaire'}</span>
         <span className="gm-combattant__nom">{j.nom}</span>
-        <span className="gm-combattant__tour" aria-live="polite">{actif ? 'Joue' : ''}</span>
+        <span className="gm-combattant__tour" aria-live="polite">{actif ? 'À son tour' : ''}</span>
       </div>
       <div className="gm-pv" role="meter" aria-label="Points de vie" aria-valuemin={0} aria-valuemax={j.pvMax} aria-valuenow={pv}>
         <span className="gm-pv__traine" style={{ '--part': part }} />
@@ -55,18 +55,21 @@ function Combattant({ j, cote, pv, jauges, actif, echanges, peutDeclencher, surD
         {j.cartes.map((c, k) => {
           const jauge = jauges[k];
           const pleine = jauge >= c.max;
-          const effet = effetCarte(c);
-          const titre = `${c.n} — ${NOM_RARETE[c.rarete]}. ${COULEUR[c.couleur].effet} (${effet.degats} dégâts${effet.soin ? `, ${effet.soin} PV rendus` : ''})`;
+          const titre = `${c.n} — ${RARETE[c.rarete].nom} : se charge avec les gemmes ${RARETE[c.gemme].nom.toLowerCase()}s. Pouvoir : ${textePouvoir(c.rarete)}`;
           return (
-            <li key={c.couleur}>
-              <button type="button" className={`gm-carte gm-carte--${c.couleur}${pleine ? ' est-pleine' : ''}${carteActive === k ? ' est-declenchee' : ''}${parts?.[k] ? ' est-chargee' : ''}`}
+            <li key={k}>
+              <button type="button" className={`gm-carte gm-carte--${c.gemme}${pleine ? ' est-pleine' : ''}${carteActive === k ? ' est-declenchee' : ''}${parts?.[k] ? ' est-chargee' : ''}`}
                 disabled={!(pleine && peutDeclencher)} onClick={() => surDeclencher(k)} title={titre}>
+                <span className="gm-carte__aura" aria-hidden="true" />
                 <span className="gm-carte__image" style={c.image ? { backgroundImage: `url("${urlPublique(c.image)}")` } : undefined} />
-                <span className="gm-carte__gemme"><Gemme sorte={c.couleur} /></span>
                 <span className="gm-carte__nom">{c.n}</span>
-                <span className="gm-carte__jauge" style={{ '--part': Math.min(1, jauge / c.max) }}><i /></span>
+                {/* la ligne de la jauge : la gemme qui la charge, la barre, l'état */}
+                <span className="gm-carte__ligne">
+                  <span className="gm-carte__gemme"><Gemme sorte={c.gemme} /></span>
+                  <span className="gm-carte__jauge" style={{ '--part': Math.min(1, jauge / c.max) }}><i /></span>
+                  <span className="gm-carte__etat">{pleine ? (peutDeclencher ? 'Attaquer' : 'Prête') : `${jauge}/${c.max}`}</span>
+                </span>
                 {parts?.[k] ? <span key={parts.id} className="gm-carte__plus" aria-hidden="true">+{parts[k]}</span> : null}
-                <span className="gm-carte__etat">{pleine ? (peutDeclencher ? 'Attaquer !' : 'Prête') : `${jauge} / ${c.max}`}</span>
               </button>
             </li>
           );
@@ -151,25 +154,22 @@ export default function Table({ combattants, graine, moi, ligne = null, difficul
           await attendre(duree(500));
           continue;
         }
-        // les gemmes éclatent : des éclats à leur place, et les jauges de la couleur se chargent (pas de dégâts)
+        // les gemmes éclatent : des éclats à leur place, et les jauges des cartes de leur rareté se chargent (pas de dégâts)
         const places = v.grille.map((x, i) => (etape.retirees.includes(x.id) ? i : -1)).filter((i) => i >= 0);
         setEclats(new Set(etape.retirees));
         setEclairs(places.map((i) => ({ id: ++numero, i, sorte: SORTES[v.grille[i].s] })));
-        const couleurs = COULEURS.filter((c) => etape.charges[c]);
-        couleurs.forEach((c, n) => jouerSon(SON_COULEUR[c], n * 0.06));
-        if (!couleurs.length) jouerSon('pioche');
+        const chargees = Object.keys(etape.charges).map(Number);
+        const cartes = etatRef.current.joueurs[qui].cartes;
+        chargees.forEach((k, n) => jouerSon(SON_RARETE[cartes[k].gemme], n * 0.06));
+        if (!chargees.length) jouerSon('pioche');
         if (etape.chaine >= 2) { jouerSon('chaine'); setBanniere({ texte: `Chaîne ×${etape.chaine}`, genre: 'chaine', id: ++numero }); }
         const jauges = v.jauges.map((l) => l.slice());
-        const parts = {};
-        couleurs.forEach((c) => {
-          const k = COULEURS.indexOf(c);
-          const carte = etatRef.current.joueurs[qui].cartes[k];
+        chargees.forEach((k) => {
           const avant = jauges[qui][k];
-          jauges[qui][k] = Math.min(carte.max, avant + etape.charges[c]);
-          parts[k] = etape.charges[c];
-          if (avant < carte.max && jauges[qui][k] >= carte.max) jouerSon('couronne', 0.15);   // la jauge vient d'être pleine
+          jauges[qui][k] = Math.min(cartes[k].max, avant + etape.charges[k]);
+          if (avant < cartes[k].max && jauges[qui][k] >= cartes[k].max) jouerSon('couronne', 0.15);   // la jauge vient d'être pleine
         });
-        if (couleurs.length) charger(qui, parts);
+        if (chargees.length) charger(qui, etape.charges);
         montrer({ ...v, jauges });
         await attendre(duree(300));
         if (!vivant.current) return;
@@ -183,7 +183,7 @@ export default function Table({ combattants, graine, moi, ligne = null, difficul
     } else if (action.t === 'carte') {
       const c = res.etat.joueurs[qui].cartes[res.carte.k];
       setActivation({ qui, k: res.carte.k, carte: c, effet: res.carte, id: ++numero });
-      jouerSon(SON_CARTE[c.couleur]);
+      jouerSon(SON_CARTE[c.rarete]);
       await attendre(duree(900));
       if (!vivant.current) return;
       v = vueRef.current;
@@ -191,7 +191,7 @@ export default function Table({ combattants, graine, moi, ligne = null, difficul
       const jauges = v.jauges.map((l) => l.slice());
       pv[cible] = Math.max(0, pv[cible] - res.carte.degats);
       jauges[qui][res.carte.k] = 0;
-      flotter(cible, `−${res.carte.degats}`, c.couleur);
+      flotter(cible, `−${res.carte.degats}`, c.gemme);
       frapper(cible, true);
       jouerSon('choc');
       if (res.carte.soin) {
@@ -199,7 +199,7 @@ export default function Table({ combattants, graine, moi, ligne = null, difficul
         flotter(qui, `+${res.carte.soin}`, 'soin');
         jouerSon('soin', 0.15);
       }
-      if (res.carte.echange) flotter(qui, '+1 échange', 'ambre');
+      if (res.carte.echange) flotter(qui, '+1 échange', 'mythique');
       montrer({ ...v, pv, jauges });
       await attendre(duree(650));
       if (vivant.current) setActivation(null);
@@ -361,6 +361,7 @@ export default function Table({ combattants, graine, moi, ligne = null, difficul
           <button type="button" className="gm-bouton gm-bouton--fin" disabled={!monTour} onClick={() => agir({ t: 'fin' })}>Fin du tour</button>
         </div>
 
+        <div className="gm-cadre">
         <div className={`gm-grille${monTour ? ' est-mon-tour' : ''}`} ref={grilleEl} role="grid" aria-label="Grille de gemmes"
           onPointerMove={bouger} onPointerUp={lacher} onPointerLeave={lacher} onPointerCancel={lacher}>
           {vue.grille.map((x, i) => {
@@ -386,7 +387,7 @@ export default function Table({ combattants, graine, moi, ligne = null, difficul
           ))}
           {banniere && <div key={banniere.id} className={`gm-banniere gm-banniere--${banniere.genre}`} role="status">{banniere.texte}</div>}
           {activation && (
-            <div key={activation.id} className={`gm-activation gm-activation--${activation.carte.couleur} gm-activation--${activation.qui === moi ? 'droite' : 'gauche'}`} aria-hidden="true">
+            <div key={activation.id} className={`gm-activation gm-activation--${activation.carte.gemme} gm-activation--${activation.qui === moi ? 'droite' : 'gauche'}`} aria-hidden="true">
               <span className="gm-activation__carte" style={activation.carte.image ? { backgroundImage: `url("${urlPublique(activation.carte.image)}")` } : undefined} />
               <span className="gm-activation__nom">{activation.carte.n}</span>
               <span className="gm-activation__effet">{activation.effet.degats} dégâts{activation.effet.soin ? ` · +${activation.effet.soin} PV` : ''}{activation.effet.echange ? ' · +1 échange' : ''}</span>
@@ -405,6 +406,9 @@ export default function Table({ combattants, graine, moi, ligne = null, difficul
               </div>
             </div>
           )}
+        </div>
+        {/* le cadre de la grille : quatre coins d’or */}
+        <span className="gm-coins" aria-hidden="true"><i /><i /><i /><i /></span>
         </div>
         <button type="button" className="gm-quitter" onClick={() => (fin ? surQuitter() : ligne ? ligne.abandonner() : surQuitter())}>
           {fin ? 'Quitter' : ligne ? 'Abandonner' : 'Quitter la partie'}

@@ -11,7 +11,7 @@ const CARTES = [{ n: 'A', rarete: 'commune' }, { n: 'B', rarete: 'mythique' }, {
 const partie = (graine = 42) => nouvellePartie([{ nom: 'Moi', cartes: CARTES }, { nom: 'Ombre', cartes: CARTES }], graine);
 // Une grille d'après une liste de sortes (indices de SORTES)
 const grilleDe = (sortes) => sortes.map((s, i) => ({ id: 1000 + i, s }));
-// Une grille sans alignement : un damier d'os et de pierre
+// Une grille sans alignement : un damier de gemmes légendaires et transcendantes
 const motif = (i) => ((Math.floor(i / TAILLE) + (i % TAILLE)) % 2 ? 3 : 4);
 
 describe('les Gemmes du Codex', () => {
@@ -43,20 +43,20 @@ describe('les Gemmes du Codex', () => {
     expect(appliquer(e, 1, { t: 'echange', a: 0, b: 1 })).toBeNull();   // pas son tour
   });
 
-  it('aligner 3 Sang charge la jauge de Sang de 3, 4 gemmes de 4 (×4 charge plus que ×3), sans blesser personne', () => {
+  it('aligner 3 gemmes communes charge la carte commune de 3, 4 gemmes de 4 (×4 charge plus que ×3), sans blesser personne', () => {
     for (const n of [3, 4]) {
       const e = partie();
       const sortes = Array.from({ length: TAILLE * TAILLE }, (_, i) => motif(i));
-      // ligne du bas : n-1 Sang avec un trou en 2e case, où glisser le dernier Sang depuis au-dessus
+      // ligne du bas : n-1 gemmes communes avec un trou en 2e case, où glisser la dernière depuis au-dessus
       for (let c = 0; c < n; c += 1) sortes[7 * TAILLE + c] = 0;
       sortes[7 * TAILLE + 1] = 3;
       sortes[6 * TAILLE + 1] = 0;
       e.grille = grilleDe(sortes);
-      e.tirages = Array(200).fill(0.7);   // les gemmes qui tombent : toutes « os » (qui ne chargent rien)
+      e.tirages = Array(200).fill(0.7);   // les gemmes qui tombent : toutes légendaires
       expect(alignements(e.grille).size).toBe(0);
       const r = appliquer(e, 0, { t: 'echange', a: 6 * TAILLE + 1, b: 7 * TAILLE + 1 });
       expect(r).not.toBeNull();
-      expect(r.etapes[0].gains.sang).toBe(n);
+      expect(r.etapes[0].gains.commune).toBe(n);
       expect(r.etat.joueurs.map((j) => j.pv)).toEqual([PV_DEPART, PV_DEPART]);   // les gemmes ne blessent pas
       expect(r.etat.joueurs[0].cartes[0].jauge).toBe(n);
       expect(r.etat.echanges).toBe(e.echanges - 1);
@@ -76,18 +76,21 @@ describe('les Gemmes du Codex', () => {
     expect(e.actif === 0 || e.fin).toBeTruthy();
   });
 
-  it('une carte pleine se déclenche : Sang frappe 1,5 × sa force, Azur soigne, Ambre rend un échange', () => {
-    const e = partie();
+  it('une carte pleine lance son pouvoir, selon sa rareté (dégâts, soin, échange rendu), puis se vide', () => {
+    const e = nouvellePartie([{ nom: 'Moi', cartes: [{ rarete: 'commune' }, { rarete: 'eveillee' }, { rarete: 'mythique' }] }, { nom: 'Ombre', cartes: CARTES }], 42);
     e.joueurs[0].pv = 50;
     e.joueurs[0].cartes.forEach((c) => { c.jauge = c.max; });
-    const sang = appliquer(e, 0, { t: 'carte', k: 0 });
-    expect(sang.etat.joueurs[1].pv).toBe(PV_DEPART - effetCarte({ couleur: 'sang', rarete: 'commune' }).degats);
-    expect(sang.etat.joueurs[0].cartes[0].jauge).toBe(0);
-    const ambre = appliquer(sang.etat, 0, { t: 'carte', k: 1 });
-    expect(ambre.etat.echanges).toBe(e.echanges + 1);
-    const azur = appliquer(ambre.etat, 0, { t: 'carte', k: 2 });
-    expect(azur.etat.joueurs[0].pv).toBe(50 + effetCarte({ couleur: 'azur', rarete: 'legendaire' }).soin);
-    expect(appliquer(azur.etat, 0, { t: 'carte', k: 2 })).toBeNull();   // vide
+    const commune = appliquer(e, 0, { t: 'carte', k: 0 });
+    expect(commune.etat.joueurs[1].pv).toBe(PV_DEPART - effetCarte({ rarete: 'commune' }).degats);
+    expect(commune.etat.joueurs[0].cartes[0].jauge).toBe(0);
+    const eveillee = appliquer(commune.etat, 0, { t: 'carte', k: 1 });
+    expect(eveillee.etat.joueurs[0].pv).toBe(50 + effetCarte({ rarete: 'eveillee' }).soin);
+    const mythique = appliquer(eveillee.etat, 0, { t: 'carte', k: 2 });
+    expect(mythique.etat.echanges).toBe(e.echanges + 1);
+    expect(appliquer(mythique.etat, 0, { t: 'carte', k: 2 })).toBeNull();   // vide
+    // plus la carte est rare, plus sa jauge est longue et plus elle frappe fort
+    const forces = SORTES.map((r) => [nouvellePartie([{ nom: 'a', cartes: [{ rarete: r }] }, { nom: 'b', cartes: [] }], 1).joueurs[0].cartes[0].max, effetCarte({ rarete: r }).degats]);
+    forces.slice(1).forEach(([jauge, degats], k) => { expect(jauge).toBeGreaterThan(forces[k][0]); expect(degats).toBeGreaterThan(forces[k][1]); });
   });
 
   it('la partie s\'arrête à 0 PV, et plus rien ne se joue', () => {
@@ -111,5 +114,12 @@ describe('les Gemmes du Codex', () => {
       expect(e.fin).not.toBeNull();
       expect(SORTES.length).toBe(5);
     }
+  });
+
+  it('une carte peut se charger avec une autre gemme que celle de sa rareté (l’Ombre), sa force reste celle de sa rareté', () => {
+    const e = nouvellePartie([{ nom: 'Ombre', cartes: [{ rarete: 'legendaire', gemme: 'commune' }, { rarete: 'mythique', gemme: 'inconnue' }] }, { nom: 'Moi', cartes: CARTES }], 5);
+    const [a, b] = e.joueurs[0].cartes;
+    expect([a.gemme, a.max, effetCarte(a).degats]).toEqual(['commune', 15, effetCarte({ rarete: 'legendaire' }).degats]);
+    expect(b.gemme).toBe('mythique');   // gemme inconnue : celle de sa rareté
   });
 });

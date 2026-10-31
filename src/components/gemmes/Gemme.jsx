@@ -3,19 +3,26 @@
 //  une table au centre, et des facettes plus claires du côté de la lumière (en haut à gauche).
 //  Les dégradés de chaque sorte (#gm-<sorte>) sont posés une seule fois par <DefsGemmes />.
 // =====================================================================
+// Une forme par rareté (la gemme de la couleur de la rareté, comme partout dans le jeu)
 const FORMES = {
-  sang: { contour: [[50, 5], [89, 27], [89, 73], [50, 95], [11, 73], [11, 27]], table: [[50, 27], [70, 38], [70, 62], [50, 73], [30, 62], [30, 38]] },
-  ambre: { contour: [[50, 4], [95, 50], [50, 96], [5, 50]], table: [[50, 29], [71, 50], [50, 71], [29, 50]] },
-  azur: { contour: [[33, 7], [67, 7], [93, 33], [93, 67], [67, 93], [33, 93], [7, 67], [7, 33]], table: [[41, 30], [59, 30], [70, 41], [70, 59], [59, 70], [41, 70], [30, 59], [30, 41]] },
-  os: { contour: [[50, 5], [80, 36], [64, 95], [36, 95], [20, 36]], table: [[50, 30], [64, 45], [57, 76], [43, 76], [36, 45]] },
-  pierre: { contour: [[22, 12], [78, 9], [92, 46], [80, 88], [24, 92], [8, 52]], table: [[34, 32], [64, 30], [72, 50], [64, 70], [36, 72], [28, 52]] },
+  // Commune : une pierre brute, grise
+  commune: { contour: [[22, 12], [78, 9], [92, 46], [80, 88], [24, 92], [8, 52]], table: [[34, 32], [64, 30], [72, 50], [64, 70], [36, 72], [28, 52]] },
+  // Éveillée : une émeraude, taille rectangulaire
+  eveillee: { contour: [[34, 4], [66, 4], [84, 20], [84, 80], [66, 96], [34, 96], [16, 80], [16, 20]], table: [[42, 24], [58, 24], [66, 32], [66, 68], [58, 76], [42, 76], [34, 68], [34, 32]] },
+  // Mythique : un saphir rond
+  mythique: { contour: [[33, 7], [67, 7], [93, 33], [93, 67], [67, 93], [33, 93], [7, 67], [7, 33]], table: [[41, 30], [59, 30], [70, 41], [70, 59], [59, 70], [41, 70], [30, 59], [30, 41]] },
+  // Légendaire : un rubis hexagonal
+  legendaire: { contour: [[50, 5], [89, 27], [89, 73], [50, 95], [11, 73], [11, 27]], table: [[50, 27], [70, 38], [70, 62], [50, 73], [30, 62], [30, 38]] },
+  // Transcendante : un losange d'or
+  transcendante: { contour: [[50, 4], [95, 50], [50, 96], [5, 50]], table: [[50, 29], [71, 50], [50, 71], [29, 50]] },
 };
+// Les couleurs des raretés (styles/cartes-jeu.css, --rarete-…) : clair, milieu, sombre
 const COULEURS_GEMMES = {
-  sang: ['#e2606a', '#9b2730', '#4a0d12'],
-  ambre: ['#f6dc96', '#c8962e', '#5e3f0e'],
-  azur: ['#9cc8f2', '#3a6cb0', '#13264a'],
-  os: ['#f1ead8', '#b9ad92', '#5f5747'],
-  pierre: ['#8d8880', '#55514b', '#26241f'],
+  commune: ['#cfcac2', '#8f8a84', '#3a3733'],
+  eveillee: ['#8fe0ac', '#2f8a55', '#0e3520'],
+  mythique: ['#9cc4f5', '#2c5fb8', '#0f2350'],
+  legendaire: ['#ec6670', '#a8141f', '#430609'],
+  transcendante: ['#fbe6a6', '#c9a24a', '#5a420f'],
 };
 
 const pts = (l) => l.map((p) => p.join(',')).join(' ');

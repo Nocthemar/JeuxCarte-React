@@ -16,8 +16,8 @@ import { useNotifier } from '../lib/notification.js';
 import { nouveauCode, codeValide } from '../lib/salon.js';
 import { estHote } from '../lib/ligne.js';
 import { useSalonGemmes, lienGemmes } from '../lib/gemmes/useSalonGemmes.js';
-import { reserveGemmes, cartesDuChoix, lireChoix, garderChoix, cartesOmbre, NOM_RARETE } from '../lib/gemmes/choix.js';
-import { COULEURS, COULEUR, FORCE, PV_DEPART, ECHANGES_PAR_TOUR, effetCarte } from '../moteur/gemmes.js';
+import { reserveGemmes, cartesDuChoix, lireChoix, garderChoix, cartesOmbre } from '../lib/gemmes/choix.js';
+import { SORTES, RARETE, PV_DEPART, ECHANGES_PAR_TOUR, textePouvoir } from '../moteur/gemmes.js';
 import { nouvelleGraine } from '../moteur/hasard.js';
 import { DIFFICULTES } from '../data/regles.js';
 import { urlPublique } from '../lib/chemins.js';
@@ -27,53 +27,53 @@ const CLE_DIFFICULTE = 'gemmes-difficulte';
 const lireDifficulte = () => { try { const d = localStorage.getItem(CLE_DIFFICULTE); return DIFFICULTES[d] ? d : 'normal'; } catch { return 'normal'; } };
 const NOM_DIFFICULTE = { facile: 'Facile', normal: 'Normale', difficile: 'Difficile' };
 
-// Les trois emplacements (Sang, Ambre, Azur) et la réserve où l'on choisit
+// Les trois emplacements (une carte par rareté : sa gemme est celle de sa rareté) et la réserve où l'on choisit.
+// Une carte de la réserve remplace la carte choisie de même rareté, sinon celle de l'emplacement sélectionné.
 function ChoixCartes({ reserve, choisies, surChoisir, bloque }) {
   const [place, setPlace] = useState(0);
   const prendre = (carte) => {
-    if (bloque) return;
-    const cles = choisies.map((c) => c?.cle ?? null);
-    const deja = cles.indexOf(carte.cle);
-    if (deja >= 0) cles[deja] = cles[place];   // déjà placée ailleurs : les deux s'échangent
-    cles[place] = carte.cle;
+    if (bloque || choisies.some((c) => c.cle === carte.cle)) return;
+    const cles = choisies.map((c) => c.cle);
+    const meme = choisies.findIndex((c) => c.rarete === carte.rarete);
+    const ici = meme >= 0 ? meme : place;
+    cles[ici] = carte.cle;
     surChoisir(cles);
     jouerSon('pose');
-    setPlace((place + 1) % 3);
+    setPlace((ici + 1) % 3);
   };
   return (
     <div className="gm-choix">
-      <div className="gm-places" role="radiogroup" aria-label="Emplacement à remplir">
-        {COULEURS.map((couleur, k) => {
+      <div className="gm-places" role="radiogroup" aria-label="Emplacement à remplacer">
+        {[0, 1, 2].map((k) => {
           const c = choisies[k];
-          const effet = c ? effetCarte({ couleur, rarete: c.rarete }) : null;
           return (
-            <button key={couleur} type="button" role="radio" aria-checked={place === k} disabled={bloque}
-              className={`gm-place gm-place--${couleur}${place === k ? ' est-choisie' : ''}`} onClick={() => setPlace(k)}>
-              <span className="gm-place__gemme"><Gemme sorte={couleur} /></span>
-              <span className="gm-place__couleur">{COULEUR[couleur].nom}</span>
+            <button key={k} type="button" role="radio" aria-checked={place === k} disabled={bloque || !c}
+              className={`gm-place gm-place--${c?.rarete ?? 'commune'}${place === k ? ' est-choisie' : ''}`} onClick={() => setPlace(k)}>
+              {c && <span className="gm-place__gemme"><Gemme sorte={c.rarete} /></span>}
+              <span className="gm-place__couleur">{c ? RARETE[c.rarete].nom : '—'}</span>
               <span className="gm-place__image" style={c?.image ? { backgroundImage: `url("${urlPublique(c.image)}")` } : undefined} />
-              <span className="gm-place__nom">{c?.n ?? 'Choisis une carte'}</span>
-              {c && <span className="gm-place__force">{NOM_RARETE[c.rarete]} · {effet.degats} dégâts{effet.soin ? ` · +${effet.soin} PV` : ''}{effet.echange ? ' · +1 échange' : ''}</span>}
-              <span className="gm-place__effet">{COULEUR[couleur].effet}</span>
+              <span className="gm-place__nom">{c?.n ?? 'Aucune carte'}</span>
+              {c && <span className="gm-place__force">Jauge de {RARETE[c.rarete].jauge} · {textePouvoir(c.rarete)}</span>}
             </button>
           );
         })}
       </div>
       <p className="gm-choix__aide">
-        Choisis l’emplacement, puis une carte de ta collection. Plus elle est rare, plus son attaque frappe fort une fois sa jauge pleine.
+        Trois cartes de trois raretés différentes : chacune se charge avec les gemmes de sa rareté. Plus elle est rare,
+        plus sa jauge est longue et plus son pouvoir frappe fort.
       </p>
       <ul className="gm-reserve" aria-label="Ta collection">
         {reserve.map((c) => {
-          const k = choisies.findIndex((x) => x?.cle === c.cle);
+          const prise = choisies.some((x) => x.cle === c.cle);
           return (
             <li key={c.cle}>
               <button type="button" disabled={bloque} onClick={() => prendre(c)}
-                className={`gm-mini gm-mini--${c.rarete}${k >= 0 ? ` est-prise gm-mini--${COULEURS[k]}` : ''}`}
-                title={`${c.n} — ${NOM_RARETE[c.rarete]} (force ${FORCE[c.rarete]})${c.pretee ? ', prêtée par le Codex' : ''}`}>
+                className={`gm-mini gm-mini--${c.rarete}${prise ? ' est-prise' : ''}`}
+                title={`${c.n} — ${RARETE[c.rarete].nom} (${textePouvoir(c.rarete)})${c.pretee ? ', prêtée par le Codex' : ''}`}>
                 <span className="gm-mini__image" style={c.image ? { backgroundImage: `url("${urlPublique(c.image)}")` } : undefined} />
                 <span className="gm-mini__nom">{c.n}</span>
                 {c.pretee && <span className="gm-mini__pretee">prêtée</span>}
-                {k >= 0 && <span className="gm-mini__gemme"><Gemme sorte={COULEURS[k]} /></span>}
+                <span className="gm-mini__gemme"><Gemme sorte={c.rarete} /></span>
               </button>
             </li>
           );
@@ -146,7 +146,7 @@ export default function Gemmes() {
   const [partie, setPartie] = useState(null);   // contre l'Ombre : { combattants, graine, n }
   const reserve = useMemo(() => (donnees.pret ? reserveGemmes(donnees.collection, donnees.catalogue) : []), [donnees]);
   const choisies = useMemo(() => cartesDuChoix(cles, reserve), [cles, reserve]);
-  const mesCartes = useMemo(() => choisies.filter(Boolean).map(({ cle, n, image, rarete }) => ({ cle, n, image, rarete })), [choisies]);
+  const mesCartes = useMemo(() => choisies.map(({ cle, n, image, rarete }) => ({ cle, n, image, rarete })), [choisies]);
   const salon = useSalonGemmes({ joueur, cartes: mesCartes });
 
 
@@ -211,7 +211,7 @@ export default function Gemmes() {
         <header className="gm-entete">
           <span className="gm-entete__sur">Jouer · Nouveau mode</span>
           <h1>Les Gemmes du Codex</h1>
-          <p>Échange deux gemmes voisines pour en aligner trois ou plus. Chaque couleur charge la carte qui lui est liée ; jauge pleine, la carte attaque l’adversaire.</p>
+          <p>Échange deux gemmes voisines pour en aligner trois ou plus. Chaque gemme charge ta carte de sa rareté ; jauge pleine, la carte lance son pouvoir sur l’adversaire.</p>
         </header>
 
         <div className="gm-modes" role="tablist" aria-label="Adversaire">
@@ -258,10 +258,11 @@ export default function Gemmes() {
               <summary>Les règles</summary>
               <ul>
                 <li>Chacun commence avec {PV_DEPART} PV. À ton tour : jusqu’à {ECHANGES_PAR_TOUR} échanges (2 pour celui qui commence la partie), ou « Fin du tour » plus tôt.</li>
-                <li>Un échange doit aligner 3 gemmes ou plus. Les gemmes ne blessent pas : chaque gemme <b className="gm-txt--sang">Sang</b>, <b className="gm-txt--ambre">Ambre</b> ou <b className="gm-txt--azur">Azur</b> alignée charge d’une part la jauge de ta carte de cette couleur (aligner 4, c’est 4 parts). L’Os et la Pierre ne chargent rien.</li>
+                <li>Un échange doit aligner 3 gemmes ou plus. Il y a une gemme par rareté, de sa couleur : {SORTES.map((r, k) => <span key={r}>{k ? (k === SORTES.length - 1 ? ' et ' : ', ') : ''}<b className={`gm-txt--${r}`}>{RARETE[r].nom}</b></span>)}.</li>
+                <li>Les gemmes ne blessent pas : chaque gemme alignée charge d’une part la jauge de ta carte de cette rareté (aligner 4, c’est 4 parts). Les gemmes d’une rareté que tu n’as pas ne chargent rien pour toi.</li>
                 <li>Les chutes provoquent des chaînes : +25 % de charge par maillon, sans coûter d’échange.</li>
-                <li>Jauge pleine : appuie sur la carte pour lancer son attaque sur l’adversaire (gratuit, pendant ton tour). C’est la seule façon de lui faire perdre des PV.</li>
-                <li>Sang attaque fort mais se charge lentement ({COULEUR.sang.jauge} gemmes), Ambre attaque et rend un échange ({COULEUR.ambre.jauge}), Azur attaque moins mais soigne et se charge vite ({COULEUR.azur.jauge}). Plus la carte est rare, plus elle frappe fort.</li>
+                <li>Jauge pleine : appuie sur la carte pour lancer son pouvoir sur l’adversaire (gratuit, pendant ton tour). C’est la seule façon de lui faire perdre des PV.</li>
+                <li>Plus la carte est rare, plus sa jauge est longue et plus son pouvoir est fort : {SORTES.map((r) => `${RARETE[r].nom} ${RARETE[r].jauge} gemmes (${textePouvoir(r)})`).join(' ; ')}.</li>
               </ul>
             </details>
           </aside>
