@@ -42,21 +42,10 @@ body.page-gemmes {
    L'accueil
    ===================================================================== */
 .gm-accueil { max-width: 1220px; margin: 0 auto; padding: 26px 0 40px; }
-.gm-entete { text-align: center; margin-bottom: 22px; }
+.gm-entete { text-align: center; margin-bottom: 28px; }
 .gm-entete__sur { display: block; margin-bottom: .45rem; font-family: "Cinzel", "Cinzel Repli", serif; font-size: .74rem; font-weight: 700; letter-spacing: .32em; text-transform: uppercase; color: #cfae6c; }
 .gm-entete h1 { margin: 0 0 .5rem; font-family: "Cinzel", "Cinzel Repli", serif; font-size: clamp(1.9rem, 3.2vw, 2.7rem); color: var(--ivoire); text-shadow: 0 4px 26px rgba(0,0,0,.85); }
 .gm-entete p { max-width: 62ch; margin: 0 auto; font-style: italic; color: var(--ivoire-doux); }
-
-.gm-modes { display: flex; justify-content: center; gap: 14px; margin-bottom: 22px; }
-.gm-mode {
-  display: grid; gap: 2px; min-width: 230px; padding: 12px 22px; clip-path: var(--taille); cursor: pointer;
-  border: 1px solid rgba(200,168,106,.3); background: rgba(20,19,18,.85); color: var(--ivoire-doux); text-align: center;
-  transition: background .2s ease, color .2s ease;
-}
-.gm-mode strong { font-family: "Cinzel", "Cinzel Repli", serif; font-size: 1rem; color: var(--ivoire); letter-spacing: .04em; }
-.gm-mode span { font-style: italic; font-size: .9rem; }
-.gm-mode.est-actif { background: linear-gradient(180deg, rgba(200,168,106,.22), rgba(20,19,18,.9)); border-color: var(--or-pale); color: var(--ivoire); }
-.gm-mode:focus-visible { outline: 2px solid var(--or-pale); outline-offset: 2px; }
 
 .gm-accueil__corps { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 20px; align-items: start; }
 .gm-bloc { padding: 18px 20px 20px; clip-path: var(--taille); background: rgba(20,19,18,.88); border: 1px solid rgba(200,168,106,.25); }
@@ -130,25 +119,69 @@ body.page-gemmes {
 .gm-retour { text-align: center; margin-top: 20px; }
 .gm-retour a { color: var(--ivoire-doux); font-style: italic; }
 
-/* Contre un ami */
-.gm-ami p { margin: 0 0 12px; font-size: .92rem; font-style: italic; color: var(--ivoire-doux); }
-.gm-ami__actions { display: grid; gap: 10px; }
-.gm-ami__code { display: flex; gap: 8px; }
-.gm-ami__code input {
-  flex: 1; min-width: 0; padding: 8px 10px; border: 1px solid rgba(200,168,106,.35); background: #0f0e0d; color: var(--ivoire);
-  font-family: "Cinzel", "Cinzel Repli", serif; letter-spacing: .3em; text-transform: uppercase;
+/* ---------- Contre un ami : le salon ----------
+   Les trois étapes (la suivante en or, les faites cochées), puis créer ou rejoindre (le code en grandes lettres) ;
+   dans le salon : son code sur une plaque d'or, les deux joueurs face à face, « Je suis prêt ». */
+.gm-accueil--ami .gm-accueil__corps { grid-template-columns: minmax(0, 1fr) 390px; }
+.gm-salon { display: flex; flex-direction: column; gap: 14px; }
+.gm-salon *, .gm-salon *::before { box-sizing: border-box; }
+.gm-salon__large { width: 100%; padding: 12px 14px; }
+
+.gm-etapes { display: grid; gap: 6px; margin: 0; padding: 0 0 14px; list-style: none; border-bottom: 1px solid rgba(200,168,106,.2); }
+.gm-etapes li { display: flex; align-items: center; gap: 10px; font-size: .92rem; color: var(--ivoire-doux); }
+.gm-etapes__num {
+  flex: none; display: grid; place-items: center; width: 26px; height: 26px;
+  clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+  background: rgba(200,168,106,.28);
+  font-family: "Cinzel", "Cinzel Repli", serif; font-size: .72rem; font-weight: 700; color: var(--ivoire);
 }
-.gm-ami__tete { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
-.gm-ami__tete span { flex: 1; font-family: "Cinzel", "Cinzel Repli", serif; }
-.gm-ami__tete strong { color: var(--or-pale); letter-spacing: .2em; }
-.gm-ami__joueurs { display: grid; gap: 8px; margin-bottom: 10px; }
-.gm-ami__joueur { display: grid; grid-template-columns: 34px 1fr auto; align-items: center; gap: 10px; padding: 7px 10px; background: #171513; border: 1px solid rgba(200,168,106,.2); }
-.gm-ami__joueur img, .gm-ami__avatar { width: 34px; height: 34px; border-radius: 50%; object-fit: cover; display: grid; place-items: center; background: #26231f; color: var(--or-pale); }
-.gm-ami__joueur small { font-style: italic; color: var(--ivoire-doux); }
-.gm-ami__joueur.est-pret { border-color: rgba(120,190,120,.5); }
-.gm-ami__joueur.est-pret small { color: #9fd49f; }
-.gm-ami__etat { min-height: 1.4em; }
-.gm-ami--salon > .gm-bouton { width: 100%; padding: 12px; }
+.gm-etapes li.est-actuelle { color: var(--ivoire); }
+.gm-etapes li.est-actuelle .gm-etapes__num { background: linear-gradient(135deg, #f0d79c, #9c7a3c); color: #1a140b; }
+.gm-etapes li.est-fait { color: #9fd49f; }
+.gm-etapes li.est-fait .gm-etapes__num { background: rgba(120,190,120,.35); color: #dff3d6; }
+
+.gm-salon__choix { display: grid; gap: 10px; }
+.gm-salon__choix p, .gm-salon__choix label { margin: 0; font-size: .92rem; font-style: italic; color: var(--ivoire-doux); }
+.gm-salon__ou { display: flex; align-items: center; gap: 12px; font-style: italic; color: var(--ivoire-doux); }
+.gm-salon__ou::before, .gm-salon__ou::after { content: ""; flex: 1; height: 1px; background: linear-gradient(90deg, transparent, rgba(200,168,106,.45), transparent); }
+.gm-salon__saisie {
+  width: 100%; padding: 10px 12px; border: 1px solid rgba(200,168,106,.4); background: #0f0e0d; color: var(--or-pale);
+  font-family: "Cinzel", "Cinzel Repli", serif; font-size: 1.5rem; letter-spacing: .5em; text-align: center; text-transform: uppercase;
+}
+.gm-salon__saisie:focus { outline: none; border-color: var(--or-pale); box-shadow: 0 0 0 2px rgba(227,207,159,.2); }
+
+.gm-salon__code {
+  display: grid; justify-items: center; gap: 6px; padding: 14px 14px 16px; clip-path: var(--taille);
+  background: radial-gradient(ellipse 80% 70% at 50% 0%, rgba(200,168,106,.18), transparent 70%), #12100e;
+  border: 1px solid rgba(227,207,159,.45);
+}
+.gm-salon__code span { font-family: "Cinzel", "Cinzel Repli", serif; font-size: .72rem; letter-spacing: .3em; text-transform: uppercase; color: var(--or); }
+.gm-salon__code strong {
+  margin-bottom: 6px; font-family: "Cinzel", "Cinzel Repli", serif; font-size: 2.3rem; letter-spacing: .4em; text-indent: .4em;
+  background: linear-gradient(180deg, #fff1cf, #c8a86a); -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+
+.gm-salon__face { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 8px; }
+.gm-salon__joueur {
+  display: grid; justify-items: center; gap: 4px; padding: 12px 6px; min-width: 0; text-align: center;
+  clip-path: var(--taille); background: #171513; border: 1px solid rgba(200,168,106,.22);
+}
+.gm-salon__joueur img, .gm-salon__avatar {
+  width: 52px; height: 52px; border-radius: 50%; object-fit: cover; display: grid; place-items: center;
+  background: #26231f; color: var(--or-pale); font-family: "Cinzel", "Cinzel Repli", serif; font-size: 1.3rem;
+  box-shadow: 0 0 0 2px rgba(200,168,106,.45);
+}
+.gm-salon__joueur b { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: "Cinzel", "Cinzel Repli", serif; font-size: .85rem; color: var(--ivoire); }
+.gm-salon__joueur small { font-style: italic; font-size: .82rem; color: var(--ivoire-doux); }
+.gm-salon__joueur.est-vide { opacity: .6; border-style: dashed; }
+.gm-salon__joueur.est-pret { border-color: rgba(120,190,120,.55); }
+.gm-salon__joueur.est-pret img, .gm-salon__joueur.est-pret .gm-salon__avatar { box-shadow: 0 0 0 2px rgba(120,190,120,.7), 0 0 12px rgba(120,190,120,.35); }
+.gm-salon__joueur.est-pret small { color: #9fd49f; }
+.gm-salon__contre { font-family: "Cinzel", "Cinzel Repli", serif; font-size: .72rem; letter-spacing: .2em; text-transform: uppercase; color: var(--or); }
+.gm-salon__etat { min-height: 1.4em; margin: 0; text-align: center; font-style: italic; font-size: .92rem; color: var(--ivoire-doux); }
+.gm-salon__pret { font-size: .9rem; }
+.gm-salon__quitter { justify-self: center; align-self: center; padding: 2px 6px; border: 0; background: none; cursor: pointer; font-style: italic; color: var(--ivoire-doux); text-decoration: underline; text-underline-offset: 3px; }
+.gm-salon__quitter:hover { color: var(--ivoire); }
 
 /* =====================================================================
    La table
@@ -337,6 +370,7 @@ body.page-gemmes {
 .gm-fin--defaite .gm-fin__titre { color: #d8858c; text-shadow: 0 0 30px rgba(155,39,48,.6); }
 @keyframes gm-fin-titre { from { opacity: 0; transform: scale(1.8); letter-spacing: .5em; } }
 .gm-fin__texte { font-style: italic; color: var(--ivoire-doux); }
+.gm-fin__message { max-width: 34ch; font-family: "Cinzel", "Cinzel Repli", serif; font-size: .82rem; letter-spacing: .04em; color: var(--or-pale); text-align: center; }
 .gm-fin__boutons { display: flex; gap: 10px; margin-top: 10px; }
 .gm-alerte { position: fixed; left: 50%; bottom: 18px; z-index: 30; translate: -50% 0; margin: 0; padding: 10px 18px; background: rgba(15,14,12,.95); border: 1px solid rgba(200,168,106,.45); font-style: italic; }
 
@@ -507,7 +541,7 @@ body.page-gemmes {
   .gm-carte__etat { flex-basis: 100%; text-align: center; }
   .gm-bandeau { width: min(100cqi, 700px); }
   .gm-cartes { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .gm-accueil__corps { grid-template-columns: 1fr; }
+  .gm-accueil__corps, .gm-accueil--ami .gm-accueil__corps { grid-template-columns: 1fr; }
 }
 
 /* ---------- Animations coupées (Paramètres) ou système en mouvement réduit ---------- */
@@ -573,3 +607,39 @@ body.page-gemmes {
 }
 .gm-volumes input[type="range"]::-moz-range-thumb { width: 11px; height: 11px; rotate: 45deg; border: 0; border-radius: 0; background: var(--or-pale); }
 .gm-volumes input[type="range"]:focus-visible { outline: 1px solid var(--or-pale); outline-offset: 3px; }
+
+/* ---------- Le retour, en haut à gauche de l'accueil (vers Modes de jeu ou En ligne) ---------- */
+.gm-entete { position: relative; }
+.gm-retour-haut {
+  position: absolute; left: 0; top: 0; z-index: 2;
+  display: inline-flex; align-items: center; gap: 8px; padding: 9px 20px 9px 14px;
+  clip-path: polygon(12px 0, 100% 0, 100% 100%, 12px 100%, 0 50%);
+  background: linear-gradient(180deg, #2a241b, #15120e); border: 0; box-shadow: inset 0 0 0 1px rgba(200,168,106,.5);
+  font-family: "Cinzel", "Cinzel Repli", serif; font-size: .74rem; font-weight: 700; letter-spacing: .14em; text-transform: uppercase;
+  color: var(--or-pale); text-decoration: none; transition: filter .2s ease, transform .2s ease;
+}
+.gm-retour-haut svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.gm-retour-haut:hover, .gm-retour-haut:focus-visible { filter: brightness(1.25); transform: translateX(-2px); outline: none; }
+@media (max-width: 860px) {
+  .gm-retour-haut { position: static; margin-bottom: 14px; }
+  .gm-entete { display: flex; flex-direction: column; align-items: center; }
+  .gm-entete .gm-retour-haut { align-self: flex-start; }
+}
+
+/* ---------- Un niveau du mode Histoire (avant la partie) : l'adversaire, ses cartes, les récompenses ---------- */
+.gm-niveau { display: grid; gap: 10px; }
+.gm-niveau h2 { margin-bottom: 0; }
+.gm-niveau__nom { margin: 0; font-family: "Cinzel", "Cinzel Repli", serif; font-size: 1.15rem; color: var(--ivoire); }
+.gm-niveau__infos { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 0; }
+.gm-niveau__infos div { padding: 8px 10px; clip-path: var(--taille); background: #171513; border: 1px solid rgba(200,168,106,.2); }
+.gm-niveau__infos dt { font-size: .72rem; letter-spacing: .12em; text-transform: uppercase; color: var(--ivoire-doux); }
+.gm-niveau__infos dd { margin: 2px 0 0; font-family: "Cinzel", "Cinzel Repli", serif; color: var(--or-pale); }
+.gm-niveau__label { margin: 6px 0 0; font-family: "Cinzel", "Cinzel Repli", serif; font-size: .74rem; letter-spacing: .18em; text-transform: uppercase; color: var(--or); }
+.gm-niveau__raretes, .gm-niveau__gains { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.gm-niveau__raretes li { display: flex; align-items: center; gap: 10px; font-family: "Cinzel", "Cinzel Repli", serif; font-size: .88rem; }
+.gm-niveau__raretes svg { width: 22px; height: 22px; }
+.gm-niveau__gains li { display: flex; align-items: center; gap: 10px; color: var(--ivoire); }
+.gm-niveau__gains img { width: 22px; height: 22px; object-fit: contain; }
+.gm-niveau__xp { display: inline-grid; place-items: center; width: 22px; height: 22px; font-size: .62rem; font-weight: 700; color: #1a140b; background: linear-gradient(135deg, #f0d79c, #9c7a3c); clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%); }
+.gm-niveau__carte { width: 16px; height: 22px; border: 1px solid var(--or-pale); background: linear-gradient(160deg, #3a2f1e, #15120e); }
+.gm-niveau .gm-engager { margin-top: 8px; }

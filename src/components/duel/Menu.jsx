@@ -1,9 +1,12 @@
 // =====================================================================
-//  Le menu du Duel des Couronnes (ancien écran d'accueil de jeu-cartes.html et JS/jeu-cartes.js)
-//  - les trois modes : contre l'Ombre, en ligne, Histoire (une autre page) ;
+//  Le menu « Jouer » (ancien écran d'accueil de jeu-cartes.html et JS/jeu-cartes.js)
+//  - l'accueil : trois cartes, Histoire (une autre page), Modes de jeu, En ligne ;
+//  - Modes de jeu (?mode=jeux) : contre l'Ombre (sa page, ?mode=ombre) ou les Gemmes (#/gemmes) ;
+//  - En ligne (?mode=ligne) : le Duel des Couronnes (sa page, ?mode=duel, et le salon ?salon=CODE)
+//    ou les Gemmes contre un ami (#/gemmes?mode=ami) ;
 //  - la difficulté de l'Ombre (retenue dans le navigateur) ;
 //  - le Grimoire en éventail sur l'autel, et le constructeur de deck (« Choisir mes cartes ») ;
-//  - le panneau du mode en ligne : partie privée (le salon), classé.
+//  - le panneau du Duel en ligne : partie privée (le salon), classé.
 // =====================================================================
 import { useEffect, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
@@ -37,6 +40,25 @@ const MASQUES = {
 const Svg = ({ children }) => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{children}</svg>
 );
+const ICONE_EPEES = <>{ICONE_EPEE}<path d="M9.5 17.5L21 6V3h-3L6.5 14.5" /><path d="M11 19l-6-6" /><path d="M8 16l-4 4" /><path d="M5 21l-2-2" /></>;
+const ICONE_GEMME = <><path d="M12 3l8 6-8 12-8-12z" /><path d="M4 9h16M9 9l3 12 3-12M8 3.5L9 9M16 3.5L15 9" /></>;
+
+// Une carte de mode : un bouton (un écran du menu) ou un lien (une autre page)
+function CarteMode({ classe, num, icone, titre, texte, infos, actif, vers, surClic, survol }) {
+  const contenu = (
+    <>
+      <span className="hall-mode__image" aria-hidden="true" />
+      {num && <span className="hall-mode__num" aria-hidden="true">{num}</span>}
+      <span className="hall-mode__embleme"><Svg>{icone}</Svg></span>
+      <span className="hall-mode__titre">{titre}</span>
+      <span className="hall-mode__texte">{texte}</span>
+      <span className="hall-mode__infos">{infos}</span>
+    </>
+  );
+  const nom = `hall-mode hall-mode--${classe}${actif ? ' est-actif' : ''}`;
+  if (vers) return <Link className={nom} to={vers} viewTransition onPointerEnter={survol} onFocus={survol}>{contenu}</Link>;
+  return <button type="button" className={nom} aria-current={actif || undefined} onClick={surClic}>{contenu}</button>;
+}
 
 // Le rang classé du joueur (table rangs)
 function RangClasse({ joueur }) {
@@ -199,8 +221,8 @@ function useRechercheClassee(ligne) {
 }
 
 // Le panneau du mode en ligne (connexion, partie privée, classé, puis le salon)
-// cache : l'onglet « Contre l'Ombre » est choisi (le panneau reste là : une recherche classée continue)
-function PanneauLigne({ joueur, ligne, cache }) {
+// (sur la page du Duel en ligne ; la quitter arrête une recherche classée)
+function PanneauLigne({ joueur, ligne }) {
   const notifier = useNotifier();
   const [codeOuvert, setCodeOuvert] = useState(false);
   const [code, setCode] = useState('');
@@ -219,7 +241,7 @@ function PanneauLigne({ joueur, ligne, cache }) {
   const chercher = () => classe.basculer(modeClasse);
 
   return (
-    <section className="ligne" id="panneau-ligne" hidden={cache}>
+    <section className="ligne" id="panneau-ligne">
       <div className="ligne__bloc ligne__bloc--centre" hidden={!!joueur}>
         <p>Le duel en ligne se joue avec les cartes de ton grimoire : connecte-toi avec Discord pour jouer en classé ou défier un ami.</p>
         <button type="button" className="btn-discord" onClick={() => connexionDiscord()}>
@@ -277,8 +299,12 @@ function PanneauLigne({ joueur, ligne, cache }) {
 // ligne : le salon en ligne (lib/duel/useLigne.js)
 export default function Menu({ joueur, donnees, ligne, surRegles, surJouer }) {
   const notifier = useNotifier();
-  const [params] = useSearchParams();
-  const [mode, setMode] = useState(params.get('mode') === 'ligne' || params.has('salon') ? 'ligne' : 'solo');
+  const [params, setParams] = useSearchParams();
+  // L'écran du menu suit l'adresse (le bouton Retour du navigateur y revient) : l'accueil, Modes de jeu, Contre l'Ombre, En ligne, le Duel en ligne
+  const vue = params.has('salon') || params.get('mode') === 'duel' ? 'duel'
+    : params.get('mode') === 'ligne' ? 'ligne'
+    : params.get('mode') === 'ombre' || params.get('deck') === 'choisir' ? 'ombre'
+    : params.get('mode') === 'jeux' ? 'jeux' : 'accueil';
   // Lien « Choisir mes cartes » du profil (?deck=choisir) : le constructeur s'ouvre tout de suite
   const [edition, setEdition] = useState(params.get('deck') === 'choisir');
   const [carrousel, setCarrousel] = useState(3);
@@ -334,10 +360,12 @@ export default function Menu({ joueur, donnees, ligne, surRegles, surJouer }) {
     if (!edition) setTimeout(() => zoneChoix.current?.scrollIntoView({ behavior: animationsReduites() ? 'auto' : 'smooth', block: 'nearest' }), 0);
   }
 
-  // Dans un salon, on le quitte d'abord pour jouer en solo
-  function choisirSolo() {
-    if (ligne.salon) return notifier('Quitte d\'abord le salon pour jouer en solo.', 'erreur');
-    setMode('solo');
+  // Changer d'écran du menu ; dans un salon, on le quitte d'abord
+  function aller(v) {
+    if (ligne.salon) return notifier('Quitte d\'abord le salon.', 'erreur');
+    jouerSon('clic');
+    setParams(v === 'accueil' ? {} : { mode: v });
+    scrollTo(0, 0);
   }
 
   function choisirDifficulte(d, focus = false) {
@@ -360,122 +388,147 @@ export default function Menu({ joueur, donnees, ligne, surRegles, surJouer }) {
   const centre = Math.min(Math.max(0, carrousel), Math.max(0, vitrine.length - 1));
   const tourner = (pas) => setCarrousel(Math.min(Math.max(0, centre + pas), vitrine.length - 1));
 
-  return (
-    <section className="accueil hall" id="ecran-accueil">
-      <h1 className="hall__titre-cache">Duel des Couronnes</h1>
-      <div className="menu">
-        {/* Mode de jeu : trois grandes cartes illustrées (styles/duel-accueil.css) */}
-        <div className="hall-modes" role="tablist" aria-label="Mode de jeu">
-          <button type="button" className={`hall-mode hall-mode--ombre${mode === 'solo' ? ' est-actif' : ''}`} role="tab" aria-selected={mode === 'solo'} onClick={choisirSolo}>
-            <span className="hall-mode__image" aria-hidden="true" />
-            <span className="hall-mode__embleme"><Svg>{ICONE_EPEE}<path d="M9.5 17.5L21 6V3h-3L6.5 14.5" /><path d="M11 19l-6-6" /><path d="M8 16l-4 4" /><path d="M5 21l-2-2" /></Svg></span>
-            <span className="hall-mode__titre">Contre l&apos;Ombre</span>
-            <span className="hall-mode__texte">Seul, face à l&apos;IA du Codex</span>
-            <span className="hall-mode__infos">1 joueur · XP du Pass, or</span>
-          </button>
-          <button type="button" className={`hall-mode hall-mode--ligne${mode === 'ligne' ? ' est-actif' : ''}`} role="tab" aria-selected={mode === 'ligne'} onClick={() => setMode('ligne')}>
-            <span className="hall-mode__image" aria-hidden="true" />
-            <span className="hall-mode__embleme"><Svg>{ICONE_EPEE}<path d="M9.5 17.5L21 6V3h-3L6.5 14.5" /><path d="M11 19l-6-6" /><path d="M8 16l-4 4" /><path d="M5 21l-2-2" /></Svg></span>
-            <span className="hall-mode__titre">En ligne</span>
-            <span className="hall-mode__texte">Classé 1v1 ou 2v2, ou partie privée entre amis</span>
-            <span className="hall-mode__infos">2 ou 4 joueurs · XP du Pass, rang</span>
-          </button>
-          {/* Mode Histoire : un autre écran, la carte des chapitres */}
-          <Link className="hall-mode hall-mode--histoire" to="/histoire" viewTransition>
-            <span className="hall-mode__image" aria-hidden="true" />
-            <span className="hall-mode__embleme"><Svg><path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3z" /><path d="M9 3v15M15 6v15" /></Svg></span>
-            <span className="hall-mode__titre">Histoire</span>
-            <span className="hall-mode__texte">La campagne, pays après pays</span>
-            <span className="hall-mode__infos">1 joueur · or, XP, cartes</span>
-          </Link>
-          {/* Gemmes du Codex : un autre écran (pages/Gemmes.jsx) */}
-          <Link className="hall-mode hall-mode--gemmes" to="/gemmes" viewTransition onPointerEnter={() => prechargerEcran('/gemmes')} onFocus={() => prechargerEcran('/gemmes')}>
-            <span className="hall-mode__image" aria-hidden="true" />
-            <span className="hall-mode__embleme"><Svg><path d="M12 3l8 6-8 12-8-12z" /><path d="M4 9h16M9 9l3 12 3-12M8 3.5L9 9M16 3.5L15 9" /></Svg></span>
-            <span className="hall-mode__titre">Gemmes</span>
-            <span className="hall-mode__texte">Aligne les gemmes, charge tes cartes, abats l’adversaire</span>
-            <span className="hall-mode__infos">1 ou 2 joueurs · Ombre ou ami</span>
-          </Link>
-        </div>
-
-        {/* En ligne : le salon (créer, rejoindre, classé) */}
-        <PanneauLigne joueur={joueur} ligne={ligne} cache={mode !== 'ligne'} />
-
-        {/* Le bandeau : le Grimoire, la difficulté, le lancement */}
-        <div className={`hall-bandeau${mode === 'solo' ? '' : ' hall-bandeau--ligne'}`}>
-          <div className="hall-grimoire" ref={zoneDeck}>
-            <div className="hall-zone__tete">
-              <span className="hall-zone__ico"><Svg><rect x="3" y="6" width="11" height="15" rx="1.5" transform="rotate(-8 8.5 13.5)" /><rect x="10" y="3" width="11" height="15" rx="1.5" transform="rotate(8 15.5 10.5)" /></Svg></span>
-              <span className="hall-zone__textes">
-                <span className="hall-zone__titre">Mon Grimoire</span>
-                <span className="hall-zone__sous">{pret ? `${complet.length}/${TAILLE_DECK} cartes · ${parties.join(', ')}` : 'Les cartes sortent du grimoire…'}</span>
+  // Le Grimoire (le carrousel, « Choisir mes cartes ») : sur la page Contre l'Ombre et sur celle du Duel en ligne
+  const blocGrimoire = (
+    <div className="hall-grimoire" ref={zoneDeck}>
+      <div className="hall-zone__tete">
+        <span className="hall-zone__ico"><Svg><rect x="3" y="6" width="11" height="15" rx="1.5" transform="rotate(-8 8.5 13.5)" /><rect x="10" y="3" width="11" height="15" rx="1.5" transform="rotate(8 15.5 10.5)" /></Svg></span>
+        <span className="hall-zone__textes">
+          <span className="hall-zone__titre">Mon Grimoire</span>
+          <span className="hall-zone__sous">{pret ? `${complet.length}/${TAILLE_DECK} cartes · ${parties.join(', ')}` : 'Les cartes sortent du grimoire…'}</span>
+        </span>
+      </div>
+      {/* Le Grimoire en carrousel : flèches, clavier, ou un clic sur une carte pour l'amener au centre */}
+      <div className="carrousel" role="group" aria-roledescription="carrousel" aria-label="Cartes de ton Grimoire"
+        onKeyDown={(e) => { if (e.key === 'ArrowLeft') { e.preventDefault(); tourner(-1); } if (e.key === 'ArrowRight') { e.preventDefault(); tourner(1); } }}>
+        <button type="button" className="carrousel__fleche carrousel__fleche--g" aria-label="Carte précédente" disabled={centre <= 0} onClick={() => tourner(-1)} />
+        <div className="hall-grimoire__cartes carrousel__piste" id="accueil-deck">
+          {vitrine.map((c, k) => {
+            const d = k - centre;
+            const n = exemplaires(complet, c);
+            return (
+              <span key={cleCarte(c)} className={`deck-place carrousel__carte${d === 0 ? ' est-centre' : ''}`}
+                style={{ '--d': d, '--a': Math.abs(d), zIndex: 20 - Math.abs(d) }} aria-hidden={Math.abs(d) > 3 ? true : undefined}
+                onClick={() => setCarrousel(k)}>
+                <CarteDuel c={c} tabIndex={d === 0 ? 0 : -1} />
+                {n > 1 && <span className="carrousel__nb">×{n}</span>}
               </span>
-            </div>
-            {/* Le Grimoire en carrousel : flèches, clavier, ou un clic sur une carte pour l'amener au centre */}
-            <div className="carrousel" role="group" aria-roledescription="carrousel" aria-label="Cartes de ton Grimoire"
-              onKeyDown={(e) => { if (e.key === 'ArrowLeft') { e.preventDefault(); tourner(-1); } if (e.key === 'ArrowRight') { e.preventDefault(); tourner(1); } }}>
-              <button type="button" className="carrousel__fleche carrousel__fleche--g" aria-label="Carte précédente" disabled={centre <= 0} onClick={() => tourner(-1)} />
-              <div className="hall-grimoire__cartes carrousel__piste" id="accueil-deck">
-                {vitrine.map((c, k) => {
-                  const d = k - centre;
-                  const n = exemplaires(complet, c);
-                  return (
-                    <span key={cleCarte(c)} className={`deck-place carrousel__carte${d === 0 ? ' est-centre' : ''}`}
-                      style={{ '--d': d, '--a': Math.abs(d), zIndex: 20 - Math.abs(d) }} aria-hidden={Math.abs(d) > 3 ? true : undefined}
-                      onClick={() => setCarrousel(k)}>
-                      <CarteDuel c={c} tabIndex={d === 0 ? 0 : -1} />
-                      {n > 1 && <span className="carrousel__nb">×{n}</span>}
-                    </span>
-                  );
-                })}
-              </div>
-              <button type="button" className="carrousel__fleche carrousel__fleche--d" aria-label="Carte suivante" disabled={centre >= vitrine.length - 1} onClick={() => tourner(1)} />
-              {vitrine.length > 0 && (
-                <div className="carrousel__points" aria-hidden="true">
-                  {vitrine.map((c, k) => <i key={cleCarte(c)} className={k === centre ? 'est-actif' : undefined} />)}
-                </div>
-              )}
-            </div>
-            {pret && (
-              <button type="button" className={`hall-plaque hall-plaque--petite${edition ? ' est-actif' : ''}`} onClick={basculerEdition}>
-                {edition ? 'Valider mon Grimoire' : 'Choisir mes cartes'}
-              </button>
-            )}
-            {pret && !joueur && <p className="accueil__note">Connecte-toi avec Discord pour jouer avec ta collection : sans compte, ton Grimoire est fait de cartes de base.</p>}
-            {pret && joueur && !(donnees.collection ?? []).length && <p className="accueil__note">Ta collection est vide : ton Grimoire est complété avec des cartes de base. Les cartes s&apos;obtiennent à la <Link to="/boutique">boutique</Link>.</p>}
-          </div>
-
-          <div className="hall-difficulte difficulte" id="choix-difficulte" hidden={mode !== 'solo'} onKeyDown={clavierDifficulte}>
-            <span className="hall-zone__titre" id="difficulte-titre">Difficulté</span>
-            <div className="hall-difficulte__choix" role="radiogroup" aria-labelledby="difficulte-titre">
-              {[['facile', 'Facile'], ['normal', 'Normal'], ['difficile', 'Difficile']].map(([d, t]) => (
-                <button key={d} type="button" className={`hall-hex difficulte__btn hall-hex--${d}`} role="radio" aria-checked={d === difficulte}
-                  tabIndex={d === difficulte ? 0 : -1} ref={(el) => { boutonsDifficulte.current[d] = el; }}
-                  onClick={() => choisirDifficulte(d)} title={DIFFICULTES[d].texte}>
-                  <span className="hall-hex__forme"><Svg>{MASQUES[d]}</Svg></span>
-                  <span className="hall-hex__nom">{t}</span>
-                </button>
-              ))}
-            </div>
-            <p className="difficulte__texte">{DIFFICULTES[difficulte].texte}</p>
-          </div>
-
-          <div className="hall-actions accueil__actions">
-            <button type="button" className="hall-engager" id="btn-jouer" hidden={mode !== 'solo'} disabled={!pret}
-              onClick={() => surJouer(cartes, difficulte)}>
-              <Svg>{ICONE_EPEE}<path d="M9.5 17.5L21 6V3h-3L6.5 14.5" /><path d="M11 19l-6-6" /><path d="M8 16l-4 4" /><path d="M5 21l-2-2" /></Svg>
-              <span>Engager le duel</span>
-            </button>
-            <button type="button" className="hall-plaque menu__regles" onClick={surRegles}>
-              <Svg><path d="M6 3h9l4 4v14H6z" /><path d="M15 3v4h4" /><path d="M9 11h7M9 14.5h7M9 18h4" /></Svg>
-              <span>Règles du duel</span>
-            </button>
-          </div>
+            );
+          })}
         </div>
+        <button type="button" className="carrousel__fleche carrousel__fleche--d" aria-label="Carte suivante" disabled={centre >= vitrine.length - 1} onClick={() => tourner(1)} />
+        {vitrine.length > 0 && (
+          <div className="carrousel__points" aria-hidden="true">
+            {vitrine.map((c, k) => <i key={cleCarte(c)} className={k === centre ? 'est-actif' : undefined} />)}
+          </div>
+        )}
+      </div>
+      {pret && (
+        <button type="button" className={`hall-plaque hall-plaque--petite${edition ? ' est-actif' : ''}`} onClick={basculerEdition}>
+          {edition ? 'Valider mon Grimoire' : 'Choisir mes cartes'}
+        </button>
+      )}
+      {pret && !joueur && <p className="accueil__note">Connecte-toi avec Discord pour jouer avec ta collection : sans compte, ton Grimoire est fait de cartes de base.</p>}
+      {pret && joueur && !(donnees.collection ?? []).length && <p className="accueil__note">Ta collection est vide : ton Grimoire est complété avec des cartes de base. Les cartes s&apos;obtiennent à la <Link to="/boutique">boutique</Link>.</p>}
+    </div>
+  );
+  const retour = (v, nom) => (
+    <button type="button" className="hall-plaque hall-plaque--petite hall-ecran__retour" onClick={() => aller(v)}>
+      <Svg><path d="M15 5l-7 7 7 7" /></Svg><span>{nom}</span>
+    </button>
+  );
+  const boutonRegles = (
+    <button type="button" className="hall-plaque menu__regles" onClick={surRegles}>
+      <Svg><path d="M6 3h9l4 4v14H6z" /><path d="M15 3v4h4" /><path d="M9 11h7M9 14.5h7M9 18h4" /></Svg>
+      <span>Règles du duel</span>
+    </button>
+  );
+
+  return (
+    <section className={`accueil hall${vue === 'ombre' || vue === 'duel' ? ` hall--${vue}` : ''}`} id="ecran-accueil">
+      <h1 className="hall__titre-cache">Jouer</h1>
+      <div className="menu">
+        {/* L'accueil : trois bannières suspendues (styles/duel-accueil.css) */}
+        {vue === 'accueil' && (
+          <nav className="hall-modes hall-bannieres hall-modes--trois" aria-label="Jouer">
+            {/* Mode Histoire : un autre écran, la carte des chapitres */}
+            <CarteMode classe="histoire" num="I" vers="/histoire" titre="Histoire" texte="La campagne, pays après pays" infos="1 joueur · or, XP, cartes"
+              icone={<><path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3z" /><path d="M9 3v15M15 6v15" /></>} />
+            <CarteMode classe="ombre" num="II" titre="Modes de jeu" texte="Contre l’Ombre ou les Gemmes, seul face à l’IA du Codex" infos="1 joueur · 2 modes"
+              icone={ICONE_EPEES} surClic={() => aller('jeux')} />
+            <CarteMode classe="ligne" num="III" titre="En ligne" texte="Tes deux modes de jeu, avec tes amis ou en classé" infos="2 à 4 joueurs · XP du Pass, rang"
+              icone={ICONE_EPEES} surClic={() => aller('ligne')} />
+          </nav>
+        )}
+
+        {/* Modes de jeu : deux bannières, Contre l'Ombre (sa page, ?mode=ombre) et les Gemmes (pages/Gemmes.jsx) */}
+        {vue === 'jeux' && <>
+          <div className="hall-ecran">{retour('accueil', 'Jouer')}<h2 className="hall-ecran__titre">Modes de jeu</h2></div>
+          <nav className="hall-modes hall-bannieres hall-modes--jeux" aria-label="Modes de jeu">
+            <CarteMode classe="ombre" num="I" titre="Contre l’Ombre" texte="Le Duel des Couronnes, seul face à l’IA du Codex" infos="1 joueur · XP du Pass, or"
+              icone={ICONE_EPEES} surClic={() => aller('ombre')} />
+            <CarteMode classe="gemmes" num="II" vers="/gemmes" titre="Gemmes" texte="Aligne les gemmes, charge tes cartes, abats l’Ombre" infos="1 joueur · 3 difficultés"
+              icone={ICONE_GEMME} survol={() => prechargerEcran('/gemmes')} />
+          </nav>
+        </>}
+
+        {/* Contre l'Ombre : sa page, sur la forêt. À gauche le Grimoire ; à droite l'adversaire (la difficulté) et le lancement */}
+        {vue === 'ombre' && <>
+          <div className="hall-ecran">{retour('jeux', 'Modes de jeu')}<h2 className="hall-ecran__titre">Contre l’Ombre</h2></div>
+          <p className="ombre-page__intro">Le Duel des Couronnes, seul face à l’IA du Codex<span className="hall-mode__infos">1 joueur · XP du Pass, or</span></p>
+          <div className="ombre-page">
+            <section className="ombre-page__panneau ombre-page__panneau--grimoire">{blocGrimoire}</section>
+            <section className="ombre-page__panneau ombre-page__panneau--adversaire difficulte" id="choix-difficulte" onKeyDown={clavierDifficulte}>
+              <span className="hall-zone__titre" id="difficulte-titre">Ton adversaire</span>
+              <div className="ombre-page__niveaux" role="radiogroup" aria-labelledby="difficulte-titre">
+                {[['facile', 'Facile'], ['normal', 'Normal'], ['difficile', 'Difficile']].map(([d, t]) => (
+                  <button key={d} type="button" className={`hall-hex ombre-niveau hall-hex--${d}`} role="radio" aria-checked={d === difficulte}
+                    tabIndex={d === difficulte ? 0 : -1} ref={(el) => { boutonsDifficulte.current[d] = el; }}
+                    onClick={() => choisirDifficulte(d)}>
+                    <span className="hall-hex__forme"><Svg>{MASQUES[d]}</Svg></span>
+                    <span className="ombre-niveau__textes"><b>{t}</b><small>{DIFFICULTES[d].texte}</small></span>
+                  </button>
+                ))}
+              </div>
+              <div className="hall-actions accueil__actions">
+                <button type="button" className="hall-engager" id="btn-jouer" disabled={!pret} onClick={() => surJouer(cartes, difficulte)}>
+                  <Svg>{ICONE_EPEES}</Svg>
+                  <span>Engager le duel</span>
+                </button>
+                {boutonRegles}
+              </div>
+            </section>
+          </div>
+        </>}
+
+        {/* En ligne : deux bannières, le Duel des Couronnes (sa page, ?mode=duel) et les Gemmes contre un ami */}
+        {vue === 'ligne' && <>
+          <div className="hall-ecran">{retour('accueil', 'Jouer')}<h2 className="hall-ecran__titre">En ligne</h2></div>
+          <nav className="hall-modes hall-bannieres hall-modes--jeux" aria-label="En ligne">
+            <CarteMode classe="ligne" num="I" titre="Duel des Couronnes" texte="Classé 1v1 ou 2v2, ou partie privée entre amis" infos="2 ou 4 joueurs · XP du Pass, rang"
+              icone={ICONE_EPEES} surClic={() => aller('duel')} />
+            <CarteMode classe="gemmes" num="II" vers="/gemmes?mode=ami" titre="Gemmes" texte="Un salon privé : défie un ami aux Gemmes" infos="2 joueurs · lien d’invitation"
+              icone={ICONE_GEMME} survol={() => prechargerEcran('/gemmes')} />
+          </nav>
+        </>}
+
+        {/* Le Duel en ligne : sa page, sous la lune. À gauche le Grimoire ; à droite la partie privée et la classée
+            (puis le salon, une fois dedans) */}
+        {vue === 'duel' && <>
+          <div className="hall-ecran">{retour('ligne', 'En ligne')}<h2 className="hall-ecran__titre">Duel des Couronnes</h2></div>
+          <p className="ombre-page__intro">En ligne : classé 1v1 ou 2v2, ou partie privée entre amis<span className="hall-mode__infos">2 ou 4 joueurs · XP du Pass, rang</span></p>
+          <div className="ombre-page ombre-page--duel">
+            <section className="ombre-page__panneau ombre-page__panneau--grimoire">
+              {blocGrimoire}
+              <div className="ombre-page__pied">{boutonRegles}</div>
+            </section>
+            <PanneauLigne joueur={joueur} ligne={ligne} />
+          </div>
+        </>}
       </div>
 
       {/* Choix des cartes du deck (bouton « Choisir mes cartes ») */}
-      <div className="choix-deck" id="choix-deck" hidden={!edition || !pret} ref={zoneChoix}>
+      <div className="choix-deck" id="choix-deck" hidden={!edition || !pret || (vue !== 'ombre' && vue !== 'duel')} ref={zoneChoix}>
         {edition && pret && (
           <Constructeur cartes={cartes} toutes={res.toutes} connecte={!!joueur}
             surBasculer={basculerCarte} surRetirer={retirerUn} surVider={() => enregistrer([], false)} />

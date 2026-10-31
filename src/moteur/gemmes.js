@@ -105,15 +105,16 @@ function remplir(etat) {
 
 // ---------------------------------------------------------------------
 //  La partie
-//  combattants : [{ nom, cartes: [{ n, image, rarete, gemme? } ×3] }, …] (0 : celui qui commence)
+//  combattants : [{ nom, cartes: [{ n, image, rarete, gemme? } ×3], pv? }, …] (0 : celui qui commence ;
+//  pv : ses PV de départ, PV_DEPART sinon — les adversaires du mode Histoire en ont plus ou moins)
 //  Une carte de la partie : { n, image, rarete, gemme, jauge, max } : sa gemme (celle qui la charge) est celle de
 //  sa rareté, sauf si on en donne une autre (les cartes de l'Ombre : tirées au hasard, choix.js cartesOmbre)
 // ---------------------------------------------------------------------
 export function nouvellePartie(combattants, graine = nouvelleGraine()) {
   const etat = {
     graine: graine >>> 0, prochain: 0, tour: 1, actif: 0, echanges: ECHANGES_PAR_TOUR - 1, fin: null, grille: null,
-    joueurs: combattants.map(({ nom, cartes }) => ({
-      nom, pv: PV_DEPART, pvMax: PV_DEPART,
+    joueurs: combattants.map(({ nom, cartes, pv }) => ({
+      nom, pv: pv > 0 ? Math.round(pv) : PV_DEPART, pvMax: pv > 0 ? Math.round(pv) : PV_DEPART,
       cartes: [0, 1, 2].map((k) => {
         const rarete = RARETE[cartes[k]?.rarete] ? cartes[k].rarete : 'commune';
         const gemme = SORTES.includes(cartes[k]?.gemme) ? cartes[k].gemme : rarete;

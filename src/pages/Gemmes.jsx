@@ -1,11 +1,13 @@
 // =====================================================================
 //  Écran « Gemmes du Codex » (#/gemmes), un mode de « Jouer » (le menu du Duel y mène)
-//  L'accueil : contre l'Ombre ou contre un ami (le salon, #/gemmes?salon=CODE), les trois cartes du joueur
+//  Trois pages : contre l'Ombre (#/gemmes, depuis « Modes de jeu ») ; contre un ami (#/gemmes?mode=ami, depuis « En ligne » ;
+//  le salon : #/gemmes?salon=CODE) ; un niveau du mode Histoire (#/gemmes?histoire=<niveau>, depuis la carte de
+//  l'Histoire : arbitré par le serveur, moteur/histoireGemmes.js) ; les trois cartes du joueur
 //  (une par couleur, choisies dans sa collection), la difficulté ; puis la table (components/gemmes/Table.jsx).
 //  Les règles : moteur/gemmes.js.
 // =====================================================================
-import { useEffect, useMemo, useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import Page from '../components/Page.jsx';
 import Chargement from '../components/Chargement.jsx';
 import Table from '../components/gemmes/Table.jsx';
@@ -16,7 +18,11 @@ import { useNotifier } from '../lib/notification.js';
 import { nouveauCode, codeValide } from '../lib/salon.js';
 import { estHote } from '../lib/ligne.js';
 import { useSalonGemmes, lienGemmes } from '../lib/gemmes/useSalonGemmes.js';
-import { reserveGemmes, cartesDuChoix, lireChoix, garderChoix, cartesOmbre } from '../lib/gemmes/choix.js';
+import { reserveGemmes, cartesDuChoix, lireChoix, garderChoix, cartesOmbre, carteGemmes } from '../lib/gemmes/choix.js';
+import { preparerNiveau, actionGemmes } from '../moteur/histoireGemmes.js';
+import { commencerDuel, terminerDuel } from '../lib/duelServeur.js';
+import { garderResultatHistoire, texteRecompense } from '../lib/histoire.js';
+import { trouverNiveau, DIFFICULTES_HISTOIRE } from '../data/histoire.js';
 import { SORTES, RARETE, PV_DEPART, ECHANGES_PAR_TOUR, textePouvoir } from '../moteur/gemmes.js';
 import { nouvelleGraine } from '../moteur/hasard.js';
 import { DIFFICULTES } from '../data/regles.js';
@@ -83,7 +89,8 @@ function ChoixCartes({ reserve, choisies, surChoisir, bloque }) {
   );
 }
 
-// Le salon contre un ami
+// Le salon contre un ami : les trois étapes (cartes, salon, prêts), puis créer ou rejoindre ; dans le salon,
+// son code en grand, les deux joueurs face à face, « Je suis prêt »
 function PanneauAmi({ salon, cartesPretes }) {
   const notifier = useNotifier();
   const [code, setCode] = useState('');
@@ -98,39 +105,97 @@ function PanneauAmi({ salon, cartesPretes }) {
     if (!codeValide(c)) return notifier('Ce code n’est pas valide : cinq lettres ou chiffres.', 'erreur');
     salon.entrer(c, estHote(c) ? 'hote' : 'invite');
   };
-  if (!vue.code) return (
-    <div className="gm-ami">
-      <p>Crée un salon et envoie le lien à ton ami, ou rejoins le sien avec son code. Mêmes règles, chacun ses trois cartes.</p>
-      <div className="gm-ami__actions">
-        <button type="button" className="gm-bouton gm-bouton--or" onClick={() => salon.entrer(nouveauCode(), 'hote')}>Créer un salon</button>
-        <form className="gm-ami__code" onSubmit={rejoindre}>
-          <label htmlFor="gm-code" className="gm-cache">Code du salon</label>
-          <input id="gm-code" maxLength={5} autoComplete="off" spellCheck="false" placeholder="CODE" value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} />
-          <button type="submit" className="gm-bouton">Rejoindre</button>
-        </form>
-      </div>
+  const moi = vue.dedans.find((x) => x.role === vue.role);
+  const autre = vue.dedans.find((x) => x.role !== vue.role);
+  const etapes = [
+    ['Choisis tes trois cartes', cartesPretes],
+    ['Crée un salon ou rejoins celui de ton ami', !!vue.code && !!autre],
+    ['Déclarez-vous prêts tous les deux', !!moi?.pret && !!autre?.pret],
+  ];
+  const actuelle = etapes.findIndex(([, fait]) => !fait);
+
+  const joueur = (x, vide) => (
+    <div className={`gm-salon__joueur${x?.pret ? ' est-pret' : ''}${x ? '' : ' est-vide'}`}>
+      {x?.avatar ? <img src={x.avatar} alt="" /> : <span className="gm-salon__avatar" aria-hidden="true">{x ? x.nom.slice(0, 1) : '?'}</span>}
+      <b>{x ? x.nom : vide}</b>
+      <small>{x ? (x.pret ? 'Prêt' : 'Choisit ses cartes…') : 'En attente…'}</small>
     </div>
   );
-  const [a, b] = [vue.dedans.find((x) => x.role === 'hote'), vue.dedans.find((x) => x.role === 'invite')];
+
   return (
-    <div className="gm-ami gm-ami--salon">
-      <div className="gm-ami__tete">
-        <span>Salon <strong>{vue.code}</strong></span>
-        <button type="button" className="gm-bouton" onClick={copier}>Copier le lien</button>
-        <button type="button" className="gm-bouton" onClick={salon.quitterSalon}>Quitter</button>
-      </div>
-      <div className="gm-ami__joueurs">
-        {[a, b].map((x, k) => (
-          <div key={x?.cle ?? k} className={`gm-ami__joueur${x?.pret ? ' est-pret' : ''}`}>
-            {x?.avatar ? <img src={x.avatar} alt="" /> : <span className="gm-ami__avatar" aria-hidden="true">{x ? x.nom.slice(0, 1) : '?'}</span>}
-            <span>{x ? x.nom : 'Place libre'}</span>
-            <small>{x ? (x.pret ? 'Prêt' : 'Choisit ses cartes…') : 'En attente…'}</small>
-          </div>
+    <div className="gm-salon">
+      <ol className="gm-etapes">
+        {etapes.map(([texte, fait], k) => (
+          <li key={texte} className={fait ? 'est-fait' : k === actuelle ? 'est-actuelle' : undefined}>
+            <span className="gm-etapes__num" aria-hidden="true">{fait ? '✓' : k + 1}</span>{texte}
+          </li>
         ))}
-      </div>
-      <p className="gm-ami__etat" aria-live="polite">{vue.erreur || vue.texte}</p>
-      <button type="button" className={`gm-bouton${vue.pret ? '' : ' gm-bouton--or'}`} disabled={!cartesPretes} onClick={salon.basculerPret}>
-        {vue.pret ? 'Je ne suis plus prêt' : 'Je suis prêt'}
+      </ol>
+
+      {!vue.code ? (
+        <>
+          <div className="gm-salon__choix">
+            <p>Un salon privé : un code à envoyer à ton ami. Mêmes règles, chacun ses trois cartes.</p>
+            <button type="button" className="gm-bouton gm-bouton--or gm-salon__large" onClick={() => salon.entrer(nouveauCode(), 'hote')}>Créer un salon</button>
+          </div>
+          <div className="gm-salon__ou" aria-hidden="true"><span>ou</span></div>
+          <form className="gm-salon__choix" onSubmit={rejoindre}>
+            <label htmlFor="gm-code">Ton ami t’a envoyé un code ?</label>
+            <input id="gm-code" className="gm-salon__saisie" maxLength={5} autoComplete="off" spellCheck="false" placeholder="•••••"
+              value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} />
+            <button type="submit" className="gm-bouton gm-salon__large">Rejoindre le salon</button>
+          </form>
+        </>
+      ) : (
+        <>
+          <div className="gm-salon__code">
+            <span>Salon</span>
+            <strong>{vue.code}</strong>
+            <button type="button" className="gm-bouton gm-salon__large" onClick={copier}>Copier le lien d’invitation</button>
+          </div>
+          <div className="gm-salon__face">
+            {joueur(moi, 'Toi')}
+            <span className="gm-salon__contre" aria-hidden="true">contre</span>
+            {joueur(autre, 'Place libre')}
+          </div>
+          <p className="gm-salon__etat" aria-live="polite">{vue.erreur || vue.texte}</p>
+          <button type="button" className={`gm-bouton gm-salon__large gm-salon__pret${vue.pret ? '' : ' gm-bouton--or'}`} disabled={!cartesPretes} onClick={salon.basculerPret}>
+            {vue.pret ? 'Je ne suis plus prêt' : 'Je suis prêt'}
+          </button>
+          <button type="button" className="gm-salon__quitter" onClick={salon.quitterSalon}>Quitter le salon</button>
+        </>
+      )}
+    </div>
+  );
+}
+
+// Un niveau du mode Histoire, avant la partie : l'adversaire (ses PV, sa difficulté, les raretés de ses cartes),
+// les récompenses de la première victoire, « Combattre »
+function PanneauNiveau({ trouve, pret, lancement, surLancer }) {
+  const { niveau } = trouve;
+  const r = niveau.recompenses ?? {};
+  return (
+    <div className="gm-niveau">
+      <h2>L’adversaire</h2>
+      <p className="gm-niveau__nom">{niveau.adversaire}</p>
+      <dl className="gm-niveau__infos">
+        <div><dt>Difficulté</dt><dd>{DIFFICULTES_HISTOIRE[niveau.difficulte] ?? niveau.difficulte}</dd></div>
+        <div><dt>Points de vie</dt><dd>{niveau.pv ?? PV_DEPART}</dd></div>
+      </dl>
+      <p className="gm-niveau__label">Ses trois cartes</p>
+      <ul className="gm-niveau__raretes">
+        {(niveau.ombre ?? []).map((rarete, k) => (
+          <li key={k} className={`gm-txt--${rarete}`}><Gemme sorte={rarete} />{RARETE[rarete]?.nom ?? rarete}</li>
+        ))}
+      </ul>
+      <p className="gm-niveau__label">Première victoire</p>
+      <ul className="gm-niveau__gains">
+        {r.or > 0 && <li><img src={urlPublique('img/Equipement/Or-icone.webp')} alt="" /> {r.or} pièces</li>}
+        {r.xp > 0 && <li><span className="gm-niveau__xp">XP</span> {r.xp} XP de pass</li>}
+        {r.carte && <li><span className="gm-niveau__carte" aria-hidden="true" /> Une carte pour ta collection</li>}
+      </ul>
+      <button type="button" className="gm-engager" disabled={!pret || lancement} onClick={surLancer}>
+        {lancement ? 'Préparation…' : niveau.est_boss ? 'Affronter le boss' : 'Combattre'}
       </button>
     </div>
   );
@@ -140,7 +205,12 @@ export default function Gemmes() {
   const { joueur, chargement } = useAuth();
   const donnees = useDonneesDuel(joueur, chargement);
   const [params, setParams] = useSearchParams();
-  const [mode, setMode] = useState(params.has('salon') || params.get('mode') === 'ami' ? 'ami' : 'ombre');   // ?mode=ami : venu de « En ligne »
+  const naviguer = useNavigate();
+  // Trois pages : contre l'Ombre (#/gemmes, depuis « Modes de jeu ») ; contre un ami (#/gemmes?mode=ami, depuis « En ligne »,
+  // ou le lien d'un salon #/gemmes?salon=CODE) ; un niveau du mode Histoire (#/gemmes?histoire=<niveau>)
+  const idHistoire = params.get('histoire');
+  const histoire = useMemo(() => (idHistoire ? trouverNiveau(idHistoire) : null), [idHistoire]);
+  const mode = histoire ? 'histoire' : params.has('salon') || params.get('mode') === 'ami' ? 'ami' : 'ombre';
   const [difficulte, setDifficulte] = useState(lireDifficulte);
   const [cles, setCles] = useState(lireChoix);
   const [partie, setPartie] = useState(null);   // contre l'Ombre : { combattants, graine, n }
@@ -151,6 +221,10 @@ export default function Gemmes() {
   const salon = useSalonGemmes({ joueur, cartes: mesCartes });
   // L'ambiance musicale démarre au premier geste du joueur (les navigateurs l'exigent)
   useEffect(() => { musiqueAuPremierGeste(); }, []);
+  // Un niveau inconnu, ou pas connecté (la progression est liée au compte) : retour à la carte de l'Histoire
+  useEffect(() => {
+    if (idHistoire && !chargement && (!histoire || !joueur)) naviguer('/histoire', { replace: true });
+  }, [idHistoire, histoire, joueur, chargement, naviguer]);
 
 
   // Le lien d'invitation : on entre dans le salon dès que le joueur est là
@@ -165,16 +239,10 @@ export default function Gemmes() {
     if (code && params.get('salon') !== code) setParams({ salon: code }, { replace: true });
   }, [salon.vue.code]);   // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Quitter le salon : l'adresse ne garde plus son code (une page rechargée n'y retourne pas)
-  const quitterSalon = () => { salon.quitter(); setParams({}, { replace: true }); };
+  // Quitter le salon : l'adresse ne garde plus son code (une page rechargée n'y retourne pas), on reste contre un ami
+  const quitterSalon = () => { salon.quitter(); setParams({ mode: 'ami' }, { replace: true }); };
   const choisir = (nouvelles) => { setCles(nouvelles); garderChoix(nouvelles); };
   const choisirDifficulte = (d) => { setDifficulte(d); jouerSon('clic'); try { localStorage.setItem(CLE_DIFFICULTE, d); } catch { /* stockage indisponible */ } };
-  const changerMode = (m) => {
-    if (m === mode) return;
-    if (m === 'ombre' && salon.vue.code) quitterSalon();
-    setMode(m);
-    jouerSon('clic');
-  };
 
   const nom = joueur?.username ?? 'Toi';
   const lancerOmbre = () => {
@@ -189,11 +257,61 @@ export default function Gemmes() {
     }));
   };
 
+  // ---------- Un niveau du mode Histoire ----------
+  // Le serveur tire la graine et note les trois cartes (duel_commencer) ; chacune de mes actions part dans le
+  // journal ; à la fin, l'arbitre rejoue la partie et donne les récompenses du niveau. Serveur injoignable au
+  // début : partie d'entraînement, sans récompense.
+  const [niveauJeu, setNiveauJeu] = useState(null);   // { n, combattants, graine, moi, h }
+  const [messageFin, setMessageFin] = useState('');
+  const [lancement, setLancement] = useState(false);
+  const journal = useRef([]);
+  const enCours = useRef(null);   // { ticket, fini }
+  const lancerNiveau = async () => {
+    if (!histoire || mesCartes.length < 3 || lancement) return;
+    setLancement(true);
+    const ticket = await commencerDuel({ mode: 'histoire', niveau: histoire.niveau.id, grimoire: mesCartes.map((c) => String(c.cle)) });
+    setLancement(false);
+    const graine = ticket?.graine ?? nouvelleGraine();
+    const depart = preparerNiveau({
+      niveau: histoire.niveau, mesCartes, catalogue: (donnees.catalogue ?? []).map(carteGemmes), graine, nom, avatar: joueur?.avatar_url ?? null,
+    });
+    journal.current = [];
+    enCours.current = { ticket: ticket?.id ?? null, fini: false };
+    setMessageFin('');
+    setNiveauJeu((p) => ({ n: (p?.n ?? 0) + 1, combattants: depart.combattants, graine, moi: depart.moi, h: depart.h }));
+    scrollTo(0, 0);
+  };
+  const noterAction = useCallback((action) => { journal.current.push(actionGemmes(action)); }, []);
+  const finNiveau = useCallback(async ({ gagne }) => {
+    const partieEnCours = enCours.current;
+    if (!histoire || !partieEnCours || partieEnCours.fini) return;
+    partieEnCours.fini = true;
+    if (!partieEnCours.ticket) {
+      garderResultatHistoire(histoire.niveau.id, gagne, null);
+      setMessageFin(gagne ? 'Partie d’entraînement (serveur injoignable au début) : pas de récompense.' : '');
+      return;
+    }
+    setMessageFin('L’arbitre vérifie la partie…');
+    const verdict = await terminerDuel(partieEnCours.ticket, journal.current);
+    if (enCours.current !== partieEnCours) return;
+    const resultat = garderResultatHistoire(histoire.niveau.id, gagne, verdict);
+    const xp = resultat.recompenses?.xp;
+    setMessageFin([texteRecompense(resultat), xp ? `+${xp} XP de pass.` : ''].filter(Boolean).join(' '));
+  }, [histoire]);
+  const versLaCarte = histoire ? `/histoire?chapitre=${encodeURIComponent(histoire.chapitre.id)}` : '/histoire';
+
+  const retour = mode === 'histoire' ? versLaCarte : mode === 'ami' ? '/duel?mode=ligne' : '/duel?mode=jeux';
   const partieAmi = mode === 'ami' ? salon.partie : null;
-  const classes = `page-gemmes${partie || partieAmi ? ' en-partie' : ''}`;
+  const classes = `page-gemmes${partie || partieAmi || (niveauJeu && mode === 'histoire') ? ' en-partie' : ''}`;
 
   let contenu;
-  if (partie && mode === 'ombre') {
+  if (niveauJeu && mode === 'histoire') {
+    contenu = (
+      <Table key={niveauJeu.n} combattants={niveauJeu.combattants} graine={niveauJeu.graine} moi={niveauJeu.moi}
+        difficulte={histoire.niveau.difficulte} hasardOmbre={niveauJeu.h} surJournal={noterAction} surFin={finNiveau} messageFin={messageFin}
+        surRejouer={lancerNiveau} surQuitter={() => naviguer(versLaCarte, { viewTransition: true })} />
+    );
+  } else if (partie && mode === 'ombre') {
     contenu = (
       <Table key={partie.n} combattants={partie.combattants} graine={partie.graine} moi={partie.moi} difficulte={partie.difficulte}
         surRejouer={lancerOmbre} surQuitter={() => setPartie(null)} />
@@ -210,21 +328,22 @@ export default function Gemmes() {
     );
   } else {
     contenu = (
-      <main className="gm-accueil">
+      <main className={`gm-accueil gm-accueil--${mode}`}>
         <header className="gm-entete">
-          <span className="gm-entete__sur">Jouer · Nouveau mode</span>
-          <h1>Les Gemmes du Codex</h1>
-          <p>Échange deux gemmes voisines pour en aligner trois ou plus. Chaque gemme charge ta carte de sa rareté ; jauge pleine, la carte lance son pouvoir sur l’adversaire.</p>
+          {/* le retour, en haut à gauche : vers Modes de jeu (contre l'Ombre) ou En ligne (contre un ami) */}
+          <Link className="gm-retour-haut" to={retour} viewTransition>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" /></svg><span>{mode === 'histoire' ? 'La carte' : mode === 'ami' ? 'En ligne' : 'Modes de jeu'}</span>
+          </Link>
+          {mode === 'histoire' ? <>
+            <span className="gm-entete__sur">Histoire · {histoire.chapitre.nom} · {histoire.niveau.est_boss ? 'Boss' : `Niveau ${histoire.index + 1}`}</span>
+            <h1>{histoire.niveau.nom}</h1>
+            <p>{histoire.niveau.adversaire} te barre la route. Aligne les gemmes pour charger tes cartes, et fais tomber ses PV avant qu’il ne fasse tomber les tiens.</p>
+          </> : <>
+            <span className="gm-entete__sur">{mode === 'ami' ? 'En ligne · Contre un ami' : 'Modes de jeu · Contre l’Ombre'}</span>
+            <h1>Les Gemmes du Codex</h1>
+            <p>Échange deux gemmes voisines pour en aligner trois ou plus. Chaque gemme charge ta carte de sa rareté ; jauge pleine, la carte lance son pouvoir {mode === 'ami' ? 'sur ton ami' : 'sur l’Ombre'}.</p>
+          </>}
         </header>
-
-        <div className="gm-modes" role="tablist" aria-label="Adversaire">
-          <button type="button" role="tab" aria-selected={mode === 'ombre'} className={`gm-mode${mode === 'ombre' ? ' est-actif' : ''}`} onClick={() => changerMode('ombre')}>
-            <strong>Contre l’Ombre</strong><span>Seul, face à l’IA</span>
-          </button>
-          <button type="button" role="tab" aria-selected={mode === 'ami'} className={`gm-mode${mode === 'ami' ? ' est-actif' : ''}`} onClick={() => changerMode('ami')}>
-            <strong>Contre un ami</strong><span>En ligne, par un salon privé</span>
-          </button>
-        </div>
 
         <div className="gm-accueil__corps">
           <section className="gm-bloc gm-bloc--cartes" aria-labelledby="gm-titre-cartes">
@@ -235,7 +354,9 @@ export default function Gemmes() {
           </section>
 
           <aside className="gm-bloc gm-bloc--lancer">
-            {mode === 'ombre' ? (
+            {mode === 'histoire' ? (
+              <PanneauNiveau trouve={histoire} pret={mesCartes.length === 3 && donnees.pret} lancement={lancement} surLancer={lancerNiveau} />
+            ) : mode === 'ombre' ? (
               <>
                 <h2>Difficulté</h2>
                 <div className="gm-difficultes" role="radiogroup" aria-label="Difficulté de l’Ombre">
@@ -253,14 +374,14 @@ export default function Gemmes() {
               </>
             ) : (
               <>
-                <h2>Contre un ami</h2>
+                <h2>Le salon</h2>
                 <PanneauAmi salon={{ ...salon, quitterSalon }} cartesPretes={mesCartes.length === 3} />
               </>
             )}
             <details className="gm-regles">
               <summary>Les règles</summary>
               <ul>
-                <li>Chacun commence avec {PV_DEPART} PV. À ton tour : jusqu’à {ECHANGES_PAR_TOUR} échanges (2 pour celui qui commence la partie), ou « Fin du tour » plus tôt.</li>
+                <li>{mode === 'histoire' ? `Tu commences avec ${PV_DEPART} PV, ton adversaire avec ${histoire.niveau.pv ?? PV_DEPART}.` : `Chacun commence avec ${PV_DEPART} PV.`} À ton tour : jusqu’à {ECHANGES_PAR_TOUR} échanges (2 pour celui qui commence la partie), ou « Fin du tour » plus tôt.</li>
                 <li>Un échange doit aligner 3 gemmes ou plus. Il y a une gemme par rareté, de sa couleur : {SORTES.map((r, k) => <span key={r}>{k ? (k === SORTES.length - 1 ? ' et ' : ', ') : ''}<b className={`gm-txt--${r}`}>{RARETE[r].nom}</b></span>)}.</li>
                 <li>Les gemmes ne blessent pas : chaque gemme alignée charge d’une part la jauge de ta carte de cette rareté (aligner 4, c’est 4 parts). Les gemmes d’une rareté que tu n’as pas ne chargent rien pour toi.</li>
                 <li>Les chutes provoquent des chaînes : +25 % de charge par maillon, sans coûter d’échange.</li>
@@ -270,7 +391,7 @@ export default function Gemmes() {
             </details>
           </aside>
         </div>
-        <p className="gm-retour"><Link to={mode === 'ami' ? '/duel?mode=ligne' : '/duel?mode=jeux'} viewTransition>← Retour {mode === 'ami' ? 'au jeu en ligne' : 'aux modes de jeu'}</Link></p>
+        <p className="gm-retour"><Link to={retour} viewTransition>← Retour {mode === 'histoire' ? 'à la carte' : mode === 'ami' ? 'à En ligne' : 'aux modes de jeu'}</Link></p>
         <DefsGemmes />
       </main>
     );

@@ -11,6 +11,10 @@ import { uniteDepuisCarte, objetDepuisNom } from '../../src/moteur/cartes.js';
 import { reserve, cartesChoisies, cleCarte } from '../../src/lib/grimoire.js';
 import { trouverNiveau } from '../../src/data/histoire.js';
 import { arbitrer } from '../../serveur/arbitrage.js';
+import { preparerNiveau, actionGemmes } from '../../src/moteur/histoireGemmes.js';
+import { appliquer, choixOmbre } from '../../src/moteur/gemmes.js';
+import { generateur } from '../../src/moteur/hasard.js';
+import { reserveGemmes, cartesDuChoix, carteGemmes } from '../../src/lib/gemmes/choix.js';
 import { CATALOGUE } from '../moteur/catalogue.js';
 
 const CARTES = CATALOGUE.map((c) => ({ ...c, image: `img/Cartes/${c.id}.webp`, is_available: true }));
@@ -64,14 +68,6 @@ describe('arbitre des duels contre l\'Ombre', () => {
     expect(vus.has('joueur')).toBe(true);   // le test couvre bien des victoires
   });
 
-  it('mode Histoire : le niveau (deck, PV, difficulté) vient des données du jeu, pas du navigateur', () => {
-    const grimoire = grimoireDuNavigateur();
-    const { niveau } = trouverNiveau('pravorn-1');
-    const { fin, journal } = jouerUnDuel({ graine: 77, difficulte: niveau.difficulte, niveau, grimoire });
-    const r = arbitrer({ duel: duelServeur({ mode: 'histoire', difficulte: null, niveau_id: 'pravorn-1', graine: 77, grimoire }), catalogueBrut: CARTES, possedeesBrutes: POSSEDEES, journal });
-    expect(r.resultat).toBe(fin.fini);
-  });
-
   it('un abandon est une défaite (sans récompense)', () => {
     const grimoire = grimoireDuNavigateur();
     const { journal } = jouerUnDuel({ graine: 5, grimoire, abandonAuTour: 3 });
@@ -99,5 +95,83 @@ describe('arbitre des duels contre l\'Ombre', () => {
     expect(arbitrer({ ...base, duel: duelServeur({ graine, grimoire }), journal: [{ type: 'ia' }] }).resultat).toBe('invalide');
     expect(arbitrer({ ...base, duel: duelServeur({ graine, grimoire }), journal: 'gagné' }).resultat).toBe('invalide');
     expect(arbitrer({ ...base, duel: duelServeur({ graine, grimoire }), journal: [{ type: 'jouer', index: { __proto__: 1 } }] }).resultat).toBe('invalide');
+  });
+});
+
+// ---------------------------------------------------------------------
+//  Le mode Histoire : chaque niveau est une partie de Gemmes (moteur/histoireGemmes.js)
+// ---------------------------------------------------------------------
+// Joue un niveau comme la page des Gemmes : le joueur (ici automatique, avec son propre hasard), puis
+// l'adversaire avec le hasard de la partie
+function jouerUnNiveau({ idNiveau, graine, cles, abandonAuTour = null, maladroit = false }) {
+  const { niveau } = trouverNiveau(idNiveau);
+  const catalogue = CARTES.map(uniteDepuisCarte);
+  const mesCartes = cartesDuChoix(cles, reserveGemmes(POSSEDEES.map(uniteDepuisCarte), catalogue))
+    .map(({ cle, n, image, rarete }) => ({ cle, n, image, rarete }));
+  const depart = preparerNiveau({ niveau, mesCartes, catalogue: catalogue.map(carteGemmes), graine, nom: 'Testeur' });
+  const monHasard = generateur(graine + 1);
+  let e = depart.etat;
+  const journal = [];
+  for (let i = 0; i < 5000 && !e.fin; i++) {
+    if (e.actif === depart.moi) {
+      if (abandonAuTour && e.tour >= abandonAuTour) { journal.push({ t: 'abandon' }); return { journal, gagnant: 'adverse' }; }
+      const choix = maladroit ? { t: 'fin' } : choixOmbre(e, depart.moi, 'difficile', monHasard);
+      journal.push(actionGemmes(choix));
+      e = appliquer(e, depart.moi, choix).etat;
+    } else {
+      const res = appliquer(e, e.actif, choixOmbre(e, e.actif, niveau.difficulte, depart.h));
+      if (res) e = res.etat;
+    }
+  }
+  return { journal, gagnant: e.fin ? (e.fin.gagnant === depart.moi ? 'joueur' : 'adverse') : null };
+}
+const CLES = POSSEDEES.map((c) => c.id);
+const niveauServeur = (idNiveau, graine, cles = CLES) => duelServeur({ mode: 'histoire', difficulte: null, niveau_id: idNiveau, graine, grimoire: cles.map(String) });
+
+describe('arbitre du mode Histoire (Gemmes)', () => {
+  it('retrouve le même vainqueur que le navigateur, niveau après niveau', () => {
+    const vus = new Set();
+    for (const idNiveau of ['pravorn-1', 'pravorn-4', 'pravorn-boss']) {
+      for (const graine of [3, 2024, 4294967295]) {
+        const { journal, gagnant } = jouerUnNiveau({ idNiveau, graine, cles: CLES });
+        expect(gagnant).toBeTruthy();
+        vus.add(gagnant);
+        const r = arbitrer({ duel: niveauServeur(idNiveau, graine), catalogueBrut: CARTES, possedeesBrutes: POSSEDEES, journal });
+        expect(r.resultat).toBe(gagnant);
+        expect(r.details.jeu).toBe('gemmes');
+      }
+    }
+    expect(vus.has('joueur')).toBe(true);
+  });
+
+  it('un abandon est une défaite ; une partie inachevée ou truquée est refusée', () => {
+    const base = { catalogueBrut: CARTES, possedeesBrutes: POSSEDEES };
+    const abandon = jouerUnNiveau({ idNiveau: 'pravorn-2', graine: 9, cles: CLES, abandonAuTour: 2 });
+    expect(arbitrer({ ...base, duel: niveauServeur('pravorn-2', 9), journal: abandon.journal })).toMatchObject({ resultat: 'adverse', details: { abandon: true } });
+
+    let partie; let graine = 500;
+    do { partie = jouerUnNiveau({ idNiveau: 'pravorn-1', graine: ++graine, cles: CLES }); } while (partie.gagnant !== 'joueur');
+    expect(arbitrer({ ...base, duel: niveauServeur('pravorn-1', graine), journal: partie.journal }).resultat).toBe('joueur');
+    // « J'ai gagné » sans jouer, ou en s'arrêtant avant la fin
+    expect(arbitrer({ ...base, duel: niveauServeur('pravorn-1', graine), journal: [] }).resultat).toBe('invalide');
+    expect(arbitrer({ ...base, duel: niveauServeur('pravorn-1', graine), journal: partie.journal.slice(0, -3) }).resultat).toBe('invalide');
+    // Une autre graine : la grille n'est plus la même, les échanges notés ne marchent plus
+    expect(arbitrer({ ...base, duel: niveauServeur('pravorn-1', graine + 1), journal: partie.journal }).resultat).not.toBe('joueur');
+    // Une carte « qui frappe tout de suite » ou un journal mal formé
+    expect(arbitrer({ ...base, duel: niveauServeur('pravorn-1', graine), journal: [{ t: 'carte', k: 0 }] }).resultat).toBe('invalide');
+    expect(arbitrer({ ...base, duel: niveauServeur('pravorn-1', graine), journal: [{ type: 'jouer' }] }).resultat).toBe('invalide');
+    expect(arbitrer({ ...base, duel: niveauServeur('pravorn-1', graine), journal: 'gagné' }).resultat).toBe('invalide');
+    // Un niveau inconnu
+    expect(arbitrer({ ...base, duel: niveauServeur('pravorn-99', graine), journal: partie.journal }).resultat).toBe('invalide');
+  });
+
+  it('les cartes du joueur : seulement celles de sa collection (ou prêtées), pas celles qu\'il n\'a pas', () => {
+    const base = { catalogueBrut: CARTES, possedeesBrutes: POSSEDEES };
+    const pasAMoi = CARTES.map((c) => c.id).filter((id) => !CLES.includes(id)).slice(0, 3);
+    // Le journal d'une partie jouée avec les cartes possédées, envoyé en déclarant d'autres cartes : la partie
+    // rejouée est celle des cartes possédées (les autres sont ignorées), donc le même vainqueur
+    const { journal, gagnant } = jouerUnNiveau({ idNiveau: 'pravorn-3', graine: 11, cles: CLES });
+    const r = arbitrer({ ...base, duel: niveauServeur('pravorn-3', 11, [...pasAMoi, ...CLES]), journal });
+    expect(r.resultat).toBe(gagnant);
   });
 });

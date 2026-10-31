@@ -119,11 +119,11 @@ const CADRE = (
 );
 
 // Les écrans du jeu, dans l'ordre de la barre
-// actifSur : d'autres adresses où l'écran est éclairé (Jouer : le Duel et l'Histoire)
+// actifSur : d'autres adresses où l'écran est éclairé (Jouer : le Duel, l'Histoire et les Gemmes)
 // place : sa place dans la barre du téléphone ; sans place, l'écran est dans le menu « Plus »
 const PAGES = [
   { icone: 'profil', libelle: 'Profil', chemin: '/profil', place: 'profil' },
-  { icone: 'jouer', libelle: 'Jouer', chemin: '/duel', actifSur: ['/histoire'], place: 1 },
+  { icone: 'jouer', libelle: 'Jouer', chemin: '/duel', actifSur: ['/histoire', '/gemmes'], place: 1 },
   { icone: 'collection', libelle: 'Collection', chemin: '/collection', place: 2 },
   { icone: 'boutique', libelle: 'Boutique', chemin: '/boutique', place: 4 },
   { icone: 'caverne', libelle: 'Caverne', chemin: '/caverne' },

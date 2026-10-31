@@ -60,7 +60,8 @@
 .hall-mode--ombre .hall-mode__image { background-image: url("/img/Fond/contrelombre_fond.webp?v=2"); background-position: 55% 30%; }
 .hall-mode--ligne .hall-mode__image { background-image: url("/img/Fond/multijoueur_fond.webp"); background-position: 50% 40%; }
 .hall-mode--histoire .hall-mode__image { background-image: url("/img/Fond/campagne_fond.webp"); background-position: 30% 40%; filter: saturate(.75) brightness(.78); }
-.hall-mode--gemmes .hall-mode__image { background-image: url("/img/Plateaux de carte/plateau-cristaux.webp"); background-position: 50% 45%; filter: saturate(.8) brightness(.72); }
+/* les Gemmes : la salle de la Caverne aux Trésors (pierre veinée d'or, eau turquoise), cadrée sur sa porte du milieu */
+.hall-mode--gemmes .hall-mode__image { background-image: url("/img/Fond/Caverne.webp"); background-position: 50% 45%; filter: saturate(.85) brightness(.8); }
 
 /* l'emblème : un losange d'or vieilli, au bas de l'illustration */
 .hall-mode__embleme {
@@ -570,3 +571,201 @@
 /* les lueurs derrière le menu (.accueil::before, 1100 px de haut) s'arrêtent au bas du menu : sinon elles
    dépassent, et la page défile dans le vide alors que tout tient à l'écran */
 .hall.accueil::before { height: auto; bottom: 0; }
+
+/* =====================================================================
+   « Jouer » en deux temps (Menu.jsx) : l'accueil (Histoire, Modes de jeu, En ligne, trois cartes),
+   puis l'écran choisi (deux cartes et, dessous, le bandeau ou le salon), avec son titre et le retour.
+   ===================================================================== */
+.hall-bandeau[hidden], .choix-deck[hidden] { display: none; }
+/* ---------- Des bannières suspendues à une tringle d'or (l'accueil : trois ; Modes de jeu, En ligne : deux) ----------
+   Des étendards à queue d'aronde, du haut de l'écran jusqu'en bas. Leur chiffre romain et leur emblème en haut,
+   leur titre en bas. Au survol, la bannière s'élargit, se balance doucement et dévoile sa phrase ;
+   les deux autres s'effacent dans la nuit. */
+.hall-bannieres {
+  position: relative;
+  display: flex; gap: 18px;
+  width: 100%; max-width: 1180px; margin: 0 auto; padding-top: 16px;
+}
+/* la tringle, et ses deux pommeaux */
+.hall-bannieres::before {
+  content: ""; position: absolute; z-index: 2; left: -10px; right: -10px; top: 0; height: 7px; border-radius: 4px;
+  background: linear-gradient(180deg, #f6e4b2, #b28c48 45%, #5d4520);
+  box-shadow: 0 5px 12px rgba(0,0,0,.7);
+}
+.hall-bannieres::after {
+  content: ""; position: absolute; z-index: 2; left: -26px; right: -26px; top: -6px; height: 19px; pointer-events: none;
+  background:
+    radial-gradient(circle 9px at 9px 50%, #fff1cf, #b28c48 55%, #4a3618 92%, transparent 100%),
+    radial-gradient(circle 9px at calc(100% - 9px) 50%, #fff1cf, #b28c48 55%, #4a3618 92%, transparent 100%);
+}
+.hall-bannieres .hall-mode {
+  --forme: polygon(0 0, 100% 0, 100% 100%, 50% calc(100% - 52px), 0 100%);
+  flex: 1 1 0; min-width: 0;
+  min-height: max(360px, calc(100vh - 112px)); min-height: max(360px, calc(100svh - 112px));
+  justify-content: flex-end;
+  padding: 0 28px 96px;
+  transform-origin: 50% 0;
+  transition: flex-grow .6s cubic-bezier(.2,.8,.3,1), filter .45s ease;
+}
+/* l'illustration : pleine hauteur, la nuit en bas pour le titre, un léger voile en haut pour l'emblème */
+.hall-bannieres .hall-mode__image { transition: transform 1.2s cubic-bezier(.2,.8,.3,1), filter .45s ease; }
+.hall-bannieres .hall-mode__image::after {
+  background:
+    linear-gradient(180deg, rgba(10,16,29,.7), transparent 20%),
+    linear-gradient(180deg, transparent 45%, rgba(12,18,32,.7) 68%, rgba(10,16,29,.96) 86%);
+}
+/* le chiffre romain, entre deux filets, sous la tringle */
+.hall-mode__num {
+  position: absolute; top: 34px; left: 50%; translate: -50% 0;
+  display: flex; align-items: center; gap: 12px;
+  font-family: "Cinzel","Cinzel Repli", serif; font-size: .82rem; font-weight: 700; letter-spacing: .3em;
+  color: var(--or-pale); text-shadow: 0 1px 6px rgba(0,0,0,.9);
+}
+.hall-mode__num::before, .hall-mode__num::after { content: ""; width: 34px; height: 1px; background: linear-gradient(90deg, transparent, var(--or)); }
+.hall-mode__num::after { background: linear-gradient(90deg, var(--or), transparent); }
+.hall-bannieres .hall-mode__embleme { position: absolute; top: 74px; left: 50%; margin: 0 0 0 -29px; }
+/* le titre, et un filet d'or qui s'étire au survol */
+.hall-bannieres .hall-mode__titre { font-size: clamp(1.35rem, 2.2vw, 1.9rem); letter-spacing: .16em; text-align: center; }
+.hall-bannieres .hall-mode__titre::after {
+  content: ""; display: block; width: 48px; height: 1px; margin: 12px auto 2px;
+  background: linear-gradient(90deg, transparent, var(--or), transparent);
+  transition: width .6s cubic-bezier(.2,.8,.3,1);
+}
+.hall-bannieres .hall-mode__texte { margin-top: 8px; }
+
+/* au survol : la bannière s'élargit et se balance, les autres s'effacent */
+.hall-bannieres .hall-mode:hover, .hall-bannieres .hall-mode:focus-visible { flex-grow: 1.55; transform: none; animation: hall-balance 3.2s ease-in-out infinite; }
+.hall-bannieres .hall-mode:hover .hall-mode__image, .hall-bannieres .hall-mode:focus-visible .hall-mode__image { transform: scale(1.06); filter: saturate(1) brightness(.95); }
+.hall-bannieres .hall-mode:hover .hall-mode__titre::after, .hall-bannieres .hall-mode:focus-visible .hall-mode__titre::after { width: 150px; }
+.hall-bannieres:has(.hall-mode:hover) .hall-mode:not(:hover) { filter: brightness(.55) saturate(.6) drop-shadow(0 16px 26px rgba(0,0,0,.65)); }
+@keyframes hall-balance { 0%, 100% { rotate: -.45deg; } 50% { rotate: .45deg; } }
+/* la phrase n'apparaît qu'au survol (sur un écran tactile, elle reste là) */
+@media (hover: hover) {
+  .hall-bannieres .hall-mode__texte { max-height: 0; margin-top: 0; opacity: 0; overflow: hidden; transition: max-height .5s ease, margin .5s ease, opacity .4s ease; }
+  .hall-bannieres .hall-mode:hover .hall-mode__texte, .hall-bannieres .hall-mode:focus-visible .hall-mode__texte { max-height: 4em; margin-top: 8px; opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hall-bannieres .hall-mode, .hall-bannieres .hall-mode__image { transition: none; animation: none !important; }
+}
+
+.hall-ecran { position: relative; display: flex; align-items: center; justify-content: center; min-height: 44px; }
+.hall-ecran__retour { position: absolute; left: 0; top: 50%; translate: 0 -50%; }
+.hall-ecran__retour svg { width: 16px; height: 16px; }
+.hall-ecran__titre {
+  margin: 0; font-family: "Cinzel","Cinzel Repli", serif; font-weight: 700; font-size: clamp(1.4rem, 2.4vw, 1.9rem); letter-spacing: .14em; text-transform: uppercase;
+  color: var(--ivoire); text-shadow: 0 4px 22px rgba(0,0,0,.85);
+}
+.hall-ecran__titre::after { content: ""; display: block; width: 160px; height: 1px; margin: 10px auto 0; background: linear-gradient(90deg, transparent, var(--or), transparent); }
+
+@media (max-width: 860px) {
+  .hall-bannieres { flex-direction: column; gap: 14px; padding-top: 0; }
+  .hall-bannieres::before, .hall-bannieres::after, .hall-mode__num { display: none; }
+  .hall-bannieres .hall-mode__embleme { position: static; margin: 0 0 10px; }
+  .hall-bannieres .hall-mode, .hall-bannieres.hall-modes--jeux .hall-mode { min-height: 200px; padding-bottom: 60px; --forme: polygon(0 0, 100% 0, 100% 100%, 50% calc(100% - 26px), 0 100%); }
+  .hall-ecran { flex-direction: column; gap: 12px; }
+  .hall-ecran__retour { position: static; translate: none; align-self: flex-start; }
+}
+
+/* Modes de jeu, En ligne : deux bannières, aussi hautes que l'écran le permet sous le titre */
+.hall-modes--jeux { max-width: 880px; }
+.hall-bannieres.hall-modes--jeux .hall-mode { min-height: max(360px, calc(100vh - 190px)); min-height: max(360px, calc(100svh - 190px)); }
+
+/* =====================================================================
+   Contre l'Ombre : sa page (?mode=ombre, Menu.jsx). La forêt de l'Ombre en fond, voilée de nuit ;
+   deux panneaux bleu nuit à liseré d'or : le Grimoire (grand carrousel) et l'adversaire (les trois niveaux
+   en liste, chacun avec sa phrase ; « Engager le duel » dessous).
+   ===================================================================== */
+/* (sur le décor fixe du Duel, .scene__fond : un calque fixe dans la page serait coupé à sa largeur) */
+.page-jeu:has(.hall--ombre) .scene__fond {
+  background:
+    radial-gradient(ellipse 85% 70% at 50% 25%, transparent 30%, rgba(8,12,22,.8)),
+    linear-gradient(180deg, rgba(8,12,22,.45), rgba(8,12,22,.7) 45%, rgba(8,12,22,.94)),
+    url("/img/Fond/contrelombre_fond.webp?v=2") center 30% / cover no-repeat;
+}
+.ombre-page__intro {
+  max-width: none; margin: -6px 0 0;
+  font-family: "EB Garamond","EB Garamond Repli", serif; font-style: italic; font-size: 1.08rem; color: var(--ivoire-doux);
+}
+.ombre-page__intro .hall-mode__infos { margin-top: .5em; font-style: normal; }
+
+.ombre-page {
+  display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(320px, 1fr); gap: 22px;
+  width: 100%; max-width: 1180px; margin: 6px auto 0;
+  text-align: left;
+}
+.ombre-page__panneau {
+  position: relative; isolation: isolate;
+  display: flex; flex-direction: column;
+  padding: 26px 28px 28px;
+  background: linear-gradient(170deg, rgba(227,207,159,.6), rgba(122,98,54,.45) 50%, rgba(227,207,159,.5));
+  clip-path: var(--taille);
+  filter: drop-shadow(0 18px 32px rgba(0,0,0,.6));
+}
+.ombre-page__panneau::before {
+  content: ""; position: absolute; inset: 1.5px; z-index: -1; clip-path: var(--taille);
+  background:
+    radial-gradient(ellipse 80% 50% at 50% 0%, rgba(90,120,190,.12), transparent 70%),
+    linear-gradient(180deg, rgba(18,27,46,.94), rgba(10,16,29,.96));
+}
+/* le Grimoire : son carrousel en grand, centré */
+/* (la règle commune des section, index.css, leur donnait des marges automatiques : remises à zéro) */
+.ombre-page > .ombre-page__panneau, .ombre-page > .ligne { max-width: none; margin: 0; border: 0; min-width: 0; }
+.ombre-page__panneau--grimoire { justify-content: center; }
+.ombre-page__panneau--grimoire .hall-grimoire { width: 100%; }
+.ombre-page__panneau--grimoire .hall-grimoire { align-items: center; }
+.ombre-page__panneau--grimoire .hall-zone__tete { align-self: flex-start; }
+.ombre-page .carrousel { width: 100%; }
+.ombre-page .carrousel__piste { height: 250px; }
+.ombre-page .carrousel__piste > .carrousel__carte { transform: translate(-50%, -50%) translateX(calc(var(--d) * 104px)) translateZ(calc(var(--a) * -70px)) rotateY(calc(var(--d) * -14deg)) scale(calc(1 - var(--a) * .1)); }
+.ombre-page #accueil-deck .carrousel__carte, .ombre-page #accueil-deck .carrousel__carte .dc-carte { --carte-l: 128px; }
+.ombre-page #accueil-deck .carrousel__carte .dc-carte { width: 128px; }
+
+/* l'adversaire : les trois niveaux en liste */
+.ombre-page__panneau--adversaire { gap: 14px; }
+.ombre-page__niveaux { display: flex; flex-direction: column; gap: 8px; }
+.hall .ombre-niveau {
+  flex-direction: row; align-items: center; gap: 16px;
+  width: 100%; padding: 8px 14px 8px 8px;
+  text-align: left;
+  border: 1px solid rgba(200,168,106,.18);
+  background: rgba(10,16,29,.45);
+  clip-path: var(--taille);
+  transition: border-color .2s ease, background .2s ease;
+}
+.hall .ombre-niveau:hover { background: rgba(26,37,64,.6); border-color: rgba(200,168,106,.4); }
+.hall .ombre-niveau[aria-checked="true"] { background: linear-gradient(90deg, rgba(200,168,106,.16), rgba(10,16,29,.4) 70%); border-color: rgba(227,207,159,.6); }
+.ombre-niveau .hall-hex__forme { flex: none; width: 52px; height: 58px; }
+.ombre-niveau .hall-hex__forme svg { width: 26px; height: 26px; }
+.ombre-niveau__textes { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.ombre-niveau__textes b { font-family: "Cinzel","Cinzel Repli", serif; font-size: .85rem; letter-spacing: .14em; text-transform: uppercase; }
+.ombre-niveau__textes small { text-transform: none; letter-spacing: 0; font-weight: 400; font-family: "EB Garamond","EB Garamond Repli", serif; font-style: italic; font-size: .92rem; line-height: 1.3; color: var(--ivoire-doux); }
+.ombre-page__panneau--adversaire .hall-actions { flex-direction: column; align-items: stretch; gap: 12px; margin-top: auto; padding-top: 10px; }
+.ombre-page__panneau--adversaire .hall-engager { width: 100%; }
+.ombre-page__panneau--adversaire .menu__regles { align-self: center; }
+
+@media (max-width: 960px) {
+  .ombre-page { grid-template-columns: 1fr; }
+}
+@media (max-width: 860px) {
+  .ombre-page__panneau { padding: 18px 14px; }
+  .ombre-page .carrousel__piste { height: 170px; }
+  .ombre-page .carrousel__piste > .carrousel__carte { transform: translate(-50%, -50%) translateX(calc(var(--d) * 58px)) translateZ(calc(var(--a) * -60px)) rotateY(calc(var(--d) * -14deg)) scale(calc(1 - var(--a) * .1)); }
+  .ombre-page #accueil-deck .carrousel__carte, .ombre-page #accueil-deck .carrousel__carte .dc-carte { --carte-l: 88px; }
+  .ombre-page #accueil-deck .carrousel__carte .dc-carte { width: 88px; }
+}
+
+/* =====================================================================
+   Le Duel en ligne : sa page (?mode=duel ; le salon : ?salon=CODE), sur le modèle de Contre l'Ombre.
+   La nuit et la lune en fond ; à gauche le Grimoire (et les règles), à droite la partie privée puis la classée,
+   l'une sous l'autre (ou le salon, une fois dedans).
+   ===================================================================== */
+.page-jeu:has(.hall--duel) .scene__fond {
+  background:
+    radial-gradient(ellipse 85% 70% at 50% 25%, transparent 30%, rgba(8,12,22,.8)),
+    linear-gradient(180deg, rgba(8,12,22,.4), rgba(8,12,22,.7) 45%, rgba(8,12,22,.94)),
+    url("/img/Fond/multijoueur_fond.webp") center 40% / cover no-repeat;
+}
+.ombre-page--duel { grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); align-items: start; }
+.ombre-page__pied { display: flex; justify-content: center; margin-top: 18px; }
+.ombre-page--duel .ligne__accueil { display: flex; flex-direction: column; }
+.ombre-page--duel .ligne__bloc + .ligne__sous-titre { margin-top: 20px; }

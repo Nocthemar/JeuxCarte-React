@@ -115,7 +115,7 @@ export function useLigne({ joueur, grimoire, notifier }) {
     const complet = () => {
       courant.current.notifier('Ce salon est complet.', 'erreur');
       retenirHote(code, false);
-      allerA('/duel?mode=ligne');
+      allerA('/duel?mode=duel');
     };
 
     // Présences : qui est là, prêt ou non, dans quelle équipe ; l'hôte lance le duel quand tous sont prêts
@@ -284,7 +284,7 @@ export function useLigne({ joueur, grimoire, notifier }) {
       if (!incomplet) return;
       notif(enClasse.format === '2v2' ? 'Un joueur n’est pas venu : la partie est annulée.' : 'Ton adversaire n’est pas venu : la partie est annulée.', 'erreur');
       classe.current = null;
-      allerA('/duel?mode=ligne');
+      allerA('/duel?mode=duel');
     }, 30000) : null;
 
     return () => {
@@ -313,7 +313,7 @@ export function useLigne({ joueur, grimoire, notifier }) {
     pilote.current = null;
     arbitre.current = null;
     setDuel(null);
-    allerA('/duel?mode=ligne');
+    allerA('/duel?mode=duel');
   };
   const basculerPret = async () => {
     const s = salon.current;

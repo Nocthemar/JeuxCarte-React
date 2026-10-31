@@ -259,11 +259,23 @@
      sont rangées dans leurs pochettes ; puis on entre dans le grimoire (Collection.jsx, OUVERTURE).
    - Le cercle : une couronne de fer, quatre quartiers, le plateau choisi au cœur ; il tourne au survol.
    ===================================================================== */
-body.page-collection:has(#choix) {
+/* Le fond de toute la Collection (le choix, le grimoire, le cercle) : la lune de sang sur la mer de nuages
+   (img/Fond/collection.webp), sur un calque fixe (comme le Profil) ; voile plus sombre vers le bas, où sont les cartes.
+   Le thème de jour garde ce paysage. */
+body.page-collection { background: #07080c; }
+body.page-collection::before,
+:root[data-theme="jour"] body.page-collection::before {
+  z-index: -1;
   background:
-    radial-gradient(ellipse 70% 55% at 50% 0%, rgba(155,39,48,.13), transparent 70%),
-    linear-gradient(180deg, rgba(6,8,13,.55), rgba(6,8,13,.88) 55%, rgba(6,8,13,.97)),
-    url("/img/Fond/Profil_fond.webp") center top / cover no-repeat fixed,
+    linear-gradient(180deg, rgba(6,8,13,.3), rgba(6,8,13,.55) 45%, rgba(6,8,13,.82)),
+    radial-gradient(ellipse 120% 95% at 50% 35%, transparent 50%, rgba(6,8,13,.6) 100%),
+    url("/img/Fond/collection.webp") center top / cover no-repeat,
+    #07080c;
+}
+body.page-collection:not(:has(#choix))::before {   /* dans le grimoire et la roue, plus de voile : les cartes d'abord */
+  background:
+    linear-gradient(180deg, rgba(6,8,13,.5), rgba(6,8,13,.75) 45%, rgba(6,8,13,.9)),
+    url("/img/Fond/collection.webp") center top / cover no-repeat,
     #07080c;
 }
 .choix {

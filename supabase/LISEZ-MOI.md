@@ -11,7 +11,7 @@
 | `succes.sql` | les DEUX projets, après `caverne.sql` et `amis.sql` | Les succès façon jeu vidéo : secrets masqués par le serveur, récompenses en cristaux, catégories Caverne / Multijoueur / Secrets |
 | `caverne.sql` | les DEUX projets, après `securite.sql` | La Caverne aux Trésors (#/caverne) : les mises en or ou en cristaux, le hasard et les gains, tenus par le serveur |
 | `verifier-securite.sql` | les DEUX projets (lecture seule) | Vérifie les droits, les triggers, et si la faille de prise de contrôle a déjà servi |
-| `functions/arbitre/index.js` | Edge Function des DEUX projets | L'arbitre des duels contre l'Ombre et du mode Histoire (construit par `npm run arbitre`) |
+| `functions/arbitre/index.js` | Edge Function des DEUX projets | L'arbitre des duels contre l'Ombre et du mode Histoire (construit par `npm run arbitre`) ; à redéployer depuis le 31/10/2026 : les niveaux de l'Histoire se jouent aux Gemmes |
 
 Les deux premiers scripts ont été testés sur un PostgreSQL vide (installés deux fois de suite, puis le parcours d'un joueur et les droits du navigateur).
 

@@ -1,5 +1,6 @@
 // =====================================================================
-//  La table des Gemmes : l'adversaire à gauche, la grille au milieu, le joueur à droite.
+//  La table des Gemmes : le joueur à gauche, la grille au milieu, l'adversaire à droite (l'ordre vient du CSS :
+//  dans le code, le joueur reste le côté « droite », l'adversaire le côté « gauche »).
 //  Les règles (moteur/gemmes.js) donnent tout de suite le nouvel état ; la table, elle, le montre pas à pas :
 //  l'échange qui glisse, les gemmes qui éclatent, les dégâts qui volent, les chutes, les chaînes,
 //  la carte déclenchée, le tour qui passe. Pendant ce temps, on ne joue pas.
@@ -84,8 +85,12 @@ function Combattant({ j, cote, pv, jauges, actif, echanges, peutDeclencher, surD
 //  La table
 //  combattants : [{ nom, avatar, cartes }] dans l'ordre de jeu ; moi : ma place (0 ou 1)
 //  ligne : le salon (contre un ami) ou null (contre l'Ombre, de niveau « difficulte »)
+//  Mode Histoire (moteur/histoireGemmes.js) : hasardOmbre, le hasard de l'adversaire tiré de la graine du serveur ;
+//  surJournal(action) reçoit chacune de mes actions (l'arbitre rejoue la partie avec) ; surFin({ gagne, abandon })
+//  à la fin ; messageFin : la ligne des récompenses, sur l'écran de fin
 // ---------------------------------------------------------------------
-export default function Table({ combattants, graine, moi, ligne = null, difficulte = 'normal', surRejouer, surQuitter }) {
+export default function Table({ combattants, graine, moi, ligne = null, difficulte = 'normal', surRejouer, surQuitter,
+  hasardOmbre = Math.random, surJournal = null, surFin = null, messageFin = '' }) {
   const [etat, setEtat] = useState(() => {
     const e = nouvellePartie(combattants, graine);
     e.joueurs.forEach((j, k) => { j.avatar = combattants[k].avatar ?? null; });
@@ -259,9 +264,9 @@ export default function Table({ combattants, graine, moi, ligne = null, difficul
   // L'Ombre joue quand c'est son tour
   useEffect(() => {
     if (ligne || occupe || etat.fin || abandonOmbre || etat.actif === moi) return undefined;
-    const t = setTimeout(() => pousser(etat.actif, choixOmbre(etat, etat.actif, difficulte)), duree(650) + 120);
+    const t = setTimeout(() => pousser(etat.actif, choixOmbre(etat, etat.actif, difficulte, hasardOmbre)), duree(650) + 120);
     return () => clearTimeout(t);
-  }, [ligne, occupe, etat, abandonOmbre, moi, difficulte, pousser]);
+  }, [ligne, occupe, etat, abandonOmbre, moi, difficulte, hasardOmbre, pousser]);
 
   // La fin de la partie
   const finir = ligne?.finir;
@@ -269,7 +274,8 @@ export default function Table({ combattants, graine, moi, ligne = null, difficul
     if (!etat.fin) return;
     jouerSon(etat.fin.gagnant === moi ? 'fanfare' : 'sombre');
     finir?.();
-  }, [etat.fin, moi, finir]);
+    surFin?.({ gagne: etat.fin.gagnant === moi });   // (surFin : une fonction stable, useCallback)
+  }, [etat.fin, moi, finir, surFin]);
 
   // Un indice si le joueur hésite (une dizaine de secondes)
   const monTour = !occupe && !etat.fin && !abandonOmbre && etat.actif === moi && !ligne?.partie?.fini;
@@ -286,7 +292,7 @@ export default function Table({ combattants, graine, moi, ligne = null, difficul
     setChoisie(null);
     setIndice(null);
     if (ligne) ligne.jouer(action);
-    else pousser(moi, action);
+    else { surJournal?.(action); pousser(moi, action); }
     return true;
   };
   // Un échange refusé : les deux gemmes font l'aller-retour
@@ -350,7 +356,7 @@ export default function Table({ combattants, graine, moi, ligne = null, difficul
     file.current = [];
     jouerSon('sombre');
     if (ligne) ligne.abandonner();
-    else setAbandonOmbre(true);
+    else { surJournal?.({ t: 'abandon' }); setAbandonOmbre(true); surFin?.({ gagne: false, abandon: true }); }
   };
   const joueurs = etat.joueurs;
   const actif = etat.actif;
@@ -414,6 +420,7 @@ export default function Table({ combattants, graine, moi, ligne = null, difficul
               <span className="gm-fin__texte">
                 {fin.gagne ? `${joueurs[autre].nom} s’effondre en ${etat.tour} tour${etat.tour > 1 ? 's' : ''}.` : `${joueurs[autre].nom} l’emporte avec ${vue.pv[autre]} PV.`}
               </span>
+              {messageFin && <span className="gm-fin__message">{messageFin}</span>}
               <div className="gm-fin__boutons">
                 {surRejouer && <button type="button" className="gm-bouton gm-bouton--or" onClick={surRejouer}>{ligne ? 'Revanche' : 'Rejouer'}</button>}
                 <button type="button" className="gm-bouton" onClick={surQuitter}>Retour</button>

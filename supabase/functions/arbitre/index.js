@@ -774,7 +774,7 @@ function nettoyer(p) {
 	else if (adverseTombe) p.fini = "joueur";
 	return morts;
 }
-function blesser(p, campCible, t, degats, ev, source) {
+function blesser$1(p, campCible, t, degats, ev, source) {
 	if (!t || degats <= 0) return 0;
 	if (t.bouclier) {
 		t.bouclier = false;
@@ -829,7 +829,7 @@ function appliquerDestin(p, qui, de, ev) {
 			break;
 		case "trahison": {
 			const u = auHasard(unites(camp), h);
-			if (u) blesser(p, qui, u, 2, ev, null);
+			if (u) blesser$1(p, qui, u, 2, ev, null);
 			break;
 		}
 		case "brouillard":
@@ -855,7 +855,7 @@ function appliquerDestin(p, qui, de, ev) {
 			break;
 		case "eclair": {
 			const u = auHasard(unites(p.camps[adv]), h);
-			if (u) blesser(p, adv, u, 3, ev, qui);
+			if (u) blesser$1(p, adv, u, 3, ev, qui);
 			break;
 		}
 		case "fortune":
@@ -888,7 +888,7 @@ function appliquerDestin(p, qui, de, ev) {
 			});
 			break;
 		case "tempete":
-			unites(p.camps[adv]).forEach((u) => blesser(p, adv, u, 1, ev, qui));
+			unites(p.camps[adv]).forEach((u) => blesser$1(p, adv, u, 1, ev, qui));
 			break;
 		case "prophetie":
 			camp.bonusDe = (camp.bonusDe ?? 0) + 5;
@@ -972,7 +972,7 @@ var UNIQUES = {
 			texte: "3 énergie : inflige 2 dégâts à une unité adverse ; Kaéliss récupère autant de PV.",
 			effet(p, qui, u, cible, ev) {
 				const t = trouver(p.camps[autre(qui)], cible.uid);
-				const inflige = blesser(p, autre(qui), t, 2, ev, qui);
+				const inflige = blesser$1(p, autre(qui), t, 2, ev, qui);
 				if (inflige <= 0) return;
 				const avant = u.h;
 				u.h = Math.min(u.hMax, u.h + inflige);
@@ -1170,7 +1170,7 @@ var UNIQUES = {
 			texte: "2 énergie : inflige 2 dégâts à une unité adverse ; si elle tombe, ton héros récupère 2 PV.",
 			effet(p, qui, u, cible, ev) {
 				const t = trouver(p.camps[autre(qui)], cible.uid);
-				if (blesser(p, autre(qui), t, 2, ev, qui) > 0 && t.h <= 0) soignerHeros(p.camps[qui], 2, qui, ev);
+				if (blesser$1(p, autre(qui), t, 2, ev, qui) > 0 && t.h <= 0) soignerHeros(p.camps[qui], 2, qui, ev);
 			}
 		}
 	},
@@ -1222,7 +1222,7 @@ var UNIQUES = {
 		nom: "Entrée fracassante",
 		texte: "À son arrivée, inflige 2 dégâts à toutes les unités adverses.",
 		arrivee(p, qui, u, ev) {
-			unites(p.camps[autre(qui)]).forEach((t) => blesser(p, autre(qui), t, 2, ev, qui));
+			unites(p.camps[autre(qui)]).forEach((t) => blesser$1(p, autre(qui), t, 2, ev, qui));
 		}
 	}
 };
@@ -1472,7 +1472,7 @@ function cast(p, qui, carte, cible, ev) {
 	const adverse = p.camps[autre(qui)];
 	switch (carte.fx) {
 		case "unit":
-			blesser(p, autre(qui), trouver(adverse, cible.uid), carte.v, ev, qui);
+			blesser$1(p, autre(qui), trouver(adverse, cible.uid), carte.v, ev, qui);
 			break;
 		case "face":
 			adverse.pv -= carte.v;
@@ -1555,7 +1555,7 @@ function cast(p, qui, carte, cible, ev) {
 				buff: true
 			});
 			break;
-		case "aoe": unites(adverse).forEach((u) => blesser(p, autre(qui), u, carte.v, ev, qui));
+		case "aoe": unites(adverse).forEach((u) => blesser$1(p, autre(qui), u, carte.v, ev, qui));
 	}
 }
 function defendre(p, qui, uid) {
@@ -2234,6 +2234,432 @@ function rejouerSolo(depart, journal, difficulte) {
 	}
 	return e;
 }
+var SORTES = [
+	"commune",
+	"eveillee",
+	"mythique",
+	"legendaire",
+	"transcendante"
+];
+var RARETE = {
+	commune: {
+		nom: "Commune",
+		jauge: 8,
+		degats: 16,
+		soin: 0,
+		echange: 0
+	},
+	eveillee: {
+		nom: "Éveillée",
+		jauge: 10,
+		degats: 18,
+		soin: 10,
+		echange: 0
+	},
+	mythique: {
+		nom: "Mythique",
+		jauge: 12,
+		degats: 25,
+		soin: 0,
+		echange: 1
+	},
+	legendaire: {
+		nom: "Légendaire",
+		jauge: 15,
+		degats: 36,
+		soin: 0,
+		echange: 0
+	},
+	transcendante: {
+		nom: "Transcendante",
+		jauge: 18,
+		degats: 42,
+		soin: 8,
+		echange: 1
+	}
+};
+var BONUS_CHAINE = .25;
+var ligneDe = (i) => Math.floor(i / 8);
+var colonneDe = (i) => i % 8;
+var voisins = (a, b) => ligneDe(a) === ligneDe(b) && Math.abs(a - b) === 1 || Math.abs(a - b) === 8;
+function nouvelleGemme(etat, s = Math.floor(hasard(etat) * SORTES.length)) {
+	etat.prochain += 1;
+	return {
+		id: etat.prochain,
+		s
+	};
+}
+function alignements(grille) {
+	const touchees = /* @__PURE__ */ new Set();
+	const suivre = (cases) => {
+		let debut = 0;
+		for (let k = 1; k <= cases.length; k += 1) {
+			if (k < cases.length && grille[cases[k]].s === grille[cases[debut]].s) continue;
+			if (k - debut >= 3) for (let m = debut; m < k; m += 1) touchees.add(cases[m]);
+			debut = k;
+		}
+	};
+	for (let r = 0; r < 8; r += 1) suivre(Array.from({ length: 8 }, (_, c) => r * 8 + c));
+	for (let c = 0; c < 8; c += 1) suivre(Array.from({ length: 8 }, (_, r) => r * 8 + c));
+	return touchees;
+}
+var echangees = (grille, a, b) => {
+	const g = grille.slice();
+	[g[a], g[b]] = [g[b], g[a]];
+	return g;
+};
+function coupsPossibles(grille) {
+	const coups = [];
+	for (let i = 0; i < grille.length; i += 1) for (const j of [i + 1, i + 8]) {
+		if (j >= grille.length || !voisins(i, j) || grille[i].s === grille[j].s) continue;
+		if (alignements(echangees(grille, i, j)).size) coups.push([i, j]);
+	}
+	return coups;
+}
+function remplir(etat) {
+	for (;;) {
+		const g = [];
+		for (let i = 0; i < 64; i += 1) {
+			let gemme;
+			do
+				gemme = nouvelleGemme(etat);
+			while (colonneDe(i) >= 2 && g[i - 1].s === gemme.s && g[i - 2].s === gemme.s || ligneDe(i) >= 2 && g[i - 8].s === gemme.s && g[i - 16].s === gemme.s);
+			g.push(gemme);
+		}
+		if (coupsPossibles(g).length) return g;
+	}
+}
+function nouvellePartie(combattants, graine = nouvelleGraine()) {
+	const etat = {
+		graine: graine >>> 0,
+		prochain: 0,
+		tour: 1,
+		actif: 0,
+		echanges: 2,
+		fin: null,
+		grille: null,
+		joueurs: combattants.map(({ nom, cartes, pv }) => ({
+			nom,
+			pv: pv > 0 ? Math.round(pv) : 220,
+			pvMax: pv > 0 ? Math.round(pv) : 220,
+			cartes: [
+				0,
+				1,
+				2
+			].map((k) => {
+				const rarete = RARETE[cartes[k]?.rarete] ? cartes[k].rarete : "commune";
+				const gemme = SORTES.includes(cartes[k]?.gemme) ? cartes[k].gemme : rarete;
+				return {
+					n: cartes[k]?.n ?? "Carte",
+					image: cartes[k]?.image ?? null,
+					rarete,
+					gemme,
+					jauge: 0,
+					max: RARETE[rarete].jauge
+				};
+			})
+		}))
+	};
+	etat.grille = remplir(etat);
+	return etat;
+}
+var copie = (etat) => ({
+	...etat,
+	grille: etat.grille.slice(),
+	joueurs: etat.joueurs.map((j) => ({
+		...j,
+		cartes: j.cartes.map((c) => ({ ...c }))
+	}))
+});
+var blesser = (etat, cible, n) => {
+	const j = etat.joueurs[cible];
+	j.pv = Math.max(0, j.pv - n);
+	if (j.pv === 0 && !etat.fin) etat.fin = { gagnant: 1 - cible };
+};
+function resoudre(etat) {
+	const etapes = [];
+	const moi = etat.joueurs[etat.actif];
+	for (let chaine = 1;; chaine += 1) {
+		const touchees = alignements(etat.grille);
+		if (!touchees.size) break;
+		const gains = {};
+		for (const i of touchees) {
+			const sorte = SORTES[etat.grille[i].s];
+			gains[sorte] = (gains[sorte] ?? 0) + 1;
+		}
+		const charges = {};
+		for (const sorte of SORTES) {
+			if (!gains[sorte]) continue;
+			let reste = Math.round(gains[sorte] * (1 + BONUS_CHAINE * (chaine - 1)));
+			moi.cartes.forEach((carte, k) => {
+				if (carte.gemme !== sorte || !reste || carte.jauge >= carte.max) return;
+				const part = Math.min(reste, carte.max - carte.jauge);
+				carte.jauge += part;
+				charges[k] = part;
+				reste -= part;
+			});
+		}
+		const retirees = [...touchees].map((i) => etat.grille[i].id);
+		const chutes = {};
+		for (let c = 0; c < 8; c += 1) {
+			const restent = [];
+			for (let r = 7; r >= 0; r -= 1) {
+				const i = r * 8 + c;
+				if (!touchees.has(i)) restent.push([etat.grille[i], r]);
+			}
+			const manque = 8 - restent.length;
+			for (let r = 7, k = 0; r >= 0; r -= 1, k += 1) if (k < restent.length) {
+				const [gemme, avant] = restent[k];
+				etat.grille[r * 8 + c] = gemme;
+				if (r !== avant) chutes[gemme.id] = r - avant;
+			} else {
+				const gemme = nouvelleGemme(etat);
+				etat.grille[r * 8 + c] = gemme;
+				chutes[gemme.id] = manque;
+				gemme.neuve = true;
+			}
+		}
+		etapes.push({
+			retirees,
+			grille: etat.grille.map(({ id, s, neuve }) => ({
+				id,
+				s,
+				neuve
+			})),
+			chutes,
+			gains,
+			charges,
+			chaine
+		});
+		etat.grille.forEach((g) => {
+			delete g.neuve;
+		});
+	}
+	if (!etat.fin && !coupsPossibles(etat.grille).length) {
+		etat.grille = remplir(etat);
+		etapes.push({
+			rebattue: true,
+			grille: etat.grille.slice(),
+			chutes: {},
+			retirees: [],
+			gains: {},
+			charges: {},
+			chaine: 0
+		});
+	}
+	return etapes;
+}
+var jaugePleine = (j) => j.cartes.some((c) => c.jauge >= c.max);
+function passer(etat) {
+	etat.actif = 1 - etat.actif;
+	etat.echanges = 3;
+	if (etat.actif === 0) etat.tour += 1;
+}
+function effetCarte(carte) {
+	const { degats, soin, echange } = RARETE[carte.rarete] ?? RARETE.commune;
+	return {
+		degats,
+		soin,
+		echange
+	};
+}
+function appliquer(etat, qui, action) {
+	if (etat.fin || qui !== etat.actif || !action) return null;
+	const e = copie(etat);
+	const moi = e.joueurs[qui];
+	if (action.t === "echange") {
+		const { a, b } = action;
+		if (e.echanges <= 0 || !Number.isInteger(a) || !Number.isInteger(b) || a < 0 || b < 0 || a >= e.grille.length || b >= e.grille.length || !voisins(a, b)) return null;
+		const g = echangees(e.grille, a, b);
+		if (!alignements(g).size) return null;
+		e.grille = g;
+		e.echanges -= 1;
+		const etapes = resoudre(e);
+		const tourFini = !e.fin && e.echanges === 0 && !jaugePleine(moi);
+		if (tourFini) passer(e);
+		return {
+			etat: e,
+			etapes,
+			tourFini
+		};
+	}
+	if (action.t === "carte") {
+		const carte = moi.cartes[action.k];
+		if (!carte || carte.jauge < carte.max) return null;
+		carte.jauge = 0;
+		const effet = effetCarte(carte);
+		moi.pv = Math.min(moi.pvMax, moi.pv + effet.soin);
+		e.echanges += effet.echange;
+		blesser(e, 1 - qui, effet.degats);
+		const tourFini = !e.fin && e.echanges === 0 && !jaugePleine(moi);
+		if (tourFini) passer(e);
+		return {
+			etat: e,
+			etapes: [],
+			carte: {
+				k: action.k,
+				...effet
+			},
+			tourFini
+		};
+	}
+	if (action.t === "fin") {
+		passer(e);
+		return {
+			etat: e,
+			etapes: [],
+			tourFini: true
+		};
+	}
+	return null;
+}
+function valeurCoup(etat, qui, [a, b], profond) {
+	const g = echangees(etat.grille, a, b);
+	const touchees = alignements(g);
+	const moi = etat.joueurs[qui];
+	let v = 0;
+	const compter = (cases, poids) => {
+		for (const i of cases) {
+			const sorte = SORTES[g[i].s];
+			v += .1 * poids;
+			for (const c of moi.cartes) {
+				if (c.gemme !== sorte || c.jauge >= c.max) continue;
+				const e = effetCarte(c);
+				v += 10 * (e.degats + .6 * e.soin + 5 * e.echange) / c.max * (profond ? 1 + c.jauge / c.max : 1) * poids;
+			}
+		}
+	};
+	compter(touchees, 1);
+	if (profond) {
+		const h = g.map((x, i) => touchees.has(i) ? null : x);
+		for (let c = 0; c < 8; c += 1) {
+			const col = [];
+			for (let r = 7; r >= 0; r -= 1) if (h[r * 8 + c]) col.push(h[r * 8 + c]);
+			for (let r = 7, k = 0; r >= 0; r -= 1, k += 1) h[r * 8 + c] = col[k] ?? {
+				id: -1 - r * 8 - c,
+				s: -1 - r * 8 - c
+			};
+		}
+		compter(alignements(h), 1.25);
+	}
+	return v;
+}
+function choixOmbre(etat, qui, difficulte = "normal", h = Math.random) {
+	const pleine = etat.joueurs[qui].cartes.findIndex((c) => c.jauge >= c.max);
+	if (pleine >= 0) return {
+		t: "carte",
+		k: pleine
+	};
+	if (etat.echanges <= 0) return { t: "fin" };
+	const coups = coupsPossibles(etat.grille);
+	if (!coups.length) return { t: "fin" };
+	if (difficulte === "facile" && h() < .55) {
+		const [a, b] = coups[Math.floor(h() * coups.length)];
+		return {
+			t: "echange",
+			a,
+			b
+		};
+	}
+	const profond = difficulte === "difficile";
+	let meilleur = coups[0], score = -Infinity;
+	for (const coup of coups) {
+		const v = valeurCoup(etat, qui, coup, profond) + h() * .3;
+		if (v > score) {
+			score = v;
+			meilleur = coup;
+		}
+	}
+	return {
+		t: "echange",
+		a: meilleur[0],
+		b: meilleur[1]
+	};
+}
+var ACTIONS_GEMMES = /* @__PURE__ */ new Set([
+	"echange",
+	"carte",
+	"fin",
+	"abandon"
+]);
+var PAS_MAX = 2e4;
+var hasardAdversaire = (graine) => generateur((graine >>> 0 ^ 1540483477) >>> 0);
+function cartesAdversaire(niveau, catalogue, h) {
+	const toutes = melanger(catalogue ?? [], h);
+	const gemmes = melanger(SORTES, h);
+	return (niveau.ombre ?? [
+		"commune",
+		"eveillee",
+		"mythique"
+	]).slice(0, 3).map((rarete, k) => ({
+		...toutes.find((c) => c.rarete === rarete) ?? {
+			cle: 0,
+			n: "Ombre",
+			image: null,
+			rarete
+		},
+		gemme: gemmes[k]
+	}));
+}
+function preparerNiveau({ niveau, mesCartes, catalogue, graine, nom = "Toi", avatar = null }) {
+	const h = hasardAdversaire(graine);
+	const adversaire = {
+		nom: niveau.adversaire ?? "L’Ombre",
+		avatar: null,
+		pv: niveau.pv,
+		cartes: cartesAdversaire(niveau, catalogue, h)
+	};
+	const moi = {
+		nom,
+		avatar,
+		cartes: mesCartes
+	};
+	const jeCommence = h() < .5;
+	const combattants = jeCommence ? [moi, adversaire] : [adversaire, moi];
+	return {
+		combattants,
+		etat: nouvellePartie(combattants, graine),
+		moi: jeCommence ? 0 : 1,
+		h
+	};
+}
+function rejouerNiveau({ etat, moi, h }, journal, difficulte) {
+	let e = etat;
+	let lu = 0;
+	for (let pas = 0; pas < PAS_MAX; pas += 1) {
+		if (e.fin) return {
+			fin: e.fin.gagnant === moi ? "joueur" : "adverse",
+			tour: e.tour
+		};
+		if (e.actif === moi) {
+			if (lu >= journal.length) return {
+				fin: null,
+				tour: e.tour
+			};
+			const action = journal[lu];
+			lu += 1;
+			if (action.t === "abandon") return {
+				fin: "adverse",
+				tour: e.tour,
+				abandon: true
+			};
+			const res = appliquer(e, moi, action);
+			if (!res) return {
+				fin: null,
+				tour: e.tour,
+				invalide: true
+			};
+			e = res.etat;
+		} else {
+			const res = appliquer(e, e.actif, choixOmbre(e, e.actif, difficulte, h));
+			if (res) e = res.etat;
+		}
+	}
+	return {
+		fin: null,
+		tour: e.tour
+	};
+}
 //#endregion
 //#region src/lib/grimoire.js
 var cleCarte = (c) => c.carte ? `u${c.carte.id}` : c.id;
@@ -2261,6 +2687,44 @@ function cartesChoisies(choix, toutes) {
 	return cartes;
 }
 //#endregion
+//#region src/lib/gemmes/choix.js
+var RANG_RARETE = Object.fromEntries(SORTES.map((r, k) => [r, k]));
+var carteGemmes = (u) => ({
+	cle: u.carte.id,
+	n: u.carte.name,
+	image: u.carte.image ?? null,
+	rarete: RANG_RARETE[u.carte.rarity] !== void 0 ? u.carte.rarity : "commune"
+});
+var trier = (cartes) => [...cartes].sort((a, b) => RANG_RARETE[b.rarete] - RANG_RARETE[a.rarete] || a.n.localeCompare(b.n, "fr"));
+function reserveGemmes(collection, catalogue) {
+	const miennes = trier((collection ?? []).map(carteGemmes));
+	const raretes = new Set(miennes.map((c) => c.rarete));
+	const pretees = [];
+	for (const rarete of SORTES) {
+		if (raretes.size + pretees.length >= 3) break;
+		if (raretes.has(rarete)) continue;
+		const c = trier((catalogue ?? []).map(carteGemmes)).reverse().find((x) => x.rarete === rarete);
+		if (c) pretees.push({
+			...c,
+			pretee: true
+		});
+	}
+	return [...miennes, ...pretees];
+}
+function cartesDuChoix(cles, reserve) {
+	const par = new Map(reserve.map((c) => [c.cle, c]));
+	const choisies = [];
+	for (const k of cles ?? []) {
+		const c = par.get(k);
+		if (c && !choisies.some((x) => x.rarete === c.rarete)) choisies.push(c);
+	}
+	for (const c of reserve) {
+		if (choisies.length >= 3) break;
+		if (!choisies.some((x) => x.rarete === c.rarete)) choisies.push(c);
+	}
+	return choisies.slice(0, 3);
+}
+//#endregion
 //#region src/data/histoire.js
 var CHAPITRES = [{
 	id: "pravorn",
@@ -2276,13 +2740,13 @@ var CHAPITRES = [{
 			x: 9,
 			y: 80,
 			adversaire: "Un écuyer égaré",
-			deck: [
-				"Écuyer de la Couronne",
-				"Archer des Remparts",
-				"Garde du Pont",
-				"Potion de soin"
+			ombre: [
+				"commune",
+				"eveillee",
+				"mythique"
 			],
 			difficulte: "facile",
+			pv: 150,
 			est_boss: false,
 			recompenses: {
 				or: 15,
@@ -2295,14 +2759,13 @@ var CHAPITRES = [{
 			x: 23,
 			y: 60,
 			adversaire: "La garde du pont",
-			deck: [
-				"Garde de Pravorn",
-				"Garde du Pont",
-				"Archer des Remparts",
-				"Écuyer de la Couronne",
-				"Potion de soin"
+			ombre: [
+				"commune",
+				"eveillee",
+				"mythique"
 			],
 			difficulte: "facile",
+			pv: 190,
 			est_boss: false,
 			recompenses: {
 				or: 18,
@@ -2315,14 +2778,13 @@ var CHAPITRES = [{
 			x: 37,
 			y: 76,
 			adversaire: "Une bande de mercenaires",
-			deck: [
-				"Loup des Cendres",
-				"Cavalier de la Marche",
-				"Chevalier errant",
-				"Archer des Remparts",
-				"Tonique de rage"
+			ombre: [
+				"commune",
+				"mythique",
+				"legendaire"
 			],
 			difficulte: "normal",
+			pv: 200,
 			est_boss: false,
 			recompenses: {
 				or: 20,
@@ -2335,14 +2797,13 @@ var CHAPITRES = [{
 			x: 50,
 			y: 54,
 			adversaire: "Les bêtes des marais",
-			deck: [
-				"Slime",
-				"Loup des Cendres",
-				"Cavalier de la Marche",
-				"Garde du Pont",
-				"Tonique d'endurance"
+			ombre: [
+				"eveillee",
+				"mythique",
+				"legendaire"
 			],
 			difficulte: "normal",
+			pv: 220,
 			est_boss: false,
 			recompenses: {
 				or: 24,
@@ -2355,14 +2816,13 @@ var CHAPITRES = [{
 			x: 63,
 			y: 70,
 			adversaire: "Le capitaine des remparts",
-			deck: [
-				"Gardes de Pravorn",
-				"Garde de Pravorn",
-				"Sentinelle de pierre",
-				"Lancier des Ruines",
-				"Talisman du Dé"
+			ombre: [
+				"commune",
+				"legendaire",
+				"transcendante"
 			],
 			difficulte: "normal",
+			pv: 240,
 			est_boss: false,
 			recompenses: {
 				or: 27,
@@ -2375,14 +2835,13 @@ var CHAPITRES = [{
 			x: 74,
 			y: 44,
 			adversaire: "Un chevalier de tournoi",
-			deck: [
-				"Chevalier errant",
-				"Cavalier de la Marche",
-				"Lancier des Ruines",
-				"Sentinelle de pierre",
-				"Jeton du marchand"
+			ombre: [
+				"eveillee",
+				"legendaire",
+				"transcendante"
 			],
 			difficulte: "normal",
+			pv: 250,
 			est_boss: false,
 			recompenses: {
 				or: 30,
@@ -2395,16 +2854,14 @@ var CHAPITRES = [{
 			x: 88,
 			y: 22,
 			adversaire: "Le Champion du Grand Tournoi",
-			deck: [
-				"Lancier des Ruines",
-				"Sentinelle de pierre",
-				"Chevalier errant",
-				"Cavalier de la Marche",
-				"Trousse de soins"
+			ombre: [
+				"mythique",
+				"legendaire",
+				"transcendante"
 			],
 			difficulte: "difficile",
+			pv: 300,
 			est_boss: true,
-			pv: 26,
 			recompenses: {
 				or: 100,
 				xp: 500,
@@ -2444,16 +2901,60 @@ var invalide = (raison, plus = {}) => ({
 		...plus
 	}
 });
-function arbitrer({ duel, catalogueBrut, possedeesBrutes, journal, nom = "Toi" }) {
-	if (!journalValide(journal)) return invalide("journal");
-	let niveau = null;
-	let difficulte = duel.difficulte;
-	if (duel.mode === "histoire") {
-		const trouve = trouverNiveau(duel.niveau_id);
-		if (!trouve) return invalide("niveau");
-		niveau = trouve.niveau;
-		difficulte = niveau.difficulte;
+function journalGemmesValide(journal) {
+	if (!Array.isArray(journal) || journal.length > 3e3) return false;
+	return journal.every((a) => a && typeof a === "object" && !Array.isArray(a) && ACTIONS_GEMMES.has(a.t));
+}
+function arbitrerNiveau({ duel, catalogueBrut, possedeesBrutes, journal, nom }) {
+	if (!journalGemmesValide(journal)) return invalide("journal");
+	const trouve = trouverNiveau(duel.niveau_id);
+	if (!trouve) return invalide("niveau");
+	const { niveau } = trouve;
+	if (!DIFFICULTES[niveau.difficulte]) return invalide("difficulte");
+	try {
+		const catalogue = (catalogueBrut ?? []).filter(jouable).map(uniteDepuisCarte);
+		const collection = (possedeesBrutes ?? []).filter(jouable).map(uniteDepuisCarte);
+		const mesCartes = cartesDuChoix((duel.grimoire ?? []).map(Number).filter(Number.isInteger), reserveGemmes(collection, catalogue)).map(({ cle, n, image, rarete }) => ({
+			cle,
+			n,
+			image,
+			rarete
+		}));
+		if (mesCartes.length < 3) return invalide("cartes");
+		const fin = rejouerNiveau(preparerNiveau({
+			niveau,
+			mesCartes,
+			catalogue: catalogue.map(carteGemmes),
+			graine: Number(duel.graine),
+			nom
+		}), journal, niveau.difficulte);
+		if (!fin.fin) return invalide(fin.invalide ? "action" : "inachevee", {
+			tour: fin.tour,
+			actions: journal.length
+		});
+		return {
+			resultat: fin.fin,
+			details: {
+				jeu: "gemmes",
+				tour: fin.tour,
+				actions: journal.length,
+				...fin.abandon ? { abandon: true } : {}
+			}
+		};
+	} catch (e) {
+		return invalide("rejeu", { erreur: String(e?.message ?? e).slice(0, 200) });
 	}
+}
+function arbitrer({ duel, catalogueBrut, possedeesBrutes, journal, nom = "Toi" }) {
+	if (duel.mode === "histoire") return arbitrerNiveau({
+		duel,
+		catalogueBrut,
+		possedeesBrutes,
+		journal,
+		nom
+	});
+	if (!journalValide(journal)) return invalide("journal");
+	const difficulte = duel.difficulte;
 	if (!DIFFICULTES[difficulte]) return invalide("difficulte");
 	try {
 		const catalogue = (catalogueBrut ?? []).filter(jouable).map(uniteDepuisCarte);
@@ -2463,8 +2964,8 @@ function arbitrer({ duel, catalogueBrut, possedeesBrutes, journal, nom = "Toi" }
 			cartes: cartesChoisies(duel.grimoire ?? [], reserve(collection, objets).toutes),
 			catalogue,
 			difficulte,
-			niveau,
-			elan: duel.mode === "ia" ? duel.elan ?? 0 : 0,
+			niveau: null,
+			elan: duel.elan ?? 0,
 			graine: Number(duel.graine),
 			nom
 		}), journal, difficulte);

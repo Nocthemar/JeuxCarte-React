@@ -1,14 +1,15 @@
 // =====================================================================
 //  Écran « Duel des Couronnes » (ancien jeu-cartes.html)
 //  Le menu (modes, difficulté, Grimoire, constructeur, règles), puis le plateau d'un duel contre l'Ombre.
-//  #/duel?histoire=<niveau> lance directement le duel d'un niveau du mode Histoire (connecté seulement).
+//  (#/duel?histoire=<niveau>, l'ancienne adresse d'un niveau du mode Histoire : les niveaux se jouent maintenant aux
+//  Gemmes, #/gemmes?histoire=<niveau>)
 //  #/duel?salon=<CODE> : le salon d'un duel en ligne (le lien d'invitation) ; il reste ouvert du menu
 //  au duel, puis à la revanche (lib/duel/useLigne.js).
 //
 //  Le plateau choisi par le joueur (acheté en boutique) devient une classe du <body> : plateau-hiver…
 //  Pour en essayer un : #/duel?saison=hiver (printemps, ete, automne, cristaux, flamme, plage).
 // =====================================================================
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import Page from '../components/Page.jsx';
 import Menu from '../components/duel/Menu.jsx';
@@ -22,7 +23,6 @@ import { useDonneesDuel, PLATEAUX } from '../lib/donneesDuel.js';
 import { useProfondeur } from '../lib/profondeur.js';
 import { useLigne } from '../lib/duel/useLigne.js';
 import { grimoireDuJoueur } from '../lib/grimoire.js';
-import { trouverNiveau } from '../data/histoire.js';
 import { CLES, lirePref, ecrirePref } from '../lib/preferences.js';
 import { jouerSon, basculerMuet, estMuet, lireVolume, reglerVolume, musiqueAuPremierGeste } from '../lib/son.js';
 
@@ -58,10 +58,11 @@ export default function Duel() {
   // Le duel en ligne : le salon, et le duel qu'il lance
   const ligne = useLigne({ joueur, grimoire: () => (donnees.pret ? grimoireDuJoueur(donnees) : []), notifier });
   const duelLigne = ligne.duel;
-  // Mode Histoire : le niveau demandé dans l'adresse ; nHistoire change à chaque « Réessayer »
+  // L'ancienne adresse d'un niveau du mode Histoire : vers les Gemmes
   const idHistoire = params.get('histoire');
-  const histoire = useMemo(() => (idHistoire ? trouverNiveau(idHistoire) : null), [idHistoire]);
-  const [nHistoire, setNHistoire] = useState(1);
+  useEffect(() => {
+    if (idHistoire) naviguer(`/gemmes?histoire=${encodeURIComponent(idHistoire)}`, { replace: true });
+  }, [idHistoire, naviguer]);
   // Le duel en cours : { cartes, difficulte, catalogue, n } (n change à chaque nouvelle partie), ou null au menu
   const [duel, setDuel] = useState(null);
   // Conseils facultatifs : la consigne du tour s'affiche (coupés par défaut, retenus dans le navigateur)
@@ -73,14 +74,6 @@ export default function Duel() {
   // L'ambiance musicale démarre au premier geste du joueur (les navigateurs l'exigent)
   useEffect(() => { musiqueAuPremierGeste(); }, []);
 
-  // Niveau inconnu, ou joueur non connecté (la progression est liée au compte) : retour à la carte
-  useEffect(() => {
-    if (idHistoire && !chargement && (!histoire || !joueur)) naviguer('/histoire', { replace: true });
-  }, [idHistoire, histoire, joueur, chargement, naviguer]);
-  // Le duel du niveau : ton Grimoire (celui du menu), le deck et la difficulté du niveau
-  const duelHistoire = useMemo(() => (histoire && joueur && donnees.pret
-    ? { cartes: grimoireDuJoueur(donnees), difficulte: histoire.niveau.difficulte, catalogue: donnees.catalogue ?? [], histoire }
-    : null), [histoire, joueur, donnees]);
 
   useEffect(() => {
     const surChangement = () => setPleinEcran(!!document.fullscreenElement);
@@ -90,7 +83,7 @@ export default function Duel() {
 
   const saisonForcee = params.get('saison');
   const plateau = PLATEAUX.includes(saisonForcee) ? saisonForcee : (donnees.plateau ?? 'defaut');
-  const classes = `page-profil page-jeu plateau-${plateau}${duel || duelHistoire || duelLigne ? ' en-duel' : ''}${conseils ? ' avec-conseils' : ''}`;
+  const classes = `page-profil page-jeu plateau-${plateau}${duel || duelLigne ? ' en-duel' : ''}${conseils ? ' avec-conseils' : ''}`;
 
   const lancer = (cartes, difficulte) => {
     setDuel((d) => ({ cartes, difficulte, catalogue: donnees.catalogue ?? [], n: (d?.n ?? 0) + 1 }));
@@ -155,11 +148,7 @@ export default function Duel() {
       </div>
 
       <main className="jeu-wrap">
-        {idHistoire ? (duelHistoire && (
-          <DuelSolo key={`h${nHistoire}`} config={duelHistoire} outils={outils}
-            surRejouer={() => setNHistoire((n) => n + 1)}
-            surMenu={() => { quitterPleinEcran(); naviguer(`/histoire?chapitre=${encodeURIComponent(histoire.chapitre.id)}`, { viewTransition: true }); }} />
-        )) : duelLigne ? (
+        {idHistoire ? null : duelLigne ? (
           <DuelEnLigne key={`l${duelLigne.n}`} duel={duelLigne} ligne={ligne} salon={ligne.salon} outils={outils}
             surRevanche={() => { ligne.revenir(); quitterPleinEcran(); scrollTo(0, 0); }}
             surQuitter={() => { ligne.quitter(); quitterPleinEcran(); scrollTo(0, 0); }} />
