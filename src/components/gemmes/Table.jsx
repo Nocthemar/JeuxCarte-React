@@ -9,6 +9,7 @@
 // =====================================================================
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Gemme, { DefsGemmes } from './Gemme.jsx';
+import ReglageSon from './ReglageSon.jsx';
 import {
   nouvellePartie, appliquer, choixOmbre, coupsPossibles, voisins,
   TAILLE, SORTES, RARETE, ECHANGES_PAR_TOUR, textePouvoir,
@@ -103,6 +104,9 @@ export default function Table({ combattants, graine, moi, ligne = null, difficul
   const [activation, setActivation] = useState(null);
   const [indice, setIndice] = useState(null);
   const [secousse, setSecousse] = useState(false);
+  // Abandonner : un premier clic demande confirmation ; contre l'Ombre, la défaite est donnée ici
+  const [confirmer, setConfirmer] = useState(false);
+  const [abandonOmbre, setAbandonOmbre] = useState(false);
   const file = useRef([]);
   const enCours = useRef(false);
   const vivant = useRef(true);
@@ -254,10 +258,10 @@ export default function Table({ combattants, graine, moi, ligne = null, difficul
 
   // L'Ombre joue quand c'est son tour
   useEffect(() => {
-    if (ligne || occupe || etat.fin || etat.actif === moi) return undefined;
+    if (ligne || occupe || etat.fin || abandonOmbre || etat.actif === moi) return undefined;
     const t = setTimeout(() => pousser(etat.actif, choixOmbre(etat, etat.actif, difficulte)), duree(650) + 120);
     return () => clearTimeout(t);
-  }, [ligne, occupe, etat, moi, difficulte, pousser]);
+  }, [ligne, occupe, etat, abandonOmbre, moi, difficulte, pousser]);
 
   // La fin de la partie
   const finir = ligne?.finir;
@@ -268,7 +272,7 @@ export default function Table({ combattants, graine, moi, ligne = null, difficul
   }, [etat.fin, moi, finir]);
 
   // Un indice si le joueur hésite (une dizaine de secondes)
-  const monTour = !occupe && !etat.fin && etat.actif === moi && !ligne?.partie?.fini;
+  const monTour = !occupe && !etat.fin && !abandonOmbre && etat.actif === moi && !ligne?.partie?.fini;
   useEffect(() => {
     if (!monTour) return undefined;
     const t = setTimeout(() => { const c = coupsPossibles(etatRef.current.grille); if (c.length) setIndice(c[0]); }, 10000);
@@ -337,7 +341,17 @@ export default function Table({ combattants, graine, moi, ligne = null, difficul
     else grilleEl.current?.querySelector(`[data-i="${j}"]`)?.focus();
   };
 
-  const fin = etat.fin ? { gagne: etat.fin.gagnant === moi } : ligne?.partie?.abandon !== undefined ? { gagne: ligne.partie.abandon !== moi, abandon: true } : null;
+  const fin = etat.fin ? { gagne: etat.fin.gagnant === moi }
+    : ligne?.partie?.abandon !== undefined ? { gagne: ligne.partie.abandon !== moi, abandon: true }
+      : abandonOmbre ? { gagne: false, abandon: true } : null;
+  const abandonner = () => {
+    if (!confirmer) { setConfirmer(true); jouerSon('clic'); setTimeout(() => { if (vivant.current) setConfirmer(false); }, 4000); return; }
+    setConfirmer(false);
+    file.current = [];
+    jouerSon('sombre');
+    if (ligne) ligne.abandonner();
+    else setAbandonOmbre(true);
+  };
   const joueurs = etat.joueurs;
   const actif = etat.actif;
   const textesDe = (k) => textes.filter((t) => t.cible === k);
@@ -410,9 +424,19 @@ export default function Table({ combattants, graine, moi, ligne = null, difficul
         {/* le cadre de la grille : quatre coins d’or */}
         <span className="gm-coins" aria-hidden="true"><i /><i /><i /><i /></span>
         </div>
-        <button type="button" className="gm-quitter" onClick={() => (fin ? surQuitter() : ligne ? ligne.abandonner() : surQuitter())}>
-          {fin ? 'Quitter' : ligne ? 'Abandonner' : 'Quitter la partie'}
-        </button>
+        {/* sous la grille : abandonner (ou quitter, la partie finie), et le son */}
+        <div className="gm-outils">
+          {fin ? (
+            <button type="button" className="gm-outil gm-outil--texte" onClick={surQuitter}>Quitter</button>
+          ) : (
+            <button type="button" className={`gm-outil gm-outil--texte gm-outil--danger${confirmer ? ' est-confirme' : ''}`}
+              onClick={abandonner} title="Abandonner la partie (c’est une défaite)">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 21V4" /><path d="M6 4h11l-2.5 4L17 12H6" /></svg>
+              {confirmer ? 'Vraiment abandonner ?' : 'Abandonner'}
+            </button>
+          )}
+          <ReglageSon />
+        </div>
       </div>
 
       <Combattant cote="droite" {...coteDe(moi)} peutDeclencher={monTour} surDeclencher={(k) => agir({ t: 'carte', k })} />

@@ -85,8 +85,11 @@ export function useSalonGemmes({ joueur, cartes }) {
     if (salon.current) quitter();
     if (role === 'hote') retenirHote(code, true);
     let s = null;
-    const surPresence = (dedans) => {
+    const surPresence = (tous) => {
       if (salon.current !== s) return;
+      // Page rechargée : l'ancienne connexion reste visible quelques secondes ; on ne garde que la plus récente
+      // d'un même compte dans un même rôle (comme le Duel, lib/duel/useLigne.js)
+      const dedans = tous.filter((x) => !tous.some((y) => y !== x && y.discord_id === x.discord_id && y.role === x.role && y.rejoint > x.rejoint));
       const autre = dedans.find((x) => x.cle !== s.cle) ?? null;
       // L'adversaire part en pleine partie : il a DELAI_RETOUR pour revenir, sinon la victoire est donnée
       if (partieRef.current && !partieRef.current.fini) {
@@ -142,8 +145,12 @@ export function useSalonGemmes({ joueur, cartes }) {
     setVue({ ...VIDE, code, role, texte: 'Connexion au salon…' });
   }, [joueur, quitter, lancer, commencer]);
 
-  // Mes cartes changent dans le salon : l'autre les voit
-  useEffect(() => { if (salon.current && !partieRef.current) salon.current.annoncer({ cartes }); }, [cartes]);
+  // Mes cartes changent dans le salon : l'autre les voit. Seulement si elles changent VRAIMENT (leur contenu) :
+  // chaque annonce est un message au serveur, qui coupe ceux qui en envoient trop (l'autre ne nous voyait plus)
+  const cleCartes = JSON.stringify(cartes);
+  useEffect(() => {
+    if (salon.current && !partieRef.current) salon.current.annoncer({ cartes: JSON.parse(cleCartes) });
+  }, [cleCartes]);
 
   const basculerPret = useCallback(async () => {
     const s = salon.current;

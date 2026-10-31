@@ -21,7 +21,7 @@ import { SORTES, RARETE, PV_DEPART, ECHANGES_PAR_TOUR, textePouvoir } from '../m
 import { nouvelleGraine } from '../moteur/hasard.js';
 import { DIFFICULTES } from '../data/regles.js';
 import { urlPublique } from '../lib/chemins.js';
-import { jouerSon } from '../lib/son.js';
+import { jouerSon, musiqueAuPremierGeste } from '../lib/son.js';
 
 const CLE_DIFFICULTE = 'gemmes-difficulte';
 const lireDifficulte = () => { try { const d = localStorage.getItem(CLE_DIFFICULTE); return DIFFICULTES[d] ? d : 'normal'; } catch { return 'normal'; } };
@@ -140,14 +140,17 @@ export default function Gemmes() {
   const { joueur, chargement } = useAuth();
   const donnees = useDonneesDuel(joueur, chargement);
   const [params, setParams] = useSearchParams();
-  const [mode, setMode] = useState(params.has('salon') ? 'ami' : 'ombre');
+  const [mode, setMode] = useState(params.has('salon') || params.get('mode') === 'ami' ? 'ami' : 'ombre');   // ?mode=ami : venu de « En ligne »
   const [difficulte, setDifficulte] = useState(lireDifficulte);
   const [cles, setCles] = useState(lireChoix);
   const [partie, setPartie] = useState(null);   // contre l'Ombre : { combattants, graine, n }
-  const reserve = useMemo(() => (donnees.pret ? reserveGemmes(donnees.collection, donnees.catalogue) : []), [donnees]);
+  // (useDonneesDuel rend un nouvel objet à chaque affichage : on dépend de ses données, pas de l'objet)
+  const reserve = useMemo(() => (donnees.pret ? reserveGemmes(donnees.collection, donnees.catalogue) : []), [donnees.pret, donnees.collection, donnees.catalogue]);
   const choisies = useMemo(() => cartesDuChoix(cles, reserve), [cles, reserve]);
   const mesCartes = useMemo(() => choisies.map(({ cle, n, image, rarete }) => ({ cle, n, image, rarete })), [choisies]);
   const salon = useSalonGemmes({ joueur, cartes: mesCartes });
+  // L'ambiance musicale démarre au premier geste du joueur (les navigateurs l'exigent)
+  useEffect(() => { musiqueAuPremierGeste(); }, []);
 
 
   // Le lien d'invitation : on entre dans le salon dès que le joueur est là
@@ -267,7 +270,7 @@ export default function Gemmes() {
             </details>
           </aside>
         </div>
-        <p className="gm-retour"><Link to="/duel" viewTransition>← Retour aux modes de jeu</Link></p>
+        <p className="gm-retour"><Link to={mode === 'ami' ? '/duel?mode=ligne' : '/duel?mode=jeux'} viewTransition>← Retour {mode === 'ami' ? 'au jeu en ligne' : 'aux modes de jeu'}</Link></p>
         <DefsGemmes />
       </main>
     );
