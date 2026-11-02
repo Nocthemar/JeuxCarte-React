@@ -8,7 +8,7 @@
 //  et les éclats low poly qui jaillissent d'une carte posée, frappée ou détruite (au-dessus de tout).
 //  Coupées avec les animations ; moins nombreuses en effets réduits / mode performance.
 // =====================================================================
-import { animationsReduites, effetsLegers } from '../preferences.js';
+import { animationsReduites, effetsLegers, modePerformance } from '../preferences.js';
 import { urlPublique } from '../chemins.js';
 
 export const TABLES = [
@@ -59,10 +59,14 @@ export function lancerAmbiance(fond, dessus) {
   const cf = fond.getContext('2d'); const cd = dessus.getContext('2d');
   let W = 0; let H = 0; let raf = 0; let last = 0; let amb = 'poussiere'; let A = [];
   toile = dessus;
+  // Le fond se dessine en définition normale (de petites particules n'ont pas besoin de plus) : c'est lui
+  // qui change à chaque image, il doit coûter peu. Les éclats, brefs, jusqu'à 1,5 fois.
+  let fondSale = false;
   const ajuster = () => {
-    const d = Math.min(2, devicePixelRatio || 1);
     W = innerWidth; H = innerHeight;
-    for (const [cv, c] of [[fond, cf], [dessus, cd]]) { cv.width = W * d >> 0; cv.height = H * d >> 0; c.setTransform(d, 0, 0, d, 0, 0); }
+    const d = Math.min(1.5, devicePixelRatio || 1);
+    fond.width = W; fond.height = H;
+    dessus.width = W * d >> 0; dessus.height = H * d >> 0; cd.setTransform(d, 0, 0, d, 0, 0);
   };
   ajuster();
   addEventListener('resize', ajuster);
@@ -72,8 +76,12 @@ export function lancerAmbiance(fond, dessus) {
   function boucle(t) {
     raf = requestAnimationFrame(boucle);
     const dt = Math.min(0.05, (t - last) / 1000 || 0); last = t;
-    cf.clearRect(0, 0, W, H);
-    if (!animationsReduites()) {
+    // Rien à dessiner (animations coupées, mode performance) : on n'efface qu'une fois
+    if (!A.length || animationsReduites()) {
+      if (fondSale) { cf.clearRect(0, 0, W, H); fondSale = false; }
+    } else {
+      cf.clearRect(0, 0, W, H);
+      fondSale = true;
       for (const a of A) {
         a.p += dt;
         if (amb === 'neige') {
@@ -118,7 +126,7 @@ export function lancerAmbiance(fond, dessus) {
     // Change l'ambiance (une table) : de nouvelles particules, réparties sur tout l'écran
     regler(table) {
       amb = table.amb;
-      const n = animationsReduites() ? 0 : effetsLegers() ? 18 : 46;
+      const n = animationsReduites() || modePerformance() ? 0 : effetsLegers() ? 18 : 40;
       A = Array.from({ length: n }, () => creer(true));
     },
     arreter() {

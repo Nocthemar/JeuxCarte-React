@@ -70,7 +70,8 @@
   .pt-tables button { width: 13px; height: 13px; }
   .pt-journal .historique__outils { padding: 5px 0 0; gap: 0; }
   .pt-journal .historique__boutons { gap: 3px; }
-  .pt-journal .btn-outil { width: 22px; height: 24px; }
+  .pt-journal::after { border-radius: 10px; background: none; }
+  .pt-journal .btn-outil { width: 23px; height: 23px; }
   .pt-journal .btn-outil svg { width: 13px; height: 13px; }
 
   /* ---------- 4. Les boutons du tour : « Fin du tour » à gauche, les autres sur deux lignes à côté ---------- */

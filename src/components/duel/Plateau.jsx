@@ -104,6 +104,7 @@ function Plaque({ camp, qui, avatar, sel, onClick }) {
   return (
     <button type="button" className={`pt-plaque pt-plaque--${qui}${cible ? ' est-ciblable' : ''}${camp.pv <= 5 ? ' est-en-danger' : ''}`} data-heros={qui}
       aria-label={`${camp.nom}, ${camp.pv} PV sur ${camp.pvMax}, ${camp.energie} énergie`} style={{ '--pv': `${pct.toFixed(1)}%` }} onClick={onClick}>
+      <i className="pt-plaque__halo" aria-hidden="true" />
       <span className="pt-plaque__portrait">{avatar ? <img src={avatar} alt="" draggable="false" /> : COURONNE}</span>
       <span className="pt-plaque__infos">
         <span className="pt-plaque__nom">{camp.nom}</span>

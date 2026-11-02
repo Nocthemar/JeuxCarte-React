@@ -30,8 +30,9 @@
 .pt-fond--entree { animation: pt-fondu .8s ease-out; }
 @keyframes pt-fondu { from { opacity: 0; } }
 .pt-vignette { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse at 50% 45%, transparent 55%, rgba(0,0,0,.5) 100%); }
-.pt-ambiance { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
-.pt-eclats { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 46; }
+/* Les deux canvas, chacun sur son calque : redessinés à chaque image, ils ne font pas repeindre la table */
+.pt-ambiance { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; will-change: transform; }
+.pt-eclats { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 46; will-change: transform; }
 
 /* ---------- La scène : trois colonnes (camps, rangées, commandes), la table en perspective ---------- */
 .pt-scene {
@@ -84,17 +85,40 @@
 
 /* ---------- Les cartes : épaisses, ombre portée sur la table ---------- */
 .pt .dc-carte, .pt .dc-unite, .pt-tombeau .dc-carte {
-  --ombre: drop-shadow(0 1px 0 #0c0806) drop-shadow(0 2px 0 #060403) drop-shadow(0 9px 7px rgba(0,0,0,.55));
+  --ombre: drop-shadow(0 2px 0 #060403) drop-shadow(0 9px 7px rgba(0,0,0,.55));
   container-type: inline-size;
 }
-.pt .dc-unite { rotate: var(--penche, 0deg); transition: transform .45s cubic-bezier(.34,1.4,.5,1), filter .2s, rotate .3s, opacity .2s; }
-.pt .dc-unite.est-prete { filter: drop-shadow(0 0 3px var(--acc)) drop-shadow(0 0 10px color-mix(in srgb, var(--acc) 70%, transparent)) var(--ombre); animation: pt-prete 1.2s ease-in-out infinite alternate; }
-@keyframes pt-prete { to { filter: drop-shadow(0 0 5px var(--acc)) drop-shadow(0 0 16px var(--acc)) var(--ombre); } }
+/* Pas de filtre (drop-shadow) sur les cartes du plateau : chaque carte filtrée est recalculée par la carte
+   graphique à chaque image dès que quelque chose bouge à l'écran (l'ambiance), ce qui faisait ramer le duel.
+   L'ombre portée et les lueurs sont peintes une fois pour toutes sous la carte (::before) ; le halo qui bat
+   (::after) ne change que d'opacité, sur son propre calque. */
+.pt .dc-unite, .pt-main .dc-carte { filter: none !important; isolation: isolate; }
+.pt .dc-unite::before, .pt-main .dc-carte::before {
+  content: ''; position: absolute; inset: 5% 7% 3%; z-index: -1; pointer-events: none; border-radius: 10%;
+  box-shadow: 0 2px 0 #060403, 6px 11px 13px rgba(0,0,0,.6), var(--lueur, 0 0 0 transparent);
+}
+.pt .dc-unite::after, .pt-main .dc-carte::after {
+  content: ''; position: absolute; inset: 4% 6%; z-index: -1; pointer-events: none; border-radius: 10%;
+  opacity: 0;
+}
+@keyframes pt-halo { from { opacity: .3; } to { opacity: 1; } }
+.pt .dc-unite { rotate: var(--penche, 0deg); transition: transform .45s cubic-bezier(.34,1.4,.5,1), rotate .3s, opacity .2s; }
+.pt .dc-unite.est-prete { --lueur: 0 0 10px 4px var(--acc); }
+.pt .dc-unite.est-prete::after {
+  box-shadow: 0 0 22px 8px color-mix(in srgb, var(--acc) 85%, transparent);
+  animation: pt-halo 1.2s ease-in-out infinite alternate;
+  will-change: opacity;
+}
 .pt .dc-unite.est-prete:hover { transform: translateY(-5px); }
-.pt .dc-unite.est-choisie { rotate: 0deg; transform: translateY(-12px) scale(1.07); filter: drop-shadow(0 0 4px #fff3d0) drop-shadow(0 0 16px var(--acc)) drop-shadow(0 22px 12px rgba(0,0,0,.5)); animation: none; }
-.pt .dc-unite[data-camp="adverse"]:not(.est-ciblable) { filter: drop-shadow(0 0 3px rgba(200,40,50,.28)) var(--ombre); }
-.pt .dc-unite.est-ciblable { cursor: crosshair; animation: pt-cible .6s ease-in-out infinite alternate; }
-@keyframes pt-cible { from { filter: drop-shadow(0 0 3px #ff4050) drop-shadow(0 0 8px #ff4050) var(--ombre); } to { filter: drop-shadow(0 0 4px #ffb0b5) drop-shadow(0 0 18px #ff4050) var(--ombre); } }
+.pt .dc-unite.est-choisie { rotate: 0deg; transform: translateY(-12px) scale(1.07); --lueur: 0 0 8px 4px #fff3d0, 0 0 24px 8px var(--acc); }
+.pt .dc-unite.est-choisie::before { box-shadow: 0 2px 0 #060403, 12px 22px 16px rgba(0,0,0,.5), var(--lueur); }
+.pt .dc-unite[data-camp="adverse"] { --lueur: 0 0 6px rgba(200,40,50,.35); }
+.pt .dc-unite.a-garde { --lueur: 0 0 8px 2px rgba(205,214,230,.6); }
+.pt .dc-unite.a-defense { --lueur: 0 0 9px 2px rgba(140,180,220,.7); }
+.pt .dc-unite.est-ciblable { cursor: crosshair; --lueur: 0 0 9px 4px #ff6a74; }
+.pt .dc-unite.est-ciblable::after { box-shadow: 0 0 22px 8px rgba(255,64,80,.85); animation: pt-halo .6s ease-in-out infinite alternate; will-change: opacity; }
+.pt .dc-unite.est-hors-cible { opacity: .45; }
+.pt .dc-unite.est-hors-cible .dc-unite__corps { filter: grayscale(.6); }
 .pt .dc-unite.est-epuisee:not(.est-choisie) .dc-face { filter: saturate(.75) brightness(.8); }
 .pt .dc-unite.fx-arrivee { animation: pt-pose .5s cubic-bezier(.25,.8,.3,1); }
 @keyframes pt-pose { from { transform: translateY(-14px) scale(1.12); } 70% { transform: translateY(2px) scale(.98); } }
@@ -162,9 +186,12 @@
     radial-gradient(circle at calc(100% - 10px) calc(100% - 10px), #b89a6a 0 2.4px, #3a2a1a 3px, transparent 3.6px);
 }
 .pt-plaque > * { position: relative; }
-.pt-plaque.est-ciblable { cursor: crosshair; animation: pt-plaque-cible .7s ease-in-out infinite alternate; }
-@keyframes pt-plaque-cible {
-  to { box-shadow: inset 0 2px 0 rgba(255,225,180,.32), inset 0 -3px 0 rgba(0,0,0,.55), 0 0 0 3px #ff4050, 0 0 24px #ff4050, 0 16px 18px -6px rgba(0,0,0,.7); }
+.pt-plaque.est-ciblable { cursor: crosshair; }
+.pt-plaque__halo { position: absolute !important; inset: 0; border-radius: inherit; pointer-events: none; opacity: 0; }
+.pt-plaque.est-ciblable .pt-plaque__halo {
+  box-shadow: 0 0 0 3px #ff4050, 0 0 24px #ff4050;
+  animation: pt-halo .7s ease-in-out infinite alternate;
+  will-change: opacity;
 }
 .vise .pt-plaque:not(.est-ciblable) { opacity: .6; }
 .pt-plaque__portrait {
@@ -304,8 +331,13 @@
 .pt-fin:hover:not(:disabled) { transform: translateY(-1px); }
 .pt-fin:active:not(:disabled) { transform: translateY(4px); box-shadow: inset 0 2px 0 rgba(255,255,255,.35), 0 1px 0 color-mix(in srgb, var(--acc) 35%, #000), 0 1px 0 1px #0a0604, 0 3px 5px rgba(0,0,0,.5); }
 .pt-fin:disabled { cursor: default; color: #8a8070; background: linear-gradient(#4a423b, #2f2923); box-shadow: inset 0 2px 0 rgba(255,255,255,.12), 0 3px 0 #17120e, 0 8px 10px rgba(0,0,0,.5); }
-.pt-fin.est-suggere { animation: pt-suggere 1s ease-in-out infinite alternate; }
-@keyframes pt-suggere { to { box-shadow: inset 0 2px 0 rgba(255,255,255,.45), 0 5px 0 color-mix(in srgb, var(--acc) 35%, #000), 0 5px 0 1px #0a0604, 0 0 24px var(--acc); } }
+.pt-fin { position: relative; }
+.pt-fin.est-suggere::after {
+  content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+  box-shadow: 0 0 24px 2px var(--acc);
+  animation: pt-halo 1s ease-in-out infinite alternate;
+  will-change: opacity;
+}
 .pt-btn {
   padding: 8px 6px 7px;
   font-size: 11px; letter-spacing: .1em; color: var(--encre);
@@ -342,25 +374,25 @@
   transform-origin: 50% 150%;
   translate: none; scale: none;
   touch-action: none;
-  filter: var(--ombre);
-  transition: transform .5s cubic-bezier(.34,1.4,.5,1), filter .2s;
+  transition: transform .5s cubic-bezier(.34,1.4,.5,1);
 }
 .pt-main .dc-carte:first-child { margin-left: 0; }
-.pt-main .dc-carte.est-jouable { filter: drop-shadow(0 0 7px color-mix(in srgb, var(--acc) 80%, transparent)) var(--ombre); cursor: grab; }
+.pt-main .dc-carte.est-jouable { --lueur: 0 0 10px 4px color-mix(in srgb, var(--acc) 80%, transparent); cursor: grab; }
 .pt-main .dc-carte.est-trop-chere .dc-face { filter: grayscale(.55) brightness(.68); }
 .pt-main .dc-carte:hover, .pt-main .dc-carte:focus-visible, .pt-main .dc-carte.est-choisie {
   z-index: 20;
   transform: translateY(-18%) rotate(0deg) scale(1.14);
-  filter: drop-shadow(0 0 9px var(--acc)) drop-shadow(0 26px 14px rgba(0,0,0,.5));
+  --lueur: 0 0 14px 6px var(--acc);
 }
+.pt-main .dc-carte:hover::before, .pt-main .dc-carte.est-choisie::before { box-shadow: 0 2px 0 #060403, 10px 24px 16px rgba(0,0,0,.5), var(--lueur); }
 /* (au clavier, la carte levée et sa lueur suffisent : pas de cadre rectangulaire autour de sa silhouette) */
 .pt-main .dc-carte:focus-visible { outline: none; }
-.pt-main .dc-carte.est-trop-chere:hover { transform: translateY(-10%) rotate(0deg) scale(1.08); filter: var(--ombre); }
+.pt-main .dc-carte.est-trop-chere:hover { transform: translateY(-10%) rotate(0deg) scale(1.08); --lueur: 0 0 0 transparent; }
 .pt-main .dc-carte.est-glissee {
   z-index: 60; cursor: grabbing; transition: none;
-  filter: drop-shadow(0 0 16px var(--acc)) drop-shadow(0 18px 18px rgba(0,0,0,.6));
+  --lueur: 0 0 16px 4px var(--acc);
 }
-.pt-main.en-defausse .dc-carte { filter: drop-shadow(0 0 8px #c45b61) var(--ombre); }
+.pt-main.en-defausse .dc-carte { --lueur: 0 0 9px 2px #c45b61; }
 /* Une carte piochée est distribuée depuis ton Grimoire (en bas à gauche) */
 .pt-main .dc-carte.fx-donnee .dc-carte__corps { animation: pt-donnee .55s cubic-bezier(.2,.8,.3,1) var(--d, 0ms) backwards; }
 @keyframes pt-donnee { from { opacity: 0; transform: translate(-34vw, -12vh) scale(.5) rotate(-25deg); } }
@@ -384,37 +416,123 @@
 @keyframes pt-dos { from { transform: translateY(-130%) rotate(0deg); } }
 
 /* ---------- Le journal (en haut à droite) : la table, le terrain, les jets, les outils ---------- */
+/* Une plaque de bois clouée, comme celles des héros ; le terrain et les jets dans des creux taillés dedans */
 .pt-journal {
   position: absolute; top: 1.4vh; right: max(1.6vw, calc((100vw - 1640px) / 2)); z-index: 6;
   width: var(--col-d);
   display: flex; flex-direction: column; gap: 8px;
-  padding: 10px 12px 11px;
-  border-radius: 14px;
-  background: linear-gradient(180deg, rgba(36,25,17,.9), rgba(20,14,10,.92));
-  box-shadow: inset 0 1px 0 rgba(255,225,180,.22), inset 0 0 0 1px rgba(0,0,0,.6), 0 3px 0 #0a0604, 0 12px 18px rgba(0,0,0,.55);
+  padding: 13px 13px 12px;
+  border-radius: 18px;
+  background: linear-gradient(180deg, var(--bois-1), var(--bois-2) 50%, var(--bois-3));
+  box-shadow:
+    inset 0 2px 0 rgba(255,225,180,.32), inset 0 -3px 0 rgba(0,0,0,.55), inset 0 0 0 1px rgba(0,0,0,.65),
+    0 1px 0 #17100a, 0 2px 0 #100a06, 0 3px 0 #0a0604, 0 4px 0 #070403,
+    0 16px 18px -6px rgba(0,0,0,.7), 0 4px 7px rgba(0,0,0,.5);
 }
-.pt-tables { display: flex; align-items: center; gap: 9px; }
+.pt-journal::after {
+  content: ''; position: absolute; inset: 0; border-radius: 18px; pointer-events: none;
+  border: 1px solid color-mix(in srgb, var(--acc) 45%, transparent);
+  background:
+    radial-gradient(circle at 9px 9px, #b89a6a 0 2.2px, #3a2a1a 2.8px, transparent 3.4px),
+    radial-gradient(circle at calc(100% - 9px) 9px, #b89a6a 0 2.2px, #3a2a1a 2.8px, transparent 3.4px),
+    radial-gradient(circle at 9px calc(100% - 9px), #b89a6a 0 2.2px, #3a2a1a 2.8px, transparent 3.4px),
+    radial-gradient(circle at calc(100% - 9px) calc(100% - 9px), #b89a6a 0 2.2px, #3a2a1a 2.8px, transparent 3.4px);
+}
+.pt-journal > * { position: relative; }
+
+/* Le choix de la table : quatre losanges taillés, celui de la table posée brille */
+.pt-tables { display: flex; align-items: center; gap: 9px; padding: 0 4px; }
 .pt-tables button {
   width: 17px; height: 17px; padding: 0; border: 0;
   clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
-  background: var(--acc); opacity: .4; cursor: pointer;
-  transition: opacity .2s, transform .2s;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--acc) 55%, #fff) 0 30%, var(--acc) 30% 62%, color-mix(in srgb, var(--acc) 55%, #000) 62%);
+  opacity: .4; cursor: pointer;
+  transition: opacity .2s, transform .2s, filter .2s;
 }
 .pt-tables button:hover { opacity: .9; }
-.pt-tables button.est-choisie { opacity: 1; transform: scale(1.25); }
-.pt-tables span { margin-left: auto; font-family: var(--titre); font-size: 10px; letter-spacing: .2em; text-transform: uppercase; color: var(--sourd); }
-.pt-terrain { display: flex; flex-direction: column; gap: 1px; padding: 6px 8px; border-left: 3px solid var(--acc); background: rgba(0,0,0,.25); border-radius: 0 6px 6px 0; }
-.pt-terrain b { font-family: var(--titre); font-size: .74rem; letter-spacing: .06em; color: #f0d9a0; }
+.pt-tables button.est-choisie { opacity: 1; transform: scale(1.25); filter: drop-shadow(0 0 5px var(--acc)); }
+.pt-tables span { margin-left: auto; font-family: var(--titre); font-size: 10px; font-weight: 700; letter-spacing: .2em; text-transform: uppercase; color: #e9d6a9; text-shadow: 0 1px 2px #000; }
+
+/* Les creux : le terrain du duel, puis la liste des jets */
+.pt-terrain, .pt-jets {
+  border-radius: 11px;
+  background: linear-gradient(180deg, #1a110b, #271a12);
+  box-shadow: inset 0 4px 8px rgba(0,0,0,.85), 0 1px 0 rgba(255,225,180,.16);
+}
+.pt-terrain { display: flex; flex-direction: column; gap: 2px; padding: 7px 10px 8px; }
+.pt-terrain b {
+  display: flex; align-items: center; gap: 6px;
+  font-family: var(--titre); font-size: .74rem; font-weight: 700; letter-spacing: .06em; color: #f0d9a0; text-shadow: 0 1px 2px #000;
+}
+.pt-terrain b::before { content: ''; flex: none; width: 7px; height: 7px; clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%); background: var(--acc); }
 .pt-terrain span { font-size: .74rem; line-height: 1.3; color: var(--sourd); display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
-.pt-jets { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 5px; max-height: 9.5vh; overflow-y: auto; scrollbar-width: thin; }
-.pt-jets .jet { font-size: .74rem; }
-.pt-jets .jet b { width: 24px; height: 24px; font-size: .78rem; }
-.pt-journal .historique__outils { margin: 0; padding: 8px 0 0; border-top: 1px solid rgba(255,225,180,.12); background: none; position: static; display: flex; flex-direction: column; gap: 8px; }
+.pt-jets {
+  list-style: none; margin: 0; padding: 7px 8px;
+  display: flex; flex-direction: column; gap: 6px;
+  max-height: 9.5vh; overflow-y: auto;
+  scrollbar-width: thin; scrollbar-color: color-mix(in srgb, var(--acc) 60%, #000) transparent;
+}
+.pt-jets::-webkit-scrollbar { width: 5px; }
+.pt-jets::-webkit-scrollbar-thumb { border-radius: 3px; background: color-mix(in srgb, var(--acc) 60%, #000); }
+.pt-jets::-webkit-scrollbar-track { background: transparent; }
+.pt-jets .jet { gap: 8px; font-size: .74rem; }
+.pt-jets .jet span { color: var(--encre); }
+.pt-jets .jet:not(.jet--moi) span { color: #cdbfa5; }
+.pt-jets .jet small { color: var(--sourd); }
+.pt-jets .jet--vide { padding: 2px 0; color: var(--sourd); }
+/* Le dé : une gemme taillée, comme les statistiques des cartes (bleu acier ; or sur un critique, rouge sur un échec) */
+.pt-jets .jet b {
+  position: relative; width: 24px; height: 24px;
+  clip-path: polygon(50% 0, 93% 25%, 93% 75%, 50% 100%, 7% 75%, 7% 25%);
+  background: linear-gradient(160deg, #6f86a8, #273650);
+  font-size: .76rem; font-weight: 900; color: #fff; text-shadow: 0 1px 2px #000;
+  filter: drop-shadow(0 2px 2px rgba(0,0,0,.6));
+}
+.pt-jets .jet b::after { content: ''; position: absolute; inset: 0; background: linear-gradient(150deg, rgba(255,255,255,.35) 0 34%, transparent 34% 62%, rgba(0,0,0,.22) 62%); }
+.pt-jets .jet--critique b, .pt-jets .jet--grace b { background: linear-gradient(160deg, #f2c66a, #8a5412); color: #fff; }
+.pt-jets .jet--echec b, .pt-jets .jet--malediction b { background: linear-gradient(160deg, #e8545e, #7a1622); }
+.pt-jets .jet--solide b, .pt-jets .jet--benediction b { background: linear-gradient(160deg, #6fc48f, #1f5a3a); }
+
+/* Les outils : des boutons de bois en relief, ronds, qui s'enfoncent ; le volume dans une rainure */
+.pt-journal .historique__outils {
+  margin: 0; padding: 9px 0 0; position: static; background: none;
+  border-top: 0; box-shadow: inset 0 1px 0 rgba(0,0,0,.45), inset 0 2px 0 rgba(255,225,180,.12);
+  display: flex; flex-direction: column; gap: 9px;
+}
 .pt-journal .historique__boutons { display: flex; gap: 6px; justify-content: space-between; }
-.pt-journal .btn-outil { width: 32px; height: 32px; background: linear-gradient(180deg, var(--bois-1), var(--bois-3)); }
-.pt-journal .btn-outil:hover { filter: brightness(1.2); }
-.pt-journal .btn-outil.est-actif { background: color-mix(in srgb, var(--acc) 55%, #000); }
-.pt-journal .volume input { background: linear-gradient(90deg, var(--acc) var(--pct), rgba(255,255,255,.14) var(--pct)); }
+.pt-journal .btn-outil {
+  width: 32px; height: 32px; border-radius: 50%; clip-path: none;
+  background: linear-gradient(180deg, #6a4f38, var(--bois-2) 55%, var(--bois-3));
+  box-shadow: inset 0 2px 0 rgba(255,225,180,.3), inset 0 -2px 0 rgba(0,0,0,.45), 0 0 0 1px rgba(0,0,0,.6), 0 3px 0 #120c07, 0 5px 7px rgba(0,0,0,.5);
+  transition: transform .12s, box-shadow .12s, filter .15s;
+}
+.pt-journal .btn-outil svg { stroke: #e9d6a9; }
+.pt-journal .btn-outil:hover { filter: brightness(1.18); }
+.pt-journal .btn-outil:active { transform: translateY(2px); box-shadow: inset 0 2px 0 rgba(255,225,180,.2), 0 0 0 1px rgba(0,0,0,.6), 0 1px 0 #120c07, 0 2px 3px rgba(0,0,0,.5); }
+.pt-journal .btn-outil.est-actif {
+  background: linear-gradient(180deg, color-mix(in srgb, var(--acc) 85%, #fff), var(--acc) 45%, color-mix(in srgb, var(--acc) 55%, #000));
+  box-shadow: inset 0 2px 0 rgba(255,255,255,.4), 0 0 0 1px rgba(0,0,0,.6), 0 3px 0 color-mix(in srgb, var(--acc) 30%, #000), 0 0 10px color-mix(in srgb, var(--acc) 60%, transparent);
+}
+.pt-journal .btn-outil.est-actif svg { stroke: #150e08; }
+.pt-journal .btn-outil--danger:hover svg { stroke: #ff9aa0; }
+.pt-journal .ico-son { fill: #e9d6a9; stroke: #e9d6a9; }
+.pt-journal .volume { color: var(--sourd); }
+.pt-journal .volume__valeur { color: #e9d6a9; font-weight: 700; }
+.pt-journal .volume input {
+  height: 9px;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--acc) 70%, #fff), var(--acc)) 0 0 / var(--pct) 100% no-repeat, #0b0705;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,.95), 0 1px 0 rgba(255,225,180,.2);
+}
+.pt-journal .volume input::-webkit-slider-thumb {
+  width: 16px; height: 16px;
+  background: radial-gradient(circle at 35% 30%, #fff3d0 0 12%, #d9b273 35%, #7a5a3a 80%);
+  box-shadow: 0 0 0 1px #150d08, 0 2px 3px rgba(0,0,0,.7);
+}
+.pt-journal .volume input::-moz-range-thumb {
+  width: 16px; height: 16px;
+  background: radial-gradient(circle at 35% 30%, #fff3d0 0 12%, #d9b273 35%, #7a5a3a 80%);
+  box-shadow: 0 0 0 1px #150d08, 0 2px 3px rgba(0,0,0,.7);
+}
 
 /* ---------- Bannière, chiffres, 2 contre 2 ---------- */
 .pt ~ .flotte, .flotte { font-family: var(--titre, "Cinzel", serif); }
@@ -443,10 +561,10 @@
 }
 
 /* ---------- Animations coupées : rien ne bat ni ne flotte ---------- */
-:root.anim-reduites .pt .dc-unite.est-prete, :root.anim-reduites .pt .dc-unite.est-ciblable,
-:root.anim-reduites .pt-plaque.est-ciblable, :root.anim-reduites .pt-fin.est-suggere { animation: none; }
+:root.anim-reduites .pt .dc-unite.est-prete::before, :root.anim-reduites .pt .dc-unite.est-ciblable::after,
+:root.anim-reduites .pt-plaque.est-ciblable .pt-plaque__halo, :root.anim-reduites .pt-fin.est-suggere::after { animation: none; opacity: 1; }
 @media (prefers-reduced-motion: reduce) {
-  .pt .dc-unite.est-prete, .pt .dc-unite.est-ciblable, .pt-plaque.est-ciblable, .pt-fin.est-suggere,
+  .pt .dc-unite.est-prete::before, .pt-plaque.est-ciblable .pt-plaque__halo, .pt-fin.est-suggere::after,
   .pt-main .dc-carte.fx-donnee .dc-carte__corps, .pt-fond--entree { animation: none; }
 }
 
@@ -473,7 +591,8 @@
   .pt-compte svg { display: none; }
   .pt-milieu { min-height: 26px; }
   .pt-milieu .d20 { width: 30px; height: 30px; }
-  .pt-journal { top: 4px; padding: 5px 6px; gap: 4px; }
+  .pt-journal { top: 4px; padding: 5px 6px; gap: 4px; border-radius: 10px; }
+  .pt-journal::after { border-radius: 10px; background: none; }
   .pt-terrain, .pt-jets, .pt-journal .volume, .pt-tables span { display: none; }
   .pt-tables { justify-content: space-between; }
   .pt-tables button { width: 12px; height: 12px; }
