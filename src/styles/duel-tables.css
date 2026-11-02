@@ -123,6 +123,26 @@
 .pt .dc-unite.fx-arrivee { animation: pt-pose .5s cubic-bezier(.25,.8,.3,1); }
 @keyframes pt-pose { from { transform: translateY(-14px) scale(1.12); } 70% { transform: translateY(2px) scale(.98); } }
 
+/* Les vraies cartes ont une silhouette découpée (coins décoratifs transparents) : une ombre ou une lueur
+   rectangulaire dépasserait autour. Rien derrière elles dans la main (choix du joueur) ; sur la table, seule
+   une lueur d'état (prête, ciblée, choisie, en garde) qui prend la forme exacte de la carte, avec son image
+   pour masque (--masque) ; sans masque elle ne s'affiche pas. Toujours sans filtre, peinte une fois. */
+.pt .dc-unite.a-image::before, .pt-main .dc-carte.dc-carte--image::before,
+.pt .dc-unite.a-image::after, .pt-main .dc-carte.dc-carte--image::after {
+  inset: 0 !important; border-radius: 0 !important; box-shadow: none !important;
+  -webkit-mask: var(--masque) center / contain no-repeat; mask: var(--masque) center / contain no-repeat;
+}
+.pt .dc-unite.a-image::before, .pt-main .dc-carte.dc-carte--image::before { display: none; }
+/* la lueur : la silhouette en couleur, un peu plus grande, derrière la carte */
+.pt .dc-unite.a-image::after, .pt-main .dc-carte.dc-carte--image::after { background: var(--lueur-c, transparent); scale: 1.06; }
+.pt .dc-unite.a-image.est-prete::after { --lueur-c: var(--acc); }
+.pt .dc-unite.a-image.est-ciblable::after { --lueur-c: #ff4050; }
+.pt .dc-unite.a-image.est-choisie::after { --lueur-c: var(--acc); opacity: 1; animation: none; }
+.pt .dc-unite.a-image.a-garde:not(.est-prete):not(.est-ciblable)::after { --lueur-c: rgba(220,228,240,.75); opacity: .55; }
+.pt .dc-unite.a-image.a-defense:not(.est-prete):not(.est-ciblable)::after { --lueur-c: #8cb4dc; opacity: .7; }
+/* Dans ta main, rien derrière une vraie carte (choix du joueur) : survolée, elle se lève et grossit, cela suffit */
+.pt-main .dc-carte.dc-carte--image::after { display: none; }
+
 /* Attaque · Défense · PV : trois gemmes taillées au bas de la carte ; le coût, une gemme bleue en haut à gauche */
 .pt .dc-stat {
   bottom: 5% !important; top: auto; transform: none !important; translate: none !important;
@@ -152,6 +172,11 @@
   font-family: var(--titre); font-weight: 900; font-size: 12cqw; color: #fff; text-shadow: 0 1px 2px #000;
 }
 .pt #main-joueur .dc-cout--reduit { background: linear-gradient(160deg, #8fe8ac, #1f6a42); }
+/* Une vraie carte écrit déjà son coût, son attaque, sa défense et ses PV sur sa plaque (.carte-infos) :
+   pas de gemmes par-dessus. Seule une valeur qui a changé (coût réduit, blessure, bonus, malus) reparaît. */
+.pt .dc-carte:has(.carte-infos) .dc-stat,
+.pt .dc-carte:has(.carte-infos) .dc-cout:not(.dc-cout--reduit),
+.pt .dc-unite:has(.carte-infos) .dc-stat:not(.dc-stat--change) { display: none !important; }
 
 /* ---------- Les plaques des héros : bois clouté posé sur la table ---------- */
 .pt-camp { display: flex; flex-direction: column; gap: 1.6vh; min-height: 0; }

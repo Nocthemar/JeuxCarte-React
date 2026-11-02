@@ -16,6 +16,7 @@ import CarteDuel, { FaceCarte, Capacites, Stats } from './CarteDuel.jsx';
 import { animationsReduites } from '../../lib/preferences.js';
 import { TABLES, imageTable, lireTable, ecrireTable, lancerAmbiance } from '../../lib/duel/tables.js';
 import { jouerSon } from '../../lib/son.js';
+import { urlPublique } from '../../lib/chemins.js';
 import { CAPACITES, ENERGIE_MAX, COUT_DESTIN, COUT_DEFAUSSE, COUT_MEDITER } from '../../data/regles.js';
 import {
   peutJouer, peutAttaquer, peutDefendre, peutActiver, capaciteActive, peutDestin, peutDefausser, peutMediter,
@@ -34,6 +35,8 @@ function Unite({ etat, u, camp, sel, ...props }) {
   const cible = sel.cibles?.some((c) => memeCible(c, camp, u.uid));
   const atk = attaqueDe(etat, camp, u);
   const def = defenseDe(u, etat);
+  // Une vraie carte : son image sert de masque à son ombre et à sa lueur (styles/duel-tables.css)
+  const image = u.def.carte?.image ? urlPublique(u.def.carte.image) : null;
   const etats = [
     u.defend ? ['En garde', 'defense'] : null,
     u.bloquee || u.gele ? ['Gelée', 'gelee'] : null,
@@ -48,10 +51,11 @@ function Unite({ etat, u, camp, sel, ...props }) {
     sel.attaquant === u.uid ? 'est-choisie' : '', cible ? 'est-ciblable' : '',
     sel.cibles && !cible && camp === 'adverse' ? 'est-hors-cible' : '',
     u.h < u.hMax ? 'est-blessee' : '',
+    image ? 'a-image' : '',
   ].filter(Boolean).join(' ');
   const caps = capsDe(u).map((k) => CAPACITES[k]?.nom).filter(Boolean);
   return (
-    <button type="button" className={classes} data-uid={u.uid} data-camp={camp} style={{ '--penche': penche(u.uid) }} {...props}
+    <button type="button" className={classes} data-uid={u.uid} data-camp={camp} style={{ '--penche': penche(u.uid), ...(image ? { '--masque': `url('${image}')` } : {}) }} {...props}
       aria-label={`${u.n}, ${atk} attaque, ${def} défense, ${u.h} PV${caps.length ? `, ${caps.join(', ')}` : ''}${etats.length ? `, ${etats.map((e) => e[0]).join(', ')}` : ''}`}>
       <span className="dc-unite__corps">
         <FaceCarte c={u.def} />
@@ -59,7 +63,7 @@ function Unite({ etat, u, camp, sel, ...props }) {
         {etats.length > 0 && (
           <span className="dc-etats">{etats.map(([t, k]) => <span key={k} className={`dc-etat dc-etat--${k}`}>{t}</span>)}</span>
         )}
-        <Stats a={atk} d={def} h={u.h} aMod={atk !== u.a} dMod={def - u.d} />
+        <Stats a={atk} d={def} h={u.h} aMod={atk !== u.a} dMod={def - u.d} imprime={{ a: u.def.a, d: u.def.d ?? 1, h: u.def.h }} />
       </span>
     </button>
   );

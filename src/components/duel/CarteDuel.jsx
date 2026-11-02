@@ -135,26 +135,29 @@ export function Capacites({ c }) {
 }
 
 // Attaque, Défense, PV (la valeur du moment est mise en avant si elle a changé)
-export function Stats({ a, d, h, aMod = false, dMod = 0 }) {
+// imprime : les valeurs imprimées sur la vraie carte ; une valeur qui en diffère porte dc-stat--change
+// (sur le plateau, seules celles-là s'affichent par-dessus une vraie carte : styles/duel-tables.css)
+export function Stats({ a, d, h, aMod = false, dMod = 0, imprime = null }) {
+  const change = (k, v) => (imprime && v !== imprime[k] ? ' dc-stat--change' : '');
   return (
     <>
-      <span className={`dc-stat dc-stat--a${aMod ? ' dc-stat--mod' : ''}`} title="Attaque">{a}</span>
-      <span className={`dc-stat dc-stat--d${dMod > 0 ? ' dc-stat--plus' : dMod < 0 ? ' dc-stat--moins' : ''}`} title="Défense">{d}</span>
-      <span className="dc-stat dc-stat--h" title="PV">{h}</span>
+      <span className={`dc-stat dc-stat--a${aMod ? ' dc-stat--mod' : ''}${change('a', a)}`} title="Attaque">{a}</span>
+      <span className={`dc-stat dc-stat--d${dMod > 0 ? ' dc-stat--plus' : dMod < 0 ? ' dc-stat--moins' : ''}${change('d', d)}`} title="Défense">{d}</span>
+      <span className={`dc-stat dc-stat--h${change('h', h)}`} title="PV">{h}</span>
     </>
   );
 }
 
 // Une carte (main, aperçu, menu). Les autres props (onClick, draggable…) vont au bouton.
 // as="span" : une carte qu'on ne peut pas toucher (celle posée sur le Tombeau)
-export default function CarteDuel({ c, index = null, jouable = false, choisie = false, cout = c.c, className = '', as: Balise = 'button', ...props }) {
+export default function CarteDuel({ c, index = null, jouable = false, choisie = false, cout = c.c, className = '', as: Balise = 'button', style, ...props }) {
   const url = c.carte?.image ? urlPublique(c.carte.image) : null;
   const caps = nomsCapacites(c);
   const etiquette = `${c.n}, coût ${c.c}${actionsDe(c) > 1 ? ` et ${actionsDe(c)} actions` : ''}${c.t === 'u' ? `, ${c.a} attaque, ${c.d ?? 0} défense, ${c.h} PV` : ''}${caps.length ? `, ${caps.join(', ')}` : ''}. ${c.t === 's' ? c.d : ''}`;
   return (
     <Balise type={Balise === 'button' ? 'button' : undefined}
       className={`dc-carte${className ? ` ${className}` : ''} dc-carte--${c.t}${url ? ' dc-carte--image' : ''} rar-${rarete(c)}${jouable ? ' est-jouable' : ''}${choisie ? ' est-choisie' : ''}`}
-      data-index={index ?? undefined} aria-label={etiquette} style={url ? { '--masque': `url('${url}')` } : undefined} {...props}>
+      data-index={index ?? undefined} aria-label={etiquette} style={url ? { '--masque': `url('${url}')`, ...style } : style} {...props}>
       <span className="dc-carte__corps">
         <FaceCarte c={c} />
         <span className={`dc-cout${cout < c.c ? ' dc-cout--reduit' : ''}`}>{cout}</span>
