@@ -1,0 +1,492 @@
+/* =====================================================================
+   Le plateau du duel : une table vue de dessus (components/duel/Plateau.jsx, lib/duel/tables.js)
+   Bois, Glace, Automne ou Braise ; --acc : la couleur de la table choisie (liserés, lueurs, bouton du tour).
+   Tout ce qui est posé sur la table en a l'air : plaques de bois cloutées, cartes épaisses qui penchent un peu,
+   places gravées, piles de cartes en relief. La table est vue en légère perspective.
+   Chargée après les autres feuilles du Duel : elle l'emporte sur l'ancien plateau (jeu-cartes.css).
+   ===================================================================== */
+.pt {
+  --acc: #e0a24e;
+  --encre: #f3e8d2;
+  --sourd: #b6a88e;
+  --bois-1: #58412e; --bois-2: #33241a; --bois-3: #241911;
+  --titre: "Cinzel", "Cinzel Repli", serif;
+  /* tailles : une unité posée (--u), une carte de la main (--m), les deux colonnes de côté */
+  --u: min(7.4vw, 13.6vh);
+  --m: min(8.4vw, 15.5vh);
+  --col-g: clamp(210px, 19vw, 300px);
+  --col-d: clamp(170px, 15vw, 230px);
+  position: fixed; inset: 0; z-index: 2;
+  margin: 0 !important; padding: 0; border: 0; max-width: none;
+  overflow: hidden;
+  color: var(--encre);
+  user-select: none; -webkit-user-select: none;
+}
+.en-duel .scene { display: none; }
+
+/* ---------- Le fond : la table, en fondu quand on en change ; vignette ; ambiance ---------- */
+/* (étirée plutôt que rognée : le cadre de la table reste visible sur tout le pourtour) */
+.pt-fond { position: absolute; inset: 0; background: #0a0807 center / 100% 100% no-repeat; }
+.pt-fond--entree { animation: pt-fondu .8s ease-out; }
+@keyframes pt-fondu { from { opacity: 0; } }
+.pt-vignette { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse at 50% 45%, transparent 55%, rgba(0,0,0,.5) 100%); }
+.pt-ambiance { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.pt-eclats { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 46; }
+
+/* ---------- La scène : trois colonnes (camps, rangées, commandes), la table en perspective ---------- */
+.pt-scene {
+  position: absolute; inset: 0;
+  padding: 6.5vh 1.6vw calc(var(--m) * 1.5 * .86 + 1vh);
+}
+.pt-table {
+  height: 100%; max-width: 1640px; margin: 0 auto;
+  display: grid;
+  grid-template-columns: var(--col-g) minmax(0, 1fr) var(--col-d);
+  grid-template-rows: minmax(0, 1fr) auto minmax(0, 1fr);
+  grid-template-areas:
+    "camp-a rang-a ."
+    "camp-a milieu cmd"
+    "camp-j rang-j cmd";
+  column-gap: 1.6vw;
+  transform: perspective(1700px) rotateX(9deg);
+  transform-origin: 50% 100%;
+}
+.pt-camp--adverse { grid-area: camp-a; align-self: start; }
+.pt-camp--joueur { grid-area: camp-j; align-self: end; }
+#terrain-adverse { grid-area: rang-a; }
+#terrain-joueur { grid-area: rang-j; }
+.pt-milieu { grid-area: milieu; }
+.pt-commandes { grid-area: cmd; }
+
+/* ---------- Les rangées : 5 places gravées dans la table ---------- */
+.pt-rangee {
+  position: relative;
+  align-self: center; justify-self: center;
+  display: flex; align-items: center; justify-content: center;
+  gap: calc(var(--u) * .16);
+  padding: calc(var(--u) * .08) calc(var(--u) * .14);
+  border-radius: 14px;
+  transition: background .25s, box-shadow .25s;
+}
+.pt-rangee .dc-unite, .pt-place { width: var(--u); }
+.pt-place {
+  aspect-ratio: 2 / 3; flex: none;
+  border-radius: 10px;
+  scale: .94;
+  background: rgba(0,0,0,.26);
+  box-shadow: inset 0 6px 10px rgba(0,0,0,.75), inset 0 -1px 0 rgba(255,235,200,.12), 0 1px 0 rgba(255,235,200,.18);
+}
+/* Une carte glissée au-dessus de la table : ta rangée s'allume */
+.pt-rangee.est-depot {
+  background: color-mix(in srgb, var(--acc) 16%, transparent);
+  box-shadow: 0 0 0 2px var(--acc), 0 0 30px color-mix(in srgb, var(--acc) 40%, transparent);
+}
+
+/* ---------- Les cartes : épaisses, ombre portée sur la table ---------- */
+.pt .dc-carte, .pt .dc-unite, .pt-tombeau .dc-carte {
+  --ombre: drop-shadow(0 1px 0 #0c0806) drop-shadow(0 2px 0 #060403) drop-shadow(0 9px 7px rgba(0,0,0,.55));
+  container-type: inline-size;
+}
+.pt .dc-unite { rotate: var(--penche, 0deg); transition: transform .45s cubic-bezier(.34,1.4,.5,1), filter .2s, rotate .3s, opacity .2s; }
+.pt .dc-unite.est-prete { filter: drop-shadow(0 0 3px var(--acc)) drop-shadow(0 0 10px color-mix(in srgb, var(--acc) 70%, transparent)) var(--ombre); animation: pt-prete 1.2s ease-in-out infinite alternate; }
+@keyframes pt-prete { to { filter: drop-shadow(0 0 5px var(--acc)) drop-shadow(0 0 16px var(--acc)) var(--ombre); } }
+.pt .dc-unite.est-prete:hover { transform: translateY(-5px); }
+.pt .dc-unite.est-choisie { rotate: 0deg; transform: translateY(-12px) scale(1.07); filter: drop-shadow(0 0 4px #fff3d0) drop-shadow(0 0 16px var(--acc)) drop-shadow(0 22px 12px rgba(0,0,0,.5)); animation: none; }
+.pt .dc-unite[data-camp="adverse"]:not(.est-ciblable) { filter: drop-shadow(0 0 3px rgba(200,40,50,.28)) var(--ombre); }
+.pt .dc-unite.est-ciblable { cursor: crosshair; animation: pt-cible .6s ease-in-out infinite alternate; }
+@keyframes pt-cible { from { filter: drop-shadow(0 0 3px #ff4050) drop-shadow(0 0 8px #ff4050) var(--ombre); } to { filter: drop-shadow(0 0 4px #ffb0b5) drop-shadow(0 0 18px #ff4050) var(--ombre); } }
+.pt .dc-unite.est-epuisee:not(.est-choisie) .dc-face { filter: saturate(.75) brightness(.8); }
+.pt .dc-unite.fx-arrivee { animation: pt-pose .5s cubic-bezier(.25,.8,.3,1); }
+@keyframes pt-pose { from { transform: translateY(-14px) scale(1.12); } 70% { transform: translateY(2px) scale(.98); } }
+
+/* Attaque · Défense · PV : trois gemmes taillées au bas de la carte ; le coût, une gemme bleue en haut à gauche */
+.pt .dc-stat {
+  bottom: 5% !important; top: auto; transform: none !important; translate: none !important;
+  width: 23cqw; height: auto; aspect-ratio: 1; padding: 0 !important;
+  display: grid !important; place-items: center;
+  border-radius: 0 !important; box-shadow: none !important;
+  clip-path: polygon(50% 0, 93% 25%, 93% 75%, 50% 100%, 7% 75%, 7% 25%) !important;
+  font-family: var(--titre); font-weight: 900; font-size: 12cqw; line-height: 1;
+  color: #fff !important; text-shadow: 0 1px 2px #000;
+  filter: drop-shadow(0 2px 2px rgba(0,0,0,.7));
+}
+.pt .dc-stat::before { content: none; }
+.pt .dc-stat::after { content: ''; position: absolute; inset: 0; background: linear-gradient(150deg, rgba(255,255,255,.4) 0 34%, transparent 34% 62%, rgba(0,0,0,.22) 62%); pointer-events: none; }
+.pt .dc-stat--a { left: 4% !important; right: auto !important; background: linear-gradient(160deg, #f2b84e, #8a5412) !important; }
+.pt .dc-stat--d { left: 50% !important; right: auto !important; translate: -50% 0 !important; background: linear-gradient(160deg, #a9c6e4, #3d5878) !important; }
+.pt .dc-stat--h { right: 4% !important; left: auto !important; background: linear-gradient(160deg, #e8545e, #7a1622) !important; }
+.pt .dc-stat--a.dc-stat--mod { color: #ffe9a8 !important; }
+.pt .dc-stat--plus { color: #c9ffd8 !important; }
+.pt .dc-stat--moins { color: #ffd0b0 !important; }
+.pt .dc-unite.est-blessee .dc-stat--h { color: #ffd0d0 !important; }
+.pt #main-joueur .dc-cout {
+  display: grid; place-items: center;
+  left: 3.5%; top: 2.5%; right: auto; width: 21cqw; height: auto; aspect-ratio: 1; padding: 0;
+  border-radius: 0; box-shadow: none;
+  clip-path: polygon(50% 0, 93% 25%, 93% 75%, 50% 100%, 7% 75%, 7% 25%);
+  background: linear-gradient(160deg, #6aa6ff, #1d3f8c);
+  font-family: var(--titre); font-weight: 900; font-size: 12cqw; color: #fff; text-shadow: 0 1px 2px #000;
+}
+.pt #main-joueur .dc-cout--reduit { background: linear-gradient(160deg, #8fe8ac, #1f6a42); }
+
+/* ---------- Les plaques des héros : bois clouté posé sur la table ---------- */
+.pt-camp { display: flex; flex-direction: column; gap: 1.6vh; min-height: 0; }
+.pt-plaque {
+  position: relative;
+  display: flex; align-items: center; gap: 12px;
+  width: 100%; max-width: 300px;
+  padding: 12px 18px 12px 13px;
+  border: 0; border-radius: 18px;
+  background: linear-gradient(180deg, var(--bois-1), var(--bois-2) 50%, var(--bois-3));
+  box-shadow:
+    inset 0 2px 0 rgba(255,225,180,.32), inset 0 -3px 0 rgba(0,0,0,.55), inset 0 0 0 1px rgba(0,0,0,.65),
+    0 1px 0 #17100a, 0 2px 0 #100a06, 0 3px 0 #0a0604, 0 4px 0 #070403,
+    0 16px 18px -6px rgba(0,0,0,.7), 0 4px 7px rgba(0,0,0,.5);
+  color: var(--encre); text-align: left; font: inherit;
+  cursor: default;
+  transition: opacity .2s;
+}
+/* le creux de la plaque, et les quatre clous */
+.pt-plaque::before {
+  content: ''; position: absolute; inset: 6px; border-radius: 12px;
+  background: linear-gradient(180deg, #1a110b, #271a12);
+  box-shadow: inset 0 4px 8px rgba(0,0,0,.85), 0 1px 0 rgba(255,225,180,.16);
+}
+.pt-plaque::after {
+  content: ''; position: absolute; inset: 0; border-radius: 18px; pointer-events: none;
+  border: 1px solid color-mix(in srgb, var(--acc) 45%, transparent);
+  background:
+    radial-gradient(circle at 10px 10px, #b89a6a 0 2.4px, #3a2a1a 3px, transparent 3.6px),
+    radial-gradient(circle at calc(100% - 10px) 10px, #b89a6a 0 2.4px, #3a2a1a 3px, transparent 3.6px),
+    radial-gradient(circle at 10px calc(100% - 10px), #b89a6a 0 2.4px, #3a2a1a 3px, transparent 3.6px),
+    radial-gradient(circle at calc(100% - 10px) calc(100% - 10px), #b89a6a 0 2.4px, #3a2a1a 3px, transparent 3.6px);
+}
+.pt-plaque > * { position: relative; }
+.pt-plaque.est-ciblable { cursor: crosshair; animation: pt-plaque-cible .7s ease-in-out infinite alternate; }
+@keyframes pt-plaque-cible {
+  to { box-shadow: inset 0 2px 0 rgba(255,225,180,.32), inset 0 -3px 0 rgba(0,0,0,.55), 0 0 0 3px #ff4050, 0 0 24px #ff4050, 0 16px 18px -6px rgba(0,0,0,.7); }
+}
+.vise .pt-plaque:not(.est-ciblable) { opacity: .6; }
+.pt-plaque__portrait {
+  flex: none; display: grid; place-items: center;
+  width: 58px; height: 58px; border-radius: 50%; overflow: hidden;
+  background: #221812;
+  box-shadow: 0 0 0 3px #7a5a3a, 0 0 0 4px #150d08, 0 4px 6px rgba(0,0,0,.65), inset 0 0 10px rgba(0,0,0,.75);
+}
+.pt-plaque__portrait img { width: 100%; height: 100%; object-fit: cover; }
+.pt-plaque__portrait svg { width: 52%; height: 52%; fill: var(--acc); }
+.pt-plaque__infos { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 5px; }
+.pt-plaque__nom {
+  font-family: var(--titre); font-weight: 700; font-size: 12.5px; letter-spacing: .07em; text-transform: uppercase;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-shadow: 0 1px 2px #000;
+}
+/* Les PV : la barre (verte pour toi, rouge pour l'adversaire), la traînée claire qui la rattrape */
+.pt-pv {
+  position: relative; display: block; height: 18px; overflow: hidden;
+  border-radius: 9px; background: #0b0705;
+  box-shadow: inset 0 3px 5px rgba(0,0,0,.95), 0 1px 0 rgba(255,225,180,.22);
+}
+.pt-pv i { position: absolute; left: 0; top: 0; bottom: 0; width: var(--pv, 100%); border-radius: 9px 0 0 9px; }
+.pt-pv__trainee { background: #f0e6cf; opacity: .8; transition: width .9s cubic-bezier(.3,.7,.2,1) .4s; }
+.pt-pv__reste { transition: width .45s cubic-bezier(.2,.9,.2,1); box-shadow: inset 0 2px 0 rgba(255,255,255,.38), inset 0 -3px 4px rgba(0,0,0,.35); }
+.pt-plaque--joueur .pt-pv__reste { background: linear-gradient(#5ec58a, #1f6a42); }
+.pt-plaque--adverse .pt-pv__reste { background: linear-gradient(#e8545e, #8a1c28); }
+.pt-plaque.est-en-danger .pt-pv__reste { background: linear-gradient(#ff8a8f, #b81f2b); }
+.pt-pv b {
+  position: absolute; inset: 0; z-index: 1; display: block; text-align: center;
+  font-family: var(--titre); font-size: 11.5px; line-height: 18px; font-weight: 700; letter-spacing: .1em;
+  text-shadow: 0 1px 3px #000, 0 0 4px #000;
+}
+.pt-plaque.est-en-danger .pt-pv b { color: #ffd0d3; }
+/* L'énergie : des billes bleues ; les actions : des losanges dorés */
+.pt-ressources { display: flex; flex-direction: column; gap: 4px; }
+.pt-energie, .pt-actions { display: flex; align-items: center; gap: 3px; }
+.pt-energie i {
+  width: 12px; height: 12px; flex: none; border-radius: 50%;
+  box-shadow: inset 0 2px 3px rgba(0,0,0,.7), 0 1px 0 rgba(255,225,180,.2);
+  transition: background .3s, box-shadow .3s;
+}
+.pt-energie i.est-pleine { background: radial-gradient(circle at 35% 30%, #fff 0 8%, #8fc4ff 22%, #2f6fd0 62%, #17306e); box-shadow: inset 0 -2px 3px rgba(0,0,40,.5), 0 0 6px rgba(90,160,255,.7), 0 2px 2px rgba(0,0,0,.6); }
+.pt-energie i.est-vide { background: radial-gradient(circle at 35% 30%, #4a5f8e, #1d2a4a); }
+.pt-energie i.est-eteinte { background: #0e0a07; }
+.pt-actions i {
+  width: 11px; height: 11px; flex: none;
+  clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+  background: rgba(255,225,180,.14);
+}
+.pt-actions i.est-pleine { background: linear-gradient(135deg, #fff1c8, #e0a24e 55%, #8a5412); }
+.pt-energie b, .pt-actions b {
+  margin-left: 5px; white-space: nowrap;
+  font-family: var(--titre); font-size: 10.5px; font-weight: 700; letter-spacing: .08em; text-shadow: 0 1px 2px #000;
+}
+.pt-energie b { color: #bcd8ff; }
+.pt-actions b { color: #f0d9a0; }
+
+/* ---------- Le Grimoire et le Tombeau, posés à côté de la plaque ---------- */
+.pt-objets { display: flex; align-items: flex-end; gap: 14px; padding: 0 6px; }
+.pt-pile, .pt-tombeau { position: relative; flex: none; width: calc(var(--u) * .62); aspect-ratio: 2 / 3; }
+.pt-pile i {
+  position: absolute; inset: 0;
+  border-radius: 9%;
+  background: url("/img/Cartes/Verso-Carte.webp") center / 100% 100% no-repeat, #1a110b;
+  box-shadow: 0 1px 0 #0c0806, 0 2px 0 #060403;
+  transform: translateY(calc(var(--h) * -1.6px)) rotate(var(--r));
+}
+.pt-pile i:first-child { box-shadow: 0 1px 0 #0c0806, 0 2px 0 #060403, 6px 10px 12px rgba(0,0,0,.65); }
+.pt-pile b, .pt-compte {
+  position: absolute; left: 50%; bottom: -8px; translate: -50% 0; z-index: 2;
+  display: flex; align-items: center; gap: 3px;
+  min-width: 26px; padding: 2px 7px; border-radius: 9px;
+  background: linear-gradient(180deg, var(--bois-1), var(--bois-3));
+  box-shadow: inset 0 1px 0 rgba(255,225,180,.3), 0 2px 4px rgba(0,0,0,.6);
+  font-family: var(--titre); font-weight: 700; font-size: 12px; color: #e9d6a9; justify-content: center;
+}
+.pt-compte svg { width: 10px; height: 12px; fill: none; stroke: #e9d6a9; stroke-width: 2.2; }
+.pt-tombeau {
+  border-radius: 10px; cursor: pointer;
+  background: rgba(0,0,0,.26);
+  box-shadow: inset 0 6px 10px rgba(0,0,0,.75), inset 0 -1px 0 rgba(255,235,200,.12), 0 1px 0 rgba(255,235,200,.18);
+  transition: box-shadow .2s, background .2s;
+}
+.pt-tombeau__carte { position: absolute; inset: 0; filter: grayscale(.5) brightness(.7); }
+.pt-tombeau .dc-carte { --carte-l: 100%; display: block; width: 100%; cursor: pointer; transform: none; }
+.pt-tombeau .dc-stat, .pt-tombeau .dc-cout, .pt-tombeau .dc-caps, .pt-tombeau .dc-act { display: none !important; }
+.pt-tombeau.est-depot { background: color-mix(in srgb, var(--acc) 25%, transparent); box-shadow: 0 0 0 2px var(--acc), 0 0 22px var(--acc); }
+.pt-tombeau:focus-visible { outline: 2px solid var(--acc); outline-offset: 3px; }
+
+/* ---------- La ligne du milieu : un trait gravé, le d20 et son résultat pendant un lancer ---------- */
+.pt-milieu {
+  position: relative;
+  display: flex; align-items: center; justify-content: center; gap: 14px;
+  min-height: 5.5vh;
+}
+.pt-milieu::before {
+  content: ''; position: absolute; left: 6%; right: 6%; top: 50%; height: 2px;
+  background: rgba(0,0,0,.45); box-shadow: 0 1px 0 rgba(255,225,180,.18);
+}
+.pt-milieu .d20, .pt-milieu .centre__resultat { position: relative; opacity: 0; scale: .7; pointer-events: none; transition: opacity .35s, scale .35s; }
+.pt-milieu .d20.est-visible, .pt-milieu .centre__resultat.est-visible { opacity: 1; scale: 1; }
+.pt-milieu .d20 { width: min(58px, 7vh); height: min(58px, 7vh); filter: drop-shadow(0 4px 6px rgba(0,0,0,.7)); }
+.pt-milieu .d20 polygon { fill: #241a12; stroke: color-mix(in srgb, var(--acc) 75%, transparent); }
+.pt-milieu .d20 path { stroke: color-mix(in srgb, var(--acc) 30%, transparent); }
+.pt-milieu .centre__resultat {
+  min-width: 0; padding: 3px 14px; border-radius: 9px;
+  background: linear-gradient(180deg, var(--bois-2), var(--bois-3));
+  box-shadow: inset 0 1px 0 rgba(255,225,180,.25), 0 4px 8px rgba(0,0,0,.6);
+  font-size: .95rem; text-shadow: 0 1px 2px #000;
+}
+.pt-milieu .centre__resultat:empty { display: none; }
+.pt-milieu .centre__consigne {
+  position: absolute; left: 50%; bottom: calc(100% + 2px); translate: -50% 0; display: none;
+  width: max-content; max-width: 46ch; margin: 0; padding: 3px 12px; border-radius: 8px;
+  background: rgba(10,7,5,.72); color: var(--encre); font-size: .9rem; font-style: italic; text-align: center;
+}
+.avec-conseils .pt-milieu .centre__consigne:not(:empty) { display: block; }
+
+/* ---------- Les commandes du tour (à droite) ---------- */
+.pt-commandes { align-self: end; display: flex; flex-direction: column; align-items: stretch; gap: 10px; }
+.pt-commandes__paire { display: flex; gap: 8px; }
+.pt-commandes__paire > * { flex: 1; min-width: 0; }
+.pt-fin, .pt-btn {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+  border: 0; border-radius: 12px;
+  font-family: var(--titre); font-weight: 700; text-transform: uppercase; white-space: nowrap;
+  cursor: pointer;
+  transition: transform .12s, box-shadow .12s, filter .15s;
+}
+.pt-fin small, .pt-btn small { font-family: inherit; font-size: 9.5px; font-weight: 600; letter-spacing: .06em; text-transform: none; opacity: .75; }
+.pt-fin {
+  padding: 15px 10px 13px;
+  font-size: 14px; letter-spacing: .18em; color: #150e08;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--acc) 85%, #fff), var(--acc) 45%, color-mix(in srgb, var(--acc) 60%, #000));
+  box-shadow: inset 0 2px 0 rgba(255,255,255,.45), inset 0 -2px 0 rgba(0,0,0,.25), 0 5px 0 color-mix(in srgb, var(--acc) 35%, #000), 0 5px 0 1px #0a0604, 0 12px 14px rgba(0,0,0,.55);
+}
+.pt-fin:hover:not(:disabled) { transform: translateY(-1px); }
+.pt-fin:active:not(:disabled) { transform: translateY(4px); box-shadow: inset 0 2px 0 rgba(255,255,255,.35), 0 1px 0 color-mix(in srgb, var(--acc) 35%, #000), 0 1px 0 1px #0a0604, 0 3px 5px rgba(0,0,0,.5); }
+.pt-fin:disabled { cursor: default; color: #8a8070; background: linear-gradient(#4a423b, #2f2923); box-shadow: inset 0 2px 0 rgba(255,255,255,.12), 0 3px 0 #17120e, 0 8px 10px rgba(0,0,0,.5); }
+.pt-fin.est-suggere { animation: pt-suggere 1s ease-in-out infinite alternate; }
+@keyframes pt-suggere { to { box-shadow: inset 0 2px 0 rgba(255,255,255,.45), 0 5px 0 color-mix(in srgb, var(--acc) 35%, #000), 0 5px 0 1px #0a0604, 0 0 24px var(--acc); } }
+.pt-btn {
+  padding: 8px 6px 7px;
+  font-size: 11px; letter-spacing: .1em; color: var(--encre);
+  background: linear-gradient(180deg, var(--bois-1), var(--bois-2) 55%, var(--bois-3));
+  box-shadow: inset 0 2px 0 rgba(255,225,180,.28), inset 0 -2px 0 rgba(0,0,0,.45), inset 0 0 0 1px rgba(0,0,0,.6), 0 3px 0 #120c07, 0 8px 10px rgba(0,0,0,.5);
+}
+.pt-btn:hover:not(:disabled) { transform: translateY(-1px); filter: brightness(1.12); }
+.pt-btn:active:not(:disabled) { transform: translateY(2px); }
+.pt-btn:disabled { cursor: default; opacity: .45; }
+.pt-btn.est-actif { box-shadow: inset 0 0 0 2px var(--acc), 0 0 14px color-mix(in srgb, var(--acc) 60%, transparent), 0 3px 0 #120c07; }
+.pt-btn--destin { flex-direction: row; gap: 9px; font-size: 12px; }
+.pt-btn--destin svg { width: 26px; height: 26px; flex: none; }
+.pt-btn--destin svg polygon { fill: #2a1d13; stroke: var(--acc); stroke-width: 4; }
+.pt-btn--destin svg path { fill: color-mix(in srgb, var(--acc) 35%, transparent); stroke: var(--acc); stroke-width: 3; }
+.pt-btn--destin span { display: flex; flex-direction: column; align-items: flex-start; }
+.pt-btn--capacite { white-space: normal; }
+.pt-fin:focus-visible, .pt-btn:focus-visible, .pt-plaque:focus-visible, .pt .dc-unite:focus-visible { outline: 2px solid var(--acc); outline-offset: 3px; }
+
+/* ---------- Ta main : un éventail en bas, les cartes se lèvent au survol, se glissent sur la table ---------- */
+.pt-main {
+  position: absolute; left: 50%; bottom: 0; z-index: 5;
+  translate: -50% 0;
+  display: flex; justify-content: center; align-items: flex-end;
+  height: calc(var(--m) * 1.5 + 3vh);
+  padding: 0 0 2vh;
+  touch-action: none;
+}
+.pt-main .dc-carte {
+  --carte-l: var(--m);
+  width: var(--m);
+  /* plus il y a de cartes, plus elles se chevauchent (--n : le nombre de cartes) */
+  margin-left: calc(var(--m) * min(-.08, (4 - var(--n)) * .07 - .08));
+  transform: translateY(calc(var(--k) * var(--k) * 3px)) rotate(calc(var(--k) * 3.5deg));
+  transform-origin: 50% 150%;
+  translate: none; scale: none;
+  touch-action: none;
+  filter: var(--ombre);
+  transition: transform .5s cubic-bezier(.34,1.4,.5,1), filter .2s;
+}
+.pt-main .dc-carte:first-child { margin-left: 0; }
+.pt-main .dc-carte.est-jouable { filter: drop-shadow(0 0 7px color-mix(in srgb, var(--acc) 80%, transparent)) var(--ombre); cursor: grab; }
+.pt-main .dc-carte.est-trop-chere .dc-face { filter: grayscale(.55) brightness(.68); }
+.pt-main .dc-carte:hover, .pt-main .dc-carte:focus-visible, .pt-main .dc-carte.est-choisie {
+  z-index: 20;
+  transform: translateY(-18%) rotate(0deg) scale(1.14);
+  filter: drop-shadow(0 0 9px var(--acc)) drop-shadow(0 26px 14px rgba(0,0,0,.5));
+}
+/* (au clavier, la carte levée et sa lueur suffisent : pas de cadre rectangulaire autour de sa silhouette) */
+.pt-main .dc-carte:focus-visible { outline: none; }
+.pt-main .dc-carte.est-trop-chere:hover { transform: translateY(-10%) rotate(0deg) scale(1.08); filter: var(--ombre); }
+.pt-main .dc-carte.est-glissee {
+  z-index: 60; cursor: grabbing; transition: none;
+  filter: drop-shadow(0 0 16px var(--acc)) drop-shadow(0 18px 18px rgba(0,0,0,.6));
+}
+.pt-main.en-defausse .dc-carte { filter: drop-shadow(0 0 8px #c45b61) var(--ombre); }
+/* Une carte piochée est distribuée depuis ton Grimoire (en bas à gauche) */
+.pt-main .dc-carte.fx-donnee .dc-carte__corps { animation: pt-donnee .55s cubic-bezier(.2,.8,.3,1) var(--d, 0ms) backwards; }
+@keyframes pt-donnee { from { opacity: 0; transform: translate(-34vw, -12vh) scale(.5) rotate(-25deg); } }
+
+/* La main de l'adversaire : des dos de cartes qui dépassent du haut de l'écran */
+.pt-main-adverse {
+  position: absolute; top: 0; left: 50%; z-index: 4;
+  translate: -50% 0;
+  display: flex; justify-content: center;
+  pointer-events: none;
+}
+.pt-main-adverse .dos {
+  width: calc(var(--m) * .42); aspect-ratio: 2 / 3; margin: 0 calc(var(--m) * -.06);
+  border-radius: 8%;
+  background: url("/img/Cartes/Verso-Carte.webp") center / 100% 100% no-repeat, #1a110b;
+  box-shadow: 0 8px 12px rgba(0,0,0,.55);
+  transform: translateY(-58%) rotate(calc(var(--k) * -5deg));
+  transform-origin: 50% -60%;
+}
+.pt-main-adverse .dos.fx-donnee { animation: pt-dos .5s ease-out var(--d, 0ms) backwards; }
+@keyframes pt-dos { from { transform: translateY(-130%) rotate(0deg); } }
+
+/* ---------- Le journal (en haut à droite) : la table, le terrain, les jets, les outils ---------- */
+.pt-journal {
+  position: absolute; top: 1.4vh; right: max(1.6vw, calc((100vw - 1640px) / 2)); z-index: 6;
+  width: var(--col-d);
+  display: flex; flex-direction: column; gap: 8px;
+  padding: 10px 12px 11px;
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgba(36,25,17,.9), rgba(20,14,10,.92));
+  box-shadow: inset 0 1px 0 rgba(255,225,180,.22), inset 0 0 0 1px rgba(0,0,0,.6), 0 3px 0 #0a0604, 0 12px 18px rgba(0,0,0,.55);
+}
+.pt-tables { display: flex; align-items: center; gap: 9px; }
+.pt-tables button {
+  width: 17px; height: 17px; padding: 0; border: 0;
+  clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+  background: var(--acc); opacity: .4; cursor: pointer;
+  transition: opacity .2s, transform .2s;
+}
+.pt-tables button:hover { opacity: .9; }
+.pt-tables button.est-choisie { opacity: 1; transform: scale(1.25); }
+.pt-tables span { margin-left: auto; font-family: var(--titre); font-size: 10px; letter-spacing: .2em; text-transform: uppercase; color: var(--sourd); }
+.pt-terrain { display: flex; flex-direction: column; gap: 1px; padding: 6px 8px; border-left: 3px solid var(--acc); background: rgba(0,0,0,.25); border-radius: 0 6px 6px 0; }
+.pt-terrain b { font-family: var(--titre); font-size: .74rem; letter-spacing: .06em; color: #f0d9a0; }
+.pt-terrain span { font-size: .74rem; line-height: 1.3; color: var(--sourd); display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
+.pt-jets { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 5px; max-height: 9.5vh; overflow-y: auto; scrollbar-width: thin; }
+.pt-jets .jet { font-size: .74rem; }
+.pt-jets .jet b { width: 24px; height: 24px; font-size: .78rem; }
+.pt-journal .historique__outils { margin: 0; padding: 8px 0 0; border-top: 1px solid rgba(255,225,180,.12); background: none; position: static; display: flex; flex-direction: column; gap: 8px; }
+.pt-journal .historique__boutons { display: flex; gap: 6px; justify-content: space-between; }
+.pt-journal .btn-outil { width: 32px; height: 32px; background: linear-gradient(180deg, var(--bois-1), var(--bois-3)); }
+.pt-journal .btn-outil:hover { filter: brightness(1.2); }
+.pt-journal .btn-outil.est-actif { background: color-mix(in srgb, var(--acc) 55%, #000); }
+.pt-journal .volume input { background: linear-gradient(90deg, var(--acc) var(--pct), rgba(255,255,255,.14) var(--pct)); }
+
+/* ---------- Bannière, chiffres, 2 contre 2 ---------- */
+.pt ~ .flotte, .flotte { font-family: var(--titre, "Cinzel", serif); }
+.pt .banniere strong { letter-spacing: .28em; text-transform: uppercase; text-shadow: 0 0 18px var(--acc), 0 2px 4px #000; }
+.pt .banniere--moi strong { color: #fff; }
+.pt .equipe-duel { position: static; margin: 0; }
+
+/* ---------- Écrans plus bas ou plus étroits ---------- */
+@media (max-height: 720px) {
+  .pt-plaque { padding: 9px 14px 9px 10px; gap: 10px; }
+  .pt-plaque__portrait { width: 46px; height: 46px; }
+  .pt-pv { height: 15px; }
+  .pt-pv b { line-height: 15px; font-size: 10.5px; }
+  .pt-energie i { width: 10px; height: 10px; }
+  .pt-actions i { width: 9px; height: 9px; }
+  .pt-fin { padding: 11px 8px 10px; font-size: 12.5px; }
+  .pt-btn { padding: 6px 5px 5px; font-size: 10px; }
+  .pt-commandes { gap: 7px; }
+  .pt-camp { gap: 1.2vh; }
+}
+@media (max-width: 1100px) {
+  .pt { --col-g: 200px; --col-d: 160px; --u: min(8vw, 13vh); }
+  .pt-plaque__nom { font-size: 11px; }
+  .pt-energie i { width: 9px; height: 9px; }
+  .pt-energie { gap: 2px; }
+}
+
+/* ---------- Animations coupées : rien ne bat ni ne flotte ---------- */
+:root.anim-reduites .pt .dc-unite.est-prete, :root.anim-reduites .pt .dc-unite.est-ciblable,
+:root.anim-reduites .pt-plaque.est-ciblable, :root.anim-reduites .pt-fin.est-suggere { animation: none; }
+@media (prefers-reduced-motion: reduce) {
+  .pt .dc-unite.est-prete, .pt .dc-unite.est-ciblable, .pt-plaque.est-ciblable, .pt-fin.est-suggere,
+  .pt-main .dc-carte.fx-donnee .dc-carte__corps, .pt-fond--entree { animation: none; }
+}
+
+/* ---------- Téléphone couché (écran bas) : tout se resserre, la main dépasse du bas de l'écran ---------- */
+@media (max-height: 520px) and (orientation: landscape) {
+  .pt { --u: min(7vw, 15vh); --m: min(9vw, 21vh); --col-g: 168px; --col-d: 136px; }
+  .pt-scene { padding: 5vh 1.2vw calc(var(--m) * 1.5 * .62); }
+  .pt-table { transform: none; column-gap: 1.2vw; }
+  .pt-camp { gap: 6px; }
+  .pt-plaque { gap: 6px; padding: 5px 9px 5px 6px; border-radius: 12px; }
+  .pt-plaque::before { inset: 3px; border-radius: 9px; }
+  .pt-plaque::after { border-radius: 12px; background: none; }
+  .pt-plaque__portrait { width: 30px; height: 30px; }
+  .pt-plaque__nom { font-size: 9.5px; }
+  .pt-pv { height: 12px; }
+  .pt-pv b { font-size: 9px; line-height: 12px; }
+  .pt-energie i { width: 6px; height: 6px; }
+  .pt-energie { gap: 1px; }
+  .pt-actions i { width: 7px; height: 7px; }
+  .pt-energie b, .pt-actions b { font-size: 8.5px; margin-left: 3px; }
+  .pt-ressources { gap: 2px; }
+  .pt-pile, .pt-tombeau { width: 26px; }
+  .pt-pile b, .pt-compte { bottom: -6px; min-width: 18px; padding: 0 4px; font-size: 9px; }
+  .pt-compte svg { display: none; }
+  .pt-milieu { min-height: 26px; }
+  .pt-milieu .d20 { width: 30px; height: 30px; }
+  .pt-journal { top: 4px; padding: 5px 6px; gap: 4px; }
+  .pt-terrain, .pt-jets, .pt-journal .volume, .pt-tables span { display: none; }
+  .pt-tables { justify-content: space-between; }
+  .pt-tables button { width: 12px; height: 12px; }
+  .pt-journal .historique__outils { padding: 4px 0 0; }
+  .pt-journal .btn-outil { width: 24px; height: 24px; }
+  .pt-journal .btn-outil svg { width: 12px; height: 12px; }
+  .pt-commandes { gap: 4px; }
+  .pt-commandes__paire { gap: 4px; }
+  .pt-fin { padding: 8px 4px; font-size: 10px; letter-spacing: .08em; }
+  .pt-btn { padding: 4px 3px; font-size: 8.5px; letter-spacing: .02em; }
+  .pt-fin small, .pt-btn small { display: none; }
+  .pt-btn--destin svg { width: 14px; height: 14px; }
+  .pt-main { height: calc(var(--m) * 1.5 * .7); padding: 0; align-items: flex-start; }
+  .pt-main .dc-carte:hover, .pt-main .dc-carte:focus-visible, .pt-main .dc-carte.est-choisie { transform: translateY(-40%) rotate(0deg) scale(1.3); }
+  .pt-main-adverse .dos { width: 20px; }
+}

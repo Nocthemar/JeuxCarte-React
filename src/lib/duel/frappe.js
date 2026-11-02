@@ -56,7 +56,7 @@ export function chiffreDegats(el, valeur, critique = false) {
 }
 
 export function pvTouches(heros) {
-  const pv = heros?.querySelector('.dc-heros__pv');
+  const pv = heros?.querySelector('.pt-pv__chiffre, .dc-heros__pv');
   if (!pv || !actif()) return;
   pv.animate([
     { scale: '1', filter: 'none' },

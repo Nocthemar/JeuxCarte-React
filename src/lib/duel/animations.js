@@ -17,6 +17,7 @@ import { styleAttaque, couleursVeine } from './attaques.js';
 import { htmlCarte } from './htmlCarte.js';
 import { grandDe } from './grandDe.js';
 import { arretSurImage, coupDeCamera, chiffreDegats, pvTouches } from './frappe.js';
+import { eclats } from './tables.js';
 
 const reduit = animationsReduites;
 const $ = (id) => document.getElementById(id);
@@ -24,7 +25,7 @@ const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
 const elUnite = (uid) => document.querySelector(`.dc-unite[data-uid="${uid}"]`);
-const elHeros = (qui) => document.querySelector(`.dc-heros[data-heros="${qui}"]`);
+const elHeros = (qui) => document.querySelector(`[data-heros="${qui}"]`);
 export const elCible = (c) => (c.heros ? elHeros(c.camp) : elUnite(c.uid));
 
 // L'intensité des effets selon la rareté : 0 (commune, éveillée, troupes du Codex), 1 (mythique),
@@ -32,6 +33,10 @@ export const elCible = (c) => (c.heros ? elHeros(c.camp) : elUnite(c.uid));
 const NIVEAUX = { mythique: 1, legendaire: 2, transcendante: 3 };
 const niveauCarte = (def) => NIVEAUX[def?.carte?.rarity] ?? 0;
 const niveauElement = (el) => Object.entries(NIVEAUX).find(([r]) => el?.classList.contains(`rar-${r}`))?.[1] ?? 0;
+
+// Les éclats low poly (lib/duel/tables.js) : la couleur de la table choisie, celle de la Veine de la carte, de l'ivoire et du charbon
+const accent = () => ($('ecran-duel') && getComputedStyle($('ecran-duel')).getPropertyValue('--acc').trim()) || '#e0a24e';
+const couleursEclats = (def) => [...(couleursVeine(def?.veine) ?? []).slice(0, 2), accent(), '#e8dcc6', '#2a2226'];
 
 // Chiffre flottant (dégâts en rouge, soin en vert, bonus en ambre)
 // Effets de pioche d'un événement (sorts, Destin, défausse) : cartes piochées, brûlées, épuisement.
@@ -175,6 +180,7 @@ export const SFX = {
 // (niveau : celui de l'attaquant, voir niveauCarte)
 function impact(el, q, heros, niveau = 0) {
   if (!el) return;
+  eclats(el, q === 'critique' ? ['#ffffff', '#ffd9a0', '#ff9a50', accent()] : ['#ffffff', '#ffd9a0', '#ff9a50'], q === 'critique' ? 20 : 10, q === 'critique' ? 1.2 : 0.9);
   if (niveau >= 2) {
     onde(el, niveau === 3 ? '#fff1c8' : '#f3cf7c', niveau === 3 ? 3 : 2.4, 600);
     particules(el, { n: niveau === 3 ? 18 : 10, couleurs: OR, vitesse: 170, gravite: 60, taille: [2, 7], duree: 700 });
@@ -212,6 +218,7 @@ export async function animer(ev) {
       //  0 : un peu de poussière ; 1 (mythique) : la couleur de sa Veine ; 2 (légendaire) : éclat d'or,
       //  couronne, le plateau tremble ; 3 (transcendante) : onde de choc dorée sur tout le plateau
       setTimeout(() => {
+        eclats(el, couleursEclats(ev.carte), 12 + niveau * 6, 0.75 + niveau * 0.15);
         particules(el, { n: niveau ? 14 : 8, couleurs: POUSSIERE, vitesse: 80, gravite: 15, taille: [5, 12], rond: true, duree: 700 });
         onde(el, 'rgba(197,202,211,.7)', 1.6, 500);
         const teinte = couleursVeine(ev.carte?.veine);
@@ -476,6 +483,7 @@ async function mourir(uids = []) {
   uids.forEach((uid, i) => setTimeout(() => {
     const el = elUnite(uid);
     const niveau = niveauElement(el);
+    eclats(el, couleursEclats(null), 26 + niveau * 6, 1.2);
     if (niveau >= 2) {
       onde(el, '#f3cf7c', niveau === 3 ? 3.4 : 2.6, 700);
       particules(el, { n: niveau === 3 ? 26 : 16, couleurs: OR, vitesse: 150, monte: 40, gravite: 80, taille: [2, 8], duree: 900 });

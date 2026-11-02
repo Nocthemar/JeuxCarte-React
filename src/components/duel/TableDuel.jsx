@@ -2,7 +2,7 @@
 //  La table du duel : le plateau et tout ce que le joueur y fait (ancien JS/jeu-cartes.js, « Actions du
 //  joueur de cet écran »), partagée par le duel contre l'Ombre et le duel en ligne.
 //  - la sélection (unité choisie, sort ou capacité qui attend sa cible, défausse) ;
-//  - les clics, le glisser-déposer vers le Tombeau, les raccourcis clavier, la loupe ;
+//  - les clics, le glisser-déposer (vers la table : jouer ; vers le Tombeau : défausser), les raccourcis clavier, la loupe ;
 //  - les fenêtres : renvoi de main, Méditer, Tombeau, loupe, fin du duel.
 //  Elle ne sait pas QUI est l'adversaire : le parent (le « pilote ») lui dit si c'est mon tour
 //  (monTour) et reçoit mes actions (surAction), qu'il applique au moteur ou envoie à l'hôte.
@@ -32,7 +32,6 @@ export default function TableDuel({
   const [choisies, setChoisies] = useState(new Set());   // renvoi de main : les cartes à renvoyer
   const [tombeau, setTombeau] = useState(null);           // 'joueur' | 'adverse' : le Tombeau ouvert
   const [loupe, setLoupe] = useState(null);
-  const [glisse, setGlisse] = useState(false);            // une carte de la main est glissée vers le Tombeau
 
   const agir = (action) => {
     if (!monTour) return;
@@ -77,7 +76,7 @@ export default function TableDuel({
       if (sel.capacite) return agir({ type: 'capacite', uid: sel.capacite, cible });
       if (sel.attaquant) return agir({ type: 'attaque', uid: sel.attaquant, cible });
     }
-    const el = document.querySelector(cible.heros ? `.dc-heros[data-heros="${cible.camp}"]` : `.dc-unite[data-uid="${cible.uid}"]`);
+    const el = document.querySelector(cible.heros ? `[data-heros="${cible.camp}"]` : `.dc-unite[data-uid="${cible.uid}"]`);
     if (!cible.heros && cible.camp === 'joueur' && sel.sortIndex == null && !sel.capacite) {
       const u = trouver(etat.camps.joueur, cible.uid);
       if (sel.attaquant === u.uid) return annuler();
@@ -113,15 +112,8 @@ export default function TableDuel({
   };
   const mediter = () => { if (monTour && peutMediter(etat, 'joueur')) agir({ type: 'mediter' }); };
 
-  // Glisser une carte de la main sur son Tombeau : la défausser
-  const surGlisser = (e, i) => {
-    if (!e) return setGlisse(false);
-    if (!monTour || !peutDefausser(etat, 'joueur')) { e.preventDefault(); return; }
-    e.dataTransfer.setData('text/plain', String(i));
-    e.dataTransfer.effectAllowed = 'move';
-    setGlisse(true);
-  };
-  const surDeposer = (i) => { setGlisse(false); if (Number.isInteger(i)) agir({ type: 'defausser', index: i }); };
+  // Une carte de la main glissée sur son Tombeau : la défausser (le glisser est dans Plateau.jsx)
+  const surDeposer = (i) => { if (monTour && peutDefausser(etat, 'joueur') && Number.isInteger(i)) agir({ type: 'defausser', index: i }); };
 
   // ---- La loupe : clic droit, ou appui long au doigt (le clic qui suit est alors ignoré)
   const appui = useRef(null);
@@ -173,10 +165,10 @@ export default function TableDuel({
 
   return (
     <>
-      <Plateau etat={etat} sel={sel} avatars={avatars} consigne={consigne} glisse={glisse}
+      <Plateau etat={etat} sel={sel} avatars={avatars} consigne={consigne}
         surCarte={surCarte} surUnite={surCible} surHeros={surCible} surFin={finirTour} surDestin={lancerDestin}
         surDefendre={defendre} surCapacite={capacite} surDefausser={defausser} surMediter={mediter}
-        surTombeau={setTombeau} surGlisser={surGlisser} surDeposer={surDeposer} loupe={propsLoupe}
+        surTombeau={setTombeau} surDeposer={surDeposer} loupe={propsLoupe}
         outils={outils} surAbandon={surAbandon} />
 
       <Renvoi ouverte={renvoi.ouvert && !etat.fini && !fin} main={j.main} premier={etat.actif === 'joueur'} choisies={choisies}
