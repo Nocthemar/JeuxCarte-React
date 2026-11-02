@@ -36,9 +36,9 @@ const ECHOPPES = [
     intro: 'Bannières, titres et thèmes pour ton profil. Une fois acheté, équipe-le depuis ton profil.',
   },
   {
-    id: 'plateaux', num: 'III', court: 'Plateaux', sur: 'Plateaux de duel', titre: 'L\'atelier des plateaux',
-    porte: 'Change d\'arène : les plateaux des saisons pour tes duels.',
-    intro: 'Sans plateau choisi, tu joues sur l\'arène de pierre. Achète un plateau des saisons pour en changer ; choisis-le quand tu veux dans la roue de ta Collection.',
+    id: 'plateaux', num: 'III', court: 'Plateaux', sur: 'Plateaux du Duel et des Gemmes', titre: 'L\'atelier des plateaux',
+    porte: 'Change d\'arène : les plateaux des saisons pour tes duels et tes Gemmes.',
+    intro: 'Sans plateau choisi, tu joues sur l\'arène de pierre. Un plateau des saisons habille tes duels et la table de tes parties de Gemmes ; choisis-le quand tu veux dans la roue de ta Collection.',
   },
 ];
 const AUCUN = new Set();

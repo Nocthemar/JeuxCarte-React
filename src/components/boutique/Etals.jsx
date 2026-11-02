@@ -3,7 +3,7 @@
 //  - ArmoireProfil : bannières, titres et thèmes (items.shop = 'fun'), un exemplaire par joueur,
 //    achat buy_fun_item (ancien JS/boutique-profil.js) ;
 //  - AtelierPlateaux : les plateaux du Duel, achat acheter_plateau, « Jouer dessus » equiper_plateau
-//    (ancien JS/boutique-plateaux.js).
+//    (ancien JS/boutique-plateaux.js). Un plateau habille aussi la table des Gemmes : son fond est montré en médaillon.
 //  Le solde est vérifié côté serveur : impossible de tricher.
 //
 //  props communes : moi, solde, possedes (ids des objets possédés), version, rafraichir()
@@ -13,6 +13,7 @@ import { Article, BoutonAchat, Pastilles, Piece } from './Article.jsx';
 import { supabase } from '../../lib/supabase.js';
 import { useNotifier } from '../../lib/notification.js';
 import { urlPublique } from '../../lib/chemins.js';
+import { fondGemmes } from '../../lib/gemmes/fonds.js';
 import Chargement from '../Chargement.jsx';
 
 // Recharge des données quand la clé change ; null pendant le premier chargement
@@ -80,14 +81,14 @@ export function AtelierPlateaux({ moi, solde, version, rafraichir }) {
   const acheter = async (p) => {
     const { data, error } = await supabase.rpc('acheter_plateau', { p_plateau_id: p.id });
     if (error) notifier(error.message || 'Achat impossible.', 'erreur');
-    else notifier(`${data.plateau} acheté pour ${data.prix} pièces ! Clique « Jouer dessus » pour l'utiliser en duel.`);
+    else notifier(`${data.plateau} acheté pour ${data.prix} pièces ! Clique « Jouer dessus » pour l'utiliser en duel et aux Gemmes.`);
     rafraichir();
   };
   const equiper = async (p) => {
     setEquipement(p.id);
     const { error } = await supabase.rpc('equiper_plateau', { p_plateau_id: p.id });
     if (error) notifier(error.message || 'Impossible de choisir ce plateau.', 'erreur');
-    else notifier('C\'est ton plateau pour tes prochains duels.');
+    else notifier('C\'est ton plateau pour tes prochains duels et tes parties de Gemmes.');
     setEquipement(null);
     rafraichir();
   };
@@ -101,10 +102,14 @@ export function AtelierPlateaux({ moi, solde, version, rafraichir }) {
               <article key={p.id} className={`article article--plateau${possede ? ' article--possede' : ''}`}>
                 <div className="article__niche article__niche--plateau">
                   <img className="article__plateau" src={urlPublique(p.miniature ?? p.image)} alt="" loading="lazy" />
+                  <span className="article__gemmes" title="Aussi le fond de tes parties de Gemmes">
+                    <img src={urlPublique(fondGemmes(p.id, true))} alt="" loading="lazy" />
+                    <small>Gemmes</small>
+                  </span>
                   {possede && <span className="plateau__possede">Possédé</span>}
                 </div>
                 <div className="article__etiquette">
-                  <span className="article__type">Plateau de duel</span>
+                  <span className="article__type">Plateau · Duel et Gemmes</span>
                   <h3 className="article__nom">{p.nom}</h3>
                   <p className="article__desc">{p.description ?? ''}</p>
                   <div className="article__prix">{possede ? 'Acheté' : <>{p.prix} <Piece /></>}</div>

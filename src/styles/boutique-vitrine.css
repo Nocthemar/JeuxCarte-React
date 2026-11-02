@@ -389,6 +389,21 @@
   transition: transform .4s cubic-bezier(.2,.8,.3,1);
 }
 .page-boutique .article--plateau:hover .article__plateau { transform: rotateX(4deg) translateY(-6px) scale(1.05); }
+/* le fond des Gemmes du même plateau : un médaillon dans le coin, qui grandit au survol */
+.page-boutique .article__gemmes {
+  position: absolute; left: 12px; bottom: 10px; z-index: 1; display: grid; width: 34%; aspect-ratio: 16 / 9;
+  border: 1px solid var(--trait-fort); background: #0b0c10; overflow: hidden;
+  box-shadow: 0 6px 14px rgba(0,0,0,.7);
+  transform-origin: left bottom; transition: transform .35s cubic-bezier(.2,.8,.3,1);
+}
+.page-boutique .article__gemmes img { grid-area: 1 / 1; width: 100%; height: 100%; object-fit: cover; }
+.page-boutique .article__gemmes small {
+  grid-area: 1 / 1; align-self: end; padding: 1px 0 2px; text-align: center;
+  background: linear-gradient(transparent, rgba(8,7,6,.9));
+  font-family: "Cinzel","Cinzel Repli", serif; font-size: .56rem; letter-spacing: .16em; text-transform: uppercase; color: var(--or-vif);
+}
+.page-boutique .article--plateau:hover .article__gemmes { transform: scale(1.35); }
+@media (prefers-reduced-motion: reduce) { .page-boutique .article__gemmes { transition: none; } }
 .page-boutique .plateau__possede {
   position: absolute; top: 12px; right: 12px;
   padding: 3px 10px;

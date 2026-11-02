@@ -18,13 +18,29 @@ body.page-gemmes {
   --r-legendaire: #d33a45;
   --r-transcendante: #d9b25a;
   --taille: polygon(10px 0, calc(100% - 10px) 0, 100% 10px, 100% calc(100% - 10px), calc(100% - 10px) 100%, 10px 100%, 0 calc(100% - 10px), 0 10px);
+  /* l'accueil : la table par défaut des Gemmes (le bois), un peu assombrie pour que les textes se lisent */
   background:
-    radial-gradient(ellipse 70% 60% at 50% 45%, rgba(40,34,28,.35), transparent 70%),
-    linear-gradient(180deg, rgba(8,7,6,.78), rgba(8,7,6,.94)),
-    url("/img/Plateaux de carte/plateau-cristaux.webp") center / cover no-repeat fixed,
+    radial-gradient(ellipse 85% 80% at 50% 45%, rgba(0,0,0,.28), rgba(0,0,0,.68)),
+    url("/img/Fond gemmes/gemmes-defaut.webp") center / cover no-repeat fixed,
     #0b0a09;
   color: var(--ivoire);
 }
+/* Pendant une partie : la table du plateau équipé (lib/gemmes/fonds.js, Gemmes.jsx), un peu assombrie
+   vers les bords pour que les panneaux et la grille ressortent */
+body.page-gemmes.en-partie {
+  background:
+    radial-gradient(ellipse 85% 80% at 50% 50%, rgba(0,0,0,.12), rgba(0,0,0,.6)),
+    var(--fond-gemmes) center / cover no-repeat fixed,
+    #0b0a09;
+}
+body.gemmes-fond-defaut { --fond-gemmes: url("/img/Fond gemmes/gemmes-defaut.webp"); }
+body.gemmes-fond-automne { --fond-gemmes: url("/img/Fond gemmes/gemmes-automne.webp"); }
+body.gemmes-fond-ete { --fond-gemmes: url("/img/Fond gemmes/gemmes-ete.webp"); }
+body.gemmes-fond-hiver { --fond-gemmes: url("/img/Fond gemmes/gemmes-hiver.webp"); }
+body.gemmes-fond-printemps { --fond-gemmes: url("/img/Fond gemmes/gemmes-printemps.webp"); }
+body.gemmes-fond-cristaux { --fond-gemmes: url("/img/Fond gemmes/gemmes-cristaux.webp"); }
+body.gemmes-fond-flamme { --fond-gemmes: url("/img/Fond gemmes/gemmes-flamme.webp"); }
+body.gemmes-fond-plage { --fond-gemmes: url("/img/Fond gemmes/gemmes-plage.webp"); }
 .gm-cache { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 
 /* ---------- Les boutons ---------- */

@@ -14,6 +14,7 @@ import Table from '../components/gemmes/Table.jsx';
 import Gemme, { DefsGemmes } from '../components/gemmes/Gemme.jsx';
 import { useAuth } from '../lib/auth.js';
 import { useDonneesDuel } from '../lib/donneesDuel.js';
+import { FONDS_GEMMES } from '../lib/gemmes/fonds.js';
 import { useNotifier } from '../lib/notification.js';
 import { nouveauCode, codeValide } from '../lib/salon.js';
 import { estHote } from '../lib/ligne.js';
@@ -302,7 +303,10 @@ export default function Gemmes() {
 
   const retour = mode === 'histoire' ? versLaCarte : mode === 'ami' ? '/duel?mode=ligne' : '/duel?mode=jeux';
   const partieAmi = mode === 'ami' ? salon.partie : null;
-  const classes = `page-gemmes${partie || partieAmi || (niveauJeu && mode === 'histoire') ? ' en-partie' : ''}`;
+  // Le fond de la table : celui du plateau équipé (lib/gemmes/fonds.js) ; pour en essayer un : #/gemmes?saison=hiver
+  const saisonForcee = params.get('saison');
+  const fond = FONDS_GEMMES.includes(saisonForcee) ? saisonForcee : (donnees.plateau ?? 'defaut');
+  const classes = `page-gemmes gemmes-fond-${fond}${partie || partieAmi || (niveauJeu && mode === 'histoire') ? ' en-partie' : ''}`;
 
   let contenu;
   if (niveauJeu && mode === 'histoire') {

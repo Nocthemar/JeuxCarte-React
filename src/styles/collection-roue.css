@@ -549,3 +549,16 @@ body.page-collection:not(:has(#choix))::before {   /* dans le grimoire et la rou
   .tome__livre, .tome__couverture, .tome__gemme, .tome__halo, .cercle-clos__couronne, .cercle-clos__disque { transition: none; }
 }
 :root.anim-reduites :is(.tome__livre, .tome__couverture, .tome__gemme, .tome__halo, .cercle-clos__couronne, .cercle-clos__disque) { transition: none; }
+
+/* Au centre de la roue, un plateau montre aussi le fond qu'il donne à la table des Gemmes (en médaillon) */
+.apercu-roue--double { position: relative; display: grid; place-items: center; width: 100%; height: 100%; }
+.apercu-roue__gemmes {
+  position: absolute; right: -4%; bottom: -6%; display: grid; width: 40%; aspect-ratio: 16 / 9; overflow: hidden;
+  border: 1px solid rgba(216,185,120,.6); background: #0b0c10; box-shadow: 0 6px 14px rgba(0,0,0,.7);
+}
+.apercu-roue__gemmes img { grid-area: 1 / 1; width: 100%; height: 100%; object-fit: cover; }
+.apercu-roue__gemmes small {
+  grid-area: 1 / 1; align-self: end; padding: 1px 0 2px; text-align: center;
+  background: linear-gradient(transparent, rgba(8,7,6,.9));
+  font-family: "Cinzel","Cinzel Repli", serif; font-size: .5rem; letter-spacing: .16em; text-transform: uppercase; color: #f3d58e;
+}
