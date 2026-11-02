@@ -93,27 +93,7 @@
 .hall-mode.est-actif .hall-mode__embleme svg { stroke: #fff2dc; }
 
 /* ---------- Le bandeau : Grimoire | Difficulté | Lancement ---------- */
-.hall-bandeau {
-  position: relative; isolation: isolate;
-  display: grid; grid-template-columns: minmax(0, 1.35fr) auto minmax(260px, auto); align-items: center;
-  gap: 0;
-  padding: 18px 22px;
-  background: linear-gradient(170deg, rgba(227,207,159,.6), rgba(122,98,54,.45) 50%, rgba(227,207,159,.5));
-  clip-path: var(--taille);
-  filter: drop-shadow(0 16px 30px rgba(0,0,0,.6));
-  text-align: left;
-}
-.hall-bandeau::before {
-  content: ""; position: absolute; inset: 1.5px; z-index: -1;
-  clip-path: var(--taille);
-  background:
-    linear-gradient(160deg, rgba(255,255,255,.03) 0 35%, transparent 35.1%),
-    linear-gradient(180deg, rgba(24,22,21,.97), rgba(13,12,11,.97));
-}
-.hall-bandeau > * { padding: 0 22px; min-width: 0; }
 /* séparateurs verticaux entre les zones : un filet d'or qui s'efface aux extrémités */
-.hall-bandeau > * + *:not([hidden]) { border-left: 1px solid; border-image: linear-gradient(180deg, transparent, rgba(200,168,106,.55), transparent) 1; }
-.hall-bandeau--ligne { grid-template-columns: minmax(0, 1fr) auto; }
 
 .hall-zone__tete { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
 .hall-zone__ico svg { width: 30px; height: 30px; stroke: var(--or-pale); stroke-width: 1.4; fill: none; }
@@ -153,9 +133,6 @@
 .hall-plaque.est-actif::before { background: linear-gradient(180deg, #a83440, var(--sang-sombre)); }
 
 /* la difficulté : des hexagones, le choisi en rouge sang */
-.hall-difficulte { display: flex; flex-direction: column; align-items: center; gap: 10px; margin: 0; }
-.hall-difficulte .hall-zone__titre { align-self: flex-start; }
-.hall-difficulte__choix { display: flex; gap: 14px; }
 .hall .hall-hex {
   display: flex; flex-direction: column; align-items: center; gap: 6px;
   min-height: 0; padding: 0; border: 0; background: none; box-shadow: none;
@@ -183,7 +160,6 @@
 .hall .hall-hex[aria-checked="true"] .hall-hex__forme { background: linear-gradient(160deg, #f0c1c4, #c73d48 45%, #6e161c); filter: drop-shadow(0 0 10px rgba(199,61,72,.65)); }
 .hall .hall-hex[aria-checked="true"] .hall-hex__forme::before { background: linear-gradient(160deg, rgba(255,255,255,.08) 0 45%, transparent 45.1%), radial-gradient(circle at 50% 40%, #8a1f28, #3a0a0e); }
 .hall .hall-hex[aria-checked="true"] .hall-hex__forme svg { stroke: #ffe3df; }
-.hall .hall-difficulte .difficulte__texte { min-height: 0; max-width: 34ch; margin: 0; font-size: .85rem; text-align: center; color: var(--ivoire-doux); }
 
 /* le lancement : « Engager le duel », une grande plaque rouge sang bordée d'or */
 .hall-actions { display: flex; flex-direction: column; align-items: center; gap: 12px; }
@@ -215,7 +191,6 @@
 
 /* ---------- Écrans moyens et téléphones ---------- */
 @media (max-width: 1250px) {
-  .hall-bandeau { grid-template-columns: minmax(0, 1fr) auto; row-gap: 18px; }
   .hall-modes { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .hall-actions { grid-column: 1 / -1; flex-direction: row; justify-content: center; border-left: 0 !important; }
   .hall-engager { width: auto; }
@@ -224,9 +199,6 @@
   .hall-modes { grid-template-columns: 1fr; gap: 14px; }
   .hall-mode { min-height: 170px; padding-bottom: 44px; }
   .hall-mode__embleme { width: 46px; height: 46px; margin-bottom: 10px; }
-  .hall-bandeau { grid-template-columns: 1fr; padding: 16px 12px; }
-  .hall-bandeau > * { padding: 0 8px; border-left: 0 !important; }
-  .hall-difficulte .hall-zone__titre { align-self: center; }
   .hall-actions { flex-direction: column; }
   .hall-engager { width: 100%; min-width: 0; }
 }
@@ -250,31 +222,12 @@
 /* =====================================================================
    Le bandeau, en plus beau : proportions, éventail du Grimoire, titres à losange
    ===================================================================== */
-.hall-bandeau {
-  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr) minmax(0, .95fr);
-  padding: 24px 10px 22px;
-}
-.hall-bandeau > * { padding: 0 30px; align-self: stretch; display: flex; flex-direction: column; justify-content: center; }
 /* les séparateurs : un filet d'or vertical, avec un losange en son milieu */
-.hall-bandeau > * + *:not([hidden]) { position: relative; border-left: 0; }
-.hall-bandeau > * + *:not([hidden])::before {
-  content: ""; position: absolute; left: 0; top: 8%; bottom: 8%; width: 1px;
-  background: linear-gradient(180deg, transparent, rgba(200,168,106,.6) 20%, rgba(200,168,106,.6) 80%, transparent);
-}
-.hall-bandeau > * + *:not([hidden])::after {
-  content: ""; position: absolute; left: -4px; top: 50%; width: 9px; height: 9px; translate: 0 -50%; rotate: 45deg;
-  background: #141312; border: 1px solid var(--or);
-}
 /* deux losanges sur le bord haut du panneau, au droit des séparateurs */
-.hall-bandeau::after {
-  content: ""; position: absolute; inset: 0; pointer-events: none; z-index: 1;
-  background:
-    linear-gradient(var(--or-pale), var(--or-pale)) 50% 0 / 0 0 no-repeat;
-}
 
 /* les titres de zone : petites capitales, un losange devant */
 .hall-zone__titre { display: inline-flex; align-items: center; gap: 10px; font-size: .8rem; letter-spacing: .2em; }
-.hall-difficulte > .hall-zone__titre::before, .hall-grimoire .hall-zone__titre::before {
+.hall-grimoire .hall-zone__titre::before {
   content: ""; width: 7px; height: 7px; rotate: 45deg; background: var(--or); box-shadow: 0 0 6px rgba(200,168,106,.6);
 }
 .hall-zone__tete { margin-bottom: 14px; }
@@ -309,13 +262,9 @@
 .hall .hall-grimoire .accueil__note { align-self: center; text-align: center; font-size: .8rem; }
 
 /* la difficulté : des hexagones plus grands, la description sur une ligne */
-.hall-difficulte { align-items: center; gap: 14px; }
-.hall-difficulte > .hall-zone__titre { align-self: center; }
-.hall-difficulte__choix { gap: 22px; }
 .hall-hex__forme { width: 62px; height: 70px; }
 .hall-hex__forme svg { width: 32px; height: 32px; }
 .hall .hall-hex { font-family: "Cinzel","Cinzel Repli", serif; font-size: .7rem; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; }
-.hall .hall-difficulte .difficulte__texte { max-width: 30ch; font-size: .82rem; line-height: 1.35; font-style: italic; }
 
 /* le lancement : centré dans sa zone */
 .hall-actions { align-items: center; gap: 14px; }
@@ -323,15 +272,11 @@
 .hall-plaque.menu__regles { width: 78%; max-width: 260px; }
 
 @media (max-width: 1250px) {
-  .hall-bandeau { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
   .hall-actions { grid-column: 1 / -1; flex-direction: row; padding-top: 18px; }
   .hall-actions::before, .hall-actions::after { display: none; }
   .hall-plaque.menu__regles { width: auto; }
 }
 @media (max-width: 860px) {
-  .hall-bandeau { grid-template-columns: 1fr; row-gap: 22px; }
-  .hall-bandeau > * { padding: 0 6px; }
-  .hall-bandeau > * + *:not([hidden])::before, .hall-bandeau > * + *:not([hidden])::after { display: none; }
   .hall .hall-grimoire__cartes > .deck-place { --carte-l: 60px; margin-left: -20px; }
   .hall .hall-grimoire__cartes .dc-carte { --carte-l: 60px; width: 60px; }
   .hall-actions { flex-direction: column; }
@@ -521,13 +466,11 @@
 .hall .classe__rang { color: var(--ivoire-doux); }
 
 /* en ligne, le bandeau n'a que le Grimoire et les Règles : deux zones */
-.hall-bandeau.hall-bandeau--ligne { grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); }
 
 @media (max-width: 860px) {
   .hall .ligne__accueil { grid-template-columns: 1fr; grid-template-rows: none; grid-auto-flow: row; }
   .hall .ligne__bloc { margin-bottom: 16px; }
   .hall .prive__boutons { grid-template-columns: 1fr; }
-  .hall-bandeau.hall-bandeau--ligne { grid-template-columns: 1fr; }
 }
 /* partie privée et partie classée côte à côte (la règle .prive de jeu-cartes.css la mettait sur toute la largeur) */
 @media (min-width: 861px) {
@@ -549,7 +492,7 @@
    Couleurs : bleu nuit profond (comme l'exemple), liseré d'or, accent rouge sang
    ===================================================================== */
 .hall { --nuit-1: #121b2e; --nuit-2: #0a101d; --nuit-3: #1a2540; }
-.hall-bandeau::before, .hall .ligne__bloc::before, .hall .salon::before {
+.hall .ligne__bloc::before, .hall .salon::before {
   background:
     radial-gradient(ellipse 80% 60% at 50% 0%, rgba(90,120,190,.10), transparent 70%),
     linear-gradient(180deg, rgba(18,27,46,.97), rgba(10,16,29,.97));
@@ -566,7 +509,6 @@
 .hall-hex__forme::before { background: linear-gradient(160deg, rgba(255,255,255,.07) 0 45%, transparent 45.1%), radial-gradient(circle at 50% 35%, #1f2a44, #0b1120); }
 .hall .hall-hex__forme svg { stroke: #c3cad8; }
 .carrousel__fleche { background: linear-gradient(135deg, var(--nuit-3), var(--nuit-2)); }
-.hall-bandeau > * + *:not([hidden])::after { background: var(--nuit-2); }
 .hall .ligne__rejoindre input { background: #0b1120; }
 /* les lueurs derrière le menu (.accueil::before, 1100 px de haut) s'arrêtent au bas du menu : sinon elles
    dépassent, et la page défile dans le vide alors que tout tient à l'écran */
@@ -576,7 +518,7 @@
    « Jouer » en deux temps (Menu.jsx) : l'accueil (Histoire, Modes de jeu, En ligne, trois cartes),
    puis l'écran choisi (deux cartes et, dessous, le bandeau ou le salon), avec son titre et le retour.
    ===================================================================== */
-.hall-bandeau[hidden], .choix-deck[hidden] { display: none; }
+.choix-deck[hidden] { display: none; }
 /* ---------- Des bannières suspendues à une tringle d'or (l'accueil : trois ; Modes de jeu, En ligne : deux) ----------
    Des étendards à queue d'aronde, du haut de l'écran jusqu'en bas. Leur chiffre romain et leur emblème en haut,
    leur titre en bas. Au survol, la bannière s'élargit, se balance doucement et dévoile sa phrase ;

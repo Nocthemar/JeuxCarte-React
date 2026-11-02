@@ -33,10 +33,6 @@
 .gd__corps svg { width: 100%; height: 100%; overflow: visible; }
 /* Les facettes : la couleur du dé, plus ou moins éclairée selon leur pente */
 .gd__facette { stroke: var(--bord); stroke-width: 1.1; stroke-linejoin: round; transition: fill .3s ease, stroke .3s ease; }
-.gd__f1 { fill: color-mix(in srgb, var(--de) 80%, #fff); }
-.gd__f2 { fill: color-mix(in srgb, var(--de) 88%, #fff); }
-.gd__f3 { fill: var(--de); }
-.gd__f4 { fill: color-mix(in srgb, var(--de) 70%, #000); }
 .gd__contour { fill: none; stroke: var(--bord); stroke-width: 2.4; stroke-linejoin: round; }
 .gd__fissure { fill: none; stroke: #ff9ca1; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 200; stroke-dashoffset: 200; opacity: 0; filter: drop-shadow(0 0 4px #c45b61); }
 .gd__chiffre {
@@ -171,17 +167,6 @@
 .page-jeu .banniere--malediction { background: linear-gradient(90deg, transparent, rgba(40,8,12,.9) 16%, rgba(52,10,16,.95) 50%, rgba(40,8,12,.9) 84%, transparent); }
 
 /* La barre de PV du héros : la traînée claire rattrape le rouge avec un temps de retard */
-.dc-heros__barre {
-  position: relative; display: block;
-  width: 74px; height: 6px; margin-top: 4px;
-  background: rgba(8,10,15,.85);
-  box-shadow: inset 0 0 0 1px rgba(217,164,65,.45);
-  clip-path: polygon(3px 0, calc(100% - 3px) 0, 100% 50%, calc(100% - 3px) 100%, 3px 100%, 0 50%);
-}
-.dc-heros__barre i { position: absolute; left: 0; top: 1px; bottom: 1px; width: var(--pv, 100%); }
-.dc-heros__trainee { background: #f6e6c4; transition: width .7s cubic-bezier(.4,0,.2,1) .45s; }
-.dc-heros__reste { background: linear-gradient(180deg, #ff8a8f, #c33a42 60%, #8e1f27); transition: width .18s ease-out; }
-.dc-heros.est-en-danger .dc-heros__reste { background: linear-gradient(180deg, #ffb3b8, #e2434d 60%, #a11b25); }
 
 /* Mon héros en danger : les bords de l'écran battent en rouge (deux battements, puis une pause) */
 .coeur-danger {

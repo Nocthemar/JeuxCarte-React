@@ -6,8 +6,8 @@
 //  #/duel?salon=<CODE> : le salon d'un duel en ligne (le lien d'invitation) ; il reste ouvert du menu
 //  au duel, puis à la revanche (lib/duel/useLigne.js).
 //
-//  Le plateau choisi par le joueur (acheté en boutique) devient une classe du <body> : plateau-hiver…
-//  Pour en essayer un : #/duel?saison=hiver (printemps, ete, automne, cristaux, flamme, plage).
+//  La table du duel (Bois, Glace, Automne, Braise) se choisit pendant la partie (lib/duel/tables.js) ; les plateaux
+//  achetés en boutique habillent les Gemmes, plus le Duel.
 // =====================================================================
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -19,7 +19,7 @@ import Regles from '../components/duel/Regles.jsx';
 import Infobulle from '../components/duel/Infobulle.jsx';
 import { useAuth } from '../lib/auth.js';
 import { useNotifier } from '../lib/notification.js';
-import { useDonneesDuel, PLATEAUX } from '../lib/donneesDuel.js';
+import { useDonneesDuel } from '../lib/donneesDuel.js';
 import { useProfondeur } from '../lib/profondeur.js';
 import { useLigne } from '../lib/duel/useLigne.js';
 import { grimoireDuJoueur } from '../lib/grimoire.js';
@@ -81,9 +81,7 @@ export default function Duel() {
     return () => document.removeEventListener('fullscreenchange', surChangement);
   }, []);
 
-  const saisonForcee = params.get('saison');
-  const plateau = PLATEAUX.includes(saisonForcee) ? saisonForcee : (donnees.plateau ?? 'defaut');
-  const classes = `page-profil page-jeu plateau-${plateau}${duel || duelLigne ? ' en-duel' : ''}${conseils ? ' avec-conseils' : ''}`;
+  const classes = `page-profil page-jeu${duel || duelLigne ? ' en-duel' : ''}${conseils ? ' avec-conseils' : ''}`;
 
   const lancer = (cartes, difficulte) => {
     setDuel((d) => ({ cartes, difficulte, catalogue: donnees.catalogue ?? [], n: (d?.n ?? 0) + 1 }));

@@ -7,6 +7,7 @@ import { useState } from 'react';
 import Carte from '../Carte.jsx';
 import { RARETES, versoDe } from '../../data/affichage.js';
 import { urlPublique } from '../../lib/chemins.js';
+import { fondGemmes } from '../../lib/gemmes/fonds.js';
 import { TYPES, nombre, PIECE } from '../../data/pass.js';
 import { badgeDuPass } from '../../lib/caverne/badges.js';
 
@@ -67,11 +68,11 @@ function Contenu({ p, catalogue, surApercu }) {
     );
   }
   if (p.type_recompense === 'fond_plateau' && v.plateau) {
-    // Un vrai plateau de la Boutique (sa miniature), à choisir ensuite dans la Collection
+    // Un vrai plateau de la Boutique (le fond qu'il donne aux Gemmes), à choisir ensuite dans la Collection
     const pl = catalogue.plateaux.get(v.plateau);
     return (
       <>
-        <span className="recompense__visuel recompense__visuel--plateau">{pl?.miniature ? <img src={urlPublique(pl.miniature)} alt="" loading="lazy" /> : <Icone nom="fond_plateau" />}</span>
+        <span className="recompense__visuel recompense__visuel--plateau">{pl ? <img src={urlPublique(fondGemmes(pl.id, true))} alt="" loading="lazy" /> : <Icone nom="fond_plateau" />}</span>
         <span className="recompense__nom">{pl?.nom ?? v.nom ?? 'Plateau'}</span>
       </>
     );

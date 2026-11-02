@@ -1,6 +1,6 @@
 // =====================================================================
 //  La roue des apparences, ouverte en grand (ancien JS/collection-roue.js, même HTML)
-//  Quatre catégories : plateaux du Duel, thèmes, titres, bannières (ce que le joueur possède).
+//  Quatre catégories : plateaux (des Gemmes), thèmes, titres, bannières (ce que le joueur possède).
 //  Les objets de la catégorie sont posés tout autour de la roue ; on la fait tourner (glisser, molette,
 //  flèches du clavier ou boutons ‹ ›) : celui qui arrive sous le repère du haut s'affiche au centre,
 //  avec « Appliquer » (ou « Retirer » s'il est déjà équipé).
@@ -34,21 +34,10 @@ function lireCategorie() {
   try { const c = localStorage.getItem(CLE_CATEGORIE); return CATEGORIES.some((x) => x.kind === c) ? c : 'plateau'; } catch { return 'plateau'; }
 }
 
-// Petit aperçu d'un objet (sur la roue et, en grand, au centre)
-// grand : au centre, un plateau montre aussi le fond qu'il donne à la table des Gemmes
-function Apercu({ o, grand = false }) {
+// Petit aperçu d'un objet (sur la roue et, en grand, au centre) ; un plateau : le fond qu'il donne à la table des Gemmes
+function Apercu({ o }) {
   if (o.kind === 'plateau') {
-    const img = <img className="apercu-roue apercu-roue--plateau" src={urlPublique(o.image)} alt="" draggable="false" />;
-    if (!grand) return img;
-    return (
-      <span className="apercu-roue apercu-roue--double">
-        {img}
-        <span className="apercu-roue__gemmes" title="Aussi le fond de tes parties de Gemmes">
-          <img src={urlPublique(fondGemmes(o.defaut ? 'defaut' : o.id, true))} alt="" draggable="false" />
-          <small>Gemmes</small>
-        </span>
-      </span>
-    );
+    return <img className="apercu-roue apercu-roue--plateau" src={urlPublique(fondGemmes(o.defaut ? 'defaut' : o.id, true))} alt="" draggable="false" />;
   }
   if (o.kind === 'banner') {
     // (les images des bannières restent sur le site Nocthémar, comme en boutique)
@@ -213,7 +202,7 @@ export default function Roue({ objets, equipes, surEquiper, anime }) {
             </>
           ) : (
             <>
-              <span className="roue__apercu"><Apercu o={o} grand /></span>
+              <span className="roue__apercu"><Apercu o={o} /></span>
               <span className="roue__type">{LIBELLE[o.kind]}{liste.length > 1 ? ` · ${i + 1} / ${liste.length}` : ''}</span>
               <strong className="roue__nom">{o.nom}</strong>
               {o.defaut && <small className="roue__note">Gratuit : l’arène de pierre</small>}

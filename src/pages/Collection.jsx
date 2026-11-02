@@ -18,6 +18,7 @@ import { supabase } from '../lib/supabase.js';
 import { useAuth, connexionDiscord } from '../lib/auth.js';
 import { useDeck } from '../lib/deck.js';
 import { urlPublique } from '../lib/chemins.js';
+import { fondGemmes } from '../lib/gemmes/fonds.js';
 import { RARETES, rareteDe } from '../data/affichage.js';
 import { niveauAnimationsChoisi } from '../lib/preferences.js';
 
@@ -56,8 +57,8 @@ async function lireApparences(discordId) {
   }
   const achetes = (plateaux ?? []).filter((l) => l.plateau).sort((a, b) => a.plateau.ordre - b.plateau.ordre);
   objets.plateau = [
-    { kind: 'plateau', id: null, nom: 'Plateau par défaut', defaut: true, image: 'img/Plateaux de carte/plateau-defaut-mini.webp' },
-    ...achetes.map(({ plateau: p }) => ({ kind: 'plateau', id: p.id, nom: p.nom, image: p.miniature ?? p.image })),
+    { kind: 'plateau', id: null, nom: 'Plateau par défaut', defaut: true, image: fondGemmes('defaut', true) },
+    ...achetes.map(({ plateau: p }) => ({ kind: 'plateau', id: p.id, nom: p.nom, image: fondGemmes(p.id, true) })),
   ];
   return { objets, plateauChoisi: achetes.find((l) => l.equipe)?.plateau.id ?? null };
 }
