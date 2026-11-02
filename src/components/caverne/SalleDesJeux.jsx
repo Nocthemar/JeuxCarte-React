@@ -35,6 +35,50 @@ const PORTES = [
   };
 });
 
+// L'inscription au-dessus d'une porte : un bandeau en arc de cercle (unités du viewBox 250 × 60), le nom gravé sur
+// l'arc du milieu, entre deux rainures filetées d'or coupées à la longueur du nom, fermées chacune par un losange
+// d'or. Les noms trop longs pour l'arc sont un peu resserrés.
+const ARC = { l: 250, corde: 220, fleche: 32, base: 52, taille: 12 };
+ARC.r = ((ARC.corde / 2) ** 2 + ARC.fleche ** 2) / (2 * ARC.fleche);
+ARC.cy = ARC.base - ARC.fleche + ARC.r;
+ARC.long = ARC.r * 2 * Math.asin(ARC.corde / 2 / ARC.r);
+// un point de l'arc de rayon r, à l'angle a (radians, depuis le sommet, positif à droite)
+const surArc = (r, a) => [ARC.l / 2 + r * Math.sin(a), ARC.cy - r * Math.cos(a)];
+const arc = (r, a) => {
+  const [x1, y] = surArc(r, -a), [x2] = surArc(r, a);
+  return `M${x1.toFixed(1)} ${y.toFixed(1)} A${r.toFixed(1)} ${r.toFixed(1)} 0 0 1 ${x2.toFixed(1)} ${y.toFixed(1)}`;
+};
+const ARC_NOM = arc(ARC.r, Math.asin(ARC.corde / 2 / ARC.r));
+
+function Inscription({ id, nom }) {
+  // (Cinzel en capitales : ~0.93 em par lettre, espacement compris)
+  const large = Math.min(nom.length * ARC.taille * .93, ARC.long * .92);
+  const serre = large < nom.length * ARC.taille * .93 ? { textLength: large.toFixed(0), lengthAdjust: 'spacingAndGlyphs' } : {};
+  const t = ARC.taille, haut = ARC.r + t * 1.25, bas = ARC.r - t * .45, milieu = ARC.r + t * .4;
+  const demi = (large / 2 + t * .8) / ARC.r;   // la demi-ouverture des rainures, un peu plus large que le nom
+  const losange = (signe) => {
+    const a = signe * (demi + t * .55 / ARC.r), [x, y] = surArc(milieu, a);
+    return <path key={signe} className="cav-gravure__losange" transform={`translate(${x.toFixed(1)} ${y.toFixed(1)}) rotate(${(a * 180 / Math.PI).toFixed(1)})`}
+      d={`M${-t * .6} 0 L0 ${-t * .42} L${t * .6} 0 L0 ${t * .42} Z`} />;
+  };
+  const texte = (classe) => (
+    <text className={classe} fontSize={t} letterSpacing="1.8" fontFamily="Cinzel, 'Cinzel Repli', serif" fontWeight="700">
+      <textPath href={`#cav-arc-${id}`} startOffset="50%" textAnchor="middle" {...serre}>{nom.toUpperCase()}</textPath>
+    </text>
+  );
+  return (
+    <svg className="cav-gravure__arc" viewBox={`0 0 ${ARC.l} 60`}>
+      <path id={`cav-arc-${id}`} d={ARC_NOM} fill="none" />
+      {[arc(haut, demi), arc(bas, demi)].map((d) => (
+        <g key={d} className="cav-gravure__rainure"><path d={d} /><path d={d} /></g>
+      ))}
+      {losange(-1)}{losange(1)}
+      {texte('cav-gravure__or')}
+      {texte('cav-gravure__eclat')}
+    </svg>
+  );
+}
+
 export default function SalleDesJeux({ temps, surPortail }) {
   const [jeu, setJeu] = useState(null);   // le jeu ouvert, ou null : le hall
   const onglets = useRef(null);
@@ -72,7 +116,8 @@ export default function SalleDesJeux({ temps, surPortail }) {
         <div className="cav-salle">
           <img className="cav-salle__fond" src={urlPublique('img/Fond/Caverne.webp')} alt="" draggable="false" />
           <header className="cav-hall__tete">
-            {/* le titre, sur deux lignes en or, en haut du mur du fond ; le texte réel reste lisible par les lecteurs d'écran */}
+            {/* le titre, sur deux lignes d'or couchées sur l'eau du bassin, qui ondulent avec elle ; une lumière passe
+                sur l'or, des éclats s'allument sur l'eau. Le texte réel reste lisible par les lecteurs d'écran */}
             <h1 id="cav-hall-titre">
               <span className="cav-hall__lu">La Caverne aux Trésors</span>
               <svg className="cav-hall__titre" viewBox="0 0 300 120" aria-hidden="true">
@@ -81,16 +126,53 @@ export default function SalleDesJeux({ temps, surPortail }) {
                     <stop offset="0" stopColor="#fff4d8" /><stop offset=".4" stopColor="#f0cf86" />
                     <stop offset=".65" stopColor="#c5933f" /><stop offset="1" stopColor="#8c6326" />
                   </linearGradient>
-                  {/* l'ondulation de l'eau, pour les noms posés sur le bassin (caverne.css, .cav-gravure) */}
+                  {/* la lumière qui passe sur les noms gravés au-dessus des portes (Inscription : viewBox 250 de large) */}
+                  <linearGradient id="cav-nom-eclat" gradientUnits="userSpaceOnUse" x1="-70" y1="0" x2="-10" y2="20">
+                    <stop offset="0" stopColor="#fff" stopOpacity="0" /><stop offset=".5" stopColor="#fff6dc" stopOpacity=".85" />
+                    <stop offset="1" stopColor="#fff" stopOpacity="0" />
+                    <animateTransform attributeName="gradientTransform" type="translate" values="0 0;340 0;340 0" keyTimes="0;.4;1" dur="8s" repeatCount="indefinite" />
+                  </linearGradient>
+                  {/* la bande de lumière qui traverse l'or, de gauche à droite */}
+                  <linearGradient id="cav-titre-eclat" gradientUnits="userSpaceOnUse" x1="-90" y1="0" x2="-10" y2="40">
+                    <stop offset="0" stopColor="#fff" stopOpacity="0" /><stop offset=".5" stopColor="#fffbea" stopOpacity=".95" />
+                    <stop offset="1" stopColor="#fff" stopOpacity="0" />
+                    <animateTransform attributeName="gradientTransform" type="translate" values="0 0;480 0;480 0" keyTimes="0;.45;1" dur="6s" repeatCount="indefinite" />
+                  </linearGradient>
+                  {/* l'ondulation de l'eau, pour le titre */}
                   <filter id="cav-onde" x="-10%" y="-40%" width="120%" height="180%">
                     <feTurbulence type="fractalNoise" baseFrequency="0.006 0.11" numOctaves="1" seed="4">
                       <animate attributeName="baseFrequency" dur="7s" repeatCount="indefinite" values="0.006 0.11;0.008 0.13;0.006 0.11" />
                     </feTurbulence>
                     <feDisplacementMap in="SourceGraphic" scale="3" xChannelSelector="R" yChannelSelector="G" />
                   </filter>
+                  {/* le titre dans l'eau : les vagues le tordent, et l'eau le voile par endroits (des plaques plus
+                      transparentes qui dérivent), avec un léger flou de surface */}
+                  <filter id="cav-onde-titre" x="-10%" y="-40%" width="120%" height="180%">
+                    <feTurbulence type="fractalNoise" baseFrequency="0.008 0.09" numOctaves="2" seed="7" result="vague">
+                      <animate attributeName="baseFrequency" dur="6s" repeatCount="indefinite" values="0.008 0.09;0.011 0.12;0.008 0.09" />
+                    </feTurbulence>
+                    <feDisplacementMap in="SourceGraphic" in2="vague" scale="7" xChannelSelector="R" yChannelSelector="G" result="ondule" />
+                    <feTurbulence type="fractalNoise" baseFrequency="0.025 0.08" numOctaves="2" seed="3" result="eau">
+                      <animate attributeName="baseFrequency" dur="9s" repeatCount="indefinite" values="0.025 0.08;0.03 0.1;0.025 0.08" />
+                    </feTurbulence>
+                    <feColorMatrix in="eau" type="matrix" values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 -2.4 2.15" result="voile" />
+                    <feComposite in="ondule" in2="voile" operator="in" result="lettres" />
+                    <feGaussianBlur in="lettres" stdDeviation=".35" />
+                  </filter>
+                  <g id="cav-titre-lettres" textAnchor="middle" fontFamily="Cinzel, 'Cinzel Repli', serif" fontWeight="700" fontVariant="small-caps">
+                    <text x="150" y="50" fontSize="50" textLength="270" lengthAdjust="spacingAndGlyphs">La Caverne</text>
+                    <text x="150" y="104" fontSize="40" textLength="210" lengthAdjust="spacingAndGlyphs">aux Trésors</text>
+                  </g>
+                  <path id="cav-titre-scintille" d="M0 -6 L1.2 -1.2 L6 0 L1.2 1.2 L0 6 L-1.2 1.2 L-6 0 L-1.2 -1.2 Z" />
                 </defs>
-                <text x="150" y="50" fontSize="50" textLength="270" lengthAdjust="spacingAndGlyphs">La Caverne</text>
-                <text x="150" y="104" fontSize="40" textLength="210" lengthAdjust="spacingAndGlyphs">aux Trésors</text>
+                <g filter="url(#cav-onde-titre)">
+                  <use href="#cav-titre-lettres" className="cav-hall__or" />
+                  <use href="#cav-titre-lettres" className="cav-hall__eclat" />
+                </g>
+                {/* quelques éclats de lumière sur l'eau, qui s'allument tour à tour */}
+                {[[34, 22, 0], [262, 30, 1.6], [96, 112, 3.1], [214, 70, 4.3], [160, 6, 2.4]].map(([x, y, t]) => (
+                  <use key={x} href="#cav-titre-scintille" className="cav-hall__scintille" transform={`translate(${x} ${y})`} style={{ animationDelay: `${t}s` }} />
+                ))}
               </svg>
             </h1>
             <p>Quatre portes, quatre jeux. Une seule règle : savoir s&apos;arrêter à temps.</p>
@@ -101,8 +183,8 @@ export default function SalleDesJeux({ temps, surPortail }) {
               <span className="cav-porte__lueur" style={{ clipPath: p.forme }} aria-hidden="true" />
               <button type="button" className="cav-porte__ouverture" style={{ clipPath: p.forme }}
                 onClick={() => passer(p)} aria-label={`${p.nom} : ${p.sous}`} />
-              {/* le nom du jeu, en lettres d'or sur l'eau, devant les marches */}
-              <span className="cav-gravure" aria-hidden="true"><b>{p.nom}</b><small>{p.sous}</small></span>
+              {/* le nom du jeu, incrusté en or dans la pierre, au-dessus de l'arc de la porte */}
+              <span className="cav-gravure" aria-hidden="true"><Inscription id={p.cle ?? p.g} nom={p.nom} /><small>{p.sous}</small></span>
               <span className="cav-porte__sol" aria-hidden="true" />
             </div>
           ))}
