@@ -58,12 +58,12 @@ function Unite({ etat, u, camp, sel, ...props }) {
     <button type="button" className={classes} data-uid={u.uid} data-camp={camp} style={{ '--penche': penche(u.uid), ...(image ? { '--masque': `url('${image}')` } : {}) }} {...props}
       aria-label={`${u.n}, ${atk} attaque, ${def} défense, ${u.h} PV${caps.length ? `, ${caps.join(', ')}` : ''}${etats.length ? `, ${etats.map((e) => e[0]).join(', ')}` : ''}`}>
       <span className="dc-unite__corps">
-        <FaceCarte c={u.def} />
+        <FaceCarte c={u.def} valeurs={{ a: atk, d: def, h: u.h }} />
         <Capacites c={u} />
         {etats.length > 0 && (
           <span className="dc-etats">{etats.map(([t, k]) => <span key={k} className={`dc-etat dc-etat--${k}`}>{t}</span>)}</span>
         )}
-        <Stats a={atk} d={def} h={u.h} aMod={atk !== u.a} dMod={def - u.d} imprime={{ a: u.def.a, d: u.def.d ?? 1, h: u.def.h }} />
+        <Stats a={atk} d={def} h={u.h} aMod={atk !== u.a} dMod={def - u.d} />
       </span>
     </button>
   );

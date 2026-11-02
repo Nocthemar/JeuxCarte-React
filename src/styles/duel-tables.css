@@ -173,10 +173,11 @@
 }
 .pt #main-joueur .dc-cout--reduit { background: linear-gradient(160deg, #8fe8ac, #1f6a42); }
 /* Une vraie carte écrit déjà son coût, son attaque, sa défense et ses PV sur sa plaque (.carte-infos) :
-   pas de gemmes par-dessus. Seule une valeur qui a changé (coût réduit, blessure, bonus, malus) reparaît. */
+   pas de gemmes par-dessus. Sur la table, une valeur qui a changé (blessure, bonus, malus) s'écrit en couleur
+   sur la plaque même (styles/carte-infos.css) ; dans la main, seul un coût réduit reparaît. */
 .pt .dc-carte:has(.carte-infos) .dc-stat,
 .pt .dc-carte:has(.carte-infos) .dc-cout:not(.dc-cout--reduit),
-.pt .dc-unite:has(.carte-infos) .dc-stat:not(.dc-stat--change) { display: none !important; }
+.pt .dc-unite:has(.carte-infos) .dc-stat { display: none !important; }
 
 /* ---------- Les plaques des héros : bois clouté posé sur la table ---------- */
 .pt-camp { display: flex; flex-direction: column; gap: 1.6vh; min-height: 0; }

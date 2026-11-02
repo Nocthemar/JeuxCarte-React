@@ -77,7 +77,8 @@ function libelleTrait(u) {
 // Le nom sur la plaque : « Elfe des Neiges dorée » s'affiche « Elfe des Neiges » (la base garde le nom complet)
 const nomAffiche = (nom) => nom.replace(/\s+dorée$/i, '');
 const aUnPanneau = (carte, rarete) => !!carte.rank || attaquesDe(carte).length > 0 || rarete === 'transcendante';
-export function CarteInfos({ carte, rarete = rareteDe(carte) }) {
+// valeurs ({ a, d, h }, en duel) : les chiffres du moment ; celui qui diffère de la carte s'écrit en couleur
+export function CarteInfos({ carte, rarete = rareteDe(carte), valeurs = null }) {
   if (!aUnPanneau(carte, rarete)) return null;
   const rang = RANGS[carte.rank];
   const u = uniteDepuisCarte(carte);
@@ -92,12 +93,18 @@ export function CarteInfos({ carte, rarete = rareteDe(carte) }) {
       {sousTitre && <span className="carte-plaque__sous">{sousTitre}</span>}
       <span className="carte-plaque__chiffres">
         <span title="Coût d'énergie">Coût <b>{u.c}</b></span>
-        <span title="Attaque">Atk <b>{u.a}</b></span>
-        <span title="Points de vie">PV <b>{u.h}</b></span>
-        <span title="Bouclier (Défense)">Déf <b>{u.d}</b></span>
+        <span title="Attaque">Atk <Chiffre v={valeurs?.a} base={u.a} /></span>
+        <span title="Points de vie">PV <Chiffre v={valeurs?.h} base={u.h} /></span>
+        <span title="Bouclier (Défense)">Déf <Chiffre v={valeurs?.d} base={u.d} /></span>
       </span>
     </div>
   );
+}
+
+// Un chiffre de la plaque : plus haut que celui de la carte, en vert ; plus bas, en rouge
+function Chiffre({ v, base }) {
+  if (v == null || v === base) return <b>{base}</b>;
+  return <b className={v > base ? 'est-hausse' : 'est-baisse'}>{v}</b>;
 }
 
 // Infobulle : tout le texte de la carte

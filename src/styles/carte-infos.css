@@ -314,6 +314,9 @@
   color: #b3ab9b;
 }
 .carte-plaque__chiffres b { font-size: 3.6cqw; font-weight: 800; letter-spacing: 0; color: #f3ecdc; }
+/* en duel, un chiffre du moment qui diffère de la carte : plus haut en vert, plus bas en rouge */
+.carte-plaque__chiffres b.est-hausse { color: #8ff0a8; }
+.carte-plaque__chiffres b.est-baisse { color: #ff7a80; }
 /* petite carte : tout un peu plus gros, sans le sous-titre */
 @container carte (max-width: 190px) {
   .carte-infos.carte-plaque { top: auto; bottom: 10.5%; left: 8%; right: 8%; padding: 2.4cqw 2cqw; gap: .4cqw; justify-content: center; }

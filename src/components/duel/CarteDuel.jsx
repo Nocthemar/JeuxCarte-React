@@ -87,13 +87,13 @@ const nomsCapacites = (c) => capsDe(c).map((k) => CAPACITES[k]?.nom).filter(Bool
 // Texte des cartes du Codex : l'effet d'un sort, les capacités d'une troupe
 const texteCarte = (c) => (c.t === 's' ? c.d : nomsCapacites(c).join(' · '));
 
-// La face d'une carte
-export function FaceCarte({ c }) {
+// La face d'une carte (valeurs : les chiffres du moment d'une troupe sur la table, écrits sur sa plaque)
+export function FaceCarte({ c, valeurs = null }) {
   if (c.carte?.image) {
     return (
       <span className="dc-face dc-face--hote">
         <img className="dc-face dc-face--image" src={urlPublique(c.carte.image)} alt="" draggable="false" loading="lazy" />
-        <CarteInfos carte={c.carte} />
+        <CarteInfos carte={c.carte} valeurs={valeurs} />
       </span>
     );
   }
@@ -135,15 +135,13 @@ export function Capacites({ c }) {
 }
 
 // Attaque, Défense, PV (la valeur du moment est mise en avant si elle a changé)
-// imprime : les valeurs imprimées sur la vraie carte ; une valeur qui en diffère porte dc-stat--change
-// (sur le plateau, seules celles-là s'affichent par-dessus une vraie carte : styles/duel-tables.css)
-export function Stats({ a, d, h, aMod = false, dMod = 0, imprime = null }) {
-  const change = (k, v) => (imprime && v !== imprime[k] ? ' dc-stat--change' : '');
+// (sur le plateau, une vraie carte n'en a pas : ses chiffres sont sur sa plaque, styles/duel-tables.css)
+export function Stats({ a, d, h, aMod = false, dMod = 0 }) {
   return (
     <>
-      <span className={`dc-stat dc-stat--a${aMod ? ' dc-stat--mod' : ''}${change('a', a)}`} title="Attaque">{a}</span>
-      <span className={`dc-stat dc-stat--d${dMod > 0 ? ' dc-stat--plus' : dMod < 0 ? ' dc-stat--moins' : ''}${change('d', d)}`} title="Défense">{d}</span>
-      <span className={`dc-stat dc-stat--h${change('h', h)}`} title="PV">{h}</span>
+      <span className={`dc-stat dc-stat--a${aMod ? ' dc-stat--mod' : ''}`} title="Attaque">{a}</span>
+      <span className={`dc-stat dc-stat--d${dMod > 0 ? ' dc-stat--plus' : dMod < 0 ? ' dc-stat--moins' : ''}`} title="Défense">{d}</span>
+      <span className="dc-stat dc-stat--h" title="PV">{h}</span>
     </>
   );
 }
