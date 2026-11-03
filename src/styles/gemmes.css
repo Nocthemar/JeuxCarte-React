@@ -203,6 +203,7 @@ body.gemmes-fond-plage { --fond-gemmes: url("/img/Fond gemmes/gemmes-plage.webp"
    La table
    ===================================================================== */
 .gm-table {
+  position: relative;   /* (la couche des attaques se pose par-dessus toute la table) */
   display: grid; grid-template-columns: minmax(190px, 260px) minmax(0, 1fr) minmax(190px, 260px);
   align-items: center; gap: clamp(12px, 2vw, 28px);
   max-width: 1400px; min-height: calc(100vh - 20px); margin: 0 auto; padding: 10px 0;
@@ -422,14 +423,14 @@ body.gemmes-fond-plage { --fond-gemmes: url("/img/Fond gemmes/gemmes-plage.webp"
   position: absolute; inset: 0; z-index: 7; display: grid; place-content: center; justify-items: center; gap: 6px;
   pointer-events: none;
   background: radial-gradient(circle at 50% 46%, color-mix(in srgb, var(--teinte) 45%, transparent), rgba(5,5,5,.75) 62%);
-  animation: gm-voile 1.55s ease both;
+  animation: gm-voile var(--t-revele, 1.55s) ease both;
 }
 
 @keyframes gm-voile { 0% { opacity: 0; } 12%, 80% { opacity: 1; } 100% { opacity: 0; } }
 .gm-activation__carte {
   width: min(38cqi, 210px); aspect-ratio: 5 / 7; background: center / contain no-repeat;
   filter: drop-shadow(0 0 3px var(--teinte)) drop-shadow(0 0 40px var(--teinte));
-  animation: gm-surgit 1.55s cubic-bezier(.2,.9,.3,1) both;
+  animation: gm-surgit var(--t-revele, 1.55s) cubic-bezier(.2,.9,.3,1) both;
 }
 /* (la carte arrive du côté de celui qui la lance : le joueur, « droite » dans le code, est affiché à gauche) */
 .gm-activation--gauche .gm-activation__carte { --depuis: 60cqi; } .gm-activation--droite .gm-activation__carte { --depuis: -60cqi; }
@@ -441,9 +442,234 @@ body.gemmes-fond-plage { --fond-gemmes: url("/img/Fond gemmes/gemmes-plage.webp"
   85% { transform: scale(1); opacity: 1; }
   100% { transform: translateX(calc(var(--depuis) * -1)) scale(.6); opacity: 0; }
 }
-.gm-activation__nom { margin-top: 16px; font-family: "Cinzel", "Cinzel Repli", serif; font-size: 1.3rem; font-weight: 700; color: var(--ivoire); text-shadow: 0 2px 10px #000; animation: gm-texte 1.55s ease both; }
-.gm-activation__effet { font-style: italic; color: var(--or-pale); text-shadow: 0 2px 8px #000; animation: gm-texte 1.55s ease both; }
+.gm-activation__nom { margin-top: 16px; font-family: "Cinzel", "Cinzel Repli", serif; font-size: 1.3rem; font-weight: 700; color: var(--ivoire); text-shadow: 0 2px 10px #000; animation: gm-texte var(--t-revele, 1.55s) ease both; }
+.gm-activation__effet { font-style: italic; color: var(--or-pale); text-shadow: 0 2px 8px #000; animation: gm-texte var(--t-revele, 1.55s) ease both; }
 @keyframes gm-texte { 0%, 20% { opacity: 0; transform: translateY(8px); } 35%, 80% { opacity: 1; transform: none; } 100% { opacity: 0; } }
+
+/* =====================================================================
+   L'attaque d'une carte (Table.jsx, <Attaque />) : le départ, le vol jusqu'au portrait de la cible, l'impact.
+   Une rareté, un style, de plus en plus grand : la pierre (commune), la sève (éveillée), l'orbe arcanique
+   (mythique), la comète de braise (légendaire), le jugement solaire (transcendante).
+   Positions (px dans la table) et temps (--t-depart, --t-trajet, --t-impact) viennent de Table.jsx.
+   ===================================================================== */
+.gm-attaque {
+  --c1: #ece8e1; --c2: #9a948c; --c3: #4a4640;
+  --impact: calc(var(--t-depart) + var(--t-trajet));
+  position: absolute; inset: 0; z-index: 20; pointer-events: none;
+}
+.gm-attaque--eveillee { --c1: #c6f5d4; --c2: #3fae6c; --c3: #0f4a2a; }
+.gm-attaque--mythique { --c1: #d6e8ff; --c2: #4a86e8; --c3: #14306e; }
+.gm-attaque--legendaire { --c1: #ffe0a6; --c2: #e2452f; --c3: #6a0a0f; }
+.gm-attaque--transcendante { --c1: #fff6d6; --c2: #e9c060; --c3: #7a5512; }
+.gm-attaque span, .gm-attaque i { position: absolute; display: block; }
+
+/* ---------- Le départ (commune, éveillée) : un cercle qui s'ouvre sur la carte, et son nom au-dessus ---------- */
+.gm-attaque__depart { left: var(--x0); top: var(--y0); }
+.gm-attaque__depart i {
+  width: 64px; height: 64px; margin: -32px; rotate: 45deg; border: 2px solid var(--c1);
+  box-shadow: 0 0 14px var(--c2), inset 0 0 10px var(--c2);
+  animation: gm-depart calc(var(--t-depart) + 160ms) ease-out both;
+}
+@keyframes gm-depart { 0% { transform: scale(.3); opacity: 0; } 30% { opacity: 1; } 100% { transform: scale(1.35); opacity: 0; } }
+.gm-attaque__nom {
+  left: var(--x0); top: var(--y0); translate: -50% -50%; white-space: nowrap;
+  font-family: "Cinzel", "Cinzel Repli", serif; font-weight: 700; font-size: .82rem; letter-spacing: .06em;
+  color: var(--c1); text-shadow: 0 0 10px var(--c2), 0 2px 6px #000;
+  animation: gm-nom calc(var(--impact) + var(--t-impact)) ease both;
+}
+@keyframes gm-nom { 0% { opacity: 0; transform: translateY(0); } 20%, 75% { opacity: 1; transform: translateY(-44px); } 100% { opacity: 0; transform: translateY(-52px); } }
+
+/* ---------- Le vol : en largeur puis en hauteur (deux élans qui, différents, font une courbe) ---------- */
+.gm-attaque__vol { left: var(--x0); top: var(--y0); animation: gm-vol-x var(--t-trajet) var(--elan, cubic-bezier(.45,0,.85,.55)) var(--t-depart) both; }
+.gm-attaque__arc { animation: gm-vol-y var(--t-trajet) var(--elan, cubic-bezier(.45,0,.85,.55)) var(--t-depart) both; }
+@keyframes gm-vol-x { to { transform: translateX(var(--dx)); } }
+@keyframes gm-vol-y { to { transform: translateY(var(--dy)); } }
+/* le projectile : tourné vers la cible, visible le temps du vol seulement */
+.gm-attaque__projectile { left: 0; top: 0; rotate: var(--angle); opacity: 0; animation: gm-en-vol var(--t-trajet) linear var(--t-depart) forwards; }
+@keyframes gm-en-vol { 0%, 96% { opacity: 1; } 100% { opacity: 0; } }
+.gm-attaque__coeur { left: 0; top: 0; }
+.gm-attaque__traine { left: 0; top: 0; }
+@keyframes gm-tourne { to { rotate: 1turn; } }
+
+/* ---------- L'impact, sur le portrait de la cible ---------- */
+.gm-attaque__impact { left: var(--x1); top: var(--y1); }
+.gm-attaque__onde {
+  width: 50px; height: 50px; margin: -25px; border-radius: 50%; border: 3px solid var(--c1); box-shadow: 0 0 12px var(--c2);
+  animation: gm-onde-impact var(--t-impact) ease-out var(--impact) both;
+}
+.gm-attaque__onde + .gm-attaque__onde { display: none; }
+@keyframes gm-onde-impact { 0% { transform: scale(.2); opacity: 0; } 10% { opacity: 1; } 100% { transform: scale(var(--ampleur, 1.8)); opacity: 0; } }
+.gm-attaque__eclair {
+  width: 70px; height: 70px; margin: -35px; border-radius: 50%;
+  background: radial-gradient(circle, #fff, var(--c1) 30%, transparent 70%);
+  animation: gm-eclair calc(var(--t-impact) * .6) ease-out var(--impact) both;
+}
+@keyframes gm-eclair { 0% { transform: scale(.3); opacity: 0; } 15% { opacity: 1; } 100% { transform: scale(1.3); opacity: 0; } }
+/* les éclats : une gerbe autour du point d'impact */
+.gm-attaque__impact > i {
+  width: 7px; height: 7px; margin: -3.5px; background: var(--c1); box-shadow: 0 0 6px var(--c2);
+  rotate: calc(var(--k) * 1turn / var(--n) + 10deg);
+  animation: gm-gerbe var(--t-impact) cubic-bezier(.2,.7,.4,1) var(--impact) both;
+}
+@keyframes gm-gerbe { 0% { transform: translateX(6px) scale(1); opacity: 0; } 8% { opacity: 1; } 100% { transform: translateX(var(--portee, 38px)) scale(.3); opacity: 0; } }
+
+/* ---------- Le soin (éveillée, transcendante) : des lueurs montent du portrait du lanceur ---------- */
+.gm-attaque__soin { left: var(--xs); top: var(--ys); }
+.gm-attaque__soin i {
+  left: calc((var(--k) - 2) * 11px); width: 6px; height: 6px; margin: -3px; border-radius: 50%;
+  background: var(--c1); box-shadow: 0 0 8px var(--c2);
+  animation: gm-soin-monte var(--t-impact) ease-out calc(var(--impact) + var(--k) * 40ms) both;
+}
+@keyframes gm-soin-monte { 0% { transform: translateY(14px); opacity: 0; } 25% { opacity: 1; } 100% { transform: translateY(-36px); opacity: 0; } }
+
+/* ---------- Commune : un éclat de pierre lancé droit, qui tournoie ; un nuage de poussière ---------- */
+.gm-attaque--commune { --ampleur: 2.2; }
+.gm-attaque--commune .gm-attaque__coeur {
+  width: 30px; height: 21px; margin: -10.5px -15px; filter: drop-shadow(0 0 4px rgba(236,232,225,.5));
+  clip-path: polygon(0 40%, 55% 0, 100% 50%, 60% 100%, 10% 85%);
+  background: linear-gradient(135deg, var(--c1), var(--c2) 55%, var(--c3));
+  animation: gm-tourne .22s linear infinite;
+}
+.gm-attaque--commune .gm-attaque__traine { display: none; }
+.gm-attaque--commune .gm-attaque__impact > i { --portee: 46px; width: 9px; height: 8px; clip-path: polygon(50% 0, 100% 100%, 0 80%); box-shadow: none; background: var(--c2); }
+.gm-attaque--commune .gm-attaque__eclair { width: 100px; height: 100px; margin: -50px; background: radial-gradient(circle, rgba(236,232,225,.8), rgba(154,148,140,.35) 45%, transparent 70%); }
+
+/* ---------- Éveillée : une lame de sève qui file en arc en tournoyant, des feuilles dans son sillage ---------- */
+.gm-attaque--eveillee { --elan: linear; }
+.gm-attaque--eveillee .gm-attaque__arc { animation-name: gm-vol-courbe; }
+@keyframes gm-vol-courbe {
+  0% { transform: translateY(0); animation-timing-function: cubic-bezier(.25,.6,.45,1); }
+  50% { transform: translateY(calc(var(--dy) / 2 - var(--bosse))); animation-timing-function: cubic-bezier(.55,0,.75,.4); }
+  100% { transform: translateY(var(--dy)); }
+}
+.gm-attaque--eveillee .gm-attaque__coeur {
+  width: 28px; height: 13px; margin: -6.5px -14px; border-radius: 0 100% 0 100%;
+  background: linear-gradient(135deg, var(--c1), var(--c2) 50%, var(--c3)); box-shadow: 0 0 10px rgba(63,174,108,.7);
+  animation: gm-tourne .3s linear infinite;
+}
+.gm-attaque--eveillee .gm-attaque__traine i {
+  left: calc(-16px - var(--k) * 13px); width: 12px; height: 6px; margin: -3px -6px; border-radius: 0 100% 0 100%;
+  background: var(--c2); opacity: calc(.75 - var(--k) * .17); rotate: calc(var(--k) * 70deg);
+}
+.gm-attaque--eveillee .gm-attaque__impact > i { --portee: 48px; width: 12px; height: 6px; border-radius: 0 100% 0 100%; background: var(--c2); }
+.gm-attaque--eveillee .gm-attaque__onde + .gm-attaque__onde { display: block; animation-delay: calc(var(--impact) + 90ms); border-width: 2px; }
+
+/* ---------- Mythique : un orbe arcanique cerclé d'étincelles, une traîne bleue ; des ondes et un cercle de runes ---------- */
+.gm-attaque--mythique { --ampleur: 2.4; }
+.gm-attaque--mythique .gm-attaque__coeur {
+  width: 26px; height: 26px; margin: -13px; border-radius: 50%;
+  background: radial-gradient(circle at 38% 38%, #fff, var(--c1) 22%, var(--c2) 55%, rgba(20,48,110,0) 72%);
+  box-shadow: 0 0 16px 3px rgba(74,134,232,.65);
+}
+.gm-attaque--mythique .gm-attaque__coeur::before {
+  content: ""; position: absolute; inset: -9px; border-radius: 50%; border: 1px dashed var(--c1); animation: gm-tourne .5s linear infinite;
+}
+.gm-attaque--mythique .gm-attaque__traine::before {
+  content: ""; position: absolute; right: 0; top: -6px; width: 70px; height: 12px;
+  background: linear-gradient(to left, rgba(214,232,255,.85), rgba(74,134,232,.45) 40%, transparent);
+  clip-path: polygon(100% 0, 100% 100%, 0 50%);
+}
+.gm-attaque--mythique .gm-attaque__traine i {
+  left: calc(-18px - var(--k) * 15px); top: calc((var(--k) - 1.5) * 5px); width: 4px; height: 4px; margin: -2px; rotate: 45deg;
+  background: var(--c1); box-shadow: 0 0 6px var(--c2); opacity: calc(.9 - var(--k) * .2);
+}
+.gm-attaque--mythique .gm-attaque__impact > i { --portee: 46px; width: 6px; height: 6px; rotate: calc(var(--k) * 1turn / var(--n)); clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%); }
+.gm-attaque--mythique .gm-attaque__onde { border-width: 2px; }
+.gm-attaque--mythique .gm-attaque__onde + .gm-attaque__onde { display: block; animation-delay: calc(var(--impact) + 110ms); }
+/* le cercle de runes : deux liserés pointillés qui tournent en s'effaçant */
+.gm-attaque--mythique .gm-attaque__eclair {
+  width: 96px; height: 96px; margin: -48px; background: radial-gradient(circle, rgba(214,232,255,.55), transparent 55%);
+  border: 2px dotted var(--c1); outline: 1px dashed rgba(214,232,255,.6); outline-offset: 6px;
+  animation: gm-runes var(--t-impact) ease-out var(--impact) both;
+}
+@keyframes gm-runes { 0% { transform: scale(.4) rotate(0); opacity: 0; } 20% { opacity: 1; } 100% { transform: scale(1.15) rotate(90deg); opacity: 0; } }
+
+/* ---------- Légendaire : une comète de braise à longue traîne ; explosion, fissures et braises ---------- */
+.gm-attaque--legendaire { --ampleur: 2.6; --elan: cubic-bezier(.5,0,.9,.4); }
+.gm-attaque--legendaire .gm-attaque__coeur {
+  width: 34px; height: 34px; margin: -17px; border-radius: 50%;
+  background: radial-gradient(circle, #fff, var(--c1) 22%, var(--c2) 50%, rgba(106,10,15,0) 72%);
+  box-shadow: 0 0 24px 8px rgba(226,69,47,.55);
+  animation: gm-flamme .12s ease-in-out infinite alternate;
+}
+@keyframes gm-flamme { to { transform: scale(1.12, .92); } }
+.gm-attaque--legendaire .gm-attaque__traine::before {
+  content: ""; position: absolute; right: 2px; top: -12px; width: 130px; height: 24px;
+  background: linear-gradient(to left, var(--c1), var(--c2) 25%, rgba(106,10,15,.6) 60%, transparent);
+  clip-path: polygon(100% 0, 100% 100%, 0 50%);
+}
+.gm-attaque--legendaire .gm-attaque__traine i {
+  left: calc(-28px - var(--k) * 24px); top: calc((var(--k) % 2 - .5) * 14px); width: 5px; height: 5px; margin: -2.5px; border-radius: 50%;
+  background: var(--c1); box-shadow: 0 0 8px var(--c2); animation: gm-braise .14s ease-in-out infinite alternate;
+}
+@keyframes gm-braise { to { opacity: .3; transform: scale(.6); } }
+.gm-attaque--legendaire .gm-attaque__eclair {
+  width: 130px; height: 130px; margin: -65px;
+  background: radial-gradient(circle, #fff, var(--c1) 22%, rgba(226,69,47,.7) 45%, transparent 70%);
+}
+.gm-attaque--legendaire .gm-attaque__onde { border-width: 4px; border-color: var(--c2); }
+.gm-attaque--legendaire .gm-attaque__onde + .gm-attaque__onde { display: block; animation-delay: calc(var(--impact) + 70ms); border-width: 2px; border-color: var(--c1); }
+.gm-attaque--legendaire .gm-attaque__impact > i { --portee: 72px; width: 6px; height: 6px; border-radius: 50%; }
+/* les fissures : deux lignes brisées qui s'ouvrent sur le portrait */
+.gm-attaque--legendaire .gm-attaque__impact::before, .gm-attaque--legendaire .gm-attaque__impact::after {
+  content: ""; position: absolute; width: 120px; height: 26px; margin: -13px -60px; background: var(--c1);
+  box-shadow: 0 0 10px var(--c2);
+  clip-path: polygon(0 48%, 18% 38%, 34% 56%, 52% 36%, 70% 58%, 86% 40%, 100% 47%, 100% 53%, 86% 47%, 70% 66%, 52% 44%, 34% 63%, 18% 45%, 0 55%);
+  rotate: 28deg; animation: gm-fissure var(--t-impact) ease-out var(--impact) both;
+}
+.gm-attaque--legendaire .gm-attaque__impact::after { rotate: -58deg; width: 90px; margin: -13px -45px; }
+@keyframes gm-fissure { 0% { transform: scaleX(0); opacity: 0; } 12% { opacity: 1; } 35% { transform: scaleX(1); opacity: 1; } 100% { transform: scaleX(1); opacity: 0; } }
+
+/* ---------- Transcendante : un orbe d'or monte de la carte et s'y fait soleil, puis une lance de lumière part de lui
+   jusqu'à la cible ; un soleil rayonnant, des éclats d'or ---------- */
+.gm-attaque--transcendante { --ampleur: 2.8; }
+.gm-attaque--transcendante .gm-attaque__vol { animation: none; }
+.gm-attaque--transcendante .gm-attaque__arc { animation: gm-ascension calc(var(--t-trajet) * .35) cubic-bezier(.2,.7,.4,1) var(--t-depart) both; }
+@keyframes gm-ascension { to { transform: translateY(calc(-1 * var(--montee))); } }
+.gm-attaque--transcendante .gm-attaque__projectile { rotate: -90deg; }
+.gm-attaque--transcendante .gm-attaque__coeur {
+  width: 30px; height: 30px; margin: -15px; border-radius: 50%;
+  background: radial-gradient(circle, #fff, var(--c1) 28%, var(--c2) 55%, rgba(122,85,18,0) 72%);
+  box-shadow: 0 0 22px 6px rgba(233,192,96,.6);
+}
+.gm-attaque--transcendante .gm-attaque__coeur::before {
+  content: ""; position: absolute; inset: -16px; border-radius: 50%;
+  background: repeating-conic-gradient(rgba(255,246,214,.75) 0 8deg, transparent 8deg 45deg);
+  -webkit-mask: radial-gradient(circle, #000 30%, transparent 70%); mask: radial-gradient(circle, #000 30%, transparent 70%);
+  animation: gm-tourne .8s linear infinite;
+}
+.gm-attaque--transcendante .gm-attaque__traine::before {
+  content: ""; position: absolute; right: 0; top: -7px; width: 90px; height: 14px;
+  background: linear-gradient(to left, var(--c1), rgba(233,192,96,.5) 45%, transparent); clip-path: polygon(100% 0, 100% 100%, 0 50%);
+}
+.gm-attaque--transcendante .gm-attaque__traine i { display: none; }
+/* la lance : elle jaillit du soleil et touche la cible au moment de l'impact, puis s'amincit et s'éteint */
+.gm-attaque__rayon {
+  left: var(--x0); top: calc(var(--y0) - var(--montee)); width: var(--long-lance); height: 30px; margin-top: -15px;
+  rotate: var(--angle-lance); transform-origin: 0 50%;
+  background: linear-gradient(to bottom, transparent, rgba(255,246,214,.5) 28%, #fff 50%, rgba(255,246,214,.5) 72%, transparent);
+  box-shadow: 0 0 24px rgba(233,192,96,.5);
+  animation: gm-lance calc(var(--t-trajet) * .65) cubic-bezier(.6,0,1,1) calc(var(--t-depart) + var(--t-trajet) * .35) both,
+    gm-lance-fin var(--t-impact) ease-out var(--impact) forwards;
+}
+@keyframes gm-lance { from { transform: scaleX(0); opacity: 1; } to { transform: scaleX(1); opacity: 1; } }
+@keyframes gm-lance-fin { from { transform: none; opacity: 1; } to { transform: scaleY(.1); opacity: 0; } }
+/* le soleil : des rayons qui tournent en s'ouvrant */
+.gm-attaque--transcendante .gm-attaque__eclair {
+  width: 170px; height: 170px; margin: -85px;
+  background: radial-gradient(circle, #fff 0 10%, rgba(255,246,214,.8) 18%, transparent 30%),
+    repeating-conic-gradient(rgba(255,246,214,.7) 0 5deg, transparent 5deg 22.5deg);
+  -webkit-mask: radial-gradient(circle, #000 25%, transparent 70%); mask: radial-gradient(circle, #000 25%, transparent 70%);
+  animation: gm-soleil var(--t-impact) ease-out var(--impact) both;
+}
+@keyframes gm-soleil { 0% { transform: scale(.3) rotate(0); opacity: 0; } 15% { opacity: 1; } 100% { transform: scale(1.25) rotate(40deg); opacity: 0; } }
+.gm-attaque--transcendante .gm-attaque__onde { border-color: var(--c2); }
+.gm-attaque--transcendante .gm-attaque__onde + .gm-attaque__onde { display: block; animation-delay: calc(var(--impact) + 100ms); border-width: 2px; border-color: var(--c1); }
+.gm-attaque--transcendante .gm-attaque__impact > i { --portee: 80px; width: 7px; height: 11px; clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%); }
+
+/* Effets allégés (Paramètres) : sans traînes ni lueurs de soin, des gerbes plus courtes */
+.effets-legers .gm-attaque__traine, .effets-legers .gm-attaque__soin, .effets-legers .gm-attaque__onde + .gm-attaque__onde { display: none; }
+.effets-legers .gm-attaque__impact > i:nth-child(2n) { display: none; }
 
 /* La fin de la partie */
 .gm-fin {

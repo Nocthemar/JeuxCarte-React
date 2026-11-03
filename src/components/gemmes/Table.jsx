@@ -21,7 +21,17 @@ import { jouerSon } from '../../lib/son.js';
 
 const attendre = (ms) => new Promise((ok) => setTimeout(ok, ms));
 const SON_RARETE = { commune: 'pose', eveillee: 'elan', mythique: 'eau', legendaire: 'griffe', transcendante: 'forge' };
-const SON_CARTE = { commune: 'choc', eveillee: 'soin', mythique: 'magie', legendaire: 'tonnerre', transcendante: 'couronne' };
+// L'attaque d'une carte déclenchée, selon sa rareté (son pouvoir) : de plus en plus grande à mesure que la carte est rare.
+// depart : l'élan (la carte s'illumine dans son panneau, ou surgit au milieu de la grille : revele) ; trajet : le vol
+// jusqu'à l'adversaire ; impact : l'éclat sur lui (les dégâts tombent au début de l'impact). Temps en ms ; les sons
+// sont ceux du jeu (lib/son.js) ; secousse : la table tremble.
+const ATTAQUES = {
+  commune: { depart: 120, trajet: 280, impact: 320, sons: ['pose', 'choc'] },
+  eveillee: { depart: 200, trajet: 380, impact: 380, sons: ['elan', 'choc'] },
+  mythique: { depart: 420, trajet: 400, impact: 420, revele: true, sons: ['magie', 'eau'] },
+  legendaire: { depart: 520, trajet: 380, impact: 560, revele: true, secousse: true, sons: ['feu', 'tonnerre'] },
+  transcendante: { depart: 560, trajet: 520, impact: 620, revele: true, secousse: true, sons: ['couronne', 'tonnerre'] },
+};
 const vueDe = (etat) => ({
   grille: etat.grille.map(({ id, s }) => ({ id, s })),
   pv: etat.joueurs.map((j) => j.pv),
@@ -92,6 +102,37 @@ function Combattant({ j, cote, pv, jauges, actif, echanges, peutDeclencher, surD
 }
 
 // ---------------------------------------------------------------------
+//  L'attaque d'une carte, par-dessus toute la table : le départ, le vol jusqu'au portrait de la cible, l'impact.
+//  Tout est animé par le CSS (styles/gemmes.css, « L'attaque d'une carte ») avec les temps de ATTAQUES ;
+//  les <i> sont les éclats, braises, feuilles… de chaque rareté (le CSS choisit lesquels montrer).
+// ---------------------------------------------------------------------
+const parcelles = (n) => Array.from({ length: n }, (_, k) => <i key={k} style={{ '--k': k, '--n': n }} />);
+function Attaque({ activation: { carte, effet, t, geo, revele } }) {
+  const px = (n) => `${Math.round(n)}px`;
+  const style = {
+    '--x0': px(geo.x0), '--y0': px(geo.y0), '--x1': px(geo.x1), '--y1': px(geo.y1), '--dx': px(geo.dx), '--dy': px(geo.dy),
+    '--xs': px(geo.xs), '--ys': px(geo.ys), '--angle': `${geo.angle}rad`, '--long': px(geo.long),
+    '--bosse': px(Math.min(90, geo.long * 0.22)),
+    '--montee': px(geo.montee), '--angle-lance': `${geo.angleLance}rad`, '--long-lance': px(geo.longLance),
+    '--t-depart': `${t.depart}ms`, '--t-trajet': `${t.trajet}ms`, '--t-impact': `${t.impact}ms`,
+  };
+  return (
+    <div className={`gm-attaque gm-attaque--${carte.rarete}`} style={style} aria-hidden="true">
+      {/* le départ : un éclat sur la carte du panneau, et son nom (quand elle ne surgit pas au milieu) */}
+      {!revele && <span className="gm-attaque__depart"><i /></span>}
+      {!revele && <span className="gm-attaque__nom">{carte.n}</span>}
+      {/* le vol : en largeur, puis en hauteur (deux élans : une courbe), puis le projectile tourné vers la cible */}
+      <span className="gm-attaque__vol"><span className="gm-attaque__arc">
+        <span className="gm-attaque__projectile"><span className="gm-attaque__traine">{parcelles(4)}</span><span className="gm-attaque__coeur" /></span>
+      </span></span>
+      {carte.rarete === 'transcendante' && <span className="gm-attaque__rayon" />}
+      <span className="gm-attaque__impact"><span className="gm-attaque__onde" /><span className="gm-attaque__onde" /><span className="gm-attaque__eclair" />{parcelles(8)}</span>
+      {effet.soin > 0 && <span className="gm-attaque__soin">{parcelles(5)}</span>}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------
 //  La table
 //  combattants : [{ nom, avatar, cartes }] dans l'ordre de jeu ; moi : ma place (0 ou 1)
 //  ligne : le salon (contre un ami) ou null (contre l'Ombre, de niveau « difficulte »)
@@ -152,6 +193,29 @@ export default function Table({ combattants, graine, moi, ligne = null, difficul
     setCharges({ qui, parts, id });
     setTimeout(() => { if (vivant.current) setCharges((c) => (c?.id === id ? null : c)); }, 900);
   }, []);
+  // Le trajet d'une attaque, mesuré sur la table telle qu'elle est affichée (ordinateur ou téléphone) : du départ
+  // (la carte dans le panneau du lanceur, ou le milieu de la grille quand la carte y surgit) au portrait de la cible ;
+  // et le portrait du lanceur (pour le soin). Positions en px dans la table.
+  const tableEl = useRef(null);
+  const mesurer = useCallback((qui, k, revele) => {
+    const table = tableEl.current;
+    if (!table) return null;
+    const o = table.getBoundingClientRect();
+    const centre = (el) => { const r = el?.getBoundingClientRect(); return r ? [r.left + r.width / 2 - o.left, r.top + r.height / 2 - o.top] : null; };
+    const lanceur = qui === moi ? 'droite' : 'gauche', visee = qui === moi ? 'gauche' : 'droite';
+    const de = centre(revele ? grilleEl.current : table.querySelector(`.gm-combattant--${lanceur} .gm-cartes > li:nth-child(${k + 1}) .gm-carte__image`));
+    const vers = centre(table.querySelector(`.gm-combattant--${visee} .gm-combattant__portrait`));
+    const soi = centre(table.querySelector(`.gm-combattant--${lanceur} .gm-combattant__portrait`));
+    if (!de || !vers || !soi) return null;
+    const [dx, dy] = [vers[0] - de[0], vers[1] - de[1]];
+    // (la lance de la transcendante part d'un point au-dessus du départ, où l'orbe est monté)
+    const montee = Math.min(110, de[1] * 0.4);
+    const [lx, ly] = [vers[0] - de[0], vers[1] - (de[1] - montee)];
+    return {
+      x0: de[0], y0: de[1], x1: vers[0], y1: vers[1], dx, dy, xs: soi[0], ys: soi[1], angle: Math.atan2(dy, dx), long: Math.hypot(dx, dy),
+      montee, angleLance: Math.atan2(ly, lx), longLance: Math.hypot(lx, ly),
+    };
+  }, [moi]);
   const frapper = useCallback((cible, fort) => {
     setTouche(cible);
     if (fort) setSecousse(true);
@@ -224,18 +288,21 @@ export default function Table({ combattants, graine, moi, ligne = null, difficul
       }
     } else if (action.t === 'carte') {
       const c = res.etat.joueurs[qui].cartes[res.carte.k];
-      setActivation({ qui, k: res.carte.k, carte: c, effet: res.carte, id: ++numero });
-      jouerSon(SON_CARTE[c.rarete]);
-      await attendre(duree(900));
+      const a = ATTAQUES[c.rarete] ?? ATTAQUES.commune;
+      const t = { depart: duree(a.depart), trajet: duree(a.trajet), impact: duree(a.impact) };
+      setActivation({ qui, k: res.carte.k, carte: c, effet: res.carte, id: ++numero, t, revele: a.revele, geo: t.trajet ? mesurer(qui, res.carte.k, a.revele) : null });
+      jouerSon(a.sons[0]);
+      await attendre(t.depart + t.trajet);
       if (!vivant.current) return;
       v = vueRef.current;
       const pv = v.pv.slice();
       const jauges = v.jauges.map((l) => l.slice());
       pv[cible] = Math.max(0, pv[cible] - res.carte.degats);
       jauges[qui][res.carte.k] = 0;
-      flotter(cible, `−${res.carte.degats}`, c.gemme);
-      frapper(cible, true);
-      jouerSon('choc');
+      flotter(cible, `−${res.carte.degats}`, c.rarete);
+      frapper(cible, a.secousse);
+      jouerSon(a.sons[1]);
+      if (a.secousse) jouerSon('choc', 0.04);
       if (res.carte.soin) {
         pv[qui] = Math.min(res.etat.joueurs[qui].pvMax, pv[qui] + res.carte.soin);
         flotter(qui, `+${res.carte.soin}`, 'soin');
@@ -243,7 +310,7 @@ export default function Table({ combattants, graine, moi, ligne = null, difficul
       }
       if (res.carte.echange) flotter(qui, '+1 échange', 'mythique');
       montrer({ ...v, pv, jauges });
-      await attendre(duree(650));
+      await attendre(t.impact);
       if (vivant.current) setActivation(null);
     }
     if (!vivant.current) return;
@@ -258,7 +325,7 @@ export default function Table({ combattants, graine, moi, ligne = null, difficul
       if (aMoi) jouerSon('cloche');
       await annoncer(aMoi ? 'À toi de jouer' : `Au tour de ${res.etat.joueurs[res.etat.actif].nom}`, 950, aMoi ? 'moi' : 'autre', !aMoi);
     }
-  }, [annoncer, charger, flotter, frapper, montrer, moi]);
+  }, [annoncer, charger, flotter, frapper, mesurer, montrer, moi]);
 
   // ---------- La file des actions : une à la fois ----------
   const traiter = useCallback(async () => {
@@ -431,7 +498,7 @@ export default function Table({ combattants, graine, moi, ligne = null, difficul
   });
 
   return (
-    <section className={`gm-table${secousse ? ' est-secouee' : ''}`} aria-label="Partie de Gemmes">
+    <section ref={tableEl} className={`gm-table${secousse ? ' est-secouee' : ''}`} aria-label="Partie de Gemmes">
       <DefsGemmes />
       <Combattant cote="gauche" {...coteDe(autre)} peutDeclencher={false} surDeclencher={() => {}} />
 
@@ -486,8 +553,9 @@ export default function Table({ combattants, graine, moi, ligne = null, difficul
             <span key={compte.id} className="gm-compte" style={{ '--x': compte.x, '--y': compte.y }} aria-hidden="true">+{compte.n}</span>
           )}
           {banniere && <div key={banniere.id} className={`gm-banniere gm-banniere--${banniere.genre}`} role="status">{banniere.texte}</div>}
-          {activation && (
-            <div key={activation.id} className={`gm-activation gm-activation--${activation.carte.gemme} gm-activation--${activation.qui === moi ? 'droite' : 'gauche'}`} aria-hidden="true">
+          {activation?.revele && (
+            <div key={activation.id} className={`gm-activation gm-activation--${activation.carte.rarete} gm-activation--${activation.qui === moi ? 'droite' : 'gauche'}`}
+              style={{ '--t-revele': `${activation.t.depart + activation.t.trajet * 0.6}ms` }} aria-hidden="true">
               <span className="gm-activation__carte" style={activation.carte.image ? { backgroundImage: `url("${urlPublique(activation.carte.image)}")` } : undefined} />
               <span className="gm-activation__nom">{activation.carte.n}</span>
               <span className="gm-activation__effet">{activation.effet.degats} dégâts{activation.effet.soin ? ` · +${activation.effet.soin} PV` : ''}{activation.effet.echange ? ' · +1 échange' : ''}</span>
@@ -527,6 +595,7 @@ export default function Table({ combattants, graine, moi, ligne = null, difficul
       </div>
 
       <Combattant cote="droite" {...coteDe(moi)} peutDeclencher={monTour} surDeclencher={(k) => agir({ t: 'carte', k })} />
+      {activation?.geo && <Attaque key={activation.id} activation={activation} />}
     </section>
   );
 }
