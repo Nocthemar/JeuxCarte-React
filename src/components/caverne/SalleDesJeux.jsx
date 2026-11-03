@@ -18,14 +18,18 @@ const JEUX = [
 ];
 
 // Les cinq portes de la salle, de gauche à droite : l'ouverture de chacune en pixels de l'image (IMAGE),
-// et ce qu'elle ouvre (un jeu, ou le portail), avec la teinte de sa lumière (r, v, b)
+// et ce qu'elle ouvre (un jeu, ou le portail), avec la teinte de sa lumière (r, v, b), son nom gravé au-dessus
+// (lignes) et l'orientation de son mur (pente, en degrés : la salle est ronde, les murs des côtés sont vus de biais)
 const IMAGE = { l: 1672, h: 941 };
+// Le nom gravé, en pixels de l'image : aussi large que l'encadrement de pierre des portes, centré sur l'ouverture,
+// son bas à ecart au-dessus du sommet de l'ouverture (l'arc de pierre de la porte en prend ~32) ; deux lignes au plus
+const TITRE = { l: 196, h: 48, ecart: 48, taille: 19, interligne: 23 };
 const PORTES = [
-  { cle: 'portail', nom: 'Le portail', sous: 'Revenir à l\'arche', teinte: '236,228,210', pts: [[88, 520], [88, 255], [100, 215], [125, 185], [165, 163], [205, 185], [232, 215], [243, 255], [243, 520]] },
-  { g: 0, teinte: '214,96,48', pts: [[420, 532], [420, 320], [432, 285], [457, 258], [494, 238], [530, 258], [555, 285], [567, 320], [567, 532]] },
-  { g: 1, teinte: '214,176,104', pts: [[757, 538], [757, 335], [770, 300], [797, 272], [835, 252], [873, 272], [900, 300], [913, 335], [913, 538]] },
-  { g: 2, teinte: '200,58,70', pts: [[1107, 532], [1107, 320], [1119, 285], [1143, 258], [1177, 238], [1213, 258], [1239, 285], [1251, 320], [1251, 532]] },
-  { g: 3, teinte: '79,190,180', pts: [[1427, 520], [1427, 255], [1438, 215], [1465, 185], [1507, 163], [1548, 185], [1575, 215], [1588, 255], [1588, 520]] },
+  { cle: 'portail', nom: 'Le portail', sous: 'Revenir à l\'arche', teinte: '236,228,210', lignes: ['Le portail'], pente: 12, pts: [[88, 520], [88, 255], [100, 215], [125, 185], [165, 163], [205, 185], [232, 215], [243, 255], [243, 520]] },
+  { g: 0, teinte: '214,96,48', lignes: ['Le Dragon', 'Dormant'], pente: 5, pts: [[420, 532], [420, 320], [432, 285], [457, 258], [494, 238], [530, 258], [555, 285], [567, 320], [567, 532]] },
+  { g: 1, teinte: '214,176,104', lignes: ['Les Bourses', 'du Marchand'], pente: 0, pts: [[757, 538], [757, 335], [770, 300], [797, 272], [835, 252], [873, 272], [900, 300], [913, 335], [913, 538]] },
+  { g: 2, teinte: '200,58,70', lignes: ['Le Pont', 'Maudit'], pente: -5, pts: [[1107, 532], [1107, 320], [1119, 285], [1143, 258], [1177, 238], [1213, 258], [1239, 285], [1251, 320], [1251, 532]] },
+  { g: 3, teinte: '79,190,180', lignes: ['Le Lac', 'des Esprits'], pente: -12, pts: [[1427, 520], [1427, 255], [1438, 215], [1465, 185], [1507, 163], [1548, 185], [1575, 215], [1588, 255], [1588, 520]] },
 ].map((p) => {
   const xs = p.pts.map(([x]) => x), ys = p.pts.map(([, y]) => y);
   const x = Math.min(...xs), y = Math.min(...ys), l = Math.max(...xs) - x, h = Math.max(...ys) - y;
@@ -33,63 +37,32 @@ const PORTES = [
     ...p, ...(p.g !== undefined ? { nom: JEUX[p.g].nom, sous: JEUX[p.g].sous, image: JEUX[p.g].image } : {}),
     place: { left: `${(x / IMAGE.l) * 100}%`, top: `${(y / IMAGE.h) * 100}%`, width: `${(l / IMAGE.l) * 100}%`, height: `${(h / IMAGE.h) * 100}%` },
     forme: `polygon(${p.pts.map(([px, py]) => `${(((px - x) / l) * 100).toFixed(1)}% ${(((py - y) / h) * 100).toFixed(1)}%`).join(', ')})`,
+    // (en % de la porte, la boîte de l'ouverture)
+    titre: { left: `${((l - TITRE.l) / 2 / l) * 100}%`, width: `${(TITRE.l / l) * 100}%`, bottom: `${100 + (TITRE.ecart / h) * 100}%` },
   };
 });
 
-// L'inscription au-dessus d'une porte : un bandeau en arc de cercle (unités du viewBox 250 × 60), le nom gravé sur
-// l'arc du milieu, entre deux rainures filetées d'or coupées à la longueur du nom, fermées chacune par un losange
-// d'or. Les noms trop longs pour l'arc sont un peu resserrés.
-const ARC = { l: 250, corde: 220, fleche: 32, base: 52, taille: 12 };
-ARC.r = ((ARC.corde / 2) ** 2 + ARC.fleche ** 2) / (2 * ARC.fleche);
-ARC.cy = ARC.base - ARC.fleche + ARC.r;
-ARC.long = ARC.r * 2 * Math.asin(ARC.corde / 2 / ARC.r);
-// un point de l'arc de rayon r, à l'angle a (radians, depuis le sommet, positif à droite)
-const surArc = (r, a) => [ARC.l / 2 + r * Math.sin(a), ARC.cy - r * Math.cos(a)];
-const arc = (r, a) => {
-  const [x1, y] = surArc(r, -a), [x2] = surArc(r, a);
-  return `M${x1.toFixed(1)} ${y.toFixed(1)} A${r.toFixed(1)} ${r.toFixed(1)} 0 0 1 ${x2.toFixed(1)} ${y.toFixed(1)}`;
-};
-const ARC_NOM = arc(ARC.r, Math.asin(ARC.corde / 2 / ARC.r));
-
-function Inscription({ id, nom }) {
-  // (Cinzel en capitales : ~0.93 em par lettre, espacement compris)
-  const large = Math.min(nom.length * ARC.taille * .93, ARC.long * .92);
-  const serre = large < nom.length * ARC.taille * .93 ? { textLength: large.toFixed(0), lengthAdjust: 'spacingAndGlyphs' } : {};
-  const t = ARC.taille, haut = ARC.r + t * 1.25, bas = ARC.r - t * .45, milieu = ARC.r + t * .4;
-  const demi = (large / 2 + t * .8) / ARC.r;   // la demi-ouverture des rainures, un peu plus large que le nom
-  const losange = (signe) => {
-    const a = signe * (demi + t * .55 / ARC.r), [x, y] = surArc(milieu, a);
-    return <path key={signe} className="cav-gravure__losange" transform={`translate(${x.toFixed(1)} ${y.toFixed(1)}) rotate(${(a * 180 / Math.PI).toFixed(1)})`}
-      d={`M${-t * .6} 0 L0 ${-t * .42} L${t * .6} 0 L0 ${t * .42} Z`} />;
-  };
-  const texte = (classe, chemin) => (
-    <text className={classe} fontSize={t} letterSpacing="1.8" fontFamily="Cinzel, 'Cinzel Repli', serif" fontWeight="700">
-      <textPath href={`#${chemin}`} startOffset="50%" textAnchor="middle" {...serre}>{nom.toUpperCase()}</textPath>
-    </text>
-  );
-  // Trois couches, pour que rien de coûteux ne soit repeint à chaque image : la gravure et ses ombres (fixe),
-  // la même gravure auréolée pour le survol (peinte une fois, seule son opacité change), et la lumière qui passe
-  // sur l'or (elle bouge sans cesse : à part, sans ombres)
-  // (la gravure est dessinée deux fois, pas copiée par <use> : les classes ne prendraient pas dans la copie)
-  const vue = `0 0 ${ARC.l} 60`;
-  const gravure = (chemin) => (
-    <>
-      <path id={chemin} d={ARC_NOM} fill="none" />
-      {[arc(haut, demi), arc(bas, demi)].map((d) => (
-        <g key={d} className="cav-gravure__rainure"><path d={d} /><path d={d} /></g>
-      ))}
-      {losange(-1)}{losange(1)}
-      {texte('cav-gravure__or', chemin)}
-    </>
-  );
+// L'inscription au-dessus d'une porte : le nom seul, taillé dans la pierre du mur, à plat, en une ou deux lignes
+// (unités : pixels de l'image). Rien autour : ni bandeau, ni filet, ni ornement. La taille est faite par le filtre
+// #cav-taille (posé avec le titre du hall) : un creux dont le haut est dans l'ombre et le bas accroche la lumière.
+function Inscription({ lignes }) {
+  const { l, h, taille, interligne } = TITRE;
+  const texte = lignes.map((ligne, i) => {
+    // (Cinzel en capitales : ~0.82 em par lettre, espacement compris) ; resserré seulement s'il déborde
+    const large = ligne.length * taille * .82;
+    return (
+      <text key={ligne} x={l / 2} y={h - 4 - (lignes.length - 1 - i) * interligne} textAnchor="middle" fontSize={taille} letterSpacing="1.5"
+        fontFamily="Cinzel, 'Cinzel Repli', serif" fontWeight="700" {...(large > l * .97 ? { textLength: l * .97, lengthAdjust: 'spacingAndGlyphs' } : {})}>
+        {ligne.toUpperCase()}
+      </text>
+    );
+  });
+  // (dessinée deux fois : la seconde, éclairée par la lumière du jeu, n'apparaît qu'au survol)
+  const vue = `0 0 ${l} ${h}`;
   return (
     <>
-      <svg className="cav-gravure__arc" viewBox={vue}>{gravure(`cav-arc-${id}`)}</svg>
-      <svg className="cav-gravure__aureole" viewBox={vue}>{gravure(`cav-arc-${id}-aureole`)}</svg>
-      <svg className="cav-gravure__reflet" viewBox={vue}>
-        <path id={`cav-arc-${id}-reflet`} d={ARC_NOM} fill="none" />
-        {texte('cav-gravure__eclat', `cav-arc-${id}-reflet`)}
-      </svg>
+      <svg className="cav-gravure__arc" viewBox={vue} overflow="visible"><g className="cav-gravure__lettres" filter="url(#cav-taille)">{texte}</g></svg>
+      <svg className="cav-gravure__aureole" viewBox={vue} overflow="visible"><g className="cav-gravure__lettres" filter="url(#cav-taille)">{texte}</g></svg>
     </>
   );
 }
@@ -133,7 +106,7 @@ export default function SalleDesJeux({ temps, surPortail }) {
           <img className="cav-salle__fond" src={urlPublique('img/Fond/Caverne.webp')} alt="" draggable="false" />
           <header className="cav-hall__tete">
             {/* le titre, sur deux lignes d'or couchées sur l'eau du bassin, qui ondulent avec elle ; une lumière passe
-                sur l'or, des éclats s'allument sur l'eau. Le texte réel reste lisible par les lecteurs d'écran */}
+                sur l'or. Le texte réel reste lisible par les lecteurs d'écran */}
             <h1 id="cav-hall-titre">
               <span className="cav-hall__lu">La Caverne aux Trésors</span>
               <svg className="cav-hall__titre" viewBox="0 0 300 120" aria-hidden="true">
@@ -142,12 +115,28 @@ export default function SalleDesJeux({ temps, surPortail }) {
                     <stop offset="0" stopColor="#fff4d8" /><stop offset=".4" stopColor="#f0cf86" />
                     <stop offset=".65" stopColor="#c5933f" /><stop offset="1" stopColor="#8c6326" />
                   </linearGradient>
-                  {/* la lumière qui passe sur les noms gravés au-dessus des portes (Inscription : viewBox 250 de large) */}
-                  <linearGradient id="cav-nom-eclat" gradientUnits="userSpaceOnUse" x1="-70" y1="0" x2="-10" y2="20">
-                    <stop offset="0" stopColor="#fff" stopOpacity="0" /><stop offset=".5" stopColor="#fff6dc" stopOpacity=".85" />
-                    <stop offset="1" stopColor="#fff" stopOpacity="0" />
-                    <animateTransform attributeName="gradientTransform" type="translate" values="0 0;340 0;340 0" keyTimes="0;.4;1" dur="8s" repeatCount="indefinite" />
+                  {/* les noms taillés au-dessus des portes (Inscription) : une pierre claire teintée de bronze… */}
+                  <linearGradient id="cav-nom-pierre" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0" stopColor="#ece2cc" /><stop offset=".6" stopColor="#cdbd9c" /><stop offset="1" stopColor="#a99470" />
                   </linearGradient>
+                  {/* …et la taille, éclairée d'en haut comme la salle : une fine coupe sombre autour des lettres, une ombre
+                      dans le creux sous leur bord haut, un liseré de lumière sur leur bord bas (en pixels de l'image) */}
+                  <filter id="cav-taille" x="-5%" y="-30%" width="110%" height="160%" colorInterpolationFilters="sRGB">
+                    <feMorphology in="SourceAlpha" operator="dilate" radius=".7" result="large" />
+                    <feComposite in="large" in2="SourceAlpha" operator="out" result="coupe" />
+                    <feFlood floodColor="#0d0b09" floodOpacity=".6" />
+                    <feComposite in2="coupe" operator="in" result="coupeTeinte" />
+                    <feOffset in="SourceAlpha" dy="1.8" result="bas" />
+                    <feGaussianBlur in="bas" stdDeviation=".6" result="basFlou" />
+                    <feComposite in="SourceAlpha" in2="basFlou" operator="out" result="ombre" />
+                    <feFlood floodColor="#1e1912" floodOpacity=".8" />
+                    <feComposite in2="ombre" operator="in" result="ombreTeinte" />
+                    <feOffset in="SourceAlpha" dy="-1.1" result="haut" />
+                    <feComposite in="SourceAlpha" in2="haut" operator="out" result="arete" />
+                    <feFlood floodColor="#fff7e4" floodOpacity=".75" />
+                    <feComposite in2="arete" operator="in" result="areteTeinte" />
+                    <feMerge><feMergeNode in="coupeTeinte" /><feMergeNode in="SourceGraphic" /><feMergeNode in="ombreTeinte" /><feMergeNode in="areteTeinte" /></feMerge>
+                  </filter>
                   {/* la bande de lumière qui traverse l'or, de gauche à droite */}
                   <linearGradient id="cav-titre-eclat" gradientUnits="userSpaceOnUse" x1="-90" y1="0" x2="-10" y2="40">
                     <stop offset="0" stopColor="#fff" stopOpacity="0" /><stop offset=".5" stopColor="#fffbea" stopOpacity=".95" />
@@ -173,28 +162,23 @@ export default function SalleDesJeux({ temps, surPortail }) {
                     <text x="150" y="50" fontSize="50" textLength="270" lengthAdjust="spacingAndGlyphs">La Caverne</text>
                     <text x="150" y="104" fontSize="40" textLength="210" lengthAdjust="spacingAndGlyphs">aux Trésors</text>
                   </g>
-                  <path id="cav-titre-scintille" d="M0 -6 L1.2 -1.2 L6 0 L1.2 1.2 L0 6 L-1.2 1.2 L-6 0 L-1.2 -1.2 Z" />
                 </defs>
                 <g filter="url(#cav-onde-titre)">
                   <use href="#cav-titre-lettres" className="cav-hall__or" />
                   <use href="#cav-titre-lettres" className="cav-hall__eclat" />
                 </g>
-                {/* quelques éclats de lumière sur l'eau, qui s'allument tour à tour */}
-                {[[34, 22, 0], [262, 30, 1.6], [96, 112, 3.1], [214, 70, 4.3], [160, 6, 2.4]].map(([x, y, t]) => (
-                  <use key={x} href="#cav-titre-scintille" className="cav-hall__scintille" transform={`translate(${x} ${y})`} style={{ animationDelay: `${t}s` }} />
-                ))}
               </svg>
             </h1>
             <p>Quatre portes, quatre jeux. Une seule règle : savoir s&apos;arrêter à temps.</p>
           </header>
           {PORTES.map((p) => (
-            <div key={p.cle ?? p.g} className="cav-porte" style={{ ...p.place, '--teinte': p.teinte }}>
+            <div key={p.cle ?? p.g} className="cav-porte" style={{ ...p.place, '--teinte': p.teinte, '--pente': `${p.pente}deg` }}>
               <button type="button" className="cav-porte__ouverture" style={{ clipPath: p.forme }}
                 onClick={() => passer(p)} aria-label={`${p.nom} : ${p.sous}`} />
               {/* la lumière derrière la porte (hors du bouton, et après lui : son survol l'allume, voir caverne.css) */}
               <span className="cav-porte__lueur" style={{ clipPath: p.forme }} aria-hidden="true" />
               {/* le nom du jeu, incrusté en or dans la pierre, au-dessus de l'arc de la porte */}
-              <span className="cav-gravure" aria-hidden="true"><Inscription id={p.cle ?? p.g} nom={p.nom} /><small>{p.sous}</small></span>
+              <span className="cav-gravure" style={p.titre} aria-hidden="true"><Inscription lignes={p.lignes} /><small>{p.sous}</small></span>
               <span className="cav-porte__sol" aria-hidden="true" />
             </div>
           ))}

@@ -274,7 +274,7 @@
 
 /* le titre : au milieu du bassin, sur deux lignes d'or couchées à la surface (perspective), qui ondulent avec l'eau
    (SVG, SalleDesJeux.jsx : il tient toujours dans sa place, quelle que soit la taille de la salle). Une bande de
-   lumière passe sur l'or, un halo doré brille dans l'eau autour, et des éclats s'allument tour à tour sur l'eau. */
+   lumière passe sur l'or, et un halo doré brille dans l'eau autour. */
 .caverne .cav-hall { container-name: hall; }
 .caverne .cav-hall__tete {
   position: absolute; left: 0; right: 0; top: 64%; margin: 0 auto; width: 38%; pointer-events: none;
@@ -298,9 +298,7 @@
 .caverne .cav-hall__titre text { font-family: "Cinzel", "Cinzel Repli", serif; font-weight: 700; font-variant: small-caps; text-anchor: middle; }
 .caverne .cav-hall__or { fill: url(#cav-titre-or); stroke: rgba(10,60,70,.35); stroke-width: 1.5px; paint-order: stroke; stroke-linejoin: round; }
 .caverne .cav-hall__eclat { fill: url(#cav-titre-eclat); mix-blend-mode: screen; }
-.caverne .cav-hall__scintille { fill: #fff8e0; opacity: 0; transform-box: fill-box; transform-origin: center; animation: cav-scintille 5.5s ease-in-out infinite; }
-@keyframes cav-scintille { 0%, 70%, 100% { opacity: 0; scale: .3; } 80% { opacity: .95; scale: 1; } 90% { opacity: 0; scale: .5; } }
-@media (prefers-reduced-motion: reduce) { .caverne .cav-hall__tete::before, .caverne .cav-hall__scintille { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .caverne .cav-hall__tete::before { animation: none; } }
 
 /* une porte : son ouverture (le bouton, découpé à sa forme), sa plaque au-dessus, sa lumière au sol */
 .caverne .cav-porte { position: absolute; --teinte: 236,228,210; }
@@ -398,36 +396,24 @@
 }
 
 /* =====================================================================
-   Les noms des jeux, gravés dans la pierre au-dessus de chaque porte (02/11/2026) : une inscription en arc qui
-   suit l'arc de la porte (SalleDesJeux.jsx, Inscription), lettres d'or entre deux rainures filetées d'or, comme
-   les veines d'or de la paroi. Le creux de la gravure : une ombre en haut, une arête claire en bas ; une suie
-   légère derrière les détache de la pierre claire. Une lumière passe lentement sur l'or. Au survol, l'or prend
-   la teinte du jeu et la phrase du jeu apparaît au-dessus.
+   Les noms des jeux, taillés dans la pierre au-dessus de chaque porte (SalleDesJeux.jsx, Inscription) : à plat sur
+   le mur, en une ou deux lignes, centrés sur l'ouverture et aussi larges que l'encadrement de la porte (placés en
+   pixels de l'image, ils la suivent à toute taille) ; tournés comme leur mur (--pente). Rien derrière : la taille
+   elle-même (coupe, creux, liseré) est faite par le filtre #cav-taille. Au survol, la lumière du jeu monte dans la
+   taille et la phrase du jeu apparaît au-dessus.
    ===================================================================== */
 .caverne .cav-gravure {
-  position: absolute; left: -40%; right: -40%; bottom: calc(100% + 1.4cqw); z-index: 2; pointer-events: none;
+  position: absolute; z-index: 2; pointer-events: none;
+  transform: perspective(30cqw) rotateY(var(--pente, 0deg)); transform-origin: 50% 100%;
 }
-.caverne .cav-gravure::before {   /* la suie dans la pierre, derrière l'arc */
-  content: ''; position: absolute; inset: 0 6% 18%; z-index: -1;
-  background: radial-gradient(ellipse 50% 75% at 50% 75%, rgba(12,12,16,.5), rgba(12,12,16,.2) 55%, transparent 75%);
-}
-.caverne .cav-gravure__arc {
-  display: block; width: 100%; height: auto; overflow: visible;
-  filter: drop-shadow(0 -.07cqw 0 rgba(0,0,0,.95)) drop-shadow(0 .06cqw 0 rgba(255,236,190,.3)) drop-shadow(0 0 .25cqw rgba(240,190,90,.35));
-}
-/* par-dessus : l'auréole du survol (la même gravure, peinte une fois ; seule son opacité change) et la lumière qui
-   passe sur l'or (sans ombres : elle bouge à chaque image) */
-.caverne .cav-gravure__aureole, .caverne .cav-gravure__reflet { position: absolute; left: 0; top: 0; width: 100%; height: auto; overflow: visible; }
+.caverne .cav-gravure__arc { display: block; width: 100%; height: auto; }
+.caverne .cav-gravure__lettres { fill: url(#cav-nom-pierre); }
+/* par-dessus : la même gravure, éclairée par la lumière du jeu (peinte une fois ; seule son opacité change) */
 .caverne .cav-gravure__aureole {
+  position: absolute; left: 0; top: 0; width: 100%; height: auto;
   opacity: 0; will-change: opacity; transition: opacity .35s ease;
-  filter: drop-shadow(0 0 .3cqw rgba(255,226,150,.7)) drop-shadow(0 0 .8cqw rgba(var(--teinte),.9));
+  filter: brightness(1.12) drop-shadow(0 0 .3cqw rgba(var(--teinte),.6));
 }
-.caverne .cav-gravure__or { fill: url(#cav-titre-or); stroke: rgba(10,8,4,.6); stroke-width: .7px; paint-order: stroke; }   /* (un fin trait sombre : les lettres se lisent sur la pierre claire) */
-.caverne .cav-gravure__eclat { fill: url(#cav-nom-eclat); }
-.caverne .cav-gravure__rainure path { fill: none; stroke-linecap: round; }
-.caverne .cav-gravure__rainure path:first-child { stroke: rgba(8,8,12,.8); stroke-width: 2.8; }   /* le creux */
-.caverne .cav-gravure__rainure path:last-child { stroke: #d4ab58; stroke-width: 1.1; }
-.caverne .cav-gravure__losange { fill: url(#cav-titre-or); stroke: rgba(8,8,12,.8); stroke-width: .9; }              /* le filet d'or */
 .caverne .cav-gravure small {
   position: absolute; left: 50%; bottom: calc(100% + .2em); translate: -50% 0; opacity: 0;
   font-family: "Cinzel", "Cinzel Repli", serif; font-size: max(.58rem, .8cqw); letter-spacing: .1em; white-space: nowrap;
