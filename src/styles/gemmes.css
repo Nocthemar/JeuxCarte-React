@@ -277,28 +277,81 @@ body.gemmes-fond-plage { --fond-gemmes: url("/img/Fond gemmes/gemmes-plage.webp"
 
 /* Une gemme : placée par sa case ; elle glisse (échange, chute) d'une case à l'autre. Elle est déplacée par
    transform (de côté) et translate (en hauteur, avec sa chute) : la carte graphique les fait glisser sans
-   recalculer la grille à chaque image, et chaque sens garde son propre élan (une case = 100 % de la gemme) */
+   recalculer la grille à chaque image (une case = 100 % de la gemme). Les temps viennent de Table.jsx :
+   --t-echange (sur la grille), --duree-chute (sur chaque gemme qui tombe, selon sa hauteur). */
+.gm-grille { --t-echange: .19s; --t-eclat: .28s; }
 .gm-gemme {
   position: absolute; left: 0; top: 0;
   transform: translateX(calc(var(--x) * 100%)); translate: 0 calc(var(--y) * 100%);
   display: grid; box-sizing: border-box; width: calc(100% / var(--n)); height: calc(100% / var(--n)); padding: calc(8% / var(--n));
   border: 0; background: none; cursor: pointer;
-  transition: transform .22s cubic-bezier(.3,.7,.4,1), translate .3s cubic-bezier(.5,0,.75,.2);
+  /* l'échange : les deux sens au même pas, qui part et se pose en douceur */
+  transition: transform var(--t-echange) cubic-bezier(.45,0,.2,1), translate var(--t-echange) cubic-bezier(.45,0,.2,1);
   -webkit-tap-highlight-color: transparent;
 }
-.gm-gemme__svg { display: block; width: 100%; height: 100%; overflow: visible; filter: drop-shadow(0 3px 3px rgba(0,0,0,.6)); transition: transform .18s ease, filter .18s ease; }
-.est-mon-tour .gm-gemme:hover .gm-gemme__svg { transform: scale(1.08); filter: drop-shadow(0 3px 3px rgba(0,0,0,.6)) brightness(1.15); }
+.gm-grille:not(.est-mon-tour) .gm-gemme { cursor: default; }
+/* celle qui part passe par-dessus l'autre */
+.gm-gemme.est-devant { z-index: 2; }
+.gm-gemme.est-devant .gm-gemme__svg { filter: drop-shadow(0 6px 5px rgba(0,0,0,.65)); }
+/* la chute : de plus en plus vite, puis la gemme se pose (un léger tassement) */
+.gm-gemme.est-tombe-a, .gm-gemme.est-tombe-b {
+  transition: transform var(--t-echange) cubic-bezier(.45,0,.2,1), translate var(--duree-chute, .3s) cubic-bezier(.55,0,.9,.45);
+}
+.gm-gemme.est-tombe-a .gm-gemme__svg { animation: gm-pose-a .2s ease-out var(--duree-chute, .3s); }
+.gm-gemme.est-tombe-b .gm-gemme__svg { animation: gm-pose-b .2s ease-out var(--duree-chute, .3s); }
+@keyframes gm-pose-a { 0% { transform: translateY(5%) scale(1.07, .88); } 55% { transform: translateY(-2%) scale(.98, 1.03); } }
+@keyframes gm-pose-b { 0% { transform: translateY(5%) scale(1.07, .88); } 55% { transform: translateY(-2%) scale(.98, 1.03); } }
+
+/* La case sous la gemme : rien au repos ; le survol, le choix et les voisines échangeables y laissent leur marque */
+.gm-gemme::before {
+  content: ""; position: absolute; inset: 5%; z-index: -1; pointer-events: none; border-radius: 3px;
+  opacity: 0; transition: opacity .15s ease, box-shadow .15s ease;
+}
+.gm-gemme__svg {
+  display: block; width: 100%; height: 100%; overflow: visible; filter: drop-shadow(0 3px 3px rgba(0,0,0,.6));
+  translate: var(--tire-x, 0px) var(--tire-y, 0px);
+  transition: transform .15s ease, filter .15s ease, translate .16s cubic-bezier(.3,.7,.4,1);
+}
+/* tirée du doigt ou de la souris : elle suit sans retard (sans dépasser le seuil, posé dans Table.jsx) */
+.gm-gemme[data-tiree] { z-index: 2; }
+.gm-gemme[data-tiree] .gm-gemme__svg { transition: transform .15s ease, filter .15s ease; transform: scale(1.1); }
+@media (hover: hover) {
+  .est-mon-tour .gm-gemme:hover:not(.est-choisie) .gm-gemme__svg { transform: scale(1.08); filter: drop-shadow(0 3px 3px rgba(0,0,0,.6)) brightness(1.15); }
+  .est-mon-tour .gm-gemme:hover::before { opacity: 1; background: rgba(227,207,159,.06); box-shadow: inset 0 0 0 1px rgba(227,207,159,.25); }
+  /* une voisine survolée se penche vers la gemme choisie : on voit l'échange avant de le faire */
+  .est-mon-tour .gm-gemme.est-voisine:hover:not([data-tiree]) .gm-gemme__svg { translate: calc(var(--vers-x, 0) * 12%) calc(var(--vers-y, 0) * 12%); }
+  .est-mon-tour .gm-gemme.est-voisine:hover::before { background: rgba(227,207,159,.12); box-shadow: inset 0 0 0 2px rgba(227,207,159,.75); }
+}
 .gm-gemme:focus-visible { outline: 2px solid var(--or-pale); outline-offset: -3px; }
+/* la gemme choisie : un liseré d'or dans sa case, elle grandit et luit */
+.gm-gemme.est-choisie { z-index: 1; }
+.gm-gemme.est-choisie::before {
+  opacity: 1; background: radial-gradient(circle, rgba(227,207,159,.22), rgba(227,207,159,.05) 70%);
+  box-shadow: inset 0 0 0 2px var(--or-pale), 0 0 14px rgba(227,207,159,.35);
+}
 .gm-gemme.est-choisie .gm-gemme__svg { transform: scale(1.14); animation: gm-choisie 1s ease-in-out infinite; }
 @keyframes gm-choisie { 50% { filter: drop-shadow(0 0 8px rgba(255,240,200,.85)) brightness(1.25); } }
+/* ses quatre voisines, celles avec qui l'échanger : un liseré fin qui respire ; les autres s'effacent un peu */
+.gm-gemme.est-voisine::before { opacity: 1; box-shadow: inset 0 0 0 1px rgba(227,207,159,.55); animation: gm-voisine 1.2s ease-in-out infinite; }
+@keyframes gm-voisine { 50% { box-shadow: inset 0 0 0 1px rgba(227,207,159,.9), inset 0 0 12px rgba(227,207,159,.15); } }
+.gm-grille.a-un-choix .gm-gemme:not(.est-choisie, .est-voisine) .gm-gemme__svg { filter: drop-shadow(0 3px 3px rgba(0,0,0,.6)) brightness(.72) saturate(.8); }
+/* l'adversaire montre l'échange qu'il va faire : le même liseré, en rouge sombre */
+.gm-gemme.est-visee::before { opacity: 1; background: rgba(194,65,76,.12); box-shadow: inset 0 0 0 2px rgba(214,96,106,.8); }
+.gm-gemme.est-visee .gm-gemme__svg { transform: scale(1.08); }
+/* un échange refusé : les deux gemmes reviennent en secouant la tête */
+.gm-gemme.est-refusee .gm-gemme__svg { animation: gm-refus .3s ease-out var(--t-echange); }
+@keyframes gm-refus { 25% { transform: translateX(-7%) rotate(-5deg); } 60% { transform: translateX(5%) rotate(3deg); } }
 .gm-gemme.est-indice .gm-gemme__svg { animation: gm-indice 1.3s ease-in-out infinite; }
 @keyframes gm-indice { 0%, 100% { transform: none; } 50% { transform: scale(1.12) rotate(-6deg); filter: drop-shadow(0 0 6px rgba(227,207,159,.7)); } }
-/* les nouvelles tombent d'au-dessus de la grille */
-.gm-gemme.est-neuve { animation: gm-tombe calc(.18s + var(--chute) * .05s) cubic-bezier(.5,0,.75,.2) both; }
+/* les nouvelles tombent d'au-dessus de la grille, au même pas que les autres */
+.gm-gemme.est-neuve { animation: gm-tombe var(--duree-chute, .3s) cubic-bezier(.55,0,.9,.45) both; }
 @keyframes gm-tombe { from { translate: 0 calc((var(--y) - var(--chute)) * 100%); } }
+/* la grille rebattue : les gemmes renaissent en vague, d'un coin à l'autre */
+.gm-gemme.est-rebattue .gm-gemme__svg { animation: gm-rebat .32s cubic-bezier(.2,1.3,.4,1) calc((var(--x) + var(--y)) * 14ms) both; }
+@keyframes gm-rebat { from { transform: scale(0) rotate(-40deg); opacity: 0; } }
 /* elles éclatent : un flash, puis plus rien */
-.gm-gemme.est-eclatee { pointer-events: none; }
-.gm-gemme.est-eclatee .gm-gemme__svg { animation: gm-eclate .3s ease-in forwards; }
+.gm-gemme.est-eclatee { pointer-events: none; z-index: 1; }
+.gm-gemme.est-eclatee .gm-gemme__svg { animation: gm-eclate var(--t-eclat) ease-in forwards; }
 @keyframes gm-eclate {
   0% { transform: scale(1); filter: brightness(1); }
   35% { transform: scale(1.3); filter: brightness(2.2) drop-shadow(0 0 12px #fff); }
@@ -321,6 +374,22 @@ body.gemmes-fond-plage { --fond-gemmes: url("/img/Fond gemmes/gemmes-plage.webp"
 .gm-eclat i:nth-child(3) { --dx: 6px; --dy: -40px; } .gm-eclat i:nth-child(4) { --dx: 30px; --dy: 22px; }
 .gm-eclat i:nth-child(5) { --dx: -34px; --dy: 16px; } .gm-eclat i:nth-child(6) { --dx: -4px; --dy: 36px; }
 @keyframes gm-eclat { to { transform: translate(var(--dx), var(--dy)) rotate(220deg) scale(.3); opacity: 0; } }
+/* et une onde de lumière, de la couleur de la gemme */
+.gm-eclat::before {
+  content: ""; position: absolute; width: 44px; height: 44px; margin: -22px; rotate: 45deg;
+  border: 2px solid var(--c, #fff); opacity: 0; animation: gm-onde .42s ease-out forwards;
+}
+@keyframes gm-onde { 0% { opacity: .9; transform: scale(.3); } 100% { opacity: 0; transform: scale(1.35); } }
+
+/* Le nombre d'un grand alignement : il s'élève au milieu des gemmes et s'efface */
+.gm-compte {
+  position: absolute; z-index: 5; pointer-events: none;
+  left: calc((var(--x) + .5) * 100% / var(--n)); top: calc((var(--y) + .5) * 100% / var(--n)); translate: -50% -50%;
+  font-family: "Cinzel", "Cinzel Repli", serif; font-weight: 700; font-size: clamp(1rem, 3.2cqi, 1.6rem);
+  color: var(--or-pale); text-shadow: 0 0 12px rgba(227,207,159,.5), 0 2px 6px rgba(0,0,0,.95);
+  animation: gm-compte .9s cubic-bezier(.2,.8,.3,1) forwards;
+}
+@keyframes gm-compte { 0% { opacity: 0; transform: scale(.6); } 20% { opacity: 1; transform: scale(1.15); } 100% { opacity: 0; transform: translateY(-28px); } }
 
 /* Les annonces au centre de la grille (le tour, les chaînes) */
 .gm-banniere {
@@ -565,9 +634,11 @@ body.gemmes-fond-plage { --fond-gemmes: url("/img/Fond gemmes/gemmes-plage.webp"
 
 /* ---------- Animations coupées (Paramètres) ou système en mouvement réduit ---------- */
 .anim-reduites .gm-gemme, .anim-reduites .gm-gemme__svg, .anim-reduites .gm-pv__traine { transition: none; }
-.anim-reduites .gm-gemme.est-neuve, .anim-reduites .gm-eclat, .anim-reduites .gm-table.est-secouee, .anim-reduites .gm-combattant.est-touche { animation: none; }
+.anim-reduites .gm-gemme.est-neuve, .anim-reduites .gm-eclat, .anim-reduites .gm-table.est-secouee, .anim-reduites .gm-combattant.est-touche,
+.anim-reduites .gm-gemme .gm-gemme__svg, .anim-reduites .gm-gemme::before, .anim-reduites .gm-compte { animation: none; }
 @media (prefers-reduced-motion: reduce) {
-  .gm-table.est-secouee, .gm-combattant.est-touche, .gm-gemme.est-choisie .gm-gemme__svg, .gm-gemme.est-indice .gm-gemme__svg { animation: none; }
+  .gm-table.est-secouee, .gm-combattant.est-touche, .gm-gemme.est-choisie .gm-gemme__svg, .gm-gemme.est-indice .gm-gemme__svg,
+  .gm-gemme.est-voisine::before, .gm-gemme.est-refusee .gm-gemme__svg, .gm-gemme.est-tombe-a .gm-gemme__svg, .gm-gemme.est-tombe-b .gm-gemme__svg { animation: none; }
 }
 
 /* La jauge qui se charge (les gemmes alignées) : la carte s'éclaire, un « +n » s'envole */
