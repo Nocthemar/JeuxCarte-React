@@ -1,11 +1,11 @@
 // =====================================================================
 //  La roue des apparences, ouverte en grand (ancien JS/collection-roue.js, même HTML)
-//  Quatre catégories : plateaux (des Gemmes), thèmes, titres, bannières (ce que le joueur possède).
+//  Quatre catégories : plateaux (la table du Duel et des Gemmes), thèmes, titres, bannières (ce que le joueur possède).
 //  Les objets de la catégorie sont posés tout autour de la roue ; on la fait tourner (glisser, molette,
 //  flèches du clavier ou boutons ‹ ›) : celui qui arrive sous le repère du haut s'affiche au centre,
 //  avec « Appliquer » (ou « Retirer » s'il est déjà équipé).
 //  Équiper : equip_cosmetic / unequip_cosmetic (thèmes, titres, bannières),
-//            equiper_plateau (plateaux ; null = plateau par défaut, l'arène de pierre).
+//            equiper_plateau (plateaux ; null = plateau par défaut).
 //
 //  props : objets ({ plateau, theme, title, banner } : listes chargées par la page),
 //          equipes ({ plateau, theme, title, banner } : id équipé de chaque sorte), surEquiper(kind, id), anime
@@ -34,7 +34,7 @@ function lireCategorie() {
   try { const c = localStorage.getItem(CLE_CATEGORIE); return CATEGORIES.some((x) => x.kind === c) ? c : 'plateau'; } catch { return 'plateau'; }
 }
 
-// Petit aperçu d'un objet (sur la roue et, en grand, au centre) ; un plateau : le fond qu'il donne à la table des Gemmes
+// Petit aperçu d'un objet (sur la roue et, en grand, au centre) ; un plateau : sa table (Duel et Gemmes)
 function Apercu({ o }) {
   if (o.kind === 'plateau') {
     return <img className="apercu-roue apercu-roue--plateau" src={urlPublique(fondGemmes(o.defaut ? 'defaut' : o.id, true))} alt="" draggable="false" />;
@@ -205,7 +205,7 @@ export default function Roue({ objets, equipes, surEquiper, anime }) {
               <span className="roue__apercu"><Apercu o={o} /></span>
               <span className="roue__type">{LIBELLE[o.kind]}{liste.length > 1 ? ` · ${i + 1} / ${liste.length}` : ''}</span>
               <strong className="roue__nom">{o.nom}</strong>
-              {o.defaut && <small className="roue__note">Gratuit : l’arène de pierre</small>}
+              {o.defaut && <small className="roue__note">Gratuit</small>}
               {retirable && <small className="roue__note">Équipé</small>}
               {retirable
                 ? <button type="button" className="roue__action roue__action--retirer" data-roue-action="retirer" disabled={occupe} onClick={() => agir('retirer')}>Retirer</button>

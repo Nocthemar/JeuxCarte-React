@@ -8,7 +8,7 @@
 //   I.   les boosters de cartes, l'offrande gratuite (components/boutique/Boosters.jsx), et les badges de la
 //        Caverne aux Trésors (components/boutique/EtalBadges.jsx) ;
 //   II.  l'armoire des apparences (bannières, titres, thèmes) ;
-//   III. l'atelier des plateaux des Gemmes (components/boutique/Etals.jsx).
+//   III. l'atelier des plateaux du Duel et des Gemmes (components/boutique/Etals.jsx).
 //  (L'étal du marchand ambulant a été retiré du jeu le 20/10/2026 ; sa table daily_shop reste en base,
 //  le bot Discord et le site Nocthémar s'en servent.)
 //  La bourse (solde) reste en haut ; après chaque achat, tout est rechargé (le solde est commun).
@@ -36,9 +36,9 @@ const ECHOPPES = [
     intro: 'Bannières, titres et thèmes pour ton profil. Une fois acheté, équipe-le depuis ton profil.',
   },
   {
-    id: 'plateaux', num: 'III', court: 'Plateaux', sur: 'Plateaux des Gemmes', titre: 'L\'atelier des plateaux',
-    porte: 'Change d\'arène : les plateaux des saisons pour tes parties de Gemmes.',
-    intro: 'Un plateau des saisons habille la table de tes parties de Gemmes ; choisis-le quand tu veux dans la roue de ta Collection.',
+    id: 'plateaux', num: 'III', court: 'Plateaux', sur: 'Plateaux du Duel et des Gemmes', titre: 'L\'atelier des plateaux',
+    porte: 'Change d\'arène : les plateaux des saisons pour tes duels et tes Gemmes.',
+    intro: 'Un plateau des saisons habille la table de tes duels et de tes parties de Gemmes ; choisis-le quand tu veux dans la roue de ta Collection.',
   },
 ];
 const AUCUN = new Set();

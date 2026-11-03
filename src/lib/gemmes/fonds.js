@@ -1,6 +1,7 @@
 // =====================================================================
 //  Les fonds des Gemmes : un par plateau de la Boutique (mêmes ids que PLATEAUX, lib/donneesDuel.js).
-//  Le plateau équipé (boutique, roue des apparences de la Collection) habille la table des Gemmes.
+//  Le plateau équipé (boutique, roue des apparences de la Collection) habille la table des Gemmes, et celle du Duel
+//  (la même image, en grand : lib/duel/tables.js).
 //  public/img/Fond gemmes/gemmes-<id>.webp (la table, 1670 × 941) et gemmes-<id>-mini.webp (aperçus, 520 px).
 // =====================================================================
 export const FONDS_GEMMES = ['defaut', 'automne', 'ete', 'hiver', 'printemps', 'cristaux', 'flamme', 'plage'];

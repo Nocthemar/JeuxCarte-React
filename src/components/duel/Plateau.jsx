@@ -1,8 +1,8 @@
 // =====================================================================
-//  Le plateau du duel : une table vue de dessus (Bois, Glace, Automne, Braise : lib/duel/tables.js)
+//  Le plateau du duel : une table vue de dessus, celle du plateau équipé par le joueur (lib/duel/tables.js)
 //  À gauche, chaque camp : sa plaque (portrait, PV, énergie, actions), son Grimoire et son Tombeau ;
 //  au centre, les deux rangées de 5 places et la ligne du d20 ; à droite, les commandes du tour ;
-//  en haut à droite, le journal (terrain, derniers jets, outils, choix de la table) ; en bas, ta main en
+//  en haut à droite, le journal (terrain, derniers jets, outils) ; en bas, ta main en
 //  éventail : touche une carte pour la jouer, ou glisse-la sur la table (ou sur ton Tombeau pour la défausser).
 //  Il ne fait qu'AFFICHER l'état de la partie : chaque geste est remonté à TableDuel (props « sur… »).
 //  Les animations (lib/duel/animations.js) retrouvent les éléments par leurs identifiants et classes :
@@ -11,11 +11,10 @@
 //  Styles : styles/duel-tables.css
 // =====================================================================
 import { createPortal } from 'react-dom';
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useContext, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import CarteDuel, { FaceCarte, Capacites, Stats } from './CarteDuel.jsx';
 import { animationsReduites } from '../../lib/preferences.js';
-import { TABLES, imageTable, lireTable, ecrireTable, lancerAmbiance } from '../../lib/duel/tables.js';
-import { jouerSon } from '../../lib/son.js';
+import { imageTable, tableDe, PlateauDuel, lancerAmbiance } from '../../lib/duel/tables.js';
 import { urlPublique } from '../../lib/chemins.js';
 import { CAPACITES, ENERGIE_MAX, COUT_DESTIN, COUT_DEFAUSSE, COUT_MEDITER } from '../../data/regles.js';
 import {
@@ -313,16 +312,11 @@ export default function Plateau({
   const terrain = terrainDe(etat);
   const choisie = sel.attaquant ? trouver(j, sel.attaquant) : null;
   const act = capaciteActive(choisie);
-  const [table, setTable] = useState(lireTable);
+  // La table : celle du plateau équipé dans la Collection (lib/duel/tables.js)
+  const table = tableDe(useContext(PlateauDuel));
   const [depot, setDepot] = useState(null);   // pendant un glisser : 'table' | 'tombeau' | null
   usePioche(j.main, a.main.length);
 
-  const choisirTable = (t) => {
-    if (t.id === table.id) return;
-    ecrireTable(t.id);
-    setTable(t);
-    jouerSon('clic');
-  };
   // Plus rien à faire ce tour : « Fin du tour » s'allume
   const rienAFaire = sel.monTour && (j.actions <= 0
     || (!j.main.some((_, i) => peutJouer(etat, 'joueur', i)) && !j.terrain.some((u) => u && (peutAttaquer(u) || peutDefendre(u) || peutActiver(etat, 'joueur', u.uid)))));
@@ -422,15 +416,8 @@ export default function Plateau({
 
       <Main etat={etat} sel={sel} surCarte={surCarte} surDeposer={surDeposer} loupe={loupe} setDepot={setDepot} />
 
-      {/* Le journal : la table, le terrain, les derniers jets, les outils */}
+      {/* Le journal : le terrain, les derniers jets, les outils */}
       <aside className="pt-journal">
-        <div className="pt-tables" role="radiogroup" aria-label="Table">
-          {TABLES.map((t) => (
-            <button key={t.id} type="button" role="radio" aria-checked={t.id === table.id} className={t.id === table.id ? 'est-choisie' : ''}
-              title={`Table : ${t.nom}`} aria-label={t.nom} style={{ '--acc': t.acc }} onClick={() => choisirTable(t)} />
-          ))}
-          <span>{table.nom}</span>
-        </div>
         {terrain && (
           <div className="pt-terrain" title={terrain.texte}>
             <b>{terrain.nom}</b><span>{terrain.texte}</span>

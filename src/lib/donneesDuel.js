@@ -4,14 +4,14 @@
 //    collection       : les unités de la collection du joueur (son Grimoire se construit avec)
 //    objets           : ses objets de pouvoir (table inventory) qui existent comme cartes
 //    favorites        : les id des cartes du deck de son profil (proposées en premier)
-//    plateau          : le plateau choisi pour ses duels (défaut : l'arène de pierre)
+//    plateau          : le plateau équipé, la table de ses duels et de ses Gemmes (défaut : 'defaut')
 //  useDonneesDuel(joueur) -> { pret, erreur, ...ces données }
 // =====================================================================
 import { useEffect, useState } from 'react';
 import { supabase } from './supabase.js';
 import { uniteDepuisCarte, objetDepuisNom } from '../moteur/index.js';
 
-// Les plateaux que le CSS sait afficher (classe plateau-… sur <body>)
+// Les plateaux qui ont une table (lib/duel/tables.js, lib/gemmes/fonds.js)
 export const PLATEAUX = ['defaut', 'automne', 'ete', 'hiver', 'printemps', 'cristaux', 'flamme', 'plage'];
 
 // Seulement les vraies cartes illustrées (pas la carte d'exemple)

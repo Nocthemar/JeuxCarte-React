@@ -6,8 +6,8 @@
 //  #/duel?salon=<CODE> : le salon d'un duel en ligne (le lien d'invitation) ; il reste ouvert du menu
 //  au duel, puis à la revanche (lib/duel/useLigne.js).
 //
-//  La table du duel (Bois, Glace, Automne, Braise) se choisit pendant la partie (lib/duel/tables.js) ; les plateaux
-//  achetés en boutique habillent les Gemmes, plus le Duel.
+//  La table du duel est celle du plateau équipé (acheté en Boutique, choisi dans la Collection ; le même habille
+//  les Gemmes) : lib/duel/tables.js. Pour en essayer un : #/duel?saison=hiver (printemps, ete, automne, cristaux, flamme, plage).
 // =====================================================================
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -19,7 +19,8 @@ import Regles from '../components/duel/Regles.jsx';
 import Infobulle from '../components/duel/Infobulle.jsx';
 import { useAuth } from '../lib/auth.js';
 import { useNotifier } from '../lib/notification.js';
-import { useDonneesDuel } from '../lib/donneesDuel.js';
+import { useDonneesDuel, PLATEAUX } from '../lib/donneesDuel.js';
+import { PlateauDuel } from '../lib/duel/tables.js';
 import { useProfondeur } from '../lib/profondeur.js';
 import { useLigne } from '../lib/duel/useLigne.js';
 import { grimoireDuJoueur } from '../lib/grimoire.js';
@@ -81,6 +82,8 @@ export default function Duel() {
     return () => document.removeEventListener('fullscreenchange', surChangement);
   }, []);
 
+  const saisonForcee = params.get('saison');
+  const plateau = PLATEAUX.includes(saisonForcee) ? saisonForcee : (donnees.plateau ?? 'defaut');
   const classes = `page-profil page-jeu${duel || duelLigne ? ' en-duel' : ''}${conseils ? ' avec-conseils' : ''}`;
 
   const lancer = (cartes, difficulte) => {
@@ -145,6 +148,7 @@ export default function Duel() {
         <div className="scene__brume scene__brume--2" />
       </div>
 
+      <PlateauDuel.Provider value={plateau}>
       <main className="jeu-wrap">
         {idHistoire ? null : duelLigne ? (
           <DuelEnLigne key={`l${duelLigne.n}`} duel={duelLigne} ligne={ligne} salon={ligne.salon} outils={outils}
@@ -155,6 +159,7 @@ export default function Duel() {
               surRejouer={() => lancer(duel.cartes, duel.difficulte)} surMenu={retourMenu} />
           : <Menu joueur={joueur} donnees={donnees} ligne={ligne} surRegles={() => setRegles(true)} surJouer={lancer} />}
       </main>
+      </PlateauDuel.Provider>
 
       <Regles ouverte={regles} surFermeture={() => setRegles(false)} />
       <Infobulle />

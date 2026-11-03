@@ -1,34 +1,38 @@
 // =====================================================================
-//  Les tables du duel : le plateau sur lequel la partie se joue (Bois, Glace, Automne, Braise).
-//  Le joueur la choisit pendant le duel (les losanges en haut de l'écran) ; son choix est retenu dans
-//  le navigateur. Rien à voir avec les plateaux achetés en boutique (ils habillent les Gemmes).
-//  public/img/Tables duel/<id>.webp (1280 × 720, vue de dessus, cadre compris)
+//  Les tables du duel : la table sur laquelle la partie se joue, celle du PLATEAU ÉQUIPÉ par le joueur
+//  (acheté en Boutique, choisi dans la roue de sa Collection ; le même habille les Gemmes). Son image est le
+//  fond des Gemmes de ce plateau, en grand (lib/gemmes/fonds.js : img/Fond gemmes/gemmes-<id>.webp).
+//  La page Duel donne le plateau (PlateauDuel, un contexte React) ; #/duel?saison=hiver en force un pour l'essayer.
 //
-//  L'ambiance : un seul canvas plein écran, sous les cartes (poussière dorée, neige, feuilles, braises),
+//  L'ambiance : un seul canvas plein écran, sous les cartes (poussière dorée, neige, feuilles, pétales, braises…),
 //  et les éclats low poly qui jaillissent d'une carte posée, frappée ou détruite (au-dessus de tout).
 //  Coupées avec les animations ; moins nombreuses en effets réduits / mode performance.
 // =====================================================================
+import { createContext } from 'react';
 import { animationsReduites, effetsLegers, modePerformance } from '../preferences.js';
 import { urlPublique } from '../chemins.js';
+import { fondGemmes } from '../gemmes/fonds.js';
 
-export const TABLES = [
-  { id: 'bois', nom: 'Bois', acc: '#e0a24e', amb: 'poussiere' },
-  { id: 'glace', nom: 'Glace', acc: '#8fc8ff', amb: 'neige' },
-  { id: 'automne', nom: 'Automne', acc: '#ff9a3a', amb: 'feuilles' },
-  { id: 'braise', nom: 'Braise', acc: '#ff6a2a', amb: 'braises' },
-];
-const CLE = 'duel-table';
-export const imageTable = (id) => urlPublique(`img/Tables duel/${id}.webp`);
-export function lireTable() {
-  try { const id = localStorage.getItem(CLE); return TABLES.find((t) => t.id === id) ?? TABLES[0]; } catch { return TABLES[0]; }
-}
-export function ecrireTable(id) {
-  try { localStorage.setItem(CLE, id); } catch { /* stockage indisponible */ }
-}
+// Une table par plateau : acc = la couleur des liserés, lueurs et du bouton du tour ; amb = l'ambiance ;
+// teintes = les couleurs de ses particules
+export const TABLES = {
+  defaut: { acc: '#e0a24e', amb: 'poussiere', teintes: ['#ffd9a0'] },
+  printemps: { acc: '#f2a7c3', amb: 'feuilles', teintes: ['#f7c6d6', '#f2a7c3', '#fde3ea', '#e98bb0'] },
+  ete: { acc: '#e6c25a', amb: 'feuilles', teintes: ['#8cc63f', '#6fae2c', '#b5d96a', '#f0d36b'] },
+  automne: { acc: '#ff9a3a', amb: 'feuilles', teintes: ['#e8541c', '#f08a22', '#c43a1a', '#f4b030'] },
+  hiver: { acc: '#8fc8ff', amb: 'neige', teintes: ['#ffffff'] },
+  cristaux: { acc: '#b48cff', amb: 'poussiere', teintes: ['#c9a6ff', '#e2d2ff'] },
+  flamme: { acc: '#ff6a2a', amb: 'braises', teintes: ['#ff8a2a', '#ffd070'] },
+  plage: { acc: '#4fc3d9', amb: 'poussiere', teintes: ['#ffe2a8', '#bff0f5'] },
+};
+for (const [id, t] of Object.entries(TABLES)) t.id = id;
+export const tableDe = (plateau) => TABLES[plateau] ?? TABLES.defaut;
+export const imageTable = (id) => urlPublique(fondGemmes(id));
+// Le plateau équipé, donné par la page Duel à la table (components/duel/Plateau.jsx)
+export const PlateauDuel = createContext('defaut');
 
 const TAU = Math.PI * 2;
 const rnd = (a, b) => a + Math.random() * (b - a);
-const FEUILLES = ['#e8541c', '#f08a22', '#c43a1a', '#f4b030'];
 
 // Les éclats en cours, partagés entre le canvas d'ambiance (qui les dessine) et eclats() (qui les lance)
 let eclatsEnCours = [];
@@ -57,7 +61,7 @@ export function eclats(cible, couleurs, n = 16, force = 1) {
 // Lance l'ambiance sur deux canvas (fond : particules du plateau ; dessus : éclats). Rend arreter().
 export function lancerAmbiance(fond, dessus) {
   const cf = fond.getContext('2d'); const cd = dessus.getContext('2d');
-  let W = 0; let H = 0; let raf = 0; let last = 0; let amb = 'poussiere'; let A = [];
+  let W = 0; let H = 0; let raf = 0; let last = 0; let amb = 'poussiere'; let teintes = ['#ffd9a0']; let A = [];
   toile = dessus;
   // Le fond se dessine en définition normale (de petites particules n'ont pas besoin de plus) : c'est lui
   // qui change à chaque image, il doit coûter peu. Les éclats, brefs, jusqu'à 1,5 fois.
@@ -90,15 +94,15 @@ export function lancerAmbiance(fond, dessus) {
         } else if (amb === 'feuilles') {
           a.y += (28 + a.s * 22) * dt; a.x += Math.sin(a.p * 1.1 + a.k * 6) * 26 * dt + 8 * dt; a.r += dt * (a.k - 0.5) * 4;
           cf.save(); cf.translate(a.x, a.y); cf.rotate(a.r); cf.scale(1, 0.55 + 0.45 * Math.abs(Math.sin(a.p * 1.4)));
-          cf.globalAlpha = 0.85; cf.fillStyle = FEUILLES[(a.k * 4) | 0]; const s = 4 + a.s * 3;
+          cf.globalAlpha = 0.85; cf.fillStyle = teintes[(a.k * teintes.length) | 0]; const s = 4 + a.s * 3;
           cf.beginPath(); cf.moveTo(0, -s); cf.lineTo(s * 0.7, 0); cf.lineTo(0, s * 1.1); cf.lineTo(-s * 0.7, 0); cf.fill(); cf.restore();
         } else if (amb === 'braises') {
           a.y -= (20 + a.s * 28) * dt; a.x += Math.sin(a.p * 1.7 + a.k * 6) * 16 * dt;
-          cf.globalAlpha = Math.max(0, 0.35 + 0.3 * Math.sin(a.p * 3 + a.k * 9) + 0.3); cf.fillStyle = a.k > 0.5 ? '#ff8a2a' : '#ffd070';
+          cf.globalAlpha = Math.max(0, 0.35 + 0.3 * Math.sin(a.p * 3 + a.k * 9) + 0.3); cf.fillStyle = teintes[(a.k * teintes.length) | 0];
           cf.save(); cf.translate(a.x, a.y); cf.rotate(a.p); const s = 1 + a.s * 1.4; cf.fillRect(-s, -s, s * 2, s * 2); cf.restore();
         } else {
           a.y -= (6 + a.s * 7) * dt; a.x += Math.sin(a.p * 0.7 + a.k * 6) * 7 * dt;
-          cf.globalAlpha = 0.12 + 0.22 * Math.abs(Math.sin(a.p * 0.9 + a.k * 9)); cf.fillStyle = '#ffd9a0';
+          cf.globalAlpha = 0.12 + 0.22 * Math.abs(Math.sin(a.p * 0.9 + a.k * 9)); cf.fillStyle = teintes[(a.k * teintes.length) | 0];
           cf.beginPath(); cf.arc(a.x, a.y, a.s * 1.6, 0, TAU); cf.fill();
         }
         if (a.y < -14 || a.y > H + 14 || a.x < -20 || a.x > W + 20) Object.assign(a, creer(false));
@@ -126,6 +130,7 @@ export function lancerAmbiance(fond, dessus) {
     // Change l'ambiance (une table) : de nouvelles particules, réparties sur tout l'écran
     regler(table) {
       amb = table.amb;
+      teintes = table.teintes;
       const n = animationsReduites() || modePerformance() ? 0 : effetsLegers() ? 18 : 40;
       A = Array.from({ length: n }, () => creer(true));
     },

@@ -65,10 +65,8 @@
     top: calc(4px + env(safe-area-inset-top, 0px)); right: 6px;
     width: 104px; gap: 5px; padding: 6px 6px 7px; border-radius: 10px;
   }
-  .pt-terrain, .pt-jets, .pt-journal .volume, .pt-tables span { display: none; }
-  .pt-tables { justify-content: space-between; gap: 4px; }
-  .pt-tables button { width: 13px; height: 13px; }
-  .pt-journal .historique__outils { padding: 5px 0 0; gap: 0; }
+  .pt-terrain, .pt-jets, .pt-journal .volume { display: none; }
+  .pt-journal .historique__outils { padding: 0; gap: 0; box-shadow: none; }
   .pt-journal .historique__boutons { gap: 3px; }
   .pt-journal::after { border-radius: 10px; background: none; }
   .pt-journal .btn-outil { width: 23px; height: 23px; }
