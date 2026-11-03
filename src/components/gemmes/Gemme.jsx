@@ -3,6 +3,8 @@
 //  une table au centre, et des facettes plus claires du côté de la lumière (en haut à gauche).
 //  Les dégradés de chaque sorte (#gm-<sorte>) sont posés une seule fois par <DefsGemmes />.
 // =====================================================================
+import { memo } from 'react';
+
 // Une forme par rareté (la gemme de la couleur de la rareté, comme partout dans le jeu)
 const FORMES = {
   // Commune : une pierre brute, grise
@@ -54,7 +56,8 @@ export function DefsGemmes() {
   );
 }
 
-export default function Gemme({ sorte }) {
+// (mémorisée : la grille en compte 64, qui ne changent pas quand on choisit une gemme)
+export default memo(function Gemme({ sorte }) {
   const { contour, table } = FORMES[sorte];
   return (
     <svg className="gm-gemme__svg" viewBox="0 0 100 100" aria-hidden="true" focusable="false">
@@ -65,4 +68,4 @@ export default function Gemme({ sorte }) {
       <polygon points={pts(contour)} fill="none" stroke="rgba(10,8,6,.75)" strokeWidth="3" strokeLinejoin="round" />
     </svg>
   );
-}
+});

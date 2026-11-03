@@ -142,7 +142,7 @@ describe('arbitre du mode Histoire (Gemmes)', () => {
       }
     }
     expect(vus.has('joueur')).toBe(true);
-  });
+  }, 20000);   // (neuf parties jouées puis rejouées : plus de 5 s quand toute la suite tourne en même temps)
 
   it('un abandon est une défaite ; une partie inachevée ou truquée est refusée', () => {
     const base = { catalogueBrut: CARTES, possedeesBrutes: POSSEDEES };

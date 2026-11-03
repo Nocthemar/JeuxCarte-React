@@ -34,6 +34,23 @@ export function monterCaverne(racine, { serveur, notifier, bourse }) {
   const fmt = n => Math.round(n).toLocaleString('fr-FR');
   const gain = (mise, m) => fmt(Math.floor(mise*m + 1e-9));   // ce que paierait le serveur (arrondi en dessous)
   const ready = k => imgs[k] && imgs[k].naturalWidth > 0;
+  // Ce qui change à chaque image n'est écrit dans la page que s'il a changé (sinon la page se recalcule à chaque
+  // image, et le survol des portes et des boutons saccade)
+  const ecrire = (el, t) => { if (el.textContent !== t) el.textContent = t; };
+  const styler = (el, prop, v) => { const cle = '_' + prop; if (el[cle] !== v) { el[cle] = v; el.style[prop] = v; } };
+  // Une image et son ombre, peintes une fois (une ombre floue recalculée à chaque image coûte cher) ; taille : la plus
+  // grande à laquelle on la dessine. Elle se dessine ensuite avec poserOmbree().
+  const ombrees = new Map();
+  function ombree(k, taille, flou, dpr) {
+    const cle = `${k}|${Math.round(taille)}|${flou}|${dpr}`; let c = ombrees.get(cle);
+    if (!c) {
+      const m = flou*1.5/dpr + 2; c = document.createElement('canvas'); c.width = c.height = Math.ceil((taille + m*2)*dpr);
+      const b = c.getContext('2d'); b.scale(dpr, dpr); b.shadowColor = 'rgba(0,0,0,.8)'; b.shadowBlur = flou; b.drawImage(imgs[k], m, m, taille, taille);
+      c.marge = m/taille; ombrees.set(cle, c);
+    }
+    return c;
+  }
+  const poserOmbree = (ctx, c, x, y, s) => { const m = c.marge*s; ctx.drawImage(c, x - m, y - m, s + m*2, s + m*2); };
 
   // En quittant l'écran : plus rien ne doit bouger (minuteurs, réponses du serveur qui arrivent après)
   let demonte = false, raf = 0;
@@ -106,9 +123,18 @@ export function monterCaverne(racine, { serveur, notifier, bourse }) {
     return c;
   }
   let motes = Array.from({ length: 55 }, () => ({ x: Math.random(), y: Math.random(), s: rnd(.3,1), z: rnd(.5,2), gold: Math.random() < .25 }));
+  // une poussière : un point flou, peint une fois par couleur (au lieu d'un dégradé par poussière et par image)
+  const poussiere = c => { const t = document.createElement('canvas'); t.width = t.height = 32; const b = t.getContext('2d'), g = b.createRadialGradient(16,16,0,16,16,16); g.addColorStop(0, `rgba(${c},1)`); g.addColorStop(1, `rgba(${c},0)`); b.fillStyle = g; b.fillRect(0,0,32,32); return t; };
+  const POUSSIERES = { or: poussiere('255,205,130'), gris: poussiere('190,198,215') };
+  // Une scène n'est redessinée (son décor refait) que si sa taille a changé
+  const memeTaille = (el, l, h, dpr) => { const cle = `${l}x${h}@${dpr}`; if (el._taille === cle) return true; el._taille = cle; return false; };
+  // La taille d'une scène : celle de .jeux (les scènes la couvrent toute), même si son jeu est caché ; on peut
+  // ainsi préparer son décor avant qu'on ouvre sa porte
+  const tailleScene = stage => { const r = stage.getBoundingClientRect(); return r.width >= 10 ? r : racine.querySelector('.jeux').getBoundingClientRect(); };
   function fitBG() {
     const r = racine.getBoundingClientRect(); if (r.width < 10) return;
-    BW = r.width; BH = r.height; const dpr = Math.min(2, devicePixelRatio || 1); bg.width = BW*dpr; bg.height = BH*dpr; bctx.setTransform(dpr,0,0,dpr,0,0);
+    const dpr = Math.min(2, devicePixelRatio || 1); if (memeTaille(bg, r.width, r.height, dpr)) return;
+    BW = r.width; BH = r.height; bg.width = BW*dpr; bg.height = BH*dpr; bctx.setTransform(dpr,0,0,dpr,0,0);
     // la salle du marchand (le fond des Bourses) : une pierre chaude, éclairée d'en bas par les lanternes
     bgc = caveTexture(BW, BH, dpr, { haut: [30,24,20], bas: [62,44,28], roche: [34,27,22], lumiere: [.2, .8, .6] }, 7);
   }
@@ -118,20 +144,23 @@ export function monterCaverne(racine, { serveur, notifier, bourse }) {
     bctx.save(); bctx.globalCompositeOperation = 'lighter';
     for (const m of motes) {
       m.y -= dt*.012*m.z; m.x += Math.sin(tNow*.6 + m.s*9)*dt*.004; if (m.y < -.02) { m.y = 1.02; m.x = Math.random(); }
-      const x = m.x*BW, y = m.y*BH, a = (.25 + .35*Math.sin(tNow*1.5 + m.s*20)**2)*m.s, r = 1 + m.z, c = m.gold ? '255,205,130' : '190,198,215';
-      const g = bctx.createRadialGradient(x,y,0,x,y,r*4); g.addColorStop(0, `rgba(${c},${a})`); g.addColorStop(1, `rgba(${c},0)`); bctx.fillStyle = g; bctx.beginPath(); bctx.arc(x,y,r*4,0,TAU); bctx.fill();
+      const x = m.x*BW, y = m.y*BH, a = (.25 + .35*Math.sin(tNow*1.5 + m.s*20)**2)*m.s, r = (1 + m.z)*4;
+      bctx.globalAlpha = a; bctx.drawImage(m.gold ? POUSSIERES.or : POUSSIERES.gris, x - r, y - r, r*2, r*2);
     }
     bctx.restore();
   }
 
   // ---- pièces (ou cristaux) qui volent vers la bourse + textes ----
-  const fx = $('fx'), fctx = fx.getContext('2d'); let fparts = [];
-  function fitFX() { fx.width = innerWidth; fx.height = innerHeight; }
+  const fx = $('fx'), fctx = fx.getContext('2d'); let fparts = [], fxVide = true;
+  function fitFX() { if (fx.width !== innerWidth || fx.height !== innerHeight) { fx.width = innerWidth; fx.height = innerHeight; } }
   function flyCoins(x, y, n) {
     const k = icone();
     for (let i = 0; i < n; i++) fparts.push({ k, x: x + rnd(-20,20), y: y - rnd(0,20), vx: rnd(-240,240), vy: -rnd(260,640), rot: rnd(0,TAU), vr: rnd(-12,12), s: rnd(20,32), life: -i*.02, max: 1.5, fly: false });
   }
   function stepFX(dt) {
+    // (rien en vol : la toile est déjà vide, on ne mesure rien)
+    if (!fparts.length) { if (!fxVide) { fctx.clearRect(0,0,fx.width,fx.height); fxVide = true; } return; }
+    fxVide = false;
     const tg = racine.querySelector(`.bal[data-m="${monnaie}"] img`).getBoundingClientRect(), tx = tg.left + tg.width/2, ty = tg.top + tg.height/2;
     fctx.clearRect(0,0,fx.width,fx.height);
     fparts = fparts.filter(p => {
@@ -219,8 +248,9 @@ export function monterCaverne(racine, { serveur, notifier, bourse }) {
   const CHANFREIN = [[0,.34],[.07,.38],[.1,.7],[.07,.86],[0,.92]];
   const ARCADE = [[.05,.33],[.19,.25],[.36,.28],[.41,.35],[.23,.33],[.08,.4]];
   function fitD() {
-    const r = $('dStage').getBoundingClientRect(); if (r.width < 10) return;
-    DW = r.width; DH = r.height; ddpr = Math.min(2, devicePixelRatio || 1); dc.width = DW*ddpr; dc.height = DH*ddpr;
+    const r = tailleScene($('dStage')); if (r.width < 10) return;
+    const dpr = Math.min(2, devicePixelRatio || 1); if (memeTaille(dc, r.width, r.height, dpr)) return;
+    DW = r.width; DH = r.height; ddpr = dpr; dc.width = DW*ddpr; dc.height = DH*ddpr; ombrees.clear();
     dRock = caveTexture(DW, DH, ddpr, { haut: [12,11,13], bas: [34,22,18], roche: [17,14,14], lumiere: [0, .9, .5] }, 21);
     const g = dGeo(), toile = () => { const c = document.createElement('canvas'); c.width = DW*ddpr; c.height = DH*ddpr; const b = c.getContext('2d'); b.setTransform(ddpr,0,0,ddpr,0,0); return [c, b]; };
     const forme = pts => pts.map(([u, v]) => g.P(u, v)), lumiere = [0, .85, .55], taille = clamp(g.hw/11, 22, 60);
@@ -288,7 +318,7 @@ export function monterCaverne(racine, { serveur, notifier, bourse }) {
     // le trésor
     const growth = 1 + .22*clamp(Math.log(D.m)/Math.log(30), 0, 1), sizes = [.82,.92,1.0];
     const burn = D.state === 'crash' ? clamp(D.cr/.9, 0, 1) : 0;
-    const drawPile = (k, a) => { if (a <= .01 || !ready(PK[k])) return; const s = g.Q*sizes[k]*growth; dx.save(); dx.globalAlpha = a*(1 - burn*.72); dx.shadowColor = 'rgba(0,0,0,.8)'; dx.shadowBlur = 24; dx.drawImage(imgs[PK[k]], DW/2 - s/2, g.pileY - s*.93 + Math.sin(tNow*40)*D.shake*.2, s, s); dx.restore(); };
+    const drawPile = (k, a) => { if (a <= .01 || !ready(PK[k])) return; const s = g.Q*sizes[k]*growth; dx.save(); dx.globalAlpha = a*(1 - burn*.72); poserOmbree(dx, ombree(PK[k], g.Q*1.22, 24, ddpr), DW/2 - s/2, g.pileY - s*.93 + Math.sin(tNow*40)*D.shake*.2, s); dx.restore(); };
     drawPile(D.pileFrom, 1 - D.pileFade); drawPile(D.pile, D.pileFade);
     if (burn > 0) { dx.fillStyle = `rgba(20,4,0,${burn*.35})`; dx.fillRect(0, DH*.45, DW, DH*.55); }
     // éclats sur le tas
@@ -324,10 +354,12 @@ export function monterCaverne(racine, { serveur, notifier, bourse }) {
   function dSay(t) { dHud.s.textContent = t; }
   function dRenderHist() { $('dHist').innerHTML = D.hist.slice(-9).map(c => `<span class="${c >= 10 ? 'h' : c >= 2 ? 'm' : ''}">×${c.toFixed(2)}</span>`).join(''); }
   function dButton() {
+    // (appelée à chaque image tant que le dragon dort : rien n'est écrit si rien n'a changé)
     const go = $('dGo'), t = $('dGoT'), s = $('dGoS');
-    if (D.state === 'idle') { go.className = 'btn pri'; go.disabled = D.attente || !peutMiser(); t.textContent = D.attente ? 'La mise est posée…' : 'Voler le trésor'; s.textContent = `MISE ${fmt(BET)} ${unite().toUpperCase()} · ESPACE`; }
-    else if (D.state === 'run') { go.className = 'btn out'; go.disabled = D.veutFuir; t.textContent = D.veutFuir ? 'Tu fuis…' : `Fuir avec ${gain(D.bet, D.m)}`; s.textContent = 'ESPACE'; }
-    else { go.className = 'btn sec'; go.disabled = true; t.textContent = D.state === 'cashed' ? 'Tu as fui !' : 'Le dragon s\'éveille…'; s.textContent = ''; }
+    const etat = (classe, inactif) => { if (go.className !== classe) go.className = classe; if (go.disabled !== inactif) go.disabled = inactif; };
+    if (D.state === 'idle') { etat('btn pri', D.attente || !peutMiser()); ecrire(t, D.attente ? 'La mise est posée…' : 'Voler le trésor'); ecrire(s, `MISE ${fmt(BET)} ${unite().toUpperCase()} · ESPACE`); }
+    else if (D.state === 'run') { etat('btn out', D.veutFuir); ecrire(t, D.veutFuir ? 'Tu fuis…' : `Fuir avec ${gain(D.bet, D.m)}`); ecrire(s, 'ESPACE'); }
+    else { etat('btn sec', true); ecrire(t, D.state === 'cashed' ? 'Tu as fui !' : 'Le dragon s\'éveille…'); ecrire(s, ''); }
   }
   function dLibre() { setBusy(0, false); dBet.lock(false); $('dAutoW').classList.remove('lock'); }
   async function dStart() {
@@ -340,7 +372,7 @@ export function monterCaverne(racine, { serveur, notifier, bourse }) {
     setBourse(r.bourse); annoncerReglee(r.reglee);
     D.bet = r.mise; D.icone = icone(); D.crashAt = null; D.tc = Infinity; D.t = 0; D.m = 1; D.state = 'run'; D.beat = 0; D.cashM = 0; D.cr = 0; D.flame = 0;
     D.auto = auto || 0; D.vue = VUE; D.veutFuir = false;
-    D.pileFrom = D.pile; D.pile = 0; D.pileFade = 1; dSay('Chhht… ne le réveille pas.'); dHud.m.style.color = dColor(1); tone(160, 90, .3, 'sawtooth', .08); dButton();
+    D.pileFrom = D.pile; D.pile = 0; D.pileFade = 1; dSay('Chhht… ne le réveille pas.'); styler(dHud.m, 'color', dColor(1)); tone(160, 90, .3, 'sawtooth', .08); dButton();
   }
   // Le serveur a fermé la partie (fuite, encaissement auto ou réveil) : on montre comment
   function dFin(r) {
@@ -373,14 +405,14 @@ export function monterCaverne(racine, { serveur, notifier, bourse }) {
     const pay = r.gain; D.cashM = Number(r.multiplicateur); D.m = Math.max(D.m, D.cashM); D.state = 'cashed';
     D.speed = Math.max(3, (D.tc - D.t)/2.2);
     const rc = dc.getBoundingClientRect(); flyCoins(rc.left + DW/2, rc.top + dGeo().pileY - dGeo().Q*.4, Math.min(40, 10 + Math.floor(D.cashM*3))); sCoins(12);
-    floatText(rc.left + DW/2, rc.top + DH*.3, '+' + fmt(pay), 'big'); dHud.m.textContent = '×' + D.cashM.toFixed(2); dHud.m.style.color = '#a6e3bb';
+    floatText(rc.left + DW/2, rc.top + DH*.3, '+' + fmt(pay), 'big'); dHud.m.textContent = '×' + D.cashM.toFixed(2); styler(dHud.m, 'color', '#a6e3bb');
     dSay(`${r.auto ? 'Encaissement automatique : t' : 'T'}u as fui avec ${fmt(pay)} ${unite()} ! Voyons jusqu'où il montait…`); dButton();
   }
   function dCrash() {
     const cashed = D.state === 'cashed'; D.state = 'crash'; D.cr = 0; D.m = D.crashAt; D.hist.push(D.crashAt); dRenderHist();
     D.flame = 1.3; D.flash = 1; D.shake = 34; noise(1.1, 'lowpass', 1500, 120, .5); tone(220, 45, 1.0, 'sawtooth', .16); tone(110, 40, 1.2, 'square', .06, .05);
     flashScreen('rgba(255,90,20,.55)', 160);
-    if (!cashed) { dHud.m.textContent = '×' + D.crashAt.toFixed(2); dHud.m.style.color = '#e4646c'; dSay('Le dragon s\'éveille ! Ton butin part en fumée.'); const r = dc.getBoundingClientRect(); floatText(r.left + DW/2, r.top + DH*.3, '−' + fmt(D.bet), 'bad'); }
+    if (!cashed) { dHud.m.textContent = '×' + D.crashAt.toFixed(2); styler(dHud.m, 'color', '#e4646c'); dSay('Le dragon s\'éveille ! Ton butin part en fumée.'); const r = dc.getBoundingClientRect(); floatText(r.left + DW/2, r.top + DH*.3, '−' + fmt(D.bet), 'bad'); }
     else dSay(`Le dragon s'est réveillé à ×${D.crashAt.toFixed(2)}. Tu étais déjà loin.`);
     dButton();
   }
@@ -394,16 +426,16 @@ export function monterCaverne(racine, { serveur, notifier, bourse }) {
       if (D.state === 'cashed') D.m = Math.max(D.m, Math.min(D.cashM, D.crashAt));
       const k = pileKey(D.m); if (k !== D.pile) { D.pileFrom = D.pile; D.pile = k; D.pileFade = 0; tone(700, 1100, .2, 'triangle', .06); }
       if (D.state === 'run') {
-        dHud.m.textContent = '×' + D.m.toFixed(2); dHud.m.style.color = dColor(D.m);
-        if (!D.veutFuir) $('dGoT').textContent = `Fuir avec ${gain(D.bet, D.m)}`;
+        ecrire(dHud.m, '×' + D.m.toFixed(2)); styler(dHud.m, 'color', dColor(D.m));
+        if (!D.veutFuir) ecrire($('dGoT'), `Fuir avec ${gain(D.bet, D.m)}`);
         D.beat -= dt; if (D.beat <= 0) { D.beat = clamp(.95 - Math.log(D.m)*.22, .26, .95); tone(72, 44, .17, 'sine', .26); tone(66, 40, .15, 'sine', .16, .13); D.shake = Math.max(D.shake, Math.min(5, Math.log(D.m)*1.6)); }
         if (!D.attente) { D.vue -= dt; if (D.vue <= 0 || (D.auto && D.m >= D.auto && D.vue < VUE - .3)) dVoir(); }
       } else if (D.state === 'cashed') {
-        dSay(`Le dragon dormait encore… ×${D.m.toFixed(2)}`);
+        ecrire(dHud.s, `Le dragon dormait encore… ×${D.m.toFixed(2)}`);
         if (D.t >= D.tc) dCrash();
       }
     } else if (D.state === 'crash') {
-      D.cr += dt; if (D.cr > 2.6) { D.state = 'idle'; D.pileFrom = D.pile; D.pile = 0; D.pileFade = 0; dLibre(); dHud.m.textContent = '×1.00'; dHud.m.style.color = dColor(1); dSay('Le dragon se rendort. Ose revenir…'); dButton(); }
+      D.cr += dt; if (D.cr > 2.6) { D.state = 'idle'; D.pileFrom = D.pile; D.pile = 0; D.pileFade = 0; dLibre(); dHud.m.textContent = '×1.00'; styler(dHud.m, 'color', dColor(1)); dSay('Le dragon se rendort. Ose revenir…'); dButton(); }
     }
     // ouverture des yeux
     let target = 0;
@@ -504,8 +536,9 @@ export function monterCaverne(racine, { serveur, notifier, bourse }) {
   const mFmt = m => m >= 10 ? Math.round(m) : m.toFixed(g.step >= 40 ? 2 : 1);
 
   function cFit() {
-    const r = $('cStage').getBoundingClientRect(); if (r.width < 10) return;
-    CW = r.width; CH = r.height; cdpr = Math.min(2, devicePixelRatio || 1); cc.width = CW*cdpr; cc.height = CH*cdpr;
+    const r = tailleScene($('cStage')); if (r.width < 10) return;
+    const dpr = Math.min(2, devicePixelRatio || 1); if (memeTaille(cc, r.width, r.height, dpr)) return;
+    CW = r.width; CH = r.height; cdpr = dpr; cc.width = CW*cdpr; cc.height = CH*cdpr; ombrees.clear();
     const m = CW < 600 ? .13 : .14, xL = CW*m, xR = CW*(1 - m), step = (xR - xL)/(NP + 1);
     g = { W:CW, H:CH, xL, xR, step, gy:CH*.55, sag:CH*.04, hh:clamp(step*1.55, 38, 96) }; g.cl = xL + step*.5; g.cr = xR - step*.5;
     cRock = caveTexture(CW, CH, cdpr, { haut: [22,25,34], bas: [12,14,20], roche: [28,31,40], lumiere: [-.4, -.7, .6] }, 33);
@@ -638,7 +671,7 @@ export function monterCaverne(racine, { serveur, notifier, bourse }) {
     // trésor
     if (ready('s3')) { const Q = Math.min((W - g.xR)*1.5, H*.3), px_ = Math.min((g.cr + W)/2, W - Q*.45), by_ = g.gy - 2;
       cx.save(); cx.globalCompositeOperation = 'lighter'; const tg = cx.createRadialGradient(px_, by_ - Q*.4, 0, px_, by_ - Q*.4, Q*.9); tg.addColorStop(0, `rgba(255,170,50,${.28 + .08*Math.sin(tNow*3)})`); tg.addColorStop(1, 'rgba(255,120,20,0)'); cx.fillStyle = tg; cx.fillRect(px_ - Q, by_ - Q*1.5, Q*2, Q*1.8); cx.restore();
-      cx.save(); cx.shadowColor = 'rgba(0,0,0,.8)'; cx.shadowBlur = 16; cx.drawImage(imgs.s3, px_ - Q/2, by_ - Q*.93, Q, Q); cx.restore(); }
+      poserOmbree(cx, ombree('s3', Q, 16, cdpr), px_ - Q/2, by_ - Q*.93, Q); }
     // torche
     { const tx = g.xL*.5, ty = g.gy - 4, th = g.hh*1.4; cx.fillStyle = '#2a170a'; cx.fillRect(tx - 3, ty - th, 6, th); cx.fillStyle = '#5b4d3d'; cx.fillRect(tx - 7, ty - th - 3, 14, 6);
       cx.save(); cx.globalCompositeOperation = 'lighter'; const fl = 1 + .1*Math.sin(tNow*17) + .06*Math.sin(tNow*29), fg = cx.createRadialGradient(tx, ty - th - 6, 0, tx, ty - th - 6, g.hh*2.4*fl); fg.addColorStop(0, 'rgba(255,170,60,.45)'); fg.addColorStop(1, 'rgba(255,90,10,0)'); cx.fillStyle = fg; cx.fillRect(tx - g.hh*3, ty - th - g.hh*3, g.hh*6, g.hh*6);
@@ -689,8 +722,9 @@ export function monterCaverne(racine, { serveur, notifier, bourse }) {
   const RIVE = [[.06,.26,'',.85],[.17,.17,'',.9],[.29,.1,'',.6],[.74,.13,'',.7],[.86,.24,'',.9],[.96,.15,'',.75]];
 
   function lFit() {
-    const r = $('lStage').getBoundingClientRect(); if (r.width < 10) return;
-    LW = r.width; LH = r.height; ldpr = Math.min(2, devicePixelRatio || 1); lcv.width = LW*ldpr; lcv.height = LH*ldpr;
+    const r = tailleScene($('lStage')); if (r.width < 10) return;
+    const dpr = Math.min(2, devicePixelRatio || 1); if (memeTaille(lcv, r.width, r.height, dpr)) return;
+    LW = r.width; LH = r.height; ldpr = dpr; lcv.width = LW*ldpr; lcv.height = LH*ldpr;
     lRock = caveTexture(LW, LH, ldpr, { haut: [14,26,32], bas: [18,40,46], roche: [16,28,34], lumiere: [0, .6, .7] }, 45);
     // la rive d'en face : des rochers en facettes, posés sur l'eau
     const b = lRock.getContext('2d'), sy = lSurface(), ha = hasard(46), rive = [[-10, sy + 2]];
@@ -705,13 +739,15 @@ export function monterCaverne(racine, { serveur, notifier, bourse }) {
     const k = lRatio(), base = [LW*.08, LH*1.04], tip = [LW*.34 + k*LW*.04, LH*.2 + k*LH*.12];
     return { base, tip, k };
   }
+  // (appelée à chaque image : rien n'est écrit si rien n'a changé)
+  const lHudEl = { j: $('lJauge'), m: $('lm'), tirages: $('lTirages') };
   function lHud() {
-    const k = lRatio(), j = $('lJauge');
-    j.style.width = (k*100).toFixed(1) + '%';
-    j.style.background = `linear-gradient(90deg, #4fd1c5, hsl(${Math.round(170 - 170*k)}, 85%, ${55 - 10*k}%))`;
-    $('lm').textContent = Math.round(k*100) + ' %';
-    $('lm').style.color = k < .35 ? '#bff4ee' : k < .65 ? '#ffd27a' : '#ff7a5a';
-    $('lTirages').textContent = `${L.tirages} / ${LAC.tirages}`;
+    const k = lRatio(), { j, m, tirages } = lHudEl;
+    styler(j, 'width', (k*100).toFixed(1) + '%');
+    styler(j, 'background', `linear-gradient(90deg, #4fd1c5, hsl(${Math.round(170 - 170*k)}, 85%, ${(55 - 10*k).toFixed(1)}%))`);
+    ecrire(m, Math.round(k*100) + ' %');
+    styler(m, 'color', k < .35 ? '#bff4ee' : k < .65 ? '#ffd27a' : '#ff7a5a');
+    ecrire(tirages, `${L.tirages} / ${LAC.tirages}`);
   }
   function lHist() { $('lHist').innerHTML = L.hist.slice(-9).map(h => `<span class="${h.casse ? '' : h.mult >= 2 ? 'h' : 'm'}">${h.texte}</span>`).join(''); }
   function lButtons() {
@@ -901,9 +937,13 @@ export function monterCaverne(racine, { serveur, notifier, bourse }) {
   lHud(); lHist(); lButtons();
 
   // ================= BOUCLE / ENTRÉES =================
+  // (chaque scène ne refait son décor que si sa taille a changé : ouvrir une porte ne refait que celui de son jeu,
+  // s'il n'a pas déjà été préparé)
   function fitAll() { fitBG(); fitFX(); fitD(); cFit(); lFit(); }
-  const ro = new ResizeObserver(() => { fitBG(); fitD(); cFit(); lFit(); }); ro.observe(racine.querySelector('.jeux'));
-  const surTaille = () => { fitBG(); fitFX(); };
+  // en changeant de taille, seule la scène visible est refaite tout de suite ; les autres, quand on les ouvre
+  const fitActif = () => { if (active === 1) fitBG(); else [fitD, null, cFit, lFit][active](); };
+  const ro = new ResizeObserver(fitActif); ro.observe(racine.querySelector('.jeux'));
+  const surTaille = () => { fitActif(); fitFX(); };
   const surTouche = e => {
     if (document.activeElement && document.activeElement.tagName === 'INPUT') return;
     if (racine.querySelector('.cav-hall:not([hidden])')) return;   // dans le hall, aucun jeu n'est ouvert
@@ -922,21 +962,33 @@ export function monterCaverne(racine, { serveur, notifier, bourse }) {
   addEventListener('keydown', surTouche);
   addEventListener('pointerdown', surGeste, { once: true });
 
+  // Le hall (SalleDesJeux.jsx) cache les jeux : tant qu'il est là, aucune scène n'est dessinée (on ne peut pas y
+  // revenir pendant une partie), et le survol des portes a toute la place
+  const hall = racine.querySelector('.cav-hall');
+  const chiffresBourses = { or: racine.querySelector('.bal[data-m="or"] span'), cristaux: racine.querySelector('.bal[data-m="cristaux"] span') };
   let last = performance.now();
   function frame(now) {
     const dt = Math.min(.05, (now - last)/1000); last = now; tNow += dt;
     for (const m of ['or', 'cristaux']) {
+      if (disp[m] === solde[m]) continue;
       disp[m] += (solde[m] - disp[m])*Math.min(1, dt*5); if (Math.abs(solde[m] - disp[m]) < .6) disp[m] = solde[m];
-      racine.querySelector(`.bal[data-m="${m}"] span`).textContent = fmt(disp[m]);
+      ecrire(chiffresBourses[m], fmt(disp[m]));
     }
-    drawBG(dt);
-    if (active === 0) { dragonFrame(dt); if (D.state === 'idle') dButton(); }
-    else if (active === 2) pontFrame(dt);
-    else if (active === 3) lacFrame(dt);
+    if (!hall || hall.hidden) {
+      // (le fond de caverne n'est visible que derrière les Bourses : les autres scènes le couvrent)
+      if (active === 1) drawBG(dt);
+      else if (active === 0) { dragonFrame(dt); if (D.state === 'idle') dButton(); }
+      else if (active === 2) pontFrame(dt);
+      else if (active === 3) lacFrame(dt);
+    }
     stepFX(dt);
     raf = requestAnimationFrame(frame);
   }
-  fitAll(); syncBalance(); plusTard(fitAll, 250);
+  for (const m of ['or', 'cristaux']) ecrire(chiffresBourses[m], fmt(disp[m]));
+  // le premier jeu tout de suite ; les décors des autres quand le navigateur est libre, pour que leurs portes s'ouvrent sans attendre
+  fitBG(); fitFX(); fitD(); syncBalance();
+  for (const f of [cFit, lFit]) { if (window.requestIdleCallback) requestIdleCallback(() => { if (!demonte) f(); }, { timeout: 1500 }); else plusTard(f, 300); }
+  plusTard(() => { fitBG(); fitActif(); }, 250);
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { if (!demonte) fitAll(); });
   raf = requestAnimationFrame(frame);
 

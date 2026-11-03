@@ -275,12 +275,15 @@ body.gemmes-fond-plage { --fond-gemmes: url("/img/Fond gemmes/gemmes-plage.webp"
 .gm-grille::after { content: ""; position: absolute; inset: 0; pointer-events: none; transition: box-shadow .5s ease; }
 .gm-grille.est-mon-tour::after { box-shadow: inset 0 0 0 1px rgba(227,207,159,.6), inset 0 0 50px rgba(200,168,106,.12); }
 
-/* Une gemme : placée par sa case ; elle glisse (échange, chute) d'une case à l'autre */
+/* Une gemme : placée par sa case ; elle glisse (échange, chute) d'une case à l'autre. Elle est déplacée par
+   transform (de côté) et translate (en hauteur, avec sa chute) : la carte graphique les fait glisser sans
+   recalculer la grille à chaque image, et chaque sens garde son propre élan (une case = 100 % de la gemme) */
 .gm-gemme {
-  position: absolute; left: calc(var(--x) * 100% / var(--n)); top: calc(var(--y) * 100% / var(--n));
+  position: absolute; left: 0; top: 0;
+  transform: translateX(calc(var(--x) * 100%)); translate: 0 calc(var(--y) * 100%);
   display: grid; box-sizing: border-box; width: calc(100% / var(--n)); height: calc(100% / var(--n)); padding: calc(8% / var(--n));
   border: 0; background: none; cursor: pointer;
-  transition: left .22s cubic-bezier(.3,.7,.4,1), top .3s cubic-bezier(.5,0,.75,.2);
+  transition: transform .22s cubic-bezier(.3,.7,.4,1), translate .3s cubic-bezier(.5,0,.75,.2);
   -webkit-tap-highlight-color: transparent;
 }
 .gm-gemme__svg { display: block; width: 100%; height: 100%; overflow: visible; filter: drop-shadow(0 3px 3px rgba(0,0,0,.6)); transition: transform .18s ease, filter .18s ease; }
@@ -292,7 +295,7 @@ body.gemmes-fond-plage { --fond-gemmes: url("/img/Fond gemmes/gemmes-plage.webp"
 @keyframes gm-indice { 0%, 100% { transform: none; } 50% { transform: scale(1.12) rotate(-6deg); filter: drop-shadow(0 0 6px rgba(227,207,159,.7)); } }
 /* les nouvelles tombent d'au-dessus de la grille */
 .gm-gemme.est-neuve { animation: gm-tombe calc(.18s + var(--chute) * .05s) cubic-bezier(.5,0,.75,.2) both; }
-@keyframes gm-tombe { from { transform: translateY(calc(var(--chute) * -100%)); } }
+@keyframes gm-tombe { from { translate: 0 calc((var(--y) - var(--chute)) * 100%); } }
 /* elles éclatent : un flash, puis plus rien */
 .gm-gemme.est-eclatee { pointer-events: none; }
 .gm-gemme.est-eclatee .gm-gemme__svg { animation: gm-eclate .3s ease-in forwards; }

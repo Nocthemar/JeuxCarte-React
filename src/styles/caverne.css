@@ -319,6 +319,7 @@
     radial-gradient(ellipse 65% 55% at 50% 78%, rgba(var(--teinte),.38), transparent 80%),
     linear-gradient(180deg, transparent 20%, rgba(var(--teinte),.1));
   transition: opacity .4s ease;
+  will-change: opacity;   /* (sa propre couche : l'allumer ne repeint pas la salle) */
 }
 /* le filet de lumière entre les deux battants, plus vif en bas */
 .caverne .cav-porte__lueur::before {
@@ -327,8 +328,10 @@
   -webkit-mask-image: linear-gradient(180deg, transparent 8%, #000 55%, #000);
   mask-image: linear-gradient(180deg, transparent 8%, #000 55%, #000);
 }
-.caverne .cav-porte:has(.cav-porte__ouverture:is(:hover, :focus-visible)) .cav-porte__lueur {
-  opacity: 1; animation: cav-vacille 2.8s ease-in-out .4s infinite;
+/* (le survol allume tout de suite, l'extinction reste douce ; la lueur, la gravure et le sol suivent le bouton dans
+   la porte : un simple sélecteur de frère, moins coûteux à suivre que :has() à chaque mouvement de souris) */
+.caverne .cav-porte__ouverture:is(:hover, :focus-visible) ~ .cav-porte__lueur {
+  opacity: 1; transition-duration: .15s; animation: cav-vacille 2.8s ease-in-out .15s infinite;
 }
 @keyframes cav-vacille { 0%, 100% { opacity: 1; } 50% { opacity: .82; } }
 @media (prefers-reduced-motion: reduce) { .caverne .cav-porte__lueur { animation: none !important; } }
@@ -336,9 +339,9 @@
 .caverne .cav-porte__sol {
   position: absolute; left: -25%; right: -25%; top: 97%; height: 16%; pointer-events: none; mix-blend-mode: screen; opacity: 0;
   background: radial-gradient(ellipse 50% 60% at 50% 0%, rgba(var(--teinte),.65), transparent 75%);
-  transition: opacity .4s ease;
+  transition: opacity .4s ease; will-change: opacity;
 }
-.caverne .cav-porte:has(.cav-porte__ouverture:is(:hover, :focus-visible)) .cav-porte__sol { opacity: 1; }
+.caverne .cav-porte__ouverture:is(:hover, :focus-visible) ~ .cav-porte__sol { opacity: 1; transition-duration: .15s; }
 
 
 /* l'en-tête pendant un jeu : « ← La Caverne », puis le jeu ouvert ; dans le hall, rien à gauche */
@@ -411,7 +414,13 @@
 .caverne .cav-gravure__arc {
   display: block; width: 100%; height: auto; overflow: visible;
   filter: drop-shadow(0 -.07cqw 0 rgba(0,0,0,.95)) drop-shadow(0 .06cqw 0 rgba(255,236,190,.3)) drop-shadow(0 0 .25cqw rgba(240,190,90,.35));
-  transition: filter .35s ease;
+}
+/* par-dessus : l'auréole du survol (la même gravure, peinte une fois ; seule son opacité change) et la lumière qui
+   passe sur l'or (sans ombres : elle bouge à chaque image) */
+.caverne .cav-gravure__aureole, .caverne .cav-gravure__reflet { position: absolute; left: 0; top: 0; width: 100%; height: auto; overflow: visible; }
+.caverne .cav-gravure__aureole {
+  opacity: 0; will-change: opacity; transition: opacity .35s ease;
+  filter: drop-shadow(0 0 .3cqw rgba(255,226,150,.7)) drop-shadow(0 0 .8cqw rgba(var(--teinte),.9));
 }
 .caverne .cav-gravure__or { fill: url(#cav-titre-or); stroke: rgba(10,8,4,.6); stroke-width: .7px; paint-order: stroke; }   /* (un fin trait sombre : les lettres se lisent sur la pierre claire) */
 .caverne .cav-gravure__eclat { fill: url(#cav-nom-eclat); }
@@ -425,8 +434,5 @@
   color: rgba(244,228,184,.95); text-shadow: 0 0 .4em #000, 0 0 .8em #000, 0 0 1.2em #000;
   transition: opacity .3s ease;
 }
-.caverne .cav-porte:has(.cav-porte__ouverture:is(:hover, :focus-visible)) .cav-gravure__arc {
-  filter: drop-shadow(0 -.07cqw 0 rgba(0,0,0,.95)) drop-shadow(0 0 .3cqw rgba(255,226,150,.7)) drop-shadow(0 0 .8cqw rgba(var(--teinte),.9));
-}
-.caverne .cav-porte:has(.cav-porte__ouverture:is(:hover, :focus-visible)) .cav-gravure small { opacity: 1; }
+.caverne .cav-porte__ouverture:is(:hover, :focus-visible) ~ .cav-gravure :is(.cav-gravure__aureole, small) { opacity: 1; transition-duration: .15s; }
 

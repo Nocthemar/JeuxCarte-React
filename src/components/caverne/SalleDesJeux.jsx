@@ -8,6 +8,7 @@
 // =====================================================================
 import { useEffect, useRef, useState } from 'react';
 import { urlPublique } from '../../lib/chemins.js';
+import { animationsReduites, effetsLegers } from '../../lib/preferences.js';
 
 const JEUX = [
   { g: 0, image: 's3', nom: 'Le Dragon Dormant', sous: 'Vole l\'or avant son réveil', texte: 'Le butin grossit tant que le dragon dort. Fuis avant que ses yeux ne s\'ouvrent.' },
@@ -61,26 +62,41 @@ function Inscription({ id, nom }) {
     return <path key={signe} className="cav-gravure__losange" transform={`translate(${x.toFixed(1)} ${y.toFixed(1)}) rotate(${(a * 180 / Math.PI).toFixed(1)})`}
       d={`M${-t * .6} 0 L0 ${-t * .42} L${t * .6} 0 L0 ${t * .42} Z`} />;
   };
-  const texte = (classe) => (
+  const texte = (classe, chemin) => (
     <text className={classe} fontSize={t} letterSpacing="1.8" fontFamily="Cinzel, 'Cinzel Repli', serif" fontWeight="700">
-      <textPath href={`#cav-arc-${id}`} startOffset="50%" textAnchor="middle" {...serre}>{nom.toUpperCase()}</textPath>
+      <textPath href={`#${chemin}`} startOffset="50%" textAnchor="middle" {...serre}>{nom.toUpperCase()}</textPath>
     </text>
   );
-  return (
-    <svg className="cav-gravure__arc" viewBox={`0 0 ${ARC.l} 60`}>
-      <path id={`cav-arc-${id}`} d={ARC_NOM} fill="none" />
+  // Trois couches, pour que rien de coûteux ne soit repeint à chaque image : la gravure et ses ombres (fixe),
+  // la même gravure auréolée pour le survol (peinte une fois, seule son opacité change), et la lumière qui passe
+  // sur l'or (elle bouge sans cesse : à part, sans ombres)
+  // (la gravure est dessinée deux fois, pas copiée par <use> : les classes ne prendraient pas dans la copie)
+  const vue = `0 0 ${ARC.l} 60`;
+  const gravure = (chemin) => (
+    <>
+      <path id={chemin} d={ARC_NOM} fill="none" />
       {[arc(haut, demi), arc(bas, demi)].map((d) => (
         <g key={d} className="cav-gravure__rainure"><path d={d} /><path d={d} /></g>
       ))}
       {losange(-1)}{losange(1)}
-      {texte('cav-gravure__or')}
-      {texte('cav-gravure__eclat')}
-    </svg>
+      {texte('cav-gravure__or', chemin)}
+    </>
+  );
+  return (
+    <>
+      <svg className="cav-gravure__arc" viewBox={vue}>{gravure(`cav-arc-${id}`)}</svg>
+      <svg className="cav-gravure__aureole" viewBox={vue}>{gravure(`cav-arc-${id}-aureole`)}</svg>
+      <svg className="cav-gravure__reflet" viewBox={vue}>
+        <path id={`cav-arc-${id}-reflet`} d={ARC_NOM} fill="none" />
+        {texte('cav-gravure__eclat', `cav-arc-${id}-reflet`)}
+      </svg>
+    </>
   );
 }
 
 export default function SalleDesJeux({ temps, surPortail }) {
   const [jeu, setJeu] = useState(null);   // le jeu ouvert, ou null : le hall
+  const [eauVive] = useState(() => !animationsReduites() && !effetsLegers());   // l'eau du titre ondule
   const onglets = useRef(null);
   const choisir = (g) => { onglets.current.querySelector(`.tab[data-g="${g}"]`).click(); setJeu(g); };
   // pas de retour au hall pendant une partie (le script verrouille alors les onglets)
@@ -138,22 +154,16 @@ export default function SalleDesJeux({ temps, surPortail }) {
                     <stop offset="1" stopColor="#fff" stopOpacity="0" />
                     <animateTransform attributeName="gradientTransform" type="translate" values="0 0;480 0;480 0" keyTimes="0;.45;1" dur="6s" repeatCount="indefinite" />
                   </linearGradient>
-                  {/* l'ondulation de l'eau, pour le titre */}
-                  <filter id="cav-onde" x="-10%" y="-40%" width="120%" height="180%">
-                    <feTurbulence type="fractalNoise" baseFrequency="0.006 0.11" numOctaves="1" seed="4">
-                      <animate attributeName="baseFrequency" dur="7s" repeatCount="indefinite" values="0.006 0.11;0.008 0.13;0.006 0.11" />
-                    </feTurbulence>
-                    <feDisplacementMap in="SourceGraphic" scale="3" xChannelSelector="R" yChannelSelector="G" />
-                  </filter>
                   {/* le titre dans l'eau : les vagues le tordent, et l'eau le voile par endroits (des plaques plus
-                      transparentes qui dérivent), avec un léger flou de surface */}
+                      transparentes qui dérivent), avec un léger flou de surface. (L'eau qui bouge est le plus coûteux de
+                      la salle : figée en effets légers ou en mode performance.) */}
                   <filter id="cav-onde-titre" x="-10%" y="-40%" width="120%" height="180%">
                     <feTurbulence type="fractalNoise" baseFrequency="0.008 0.09" numOctaves="2" seed="7" result="vague">
-                      <animate attributeName="baseFrequency" dur="6s" repeatCount="indefinite" values="0.008 0.09;0.011 0.12;0.008 0.09" />
+                      {eauVive && <animate attributeName="baseFrequency" dur="6s" repeatCount="indefinite" values="0.008 0.09;0.011 0.12;0.008 0.09" />}
                     </feTurbulence>
                     <feDisplacementMap in="SourceGraphic" in2="vague" scale="7" xChannelSelector="R" yChannelSelector="G" result="ondule" />
                     <feTurbulence type="fractalNoise" baseFrequency="0.025 0.08" numOctaves="2" seed="3" result="eau">
-                      <animate attributeName="baseFrequency" dur="9s" repeatCount="indefinite" values="0.025 0.08;0.03 0.1;0.025 0.08" />
+                      {eauVive && <animate attributeName="baseFrequency" dur="9s" repeatCount="indefinite" values="0.025 0.08;0.03 0.1;0.025 0.08" />}
                     </feTurbulence>
                     <feColorMatrix in="eau" type="matrix" values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 -2.4 2.15" result="voile" />
                     <feComposite in="ondule" in2="voile" operator="in" result="lettres" />
@@ -179,10 +189,10 @@ export default function SalleDesJeux({ temps, surPortail }) {
           </header>
           {PORTES.map((p) => (
             <div key={p.cle ?? p.g} className="cav-porte" style={{ ...p.place, '--teinte': p.teinte }}>
-              {/* la lumière derrière la porte (hors du bouton : voir caverne.css) */}
-              <span className="cav-porte__lueur" style={{ clipPath: p.forme }} aria-hidden="true" />
               <button type="button" className="cav-porte__ouverture" style={{ clipPath: p.forme }}
                 onClick={() => passer(p)} aria-label={`${p.nom} : ${p.sous}`} />
+              {/* la lumière derrière la porte (hors du bouton, et après lui : son survol l'allume, voir caverne.css) */}
+              <span className="cav-porte__lueur" style={{ clipPath: p.forme }} aria-hidden="true" />
               {/* le nom du jeu, incrusté en or dans la pierre, au-dessus de l'arc de la porte */}
               <span className="cav-gravure" aria-hidden="true"><Inscription id={p.cle ?? p.g} nom={p.nom} /><small>{p.sous}</small></span>
               <span className="cav-porte__sol" aria-hidden="true" />
