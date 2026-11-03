@@ -278,6 +278,19 @@ body.page-collection:not(:has(#choix))::before {   /* dans le grimoire et la rou
     url("/img/Fond/collection.webp") center top / cover no-repeat,
     #07080c;
 }
+/* Ordinateur : le fond passe derrière la barre, mais l'écran est décalé de 276 px (barre-jeu.css) ; la lune
+   (au milieu de l'image) est donc poussée de la moitié, 138 px, pour tomber entre le grimoire et le cercle.
+   L'image est agrandie d'autant (+280 px) pour qu'aucun bord ne se découvre. */
+@media (min-width: 701px) {
+  :root body.page-collection.page-collection::before {
+    background-size: auto, auto, max(calc(100% + 280px), calc(100vh * 1.78)) auto;
+    background-position: 0 0, 0 0, calc(50% + 138px) top;
+  }
+  body.page-collection:not(:has(#choix))::before {
+    background-size: auto, max(calc(100% + 280px), calc(100vh * 1.78)) auto;
+    background-position: 0 0, calc(50% + 138px) top;
+  }
+}
 .choix {
   --ivoire: #ece4d2; --ivoire-doux: #b9b2a2; --gris: #878d98;
   --pierre-1: #1d212b; --pierre-2: #13161d;
