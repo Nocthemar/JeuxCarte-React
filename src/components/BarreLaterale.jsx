@@ -43,7 +43,7 @@ function Bourse({ discordId }) {
   if (!discordId || bourse.pour !== discordId || bourse.solde === null) return null;
   return (
     <div className="barre__bourse" data-place="menu" title="Ta bourse">
-      {/* deux lignes de même taille : l'or (qui scintille), puis les cristaux (qui luisent) */}
+      {/* deux lignes de même taille : l'or, puis les cristaux (qui luisent) */}
       <span className="barre__bourse-ligne">
         <span className="barre__bourse-or"><OrAnime solde={bourse.solde} /></span>
         <span className="barre__bourse-texte">
