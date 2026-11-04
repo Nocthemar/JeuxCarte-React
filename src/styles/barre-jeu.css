@@ -201,8 +201,11 @@
 
 /* La barre du haut de l'ancien site (Page.jsx) reste cachée : la barre du jeu la remplace */
 .has-rail .topbar { display: none; }
-/* Pendant un duel, la barre s'efface (le style du duel gère lui-même la place du plateau) */
-.en-duel .barre { display: none !important; }
+/* Pendant un duel ou une partie de Gemmes, la barre s'efface : le jeu a tout l'écran, comme une page à part
+   (le style du duel gère lui-même la place du plateau ; les Gemmes : body.en-partie, posé par pages/Gemmes.jsx) */
+.en-duel .barre, .en-partie .barre { display: none !important; }
+body.has-rail.en-partie { padding: 0 clamp(10px, 1.6vw, 24px) !important; min-height: 0 !important; }
+body.has-rail.en-partie::before, body.has-rail.en-partie::after { left: 0 !important; }
 
 /* ---------- Le sceau du panneau MJ : un petit hexagone accroché en bas à droite du médaillon (MJ seulement) ---------- */
 .barre__mj {

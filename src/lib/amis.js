@@ -50,7 +50,7 @@ export function useAmis(discordId) {
     if (!discordId || document.visibilityState !== 'visible') return undefined;
     let actif = true;
     // (sans amis.sql en base, tout ceci échoue sans bruit : la pastille reste vide)
-    supabase.rpc('amis_signal', { p_en_duel: document.body.classList.contains('en-duel') }).then(() => {});
+    supabase.rpc('amis_signal', { p_en_duel: document.body.classList.contains('en-duel') || document.body.classList.contains('en-partie') }).then(() => {});
     supabase.rpc('amis_en_attente').then(({ data }) => { if (actif) setEnAttente(data ?? 0); });
     return () => { actif = false; };
   }, [discordId, pathname, tic]);
