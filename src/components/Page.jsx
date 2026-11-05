@@ -16,19 +16,10 @@ export default function Page({ id, classes, titre, braises = false, rail = true,
   // Les feuilles de l'écran, téléchargées à la demande : use() attend qu'elles soient arrivées
   // (pendant ce temps, le <Suspense> de Layout.jsx n'affiche rien)
   const feuilles = use(chargerFeuilles(id));
-  // useLayoutEffect (et non useEffect) : les styles sont posés avant que l'écran soit dessiné,
-  // donc la page n'apparaît jamais sans son style, même un instant
-  useLayoutEffect(() => {
-    const balises = feuilles.map(([nom, texte]) => {
-      const style = document.createElement('style');
-      style.dataset.feuille = nom;
-      style.textContent = texte;
-      document.head.appendChild(style);
-      return style;
-    });
-    // En quittant l'écran : ses styles s'en vont
-    return () => balises.forEach((b) => b.remove());
-  }, [feuilles]);
+  // Les styles sont rendus avec l'écran lui-même (balises <style> ci-dessous) : ils entrent dans la page
+  // en même temps que lui, et s'en vont avec lui. Posés plus tard (dans un effet), le navigateur avait parfois
+  // déjà calculé l'apparence de la barre sans eux : ses liens partaient de la couleur par défaut des liens
+  // visités (violet) et y revenaient en fondu (transition de couleur) au chargement.
 
   // Les classes du <body> (elles peuvent changer sans changer d'écran : le plateau du Duel…)
   useLayoutEffect(() => {
@@ -40,6 +31,7 @@ export default function Page({ id, classes, titre, braises = false, rail = true,
 
   return (
     <>
+      {feuilles.map(([nom, texte]) => <style key={nom} data-feuille={nom}>{texte}</style>)}
       {braises && <Braises />}
       {/* La barre du haut : affichée sur téléphone (styles/barre-laterale.css) */}
       {rail && <header className="topbar">

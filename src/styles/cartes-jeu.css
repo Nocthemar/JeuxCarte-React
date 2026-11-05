@@ -405,8 +405,9 @@ body.glisser-actif, body.glisser-actif * { cursor: grabbing !important; }
   display: grid;
   place-items: center;
   padding: 24px;
-  background: rgba(8,5,5,.82);
-  backdrop-filter: blur(3px);
+  /* (plus de flou de la page derrière : le navigateur le recalculait sur tout l'écran à chaque image
+     pendant que la carte bouge ; un voile un peu plus sombre le remplace) */
+  background: rgba(8,5,5,.88);
   animation: apercu-fondu .2s ease;
   cursor: zoom-out;
 }
@@ -818,6 +819,9 @@ body.glisser-actif, body.glisser-actif * { cursor: grabbing !important; }
 
 /* l'ombre portée, à l'opposé de la lumière */
 .carte-jeu.est-penchee { filter: drop-shadow(var(--sx, 0px) var(--sy, 10px) 14px rgba(0,0,0,.6)); }
+/* La carte en grand (aperçu) : pas d'ombre qui bouge. Sur une carte de cette taille, la recalculer à chaque
+   image faisait ramer l'inclinaison ; et sur le voile sombre de l'aperçu, elle ne se voyait presque pas. */
+.apercu-carte .carte-jeu.est-penchee { filter: none; will-change: transform; }
 
 :root.effets-legers .carte-cadre-lumiere { display: none; }
 /* seulement les Transcendantes ont la lumière (reflet, cadre, éclat) : les autres raretés s'inclinent seulement */
