@@ -258,8 +258,8 @@ body.page-boutique:has(.vitrine--accueil .hall) {
   .page-boutique .vitrine--accueil .porte__texte { display: contents; }
   .page-boutique .vitrine--accueil .porte__num {
     grid-row: 1; align-self: end; padding: 0 8%;
-    font-size: clamp(.5rem, calc(.9 * var(--u)), .9rem); letter-spacing: .2em; color: #c9b27a;
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    font-size: clamp(.5rem, calc(.9 * var(--u)), .9rem); letter-spacing: .16em; color: #c9b27a;
+    line-height: 1.25; text-wrap: balance;   /* deux lignes plutôt qu'un texte coupé (« Plateaux du Duel et … ») */
   }
   .page-boutique .vitrine--accueil .porte__titre {
     grid-row: 2; align-self: center; padding: 0 8%;

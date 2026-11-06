@@ -58,7 +58,7 @@
 .rarete-succes {
   display: inline-block;
   padding: 2px 8px;
-  font-family: "Cinzel","Cinzel Repli", serif; font-size: .62rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase;
+  font-family: "Cinzel","Cinzel Repli", serif; font-size: .68rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase;
   color: #1a1410;
 }
 .rarete-succes--commun     { background: linear-gradient(180deg, #d9b48a, #9a6b42); }

@@ -78,7 +78,7 @@
 .page-boutique .bourse__piece { width: 38px; height: 38px; filter: drop-shadow(0 2px 8px rgba(216,185,120,.45)); }
 .page-boutique .bourse__texte { display: flex; flex-direction: column; line-height: 1.05; }
 .page-boutique .bourse__libelle {
-  font-family: "Cinzel","Cinzel Repli", serif; font-size: .6rem; letter-spacing: .24em; text-transform: uppercase; color: var(--texte-doux);
+  font-family: "Cinzel","Cinzel Repli", serif; font-size: .68rem; letter-spacing: .2em; text-transform: uppercase; color: var(--texte-doux);
 }
 .page-boutique .bourse strong { font-family: "Cinzel","Cinzel Repli", serif; font-size: 1.5rem; color: var(--or-vif); font-variant-numeric: tabular-nums; }
 .page-boutique .bourse small { font-family: "EB Garamond","EB Garamond Repli", serif; font-style: italic; font-weight: 400; font-size: .85rem; color: var(--texte-doux); }

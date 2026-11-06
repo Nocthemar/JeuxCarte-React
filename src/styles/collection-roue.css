@@ -516,7 +516,7 @@ body.page-collection:not(:has(#choix))::before {   /* dans le grimoire et la rou
 }
 .cercle-clos__nom {
   position: absolute; z-index: 1;
-  font-family: "Cinzel","Cinzel Repli", serif; font-weight: 700; font-size: .62rem; letter-spacing: .18em; text-transform: uppercase; color: var(--ivoire-doux);
+  font-family: "Cinzel","Cinzel Repli", serif; font-weight: 700; font-size: .68rem; letter-spacing: .16em; text-transform: uppercase; color: var(--ivoire-doux);
 }
 .cercle-clos__nom--0 { top: 21%; }
 .cercle-clos__nom--1 { right: 11%; }

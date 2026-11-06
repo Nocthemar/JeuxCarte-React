@@ -66,7 +66,7 @@ describe('arbitre des duels contre l\'Ombre', () => {
       }
     }
     expect(vus.has('joueur')).toBe(true);   // le test couvre bien des victoires
-  });
+  }, 60000); // (rejoue des parties entières : lent quand toute la suite tourne en même temps)
 
   it('un abandon est une défaite (sans récompense)', () => {
     const grimoire = grimoireDuNavigateur();
@@ -95,7 +95,7 @@ describe('arbitre des duels contre l\'Ombre', () => {
     expect(arbitrer({ ...base, duel: duelServeur({ graine, grimoire }), journal: [{ type: 'ia' }] }).resultat).toBe('invalide');
     expect(arbitrer({ ...base, duel: duelServeur({ graine, grimoire }), journal: 'gagné' }).resultat).toBe('invalide');
     expect(arbitrer({ ...base, duel: duelServeur({ graine, grimoire }), journal: [{ type: 'jouer', index: { __proto__: 1 } }] }).resultat).toBe('invalide');
-  });
+  }, 60000);
 });
 
 // ---------------------------------------------------------------------

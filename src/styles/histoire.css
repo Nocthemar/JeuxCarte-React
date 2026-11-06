@@ -136,7 +136,7 @@ html body.page-histoire {
 .etape__sceau svg { width: 50%; height: 50%; }
 .etape__nom {
   padding: 3px 9px; white-space: nowrap;
-  font-family: "Cinzel","Cinzel Repli", serif; font-size: clamp(.6rem, .8vw, .72rem); font-weight: 700; letter-spacing: .06em;
+  font-family: "Cinzel","Cinzel Repli", serif; font-size: clamp(.68rem, .8vw, .76rem); font-weight: 700; letter-spacing: .06em;
   color: #f3e3bd; background: rgba(24,18,12,.86); box-shadow: 0 0 0 1px rgba(200,168,106,.35), 0 3px 8px rgba(0,0,0,.35);
   clip-path: polygon(6px 0, calc(100% - 6px) 0, 100% 50%, calc(100% - 6px) 100%, 6px 100%, 0 50%);
   padding-inline: 14px;

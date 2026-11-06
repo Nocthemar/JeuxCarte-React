@@ -108,7 +108,10 @@ body.gemmes-fond-plage { --fond-gemmes: url("/img/Fond gemmes/gemmes-plage.webp"
 .gm-mini.est-prise .gm-mini__image { filter: drop-shadow(0 0 2px var(--teinte)) drop-shadow(0 0 12px var(--teinte)); }
 .gm-mini.est-prise .gm-mini__nom { color: var(--teinte); }
 .gm-mini__image { aspect-ratio: 5 / 7; background: center / contain no-repeat; filter: drop-shadow(0 4px 8px rgba(0,0,0,.6)); transition: filter .25s ease; }
-.gm-mini__nom { font-size: .72rem; line-height: 1.15; text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gm-mini__nom {   /* deux lignes au plus : « Elyan, l'ami des Dragons » en entier, plutôt que coupé */
+  font-size: .72rem; line-height: 1.15; text-align: center; text-wrap: balance;
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden;
+}
 .gm-mini__pretee { position: absolute; top: 6px; left: 6px; padding: 1px 5px; font-size: .62rem; background: rgba(0,0,0,.75); color: var(--or-pale); }
 .gm-mini__gemme { position: absolute; top: 2px; right: 2px; width: 22px; height: 22px; filter: drop-shadow(0 2px 3px rgba(0,0,0,.8)); }
 
@@ -791,7 +794,8 @@ body.gemmes-fond-plage { --fond-gemmes: url("/img/Fond gemmes/gemmes-plage.webp"
 }
 .gm-carte__nom {
   font-family: "Cinzel", "Cinzel Repli", serif; font-size: .8rem; font-weight: 700; letter-spacing: .04em; text-align: center;
-  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  line-height: 1.15; text-wrap: balance;   /* deux lignes au besoin (téléphone) plutôt que « Garde de Prav… » */
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden;
 }
 .gm-carte__ligne { display: flex; align-items: center; gap: 8px; }
 .gm-carte__gemme { flex: none; width: 20px; height: 20px; filter: drop-shadow(0 1px 2px #000); }

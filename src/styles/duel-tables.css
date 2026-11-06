@@ -479,7 +479,7 @@
   font-family: var(--titre); font-size: .74rem; font-weight: 700; letter-spacing: .06em; color: #f0d9a0; text-shadow: 0 1px 2px #000;
 }
 .pt-terrain b::before { content: ''; flex: none; width: 7px; height: 7px; clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%); background: var(--acc); }
-.pt-terrain span { font-size: .74rem; line-height: 1.3; color: var(--sourd); display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
+.pt-terrain span { font-size: .74rem; line-height: 1.3; color: var(--sourd); display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 4; overflow: hidden; }
 .pt-jets {
   list-style: none; margin: 0; padding: 7px 8px;
   display: flex; flex-direction: column; gap: 6px;

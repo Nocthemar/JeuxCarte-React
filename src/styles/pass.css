@@ -222,7 +222,7 @@
 .recompense--premium { background: rgba(180,140,240,.05); border-color: rgba(180,140,240,.22); }
 .recompense--absente { border-style: dashed; opacity: .3; }
 .recompense__type {
-  font-family: "Cinzel","Cinzel Repli", serif; font-size: .58rem; letter-spacing: .16em; text-transform: uppercase;
+  font-family: "Cinzel","Cinzel Repli", serif; font-size: .66rem; letter-spacing: .12em; text-transform: uppercase;
   color: var(--texte-doux);
 }
 .recompense__visuel { display: grid; place-items: center; height: 92px; width: 100%; }

@@ -8,8 +8,13 @@
   .caverne #dHud { top: 33%; bottom: auto; }
   /* Les Bourses : des compteurs plus bas, et une grille qui s'arrête au-dessus des commandes */
   .caverne .stat { padding: 4px 6px; }
-  .caverne .stat .lbl { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  /* l'étiquette sur deux lignes plutôt que « Bourses ouver… » / « Prochaine bo… » */
+  .caverne .stat .lbl { display: block; font-size: .56rem; line-height: 1.2; letter-spacing: .04em; text-wrap: balance; }
   .caverne .grid { --gs: min(92cqw, calc(100cqh - 120px), 500px); }
+  /* le nom du jeu ouvert : sur deux lignes s'il le faut, plutôt que coupé au bord de l'écran */
+  .caverne .tab.on { min-width: 0; flex: 0 1 auto; }
+  .caverne .tab.on span { min-width: 0; }
+  .caverne .tab b { white-space: normal; line-height: 1.15; text-wrap: balance; }
 }
 @media (max-width: 700px) {
   /* Le hall : l'image couvre la hauteur de l'écran et la salle défile de côté (sinon elle serait minuscule) */
