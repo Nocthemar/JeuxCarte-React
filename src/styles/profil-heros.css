@@ -221,7 +221,8 @@ body.page-fiche::before,
 .tresor__or { position: relative; display: grid; place-items: center; height: 64px; }
 .tresor__or .piece-icone { width: 70px; height: 70px; margin: 0; object-fit: contain; filter: drop-shadow(0 4px 6px rgba(0,0,0,.6)); }
 .tresor__or .piece-icone--vide { width: 46px; height: 46px; filter: grayscale(1) brightness(.8); opacity: .7; }
-.tresor__or .bourse-etincelles { position: absolute; inset: 0; width: auto; height: auto; margin: 0; }
+/* pas d'étincelles sur l'or du Trésor non plus (comme dans la barre) : elles tombaient sur la pointe du cristal */
+.tresor__or .bourse-etincelles { display: none; }
 .tresor__solde { margin: 0; font-family: "Cinzel","Cinzel Repli", serif; font-size: 1.5rem; font-weight: 700; line-height: 1.1; color: #f1d58f; font-variant-numeric: tabular-nums; }
 .tresor__solde small { font-family: "EB Garamond","EB Garamond Repli", serif; font-size: .85rem; font-weight: 400; font-style: italic; color: var(--pierre); }
 /* les cristaux : le même rang que l'or, en bleu ; le cristal luit, sa lueur respire doucement
