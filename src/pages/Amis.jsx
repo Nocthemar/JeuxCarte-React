@@ -3,7 +3,7 @@
 //  La salle des étendards :
 //   - en haut, les défis reçus (moins de 10 minutes) : Rejoindre (le salon privé de l'ami) ou Refuser ;
 //   - un bandeau : chercher un joueur par son pseudo ; les demandes reçues (Accepter / Refuser) et envoyées (Annuler) ;
-//   - la salle : un étendard par ami (rouge sang en ligne, gris délavé absent), ceux en ligne d'abord,
+//   - la salle : un étendard gris par ami (« En ligne » / « En duel » écrit en vert), ceux en ligne d'abord,
 //     avec Défier, Profil, Échanger, Retirer.
 //  Défier : on crée un salon privé (lib/salon.js), on y entre comme hôte (#/duel?salon=CODE) et l'ami reçoit
 //  le défi ; « Rejoindre » le mène dans ce même salon. C'est le duel en ligne habituel.

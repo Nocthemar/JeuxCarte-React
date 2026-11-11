@@ -199,11 +199,10 @@ export default function BarreLaterale() {
         )}
       </div>
       {!chargement && !joueur && <button type="button" className="barre__connexion" data-place="menu" onClick={() => connexionDiscord()}>Se connecter</button>}
-      {/* (ordinateur) le pseudo sous le portrait, et un ornement à losange */}
+      {/* (ordinateur) le pseudo sous le portrait */}
       <div className="barre__tete" data-place="menu" aria-hidden="true">
         <span className="barre__pseudo">{joueur?.username ?? 'Voyageur'}</span>
         <span className="barre__sous-titre">Duel des Couronnes</span>
-        <span className="barre__ornement-ligne"><i /></span>
       </div>
 
       <div className="barre__entrees">

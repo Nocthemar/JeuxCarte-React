@@ -1,8 +1,8 @@
 /* =====================================================================
    L'écran des amis (pages/Amis.jsx) : la salle des étendards, dans le style Nocthémar.
    Chaque ami est un étendard de tissu pendu à une tringle de fer, la pointe en bas, à facettes low-poly :
-   rouge sang quand il est en ligne (avec un rai de lumière qui tombe sur lui), plus vif en duel,
-   gris délavé quand il est absent. En haut, un bandeau de pierre : chercher un joueur, et les demandes.
+   toujours gris délavé, en ligne ou non ; seul son état (« En ligne », « En duel ») s’écrit en vert.
+   En haut, un bandeau de pierre : chercher un joueur, et les demandes.
    ===================================================================== */
 body.page-amis {
   --ivoire: #ece4d2;
@@ -110,8 +110,7 @@ body.page-amis {
   position: relative; width: 196px; padding-top: 8px;
   filter: drop-shadow(0 14px 18px rgba(0,0,0,.55));   /* (sur le tissu, son découpage la rognerait) */
 }
-.amis-etendard.est-ligne { --tissu-1: var(--sang); --tissu-2: var(--sang-sombre); --lueur: rgba(236,228,210,.13); }
-.amis-etendard.est-duel  { --tissu-1: var(--sang-vif); --tissu-2: #7a1a22; --lueur: rgba(194,61,72,.22); }
+/* (le même tissu gris pour tous, en ligne ou non : seul l’état « En ligne » / « En duel » passe au vert) */
 
 /* le rai de lumière qui tombe sur un ami en ligne */
 .amis-etendard::before {
@@ -139,19 +138,18 @@ body.page-amis {
   transform-origin: 50% 0; transition: transform .5s cubic-bezier(.3,1.4,.5,1), filter .3s ease;
 }
 .amis-etendard:hover .amis-etendard__tissu { transform: rotate(-1.6deg); filter: brightness(1.1); }
-.amis-etendard.est-absent .amis-etendard__tissu { filter: saturate(.6); }
 
 .amis-portrait--grand {
   width: 96px; height: 110px; padding: 3px; box-sizing: border-box; margin-bottom: 6px;
   background: linear-gradient(160deg, var(--ivoire), #8d8572); font-size: 2.2rem; color: var(--sang-sombre);
 }
 .amis-portrait--grand img { background: var(--pierre-2); }
-.est-absent .amis-portrait--grand { background: linear-gradient(160deg, #8a8f99, #4a4e57); color: #23252c; }
-.est-absent .amis-portrait--grand img { filter: grayscale(.7) brightness(.8); }
+.amis-etendard .amis-portrait--grand { background: linear-gradient(160deg, #8a8f99, #4a4e57); color: #23252c; }
+.amis-etendard .amis-portrait--grand img { filter: grayscale(.7) brightness(.8); }
 
 .amis-etendard__nom { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: "Cinzel","Cinzel Repli", serif; font-weight: 700; font-size: 1.12rem; letter-spacing: .05em; color: #fff; text-shadow: 0 2px 6px rgba(0,0,0,.6); }
 .amis-etendard__etat { margin-bottom: 8px; font-size: .92rem; font-style: italic; color: rgba(236,228,210,.75); }
-.est-ligne .amis-etendard__etat, .est-duel .amis-etendard__etat { font-style: normal; font-family: "Cinzel","Cinzel Repli", serif; font-size: .64rem; font-weight: 700; letter-spacing: .26em; text-transform: uppercase; color: var(--ivoire); }
+.est-ligne .amis-etendard__etat, .est-duel .amis-etendard__etat { font-style: normal; font-family: "Cinzel","Cinzel Repli", serif; font-size: .64rem; font-weight: 700; letter-spacing: .26em; text-transform: uppercase; color: #6fdc8c; text-shadow: 0 0 8px rgba(111,220,140,.45), 0 1px 2px rgba(0,0,0,.7); }
 .amis-etendard .amis-btn--ivoire { width: 100%; padding: 10px; font-size: .72rem; }
 .amis-etendard__liens { display: flex; justify-content: center; gap: 16px; margin-top: 4px; }
 .amis-etendard__liens a {
