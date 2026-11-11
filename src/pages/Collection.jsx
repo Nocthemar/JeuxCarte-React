@@ -194,6 +194,13 @@ export default function Collection() {
                         <span className="tome__fermoir" />
                       </span>
                       <span className="tome__face tome__face--doublure" />
+                      <span className="tome__bord tome__bord--droite" />
+                      <span className="tome__bord tome__bord--haut" />
+                    </span>
+                    {/* le plat arrière, derrière les pages, et son épaisseur */}
+                    <span className="tome__plat-arriere">
+                      <span className="tome__bord tome__bord--droite" />
+                      <span className="tome__bord tome__bord--haut" />
                     </span>
                     <span className="tome__face tome__face--dos" />
                     <span className="tome__face tome__face--tranche" />
